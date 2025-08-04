@@ -1,0 +1,38 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+env/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Home Assistant runtime mounts (read-only or volume mounted)
+deps/
+homeassistant/
+dbus/
+run/
+
+# HA build and install artifacts
+*.tar.gz
+*.zip
+*.egg-info/
+*.egg
+.eggs/
+dist/
+build/
+
+# Test results
+.coverage
+.tox/
+.cache/
+.pytest_cache/
+
+# Local add-on backups or dev copies
+addons/
+local.addons/
+*.bak/

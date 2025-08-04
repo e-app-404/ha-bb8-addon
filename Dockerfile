@@ -13,10 +13,11 @@ RUN apk add --no-cache bluez dbus glib-dev
 # COPY src /app/src
 # COPY requirements.txt /app/requirements.txt
 COPY run.sh /app/run.sh
+COPY app/test_ble_adapter.py /app/test_ble_adapter.py
 WORKDIR /app
 
 # Install Python dependencies
-# RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install paho-mqtt
 
 # Entrypoint
 RUN chmod +x /app/run.sh

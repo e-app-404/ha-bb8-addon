@@ -51,7 +51,18 @@ def start_mqtt_dispatcher(
                 logger.error("No 'command' in payload")
                 return
             if bridge:
-                result = bridge.controller.handle_command(command, payload)
+                # Accepts 'roll', 'stop', 'set_led' commands
+                if hasattr(bridge.controller, 'roll') and command == 'roll':
+                    result = bridge.controller.roll(**payload)
+                elif hasattr(bridge.controller, 'stop') and command == 'stop':
+                    result = bridge.controller.stop()
+                elif hasattr(bridge.controller, 'set_led') and command == 'set_led':
+                    result = bridge.controller.set_led(
+                        payload.get('r', 0), payload.get('g', 0), payload.get('b', 0)
+                    )
+                else:
+                    logger.error(f"Unknown or unsupported command: {command}")
+                    result = {"success": False, "error": f"Unknown command: {command}"}
                 logger.info(f"Dispatched command '{command}': {result}")
             else:
                 logger.warning("BLEBridge not available; command not dispatched.")
