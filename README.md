@@ -11,7 +11,7 @@ Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT.
 
 ## Directory Structure
 
-```
+```text
 beep_boop_bb8/
 ├── app/
 │   └── test_ble_adapter.py
