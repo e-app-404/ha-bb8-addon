@@ -1,0 +1,20 @@
+name: "BB-8 Home Assistant Add-on"
+description: "Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT."
+version: "0.1.0"
+slug: "beep_boop_bb8"
+init: false
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+startup: application
+boot: auto
+privileged:
+  - bluetooth
+host_dbus: true
+uart: true
+options:
+  ble_adapter: "hci0"
+schema:
+  ble_adapter: str
