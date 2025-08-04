@@ -1,0 +1,42 @@
+{
+  "name": "HA Add-on Dev (beep_boop_bb8)",
+  "image": "ghcr.io/home-assistant/devcontainer:stable",
+  "runArgs": [
+    "--privileged",
+    "--network=host",
+    "--device=/dev/bus/usb:/dev/bus/usb",
+    "--volume=/var/run/dbus:/var/run/dbus",
+    "--volume=/run/dbus:/run/dbus",
+    "--env=DISPLAY",
+    "--env=DBUS_SESSION_BUS_ADDRESS",
+    "--cap-add=SYS_ADMIN",
+    "--cap-add=NET_ADMIN",
+    "--group-add=bluetooth"
+  ],
+  "workspaceMount": "source=${localWorkspaceFolder}/addons/beep_boop_bb8,target=/workspace/beep_boop_bb8,type=bind,consistency=cached",
+  "workspaceFolder": "/workspace/beep_boop_bb8",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python3",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "python.formatting.provider": "black"
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-azuretools.vscode-docker",
+        "redhat.vscode-yaml",
+        "esphome.esphome-vscode",
+        "home-assistant.home-assistant-vscode"
+      ]
+    }
+  },
+  "postCreateCommand": "pip install -r requirements.txt || true"
+}

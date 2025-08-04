@@ -17,7 +17,7 @@ COPY app/test_ble_adapter.py /app/test_ble_adapter.py
 WORKDIR /app
 
 # Install Python dependencies
-RUN pip install paho-mqtt
+RUN apk add --no-cache py3-paho-mqtt
 
 # Entrypoint
 RUN chmod +x /app/run.sh

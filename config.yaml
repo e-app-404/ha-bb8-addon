@@ -11,7 +11,9 @@ arch:
   - armv7
 boot: auto
 privileged:
-  - bluetooth
+  - SYS_RAWIO
+  - NET_ADMIN
+  - SYS_ADMIN
 host_dbus: true
 uart: true
 options:
