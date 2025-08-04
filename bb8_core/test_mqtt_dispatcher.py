@@ -3,7 +3,7 @@ import time
 import json
 import logging
 from unittest.mock import MagicMock, patch
-import paho.mqtt.client as mqtt
+import paho.mqtt.client as mqtt # pyright: ignore[reportMissingImports]
 
 # Configure logging to stdout for test visibility
 logging.basicConfig(level=logging.INFO)

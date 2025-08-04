@@ -2,8 +2,8 @@
 # Extracted from legacy launch_bb8.py (CLI/config removed)
 
 import logging
-from ha_sphero_bb8.controller import BB8Controller
-from ha_sphero_bb8.ble_gateway import BleGateway
+from bb8_core.controller import BB8Controller
+from bb8_core.ble_gateway import BleGateway
 
 logger = logging.getLogger(__name__)
 
