@@ -13,7 +13,7 @@
     "--cap-add=NET_ADMIN",
     "--group-add=bluetooth"
   ],
-  "workspaceMount": "source=${localWorkspaceFolder}/addons/beep_boop_bb8,target=/workspace/beep_boop_bb8,type=bind,consistency=cached",
+  "workspaceMount": "source=${localWorkspaceFolder}/addons/local/beep_boop_bb8,target=/workspace/beep_boop_bb8,type=bind,consistency=cached",
   "workspaceFolder": "/workspace/beep_boop_bb8",
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
