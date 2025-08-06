@@ -10,15 +10,15 @@ LABEL io.hass.type="addon"
 RUN apk add --no-cache bluez dbus glib-dev
 
 # Copy add-on source
-# COPY src /app/src
-# COPY requirements.txt /app/requirements.txt
 COPY run.sh /app/run.sh
 COPY app/test_ble_adapter.py /app/test_ble_adapter.py
+COPY services.d/ble_bridge/run /etc/services.d/ble_bridge/run
+RUN chmod +x /etc/services.d/ble_bridge/run \
+  && chmod +x /app/run.sh
 WORKDIR /app
 
 # Install Python dependencies
 RUN apk add --no-cache py3-paho-mqtt
 
-# Entrypoint
-RUN chmod +x /app/run.sh
-ENTRYPOINT ["/app/run.sh"]
+# S6 Entrypoint
+CMD [ "/init" ]
