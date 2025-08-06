@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+VERSION="0.1.0"  # Update this manually per release/rebuild
+
 # Load config from Home Assistant options.json (mounted at /data/options.json)
 CONFIG_FILE="/data/options.json"
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -22,5 +24,27 @@ export MQTT_PASSWORD
 export MQTT_TOPIC_PREFIX
 export BLE_ADAPTER
 
+export PYTHONPATH=/app
+
+echo "==== BB-8 Add-on Startup ===="
+echo "Version: $VERSION"
+echo "Build Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+echo "Container Started: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+echo "============================="
+echo "BB8_MAC: $BB8_MAC"
+echo "MQTT_BROKER: $MQTT_BROKER"
+echo "MQTT_USERNAME: $MQTT_USERNAME"
+echo "MQTT_TOPIC_PREFIX: $MQTT_TOPIC_PREFIX"
+echo "BLE_ADAPTER: $BLE_ADAPTER"
+echo "Python version: $(python3 --version 2>&1)"
+echo "Python path: $(which python3)"
+echo "Current working directory: $(pwd)"
+echo "Running as user: $(id -u -n) (UID: $(id -u))"
+echo "Contents of /app:"
+ls -l /app
+echo "Contents of /app/bb8_core:"
+ls -l /app/bb8_core
+echo "============================="
+
 # Start the Python service
-exec python3 -m src.ha_sphero_bb8
+exec python3 -m bb8_core.bridge_controller

@@ -13,6 +13,7 @@ RUN apk add --no-cache bluez dbus glib-dev
 COPY run.sh /app/run.sh
 COPY app/test_ble_adapter.py /app/test_ble_adapter.py
 COPY services.d/ble_bridge/run /etc/services.d/ble_bridge/run
+COPY bb8_core /app/bb8_core
 RUN chmod +x /etc/services.d/ble_bridge/run \
   && chmod +x /app/run.sh
 WORKDIR /app
