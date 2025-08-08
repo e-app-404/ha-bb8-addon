@@ -16,7 +16,19 @@ privileged:
   - SYS_ADMIN
 host_dbus: true
 uart: true
+devices:
+  - /dev/hci0
 options:
-  ble_adapter: "hci0"
+  ble_adapter: hci0
+  bb8_mac: "00:00:00:00:00:00"
+  mqtt_broker: "mqtt://localhost"
+  mqtt_username: "user"
+  mqtt_password: "pass"
+  mqtt_topic_prefix: "bb8"
 schema:
   ble_adapter: str
+  bb8_mac: str
+  mqtt_broker: str
+  mqtt_username: str
+  mqtt_password: str
+  mqtt_topic_prefix: str

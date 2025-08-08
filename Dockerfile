@@ -21,5 +21,17 @@ WORKDIR /app
 # Install Python dependencies
 RUN apk add --no-cache py3-paho-mqtt
 
+# Install pip for Python packages
+RUN apk add --no-cache py3-pip
+
+# Install bleak via pip (for BLE support)
+RUN pip install --break-system-packages bleak
+
+# Install spherov2 via pip (for BB-8 BLE control)
+RUN pip install --break-system-packages spherov2
+
+# Ensure bluez is installed before entrypoint for BLE diagnostics
+RUN apk add --no-cache bluez
+
 # S6 Entrypoint
-CMD [ "/init" ]
+ENTRYPOINT [ "/init" ]

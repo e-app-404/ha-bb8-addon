@@ -40,10 +40,12 @@ class BB8Controller:
         self.last_command = None
         self.device_connected = True if device is not None else False
         self.mqtt_handler = mqtt_handler
+        self.logger.debug(f"BB8Controller state after init: mode={self.mode}, device={self.device}, mqtt_handler={self.mqtt_handler}")
 
     def roll(self, speed: int, heading: int, timeout: float = 2.0, roll_mode: int = 0, reverse_flag: bool = False) -> dict:
         self.logger.info(f"Adapter/device repr: {repr(self.device)}")
         if self.device is None:
+            self.logger.warning("roll called but no device present")
             return self._create_error_result("roll", "No device present")
         self.command_count += 1
         self.last_command = "roll"
@@ -54,15 +56,17 @@ class BB8Controller:
                 self.logger.info(f"roll result: {result}")
                 return result if isinstance(result, dict) else {"success": result is None, "command": "roll", "result": result}
             else:
+                self.logger.warning("Device does not support roll")
                 return self._create_error_result("roll", "Device does not support roll")
         except Exception as e:
             self.error_count += 1
-            self.logger.error(f"Roll command failed: {e}")
+            self.logger.error(f"Roll command failed: {e}", exc_info=True)
             return self._create_error_result("roll", str(e))
 
     def stop(self) -> Dict[str, Any]:
         self.logger.info(f"Adapter/device repr: {repr(self.device)}")
         if self.device is None:
+            self.logger.warning("stop called but no device present")
             return self._create_error_result("stop", "No device present")
         self.command_count += 1
         self.last_command = "stop"
@@ -73,24 +77,27 @@ class BB8Controller:
                 self.logger.info(f"stop result: {result}")
                 return {"success": result is True or result is None, "command": "stop", "result": result}
             else:
+                self.logger.warning("Device does not support stop")
                 return self._create_error_result("stop", "Device does not support stop")
         except Exception as e:
             self.error_count += 1
-            self.logger.error(f"Stop command failed: {e}")
+            self.logger.error(f"Stop command failed: {e}", exc_info=True)
             return self._create_error_result("stop", str(e))
 
     def set_led(self, r: int, g: int, b: int) -> dict:
         try:
             if self.device is None:
+                self.logger.warning("set_led called but no device present")
                 return {"success": False, "command": "set_led", "error": "No device present"}
             if hasattr(self.device, "set_led") and callable(self.device.set_led):
                 result = self.device.set_led(r, g, b)
                 self.logger.info(f"set_led hardware call returned: {result}")
                 return result if isinstance(result, dict) else {"success": result is None, "command": "set_led", "result": result}
             else:
+                self.logger.warning("Device does not support set_led")
                 return {"success": False, "command": "set_led", "error": "Not supported by this device"}
         except Exception as e:
-            self.logger.warning(f"Error in set_led: {e}")
+            self.logger.warning(f"Error in set_led: {e}", exc_info=True)
             return {"success": False, "command": "set_led", "error": str(e)}
 
     def get_diagnostics_for_mqtt(self) -> Dict[str, Any]:
@@ -108,6 +115,7 @@ class BB8Controller:
             },
             "timestamp": time.time()
         }
+        self.logger.debug(f"Diagnostics payload for MQTT: {payload}")
         return payload
 
     def disconnect(self):
@@ -120,7 +128,7 @@ class BB8Controller:
         features = {
             "ble_gateway": self.ble_gateway is not None
         }
-        return ControllerStatus(
+        status = ControllerStatus(
             mode=self.mode,
             device_connected=self.device_connected,
             ble_status=ble_status,
@@ -130,8 +138,11 @@ class BB8Controller:
             uptime=uptime,
             features_available=features
         )
+        self.logger.debug(f"Controller status: {status}")
+        return status
 
     def _create_error_result(self, command: str, error: str) -> Dict[str, Any]:
+        self.logger.error(f"Error result for command '{command}': {error}")
         return {
             "success": False,
             "command": command,
@@ -144,3 +155,4 @@ class BB8Controller:
         self.device = device
         self.device_connected = device is not None
         self.logger.info(f"Device attached to BB8Controller: {repr(device)}")
+        self.logger.debug(f"BB8Controller state after attach: device={self.device}, device_connected={self.device_connected}")

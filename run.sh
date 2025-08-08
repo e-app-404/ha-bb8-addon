@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-VERSION="0.1.0"  # Update this manually per release/rebuild
+VERSION="0.2.1"  # Update this manually per release/rebuild
 
 # Load config from Home Assistant options.json (mounted at /data/options.json)
 CONFIG_FILE="/data/options.json"
@@ -26,6 +26,30 @@ export BLE_ADAPTER
 
 export PYTHONPATH=/app
 
+# Parse MQTT_BROKER (URL or host:port) to set MQTT_HOST and MQTT_PORT
+parse_mqtt_url() {
+  url="$1"
+  # Remove mqtt:// if present
+  url_no_proto="${url#mqtt://}"
+  # If contains colon, split host:port
+  if echo "$url_no_proto" | grep -q ':'; then
+    host="${url_no_proto%%:*}"
+    port="${url_no_proto##*:}"
+  else
+    host="$url_no_proto"
+    port="1883"
+  fi
+  export MQTT_HOST="$host"
+  export MQTT_PORT="$port"
+}
+
+parse_mqtt_url "$MQTT_BROKER"
+
+export MQTT_USER="$MQTT_USERNAME"
+export MQTT_PASSWORD="$MQTT_PASSWORD"
+export MQTT_TOPIC="${MQTT_TOPIC_PREFIX}/command"
+export STATUS_TOPIC="${MQTT_TOPIC_PREFIX}/status"
+
 echo "==== BB-8 Add-on Startup ===="
 echo "Version: $VERSION"
 echo "Build Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
@@ -45,6 +69,9 @@ ls -l /app
 echo "Contents of /app/bb8_core:"
 ls -l /app/bb8_core
 echo "============================="
+
+echo "[BB-8] Running BLE adapter check..."
+python3 /app/test_ble_adapter.py
 
 # Start the Python service
 exec python3 -m bb8_core.bridge_controller
