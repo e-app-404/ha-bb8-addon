@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-VERSION="0.2.1"  # Update this manually per release/rebuild
+VERSION="0.3.1"  # Update this manually per release/rebuild
 
 # Load config from Home Assistant options.json (mounted at /data/options.json)
 CONFIG_FILE="/data/options.json"
