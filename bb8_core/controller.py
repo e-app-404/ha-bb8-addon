@@ -1,14 +1,12 @@
 # Unified BB-8 Controller for Home Assistant add-on
 # Migrated from legacy ha_sphero_bb8.controller (2025-08-04)
 
-import logging
 import time
 from enum import Enum
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
 from bb8_core.ble_gateway import BleGateway
-
-logger = logging.getLogger(__name__)
+from bb8_core.logging_setup import logger
 
 class ControllerMode(Enum):
     HARDWARE = "hardware"
@@ -28,8 +26,7 @@ class ControllerStatus:
 class BB8Controller:
     def __init__(self, mode: ControllerMode = ControllerMode.HARDWARE, device=None, mqtt_handler=None):
         self.mode = mode
-        self.logger = logging.getLogger(f"{__name__}.BB8Controller")
-        self.logger.info(f"[AUDIT] BB8Controller initialized in hardware-only mode")
+        logger.info({"event": "controller_init", "mode": self.mode.value})
         self.device = device
         self.ble_gateway = None
         self.motor_control = None
@@ -40,64 +37,64 @@ class BB8Controller:
         self.last_command = None
         self.device_connected = True if device is not None else False
         self.mqtt_handler = mqtt_handler
-        self.logger.debug(f"BB8Controller state after init: mode={self.mode}, device={self.device}, mqtt_handler={self.mqtt_handler}")
+        logger.debug({"event": "controller_init_debug", "mode": self.mode.value, "device": str(self.device), "mqtt_handler": str(self.mqtt_handler)})
 
     def roll(self, speed: int, heading: int, timeout: float = 2.0, roll_mode: int = 0, reverse_flag: bool = False) -> dict:
-        self.logger.info(f"Adapter/device repr: {repr(self.device)}")
+        logger.info({"event": "controller_roll_start", "device": str(self.device)})
         if self.device is None:
-            self.logger.warning("roll called but no device present")
+            logger.warning({"event": "controller_roll_no_device"})
             return self._create_error_result("roll", "No device present")
         self.command_count += 1
         self.last_command = "roll"
-        self.logger.info(f"Attempting to roll: speed={speed}, heading={heading}, timeout={timeout}, roll_mode={roll_mode}, reverse_flag={reverse_flag}")
+        logger.info({"event": "controller_roll_attempt", "speed": speed, "heading": heading, "timeout": timeout, "roll_mode": roll_mode, "reverse_flag": reverse_flag})
         try:
             if hasattr(self.device, "roll") and callable(self.device.roll):
                 result = self.device.roll(speed=speed, heading=heading, timeout=timeout)
-                self.logger.info(f"roll result: {result}")
+                logger.info({"event": "controller_roll_result", "result": result})
                 return result if isinstance(result, dict) else {"success": result is None, "command": "roll", "result": result}
             else:
-                self.logger.warning("Device does not support roll")
+                logger.warning({"event": "controller_roll_not_supported"})
                 return self._create_error_result("roll", "Device does not support roll")
         except Exception as e:
             self.error_count += 1
-            self.logger.error(f"Roll command failed: {e}", exc_info=True)
+            logger.error({"event": "controller_roll_error", "error": str(e)}, exc_info=True)
             return self._create_error_result("roll", str(e))
 
     def stop(self) -> Dict[str, Any]:
-        self.logger.info(f"Adapter/device repr: {repr(self.device)}")
+        logger.info({"event": "controller_stop_start", "device": str(self.device)})
         if self.device is None:
-            self.logger.warning("stop called but no device present")
+            logger.warning({"event": "controller_stop_no_device"})
             return self._create_error_result("stop", "No device present")
         self.command_count += 1
         self.last_command = "stop"
-        self.logger.info(f"Attempting to stop device")
+        logger.info({"event": "controller_stop_attempt"})
         try:
             if hasattr(self.device, "stop") and callable(self.device.stop):
                 result = self.device.stop()
-                self.logger.info(f"stop result: {result}")
+                logger.info({"event": "controller_stop_result", "result": result})
                 return {"success": result is True or result is None, "command": "stop", "result": result}
             else:
-                self.logger.warning("Device does not support stop")
+                logger.warning({"event": "controller_stop_not_supported"})
                 return self._create_error_result("stop", "Device does not support stop")
         except Exception as e:
             self.error_count += 1
-            self.logger.error(f"Stop command failed: {e}", exc_info=True)
+            logger.error({"event": "controller_stop_error", "error": str(e)}, exc_info=True)
             return self._create_error_result("stop", str(e))
 
     def set_led(self, r: int, g: int, b: int) -> dict:
         try:
             if self.device is None:
-                self.logger.warning("set_led called but no device present")
+                logger.warning({"event": "controller_set_led_no_device"})
                 return {"success": False, "command": "set_led", "error": "No device present"}
             if hasattr(self.device, "set_led") and callable(self.device.set_led):
                 result = self.device.set_led(r, g, b)
-                self.logger.info(f"set_led hardware call returned: {result}")
+                logger.info({"event": "controller_set_led_result", "result": result})
                 return result if isinstance(result, dict) else {"success": result is None, "command": "set_led", "result": result}
             else:
-                self.logger.warning("Device does not support set_led")
+                logger.warning({"event": "controller_set_led_not_supported"})
                 return {"success": False, "command": "set_led", "error": "Not supported by this device"}
         except Exception as e:
-            self.logger.warning(f"Error in set_led: {e}", exc_info=True)
+            logger.warning({"event": "controller_set_led_error", "error": str(e)}, exc_info=True)
             return {"success": False, "command": "set_led", "error": str(e)}
 
     def get_diagnostics_for_mqtt(self) -> Dict[str, Any]:
@@ -115,11 +112,11 @@ class BB8Controller:
             },
             "timestamp": time.time()
         }
-        self.logger.debug(f"Diagnostics payload for MQTT: {payload}")
+        logger.debug({"event": "controller_diagnostics", "payload": payload})
         return payload
 
     def disconnect(self):
-        self.logger.info("BB8Controller: disconnect called (no-op)")
+        logger.info({"event": "controller_disconnect"})
         return {"success": True, "message": "BB8Controller: disconnect called"}
 
     def get_controller_status(self) -> ControllerStatus:
@@ -138,11 +135,11 @@ class BB8Controller:
             uptime=uptime,
             features_available=features
         )
-        self.logger.debug(f"Controller status: {status}")
+        logger.debug({"event": "controller_status", "status": status.__dict__})
         return status
 
     def _create_error_result(self, command: str, error: str) -> Dict[str, Any]:
-        self.logger.error(f"Error result for command '{command}': {error}")
+        logger.error({"event": "controller_error_result", "command": command, "error": error})
         return {
             "success": False,
             "command": command,
@@ -154,5 +151,5 @@ class BB8Controller:
         """Attach a BLE device to the controller and update state."""
         self.device = device
         self.device_connected = device is not None
-        self.logger.info(f"Device attached to BB8Controller: {repr(device)}")
-        self.logger.debug(f"BB8Controller state after attach: device={self.device}, device_connected={self.device_connected}")
+        logger.info({"event": "controller_attach_device", "device": str(device)})
+        logger.debug({"event": "controller_attach_device_debug", "device": str(self.device), "device_connected": self.device_connected})

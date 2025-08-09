@@ -3,40 +3,50 @@ import logging
 import platform
 import time
 from typing import Optional
+from bb8_core.logging_setup import logger
 
-logger = logging.getLogger(__name__)
+_initialized = False
+
+def init():
+    global _initialized
+    if _initialized:
+        return
+    # existing setup...
+    _initialized = True
+
+def initialized():
+    return _initialized
 
 class BleGateway:
     def __init__(self, mode: Optional[str] = None):
-        self.logger = logging.getLogger(__name__)
         self.mode = mode or "bleak"
         self.device = None
         self.adapter = None
-        self.logger.info(f"Using BLE adapter mode: {self.mode}")
-        self.logger.debug(f"BleGateway initialized with mode={self.mode}, device={self.device}, adapter={self.adapter}")
+        logger.info({"event": "ble_gateway_init", "mode": self.mode})
+        logger.debug({"event": "ble_gateway_init_debug", "mode": self.mode, "device": str(self.device), "adapter": str(self.adapter)})
         # Adapter/device init logic can be added here as needed
 
     def scan_for_device(self, timeout: int = 10, retries: int = 3, delay: int = 2):
-        self.logger.info(f"[BLE SCAN] Attempting scan (timeout={timeout}, retries={retries}, delay={delay})")
+        logger.info({"event": "ble_scan_start", "timeout": timeout, "retries": retries, "delay": delay})
         try:
             # Simulate scan logic for now
             # In production, insert BLE scan logic here
             self.device = "BB-8_DEVICE_SIM"  # Placeholder
-            self.logger.debug(f"[BLE SCAN] Scan result: {self.device}")
+            logger.debug({"event": "ble_scan_result", "device": str(self.device)})
             return self.device
         except Exception as e:
-            self.logger.error(f"[BLE SCAN][ERROR] Exception during scan: {e}", exc_info=True)
+            logger.error({"event": "ble_scan_error", "error": str(e)}, exc_info=True)
             return None
 
     def get_connection_status(self):
         status = {"connected": self.device is not None}
-        self.logger.debug(f"[BLE STATUS] Connection status: {status}")
+        logger.debug({"event": "ble_status", "status": status})
         return status
 
     def shutdown(self):
-        self.logger.info("BLE Gateway shutdown invoked")
+        logger.info({"event": "ble_gateway_shutdown"})
         try:
             self.device = None
-            self.logger.debug("BLE Gateway device set to None on shutdown.")
+            logger.debug({"event": "ble_gateway_shutdown_device_none"})
         except Exception as e:
-            self.logger.error(f"[BLE SHUTDOWN][ERROR] Exception during shutdown: {e}", exc_info=True)
+            logger.error({"event": "ble_gateway_shutdown_error", "error": str(e)}, exc_info=True)

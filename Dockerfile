@@ -33,5 +33,12 @@ RUN pip install --break-system-packages spherov2
 # Ensure bluez is installed before entrypoint for BLE diagnostics
 RUN apk add --no-cache bluez
 
+# Build-time version injection
+ARG BUILD_VERSION
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV ADDON_VERSION=${BUILD_VERSION}
+RUN echo "${BUILD_VERSION}" > /app/VERSION
+
 # S6 Entrypoint
 ENTRYPOINT [ "/init" ]

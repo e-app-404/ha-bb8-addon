@@ -1,0 +1,9 @@
+[tool.pyright]
+include = ["bb8_core"]
+extraPaths = ["."]
+
+[tool.ruff]
+extend-select = ["F", "E", "W", "I", "N"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

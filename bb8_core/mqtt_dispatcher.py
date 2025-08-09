@@ -1,7 +1,6 @@
 # MQTT Dispatcher: Core MQTT event handling for Home Assistant add-on
 # Finalized for Home Assistant runtime (2025-08-04)
 
-import logging
 import json
 import time
 from typing import Optional
@@ -12,10 +11,10 @@ from spherov2.scanner import find_toys
 from spherov2.toy.bb8 import BB8
 from spherov2.adapter.bleak_adapter import BleakAdapter
 from bb8_core.ble_bridge import bb8_power_on_sequence, bb8_power_off_sequence
-
-logging.basicConfig(level=logging.DEBUG)
-
-logger = logging.getLogger(__name__)
+from spherov2.sphero_edu import SpheroEduAPI
+from spherov2.types import Color
+from spherov2.commands.core import IntervalOptions
+from bb8_core.logging_setup import logger
 
 # Placeholder for BLE bridge import
 try:
@@ -32,10 +31,13 @@ def start_mqtt_dispatcher(
     mqtt_password: Optional[str] = None,
     status_topic: Optional[str] = None,
 ) -> None:
-    """Blocking MQTT dispatcher for BB-8 BLE bridge with robust connect/retry."""
+    """Blocking MQTT dispatcher for BB-8 BLE bridge with robust connect/retry and LWT/discovery."""
     import socket
     bridge = BLEBridge() if BLEBridge else None
-    client = mqtt.Client()
+    client = mqtt.Client(client_id="bb8-addon", clean_session=True)
+    # LWT for Home Assistant availability
+    mqtt_prefix = os.environ.get("MQTT_TOPIC_PREFIX", "bb8")
+    client.will_set(f"{mqtt_prefix}/status", payload="offline", qos=1, retain=True)
     if mqtt_user and mqtt_password:
         client.username_pw_set(mqtt_user, mqtt_password)
     # Optional: Enable TLS if needed
@@ -45,10 +47,16 @@ def start_mqtt_dispatcher(
         if rc == 0:
             logger.info(f"Connected to MQTT broker at {mqtt_host}:{mqtt_port}")
             client.subscribe(mqtt_topic)
-            client.subscribe("bb8/command/power")  # Subscribe to power command topic
+            client.subscribe("bb8/command/power")
             logger.info(f"Subscribed to topic: {mqtt_topic} and bb8/command/power")
             if status_topic:
                 publish_status(client, status_topic, bridge)
+            # Publish online status and emit discovery
+            client.publish(f"{mqtt_prefix}/status", "online", qos=1, retain=True)
+            try:
+                publish_mqtt_discovery(client)
+            except Exception as e:
+                logger.warning(f"Discovery emit failed: {e}")
         else:
             logger.error(f"Failed to connect to MQTT broker: {rc}")
 
@@ -59,45 +67,36 @@ def start_mqtt_dispatcher(
             logger.debug(f"[DISPATCH] Message topic: {topic}")
             try:
                 payload = msg.payload.decode('utf-8').strip()
-                logger.debug(f"[DISPATCH] Decoded payload: '{payload}' (type: {type(payload)})")
+                logger.debug({"event": "mqtt_payload_decoded", "payload": payload, "type": str(type(payload))})
             except Exception as e:
-                logger.error(f"[DISPATCH][ERROR] Payload decode error: {e}")
+                logger.error({"event": "mqtt_payload_decode_error", "error": str(e)})
                 return
-            print(f"[MQTT] Received message on {topic}: {payload}")
-            logger.info(f"Received message on {topic}: {payload}")
+            logger.info({"event": "mqtt_message_received", "topic": topic, "payload": payload})
             # Power command handler for Home Assistant switch
             if topic == "bb8/command/power":
-                logger.debug(f"[DISPATCH] Power command topic matched. Payload: '{payload}'")
-                print(f"[MQTT] Power command received: {payload}")
-                logger.info(f"[MQTT] Power command received: {payload}")
+                logger.debug({"event": "mqtt_power_command", "payload": payload})
                 if payload == "ON":
-                    logger.debug(f"[DISPATCH] Entered ON handler. Function ref: {bb8_power_on_sequence}")
-                    print(f"[DEBUG] About to call bb8_power_on_sequence(), function ref: {bb8_power_on_sequence}")
+                    logger.debug({"event": "mqtt_power_on_handler", "function": str(bb8_power_on_sequence)})
                     try:
                         bb8_power_on_sequence()
-                        logger.debug(f"[DISPATCH] bb8_power_on_sequence() call completed.")
+                        logger.debug({"event": "mqtt_power_on_sequence_completed"})
                     except Exception as e:
-                        logger.error(f"[DISPATCH][ERROR] Exception in bb8_power_on_sequence: {e}", exc_info=True)
-                        print(f"[MQTT][ERROR] Exception when calling bb8_power_on_sequence: {e}")
+                        logger.error({"event": "mqtt_power_on_sequence_error", "error": str(e)}, exc_info=True)
                 elif payload == "OFF":
-                    logger.debug(f"[DISPATCH] Entered OFF handler. Function ref: {bb8_power_off_sequence}")
-                    print(f"[DEBUG] Entered OFF handler, about to call bb8_power_off_sequence()")
-                    print(f"[DEBUG] About to call bb8_power_off_sequence(), function ref: {bb8_power_off_sequence}")
+                    logger.debug({"event": "mqtt_power_off_handler", "function": str(bb8_power_off_sequence)})
                     try:
                         bb8_power_off_sequence()
-                        logger.debug(f"[DISPATCH] bb8_power_off_sequence() call completed.")
+                        logger.debug({"event": "mqtt_power_off_sequence_completed"})
                     except Exception as e:
-                        logger.error(f"[DISPATCH][ERROR] Exception in bb8_power_off_sequence: {e}", exc_info=True)
-                        print(f"[MQTT][ERROR] Exception when calling bb8_power_off_sequence: {e}")
+                        logger.error({"event": "mqtt_power_off_sequence_error", "error": str(e)}, exc_info=True)
                 else:
-                    logger.warning(f"[DISPATCH] Unknown power command payload: '{payload}'")
-                    print(f"[MQTT] Unknown power command: {payload}")
+                    logger.warning({"event": "mqtt_power_command_unknown", "payload": payload})
                 return
             try:
                 payload_json = json.loads(payload)
                 command = payload_json.get("command")
                 if not command:
-                    logger.error("No 'command' in payload")
+                    logger.error({"event": "mqtt_command_missing", "payload": payload})
                     return
                 if bridge:
                     # Accepts 'roll', 'stop', 'set_led' commands
@@ -110,18 +109,17 @@ def start_mqtt_dispatcher(
                             payload_json.get('r', 0), payload_json.get('g', 0), payload_json.get('b', 0)
                         )
                     else:
-                        logger.error(f"Unknown or unsupported command: {command}")
+                        logger.error({"event": "mqtt_command_unknown", "command": command})
                         result = {"success": False, "error": f"Unknown command: {command}"}
-                    logger.info(f"Dispatched command '{command}': {result}")
+                    logger.info({"event": "mqtt_command_dispatched", "command": command, "result": result})
                 else:
-                    logger.warning("BLEBridge not available; command not dispatched.")
+                    logger.warning({"event": "mqtt_bridge_unavailable", "command": command})
             except json.JSONDecodeError as e:
-                logger.error(f"Malformed JSON: {e}")
+                logger.error({"event": "mqtt_json_decode_error", "error": str(e)})
             except Exception as e:
-                logger.error(f"Error handling message: {e}")
+                logger.error({"event": "mqtt_message_handle_error", "error": str(e)})
         except Exception as e:
-            logger.error(f"[DISPATCH][ERROR] Unhandled exception in on_message: {e}", exc_info=True)
-            print(f"[MQTT][ERROR] Unhandled exception in on_message: {e}")
+            logger.error({"event": "mqtt_on_message_unhandled_exception", "error": str(e)}, exc_info=True)
 
     def on_disconnect(client, userdata, rc):
         logger.warning(f"MQTT disconnected (rc={rc}). Attempting reconnect in 5s...")
@@ -162,34 +160,61 @@ def start_mqtt_dispatcher(
     client.loop_forever()
 
 
-def publish_mqtt_discovery():
+def publish_mqtt_discovery(client=None):
     BB8_MAC = os.environ.get("BB8_MAC", "B8:17:C2:A8:ED:45")
     MQTT_HOST = os.environ.get("MQTT_HOST", "localhost")
+    MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
     MQTT_USER = os.environ.get("MQTT_USER")
     MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD")
-    payload = {
-        "name": "BB-8 Power",
-        "unique_id": "bb8_power_switch",
-        "command_topic": "bb8/command/power",
-        "state_topic": "bb8/state/power",
-        "payload_on": "ON",
-        "payload_off": "OFF",
+    mqtt_prefix = os.environ.get("MQTT_TOPIC_PREFIX", "bb8")
+    device_id = f"bb8_{BB8_MAC.replace(':','').lower()}"
+    def _emit(topic, payload):
+        if client:
+            client.publish(topic, payload=payload, qos=1, retain=True)
+        else:
+            publish.single(topic, payload, hostname=MQTT_HOST, port=MQTT_PORT,
+                           auth={"username": MQTT_USER, "password": MQTT_PASSWORD} if MQTT_USER and MQTT_PASSWORD else None)
+    # Presence sensor
+    cfg_presence = {
+        "name": "BB-8 Presence",
+        "unique_id": f"{device_id}_presence",
+        "device_class": "presence",
+        "state_topic": f"{mqtt_prefix}/presence",
+        "availability_topic": f"{mqtt_prefix}/status",
+        "payload_on": "present",
+        "payload_off": "absent",
         "device": {
-            "identifiers": [f"bb8_{BB8_MAC}"],
-            "name": "Sphero BB-8",
+            "identifiers": [device_id],
+            "manufacturer": "Sphero",
             "model": "BB-8",
-            "manufacturer": "Sphero"
+            "name": "BB-8"
         }
     }
-    auth = None
-    if MQTT_USER and MQTT_PASSWORD:
-        auth = {'username': MQTT_USER, 'password': MQTT_PASSWORD}
-    publish.single(
-        "homeassistant/switch/bb8_power/config",
-        json.dumps(payload),
-        hostname=MQTT_HOST,
-        auth=auth
-    )
+    # RSSI sensor
+    cfg_rssi = {
+        "name": "BB-8 RSSI",
+        "unique_id": f"{device_id}_rssi",
+        "state_topic": f"{mqtt_prefix}/rssi",
+        "availability_topic": f"{mqtt_prefix}/status",
+        "unit_of_measurement": "dBm",
+        "state_class": "measurement",
+        "device_class": "signal_strength",
+        "device": cfg_presence["device"]
+    }
+    # Power switch
+    cfg_power = {
+        "name": "BB-8 Power",
+        "unique_id": f"{device_id}_power",
+        "command_topic": f"{mqtt_prefix}/command/power",
+        "state_topic": f"{mqtt_prefix}/state/power",
+        "payload_on": "ON",
+        "payload_off": "OFF",
+        "availability_topic": f"{mqtt_prefix}/status",
+        "device": cfg_presence["device"]
+    }
+    _emit(f"homeassistant/binary_sensor/{device_id}_presence/config", json.dumps(cfg_presence))
+    _emit(f"homeassistant/sensor/{device_id}_rssi/config", json.dumps(cfg_rssi))
+    _emit(f"homeassistant/switch/{device_id}_power/config", json.dumps(cfg_power))
 
 
 def turn_on_bb8():
@@ -199,9 +224,10 @@ def turn_on_bb8():
         if isinstance(toy, BB8):
             logger.info(f"[BB-8] Connecting to {toy.address} ...")
             bb8 = BB8(toy.address, adapter_cls=BleakAdapter)
-            bb8.set_main_led(255, 100, 0)
-            bb8.roll(0, 30)
-            bb8.set_main_led(0, 0, 0)
+            with SpheroEduAPI(bb8) as edu:
+                edu.set_main_led(Color(255, 100, 0))
+                edu.roll(0, 30, 2)  # heading=0, speed=30, duration=2s
+                edu.set_main_led(Color(0, 0, 0))
             logger.info("[BB-8] ON command sent.")
             return True
     logger.warning("[BB-8] No BB-8 found.")
@@ -214,7 +240,7 @@ def turn_off_bb8():
     for toy in devices:
         if isinstance(toy, BB8):
             bb8 = BB8(toy.address, adapter_cls=BleakAdapter)
-            bb8.sleep()
+            bb8.sleep(IntervalOptions.NONE, 0, 0, 0)
             logger.info("[BB-8] OFF (sleep) command sent.")
             return True
     logger.warning("[BB-8] No BB-8 found for sleep.")

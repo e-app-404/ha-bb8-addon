@@ -11,14 +11,13 @@ from spherov2.scanner import find_toys
 from spherov2.toy.bb8 import BB8
 from spherov2.adapter.bleak_adapter import BleakAdapter
 import time
-from logging import getLogger
+from bb8_core.logging_setup import logger
 import json
 import paho.mqtt.publish as publish
 from spherov2.commands.sphero import RollModes, ReverseFlags
 from spherov2.commands.core import IntervalOptions
 from bleak.exc import BleakCharacteristicNotFoundError
-
-logger = getLogger("bb8_addon")
+from .ble_utils import resolve_services
 
 BB8_NAME = os.environ.get("BB8_NAME", "BB-8")
 BB8_MAC = os.environ.get("BB8_MAC", "B8:17:C2:A8:ED:45")
@@ -106,38 +105,48 @@ def bb8_power_on_sequence():
             logger.error("[BB-8] Power on failed: device not found or not awake.")
             return
         logger.info("[BB-8] After BB-8 connect...")
+        # Use context manager for production BB-8 device
+        # type: ignore[attr-defined]
         with bb8:
-            # Defensive: check connection status if available
-            is_connected = getattr(bb8, 'is_connected', lambda: None)
-            if callable(is_connected):
-                connected = is_connected()
-            else:
-                connected = is_connected
-            logger.info(f"[BB-8] is_connected: {connected}")
-            if connected is not None and not connected:
-                logger.error("[BB-8] Not connected after context manager entry.")
-                return
-            # Timed LED command
-            led_start = time.time()
-            try:
-                bb8.set_main_led(255, 255, 255, None)
-                logger.info(f"[BB-8] LED command succeeded in {time.time() - led_start:.2f}s")
-            except Exception as e:
-                logger.error(f"[BB-8][ERROR] LED command failed after {time.time() - led_start:.2f}s: {e}", exc_info=True)
-                logger.info(f"[BB-8] Status after LED error: is_connected={getattr(bb8, 'is_connected', None)}")
-                return
-            roll_start = time.time()
-            try:
-                # Corrected argument order and types for roll (speed, heading, roll_mode, reverse_flag, proc=None)
-                bb8.roll(30, 0, RollModes.GO, ReverseFlags.OFF, None)  # type: ignore
-                logger.info(f"[BB-8] Roll command succeeded in {time.time() - roll_start:.2f}s")
-            except Exception as e:
-                logger.error(f"[BB-8][ERROR] Roll command failed after {time.time() - roll_start:.2f}s: {e}", exc_info=True)
-                logger.info(f"[BB-8] Status after roll error: is_connected={getattr(bb8, 'is_connected', None)}")
-                return
+            _bb8_power_on_sequence_body(bb8)
         logger.info("[BB-8] Power ON sequence: complete.")
     except Exception as e:
         logger.error(f"[BB-8][ERROR] Exception in power ON sequence: {e}", exc_info=True)
+
+def _bb8_power_on_sequence_body(bb8):
+    # Defensive: check connection status if available
+    is_connected = getattr(bb8, 'is_connected', lambda: None)
+    if callable(is_connected):
+        connected = is_connected()
+    else:
+        connected = is_connected
+    logger.info(f"[BB-8] is_connected: {connected}")
+    if connected is not None and not connected:
+        logger.error("[BB-8] Not connected after context manager entry.")
+        return
+    # Timed LED command
+    led_start = time.time()
+    try:
+        if hasattr(bb8, 'set_main_led'):
+            bb8.set_main_led(255, 255, 255, None)
+            logger.info(f"[BB-8] LED command succeeded in {time.time() - led_start:.2f}s")
+        else:
+            logger.warning("[BB-8] Device does not support set_main_led.")
+    except Exception as e:
+        logger.error(f"[BB-8][ERROR] LED command failed after {time.time() - led_start:.2f}s: {e}", exc_info=True)
+        logger.info(f"[BB-8] Status after LED error: is_connected={getattr(bb8, 'is_connected', None)}")
+        return
+    roll_start = time.time()
+    try:
+        if hasattr(bb8, 'roll'):
+            bb8.roll(30, 0, 1000)  # speed, heading, duration_ms
+            logger.info(f"[BB-8] Roll command succeeded in {time.time() - roll_start:.2f}s")
+        else:
+            logger.warning("[BB-8] Device does not support roll.")
+    except Exception as e:
+        logger.error(f"[BB-8][ERROR] Roll command failed after {time.time() - roll_start:.2f}s: {e}", exc_info=True)
+        logger.info(f"[BB-8] Status after roll error: is_connected={getattr(bb8, 'is_connected', None)}")
+        return
 
 def bb8_power_off_sequence():
     logger.info("[BB-8] Power OFF sequence: beginning...")
@@ -236,7 +245,10 @@ async def connect_bb8_with_retry(address, max_attempts=5, retry_delay=3, adapter
                 try:
                     services = client.services  # Bleak >=0.20
                 except AttributeError:
-                    services = await client.get_services()  # Bleak <0.20
+                    services = await resolve_services(client)
+                    if services is None:
+                        logger.debug("BLE services not available on this client/version")
+                        return None
                 found = any(
                     c.uuid.lower() == "22bb746f-2bbd-7554-2d6f-726568705327"
                     for s in services for c in s.characteristics

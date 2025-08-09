@@ -1,8 +1,11 @@
-#!/bin/sh
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Robust version reporting: fallback to "unknown" if not set
-VERSION=${VERSION:-"unknown"}
+# Version for Strategos audit and reporting
+VERSION="2025.8.5"
+
+# Robust version reporting: fallback to build-time injected value or /app/VERSION
+VERSION="${ADDON_VERSION:-$(cat /app/VERSION 2>/dev/null || echo unknown)}"
 
 # Load config from Home Assistant options.json (mounted at /data/options.json)
 CONFIG_FILE="/data/options.json"
@@ -11,24 +14,18 @@ if [ ! -f "$CONFIG_FILE" ]; then
   exit 1
 fi
 
-BB8_MAC=$(jq -r .bb8_mac "$CONFIG_FILE")
-MQTT_BROKER=$(jq -r .mqtt_broker "$CONFIG_FILE")
-MQTT_USERNAME=$(jq -r .mqtt_username "$CONFIG_FILE")
-MQTT_PASSWORD=$(jq -r .mqtt_password "$CONFIG_FILE")
-MQTT_TOPIC_PREFIX=$(jq -r .mqtt_topic_prefix "$CONFIG_FILE")
-BLE_ADAPTER=$(jq -r .ble_adapter "$CONFIG_FILE")
+mkdir -p /data
 
-# Default MQTT broker to core-mosquitto if not set
-if [ -z "$MQTT_BROKER" ] || [ "$MQTT_BROKER" = "null" ]; then
-  MQTT_BROKER="core-mosquitto"
-fi
+BB8_MAC="$(jq -r '.bb8_mac // ""' "$CONFIG_FILE")"
+SCAN_SEC="$(jq -r '.scan_seconds // 5' "$CONFIG_FILE")"
+RESCAN="$(jq -r '.rescan_on_fail // true' "$CONFIG_FILE")"
+TTL_HR="$(jq -r '.cache_ttl_hours // 720' "$CONFIG_FILE")"
 
-export BB8_MAC
-export MQTT_BROKER
-export MQTT_USERNAME
-export MQTT_PASSWORD
-export MQTT_TOPIC_PREFIX
-export BLE_ADAPTER
+export BB8_MAC_OVERRIDE="${BB8_MAC:-}"
+export BB8_SCAN_SECONDS="${SCAN_SEC:-5}"
+export BB8_RESCAN_ON_FAIL="${RESCAN:-true}"
+export BB8_CACHE_TTL_HOURS="${TTL_HR:-720}"
+export BB8_CACHE_PATH="/data/bb8_cache.json"
 
 export PYTHONPATH=/app
 
@@ -78,4 +75,8 @@ echo "[BB-8] Running BLE adapter check..."
 python3 /app/test_ble_adapter.py
 
 # Start the Python service
-exec python3 -m bb8_core.bridge_controller
+exec python -m bb8_core.main \
+  --bb8-mac "${BB8_MAC_OVERRIDE}" \
+  --scan-seconds "${BB8_SCAN_SECONDS}" \
+  --rescan-on-fail "${BB8_RESCAN_ON_FAIL}" \
+  --cache-ttl-hours "${BB8_CACHE_TTL_HOURS}"
