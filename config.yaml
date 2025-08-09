@@ -1,6 +1,6 @@
 name: "BB-8 Home Assistant Add-on"
 description: "Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT."
-version: "0.1.0"
+version: "0.3.3"
 slug: "beep_boop_bb8"
 startup: application
 init: false
@@ -20,10 +20,10 @@ devices:
   - /dev/hci0
 options:
   ble_adapter: hci0
-  bb8_mac: "00:00:00:00:00:00"
-  mqtt_broker: "mqtt://localhost"
-  mqtt_username: "user"
-  mqtt_password: "pass"
+  bb8_mac: "ED:ED:87:D7:27:50"
+  mqtt_broker: "192.168.0.129"
+  mqtt_username: "mqtt_bb8"
+  mqtt_password: "mqtt_bb8"
   mqtt_topic_prefix: "bb8"
 schema:
   ble_adapter: str

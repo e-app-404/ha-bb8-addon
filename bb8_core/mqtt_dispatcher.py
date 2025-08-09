@@ -32,7 +32,8 @@ def start_mqtt_dispatcher(
     mqtt_password: Optional[str] = None,
     status_topic: Optional[str] = None,
 ) -> None:
-    """Blocking MQTT dispatcher for BB-8 BLE bridge."""
+    """Blocking MQTT dispatcher for BB-8 BLE bridge with robust connect/retry."""
+    import socket
     bridge = BLEBridge() if BLEBridge else None
     client = mqtt.Client()
     if mqtt_user and mqtt_password:
@@ -142,8 +143,22 @@ def start_mqtt_dispatcher(
     client.on_message = on_message
     client.on_disconnect = on_disconnect
 
-    logger.info(f"Connecting to MQTT broker at {mqtt_host}:{mqtt_port}")
-    client.connect(mqtt_host, mqtt_port, keepalive=60)
+    # Robust connect/retry loop with host fallback
+    hosts_to_try = [mqtt_host, "core-mosquitto", "localhost"]
+    connected = False
+    while not connected:
+        for host in hosts_to_try:
+            try:
+                resolved_host = socket.gethostbyname(host)
+                logger.info(f"Attempting MQTT connect to {host}:{mqtt_port} (resolved: {resolved_host})")
+                client.connect(host, mqtt_port, keepalive=60)
+                connected = True
+                break
+            except Exception as e:
+                logger.error(f"MQTT connect failed for {host}:{mqtt_port}: {e}")
+        if not connected:
+            logger.warning("All MQTT broker hosts failed. Retrying in 10 seconds...")
+            time.sleep(10)
     client.loop_forever()
 
 

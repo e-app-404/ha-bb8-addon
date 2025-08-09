@@ -1,7 +1,8 @@
 #!/bin/sh
 set -e
 
-VERSION="0.3.1"  # Update this manually per release/rebuild
+# Robust version reporting: fallback to "unknown" if not set
+VERSION=${VERSION:-"unknown"}
 
 # Load config from Home Assistant options.json (mounted at /data/options.json)
 CONFIG_FILE="/data/options.json"
@@ -17,6 +18,11 @@ MQTT_PASSWORD=$(jq -r .mqtt_password "$CONFIG_FILE")
 MQTT_TOPIC_PREFIX=$(jq -r .mqtt_topic_prefix "$CONFIG_FILE")
 BLE_ADAPTER=$(jq -r .ble_adapter "$CONFIG_FILE")
 
+# Default MQTT broker to core-mosquitto if not set
+if [ -z "$MQTT_BROKER" ] || [ "$MQTT_BROKER" = "null" ]; then
+  MQTT_BROKER="core-mosquitto"
+fi
+
 export BB8_MAC
 export MQTT_BROKER
 export MQTT_USERNAME
@@ -29,9 +35,7 @@ export PYTHONPATH=/app
 # Parse MQTT_BROKER (URL or host:port) to set MQTT_HOST and MQTT_PORT
 parse_mqtt_url() {
   url="$1"
-  # Remove mqtt:// if present
   url_no_proto="${url#mqtt://}"
-  # If contains colon, split host:port
   if echo "$url_no_proto" | grep -q ':'; then
     host="${url_no_proto%%:*}"
     port="${url_no_proto##*:}"
