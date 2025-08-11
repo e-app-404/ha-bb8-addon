@@ -1,0 +1,54 @@
+# contract: delta_contract
+project: beep_boop_bb8
+version: 2025.08.11-hotfix.1
+planned_change: "Ship HA Discovery parity + command/state roundtrip (STP4) with telemetry"
+deliverable:
+  name: "STP4 Acceptance Package"
+  description: "Discovery payloads, entity list, schema validation, and command→state roundtrip trace (<2s)."
+  location: "/addons/local/beep_boop_bb8/reports/"
+action_needed:
+  - id: DISC-001
+    step: "Publish discovery for presence, RSSI, power, stop, LED; include device info, availability."
+  - id: CMD-002
+    step: "Subscribe to command topics; dispatch to BLEBridge; echo state ≤2s."
+  - id: TEL-003
+    step: "Implement periodic telemetry (RSSI/presence) and retain last-known states."
+  - id: SCH-004
+    step: "Validate discovery payloads against HA schema."
+  - id: EVD-005
+    step: "Capture and store ha_mqtt_trace_snapshot.json with timestamps and payloads."
+rationale: "Users should install the add-on and see usable BB-8 entities immediately, with reliable command feedback."
+status: "in-progress"
+path: "/addons/local/beep_boop_bb8/reports/ha_mqtt_trace_snapshot.json"
+RACI_matrix:
+  Responsible: ["Evert Appels"]
+  Accountable: ["Evert Appels"]
+  Consulted: ["Strategos"]
+  Informed: ["Stakeholders/Users"]
+acceptance_criteria:
+  - "Discovery payloads render entities: binary_sensor.bb8_presence, sensor.bb8_rssi, switch.bb8_power, button.bb8_stop, light.bb8_led (or updated doc set)."
+  - "For each controllable entity, command→state echo occurs within ≤2000 ms (p95) with timestamps captured."
+  - "Schema validation: PASS."
+  - "bb8/status retained: 'online' after connect; 'offline' on shutdown (LWT)."
+  - "Evidence artifacts saved under /addons/local/beep_boop_bb8/reports/."
+risk_assessment:
+  risks:
+    - name: "BLE flakiness on cold boot"
+      probability: "medium"
+      impact: "medium"
+      mitigation: "Keep exponential backoff + adapter up checks; optional hci reset."
+    - name: "HA schema/doc drift"
+      probability: "medium"
+      impact: "medium"
+      mitigation: "Validate against schema; align README or payloads."
+    - name: "Broker auth changes"
+      probability: "low"
+      impact: "medium"
+      mitigation: "Human-readable rc logging; document core-mosquitto + credentials."
+signoff:
+  required: true
+  approvers:
+    - role: "Owner"
+      name: "Evert Appels"
+      status: "pending"
+  target_date: "14-Aug-2025"

@@ -1,6 +1,6 @@
 name: "BB-8 BLE/MQTT Add-on"
 description: "Control Sphero BB-8 via BLE with MQTT discovery"
-version: "2025.8.5"
+version: "2025.8.11"
 slug: "bb8_addon"
 startup: application
 init: false
@@ -10,41 +10,35 @@ arch:
   - armhf
   - armv7
 boot: auto
-privileged:
-  - SYS_RAWIO
-  - NET_ADMIN
-  - SYS_ADMIN
 host_dbus: true
+udev: true
+apparmor: false
+privileged:
+  - NET_ADMIN
 uart: true
 devices:
   - /dev/hci0
 options:
-  # Optional override. When empty/omitted, add-on will auto-discover.
   bb8_mac: ""
-  # BLE discovery window in seconds (used when override/cache absent or invalid)
   scan_seconds: 5
-  # If an override or cached MAC fails to connect, do a one-time scan and retry
   rescan_on_fail: true
-  # Hours before a cached MAC is considered stale; 0 disables TTL
-  cache_ttl_hours: 720
+  cache_ttl_hours: 24
+  mqtt_broker: core-mosquitto
+  mqtt_port: 1883
+  mqtt_username: null
+  mqtt_password: null
+  mqtt_topic_prefix: bb8
+  mqtt_tls: false
+  ble_adapter: hci0
 schema:
-  bb8_mac:
-    type: str
-    required: false
-    default: ""
-  scan_seconds:
-    type: int
-    required: false
-    default: 5
-  rescan_on_fail:
-    type: bool
-    required: false
-    default: true
-  cache_ttl_hours:
-    type: int
-    required: false
-    default: 720
-
-privileges:
-  - NET_ADMIN
-  - SYS_ADMIN
+  bb8_mac: "str"
+  scan_seconds: "int?"
+  rescan_on_fail: "bool?"
+  cache_ttl_hours: "int?"
+  mqtt_broker: "str"
+  mqtt_port: "int?"
+  mqtt_username: "str?"
+  mqtt_password: "str?"
+  mqtt_topic_prefix: "str"
+  mqtt_tls: "bool?"
+  ble_adapter: "str?"

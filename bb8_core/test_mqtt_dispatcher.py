@@ -44,7 +44,7 @@ def publish_test_messages():
     logger.info({"event": "test_publish_valid_command", "payload": payload})
     time.sleep(1)
     # Publish malformed payload
-    client.publish(MQTT_TOPIC, "{invalid_json")
+    client.publish(MQTT_TOPIC, "{invalid_json")w
     logger.info({"event": "test_publish_malformed_payload", "payload": "{invalid_json"})
     time.sleep(1)
     client.loop_stop()

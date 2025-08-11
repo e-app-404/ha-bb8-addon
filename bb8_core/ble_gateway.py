@@ -1,9 +1,19 @@
-# BLE Gateway for BB-8 device management (migrated from legacy ha_sphero_bb8.ble_gateway)
+
+"""
+ble_gateway.py
+
+Handles BLE adapter selection, device scanning, and connection status for BB-8 device management.
+"""
 import logging
 import platform
 import time
 from typing import Optional
 from bb8_core.logging_setup import logger
+
+try:
+    from bleak import BleakScanner
+except Exception:  # pragma: no cover
+    BleakScanner = None  # type: ignore
 
 _initialized = False
 
@@ -18,34 +28,41 @@ def initialized():
     return _initialized
 
 class BleGateway:
-    def __init__(self, mode: Optional[str] = None):
-        self.mode = mode or "bleak"
-        self.device = None
-        self.adapter = None
-        logger.info({"event": "ble_gateway_init", "mode": self.mode})
-        logger.debug({"event": "ble_gateway_init_debug", "mode": self.mode, "device": str(self.device), "adapter": str(self.adapter)})
-        # Adapter/device init logic can be added here as needed
+    def __init__(self, mode: str = "bleak", adapter: Optional[str] = None) -> None:
+        self.mode = mode
+        self.adapter = adapter
+        self.connected: bool = False
+        logger.info({"event": "ble_gateway_init", "mode": self.mode, "adapter": self.adapter})
+        logger.debug({"event": "ble_gateway_init_debug", "mode": self.mode, "adapter": str(self.adapter)})
+        logger.debug({"event": "ble_gateway_init_state", "connected": self.connected, "class": str(type(self))})
 
-    def scan_for_device(self, timeout: int = 10, retries: int = 3, delay: int = 2):
-        logger.info({"event": "ble_scan_start", "timeout": timeout, "retries": retries, "delay": delay})
-        try:
-            # Simulate scan logic for now
-            # In production, insert BLE scan logic here
-            self.device = "BB-8_DEVICE_SIM"  # Placeholder
-            logger.debug({"event": "ble_scan_result", "device": str(self.device)})
-            return self.device
-        except Exception as e:
-            logger.error({"event": "ble_scan_error", "error": str(e)}, exc_info=True)
-            return None
+    def resolve_adapter(self) -> Optional[str]:
+        logger.debug({"event": "ble_gateway_resolve_adapter", "adapter": self.adapter})
+        return self.adapter
+
+    async def scan(self, seconds: int = 5) -> list[dict]:
+        logger.debug({"event": "ble_scan_start", "mode": self.mode, "seconds": seconds})
+        if self.mode != "bleak" or BleakScanner is None:
+            logger.debug({"event": "ble_scan_bypass", "reason": "unsupported_or_missing_bleak"})
+            return []
+        devices = await BleakScanner.discover(timeout=seconds)  # type: ignore[call-arg]
+        logger.debug({"event": "ble_scan_devices_found", "devices": [getattr(d, 'address', None) for d in devices]})
+        result = []
+        for d in devices:
+            logger.debug({"event": "ble_scan_device_detail", "name": getattr(d, "name", None), "address": getattr(d, "address", None), "rssi": getattr(d, "rssi", None)})
+            result.append({"name": getattr(d, "name", None), "address": getattr(d, "address", None), "rssi": getattr(d, "rssi", None)})
+        logger.info({"event": "ble_scan_complete", "count": len(result), "devices": result})
+        return result
 
     def get_connection_status(self):
-        status = {"connected": self.device is not None}
-        logger.debug({"event": "ble_status", "status": status})
+        status = {"connected": getattr(self, 'device', None) is not None}
+        logger.debug({"event": "ble_status", "status": status, "device": str(getattr(self, 'device', None))})
         return status
 
     def shutdown(self):
         logger.info({"event": "ble_gateway_shutdown"})
         try:
+            logger.debug({"event": "ble_gateway_shutdown_pre", "device": str(getattr(self, 'device', None))})
             self.device = None
             logger.debug({"event": "ble_gateway_shutdown_device_none"})
         except Exception as e:

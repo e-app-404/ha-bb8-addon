@@ -1,87 +1,143 @@
-# BLE Bridge: Core BLE orchestration for Home Assistant add-on
+#
+"""
+ble_bridge.py
+
+Orchestrates BLE operations for BB-8, manages device connection, and exposes diagnostics for Home Assistant add-on integration.
+"""
 # Extracted from legacy launch_bb8.py (CLI/config removed)
 
-import logging
+from __future__ import annotations
+
+from typing import Optional, Any, List, Tuple
+import contextlib
+import re
 import asyncio
-from bleak import BleakScanner, BleakClient
+import importlib.metadata
+import json
+import logging
 import os
+import time
+
+from bleak import BleakScanner, BleakClient
+from bleak.exc import BleakCharacteristicNotFoundError
+import paho.mqtt.publish as publish
+
 from bb8_core.controller import BB8Controller
 from bb8_core.ble_gateway import BleGateway
+from bb8_core.logging_setup import logger
+from spherov2.adapter.bleak_adapter import BleakAdapter
+from spherov2.commands.core import IntervalOptions
+from spherov2.commands.sphero import RollModes, ReverseFlags
 from spherov2.scanner import find_toys
 from spherov2.toy.bb8 import BB8
-from spherov2.adapter.bleak_adapter import BleakAdapter
-import time
-from bb8_core.logging_setup import logger
-import json
-import paho.mqtt.publish as publish
-from spherov2.commands.sphero import RollModes, ReverseFlags
-from spherov2.commands.core import IntervalOptions
-from bleak.exc import BleakCharacteristicNotFoundError
+
 from .ble_utils import resolve_services
+from .core import Core
 
 BB8_NAME = os.environ.get("BB8_NAME", "BB-8")
 BB8_MAC = os.environ.get("BB8_MAC", "B8:17:C2:A8:ED:45")
 
+try:
+    bleak_version = importlib.metadata.version("bleak")
+except Exception:
+    bleak_version = "unknown"
+try:
+    spherov2_version = importlib.metadata.version("spherov2")
+except Exception:
+    spherov2_version = "unknown"
+logger.info({"event": "version_probe", "bleak": bleak_version, "spherov2": spherov2_version})
+
 class BLEBridge:
-    def __init__(self, timeout=10):
-        self.gateway = BleGateway(mode="bleak")
-        self.controller = BB8Controller()
-        self.timeout = timeout
+    def __init__(self, gateway, target_mac: Optional[str] = None, mac: Optional[str] = None, **kwargs) -> None:
+        self.gateway = gateway
+        self.target_mac: Optional[str] = target_mac or mac
+        if not self.target_mac:
+            raise ValueError("BLEBridge requires target_mac/mac to be provided")
+        # Runtime/control attributes referenced elsewhere
+        self.timeout: float = float(kwargs.get("timeout", 10.0))
+        self.controller: Optional[Any] = kwargs.get("controller")
+        # Low-level core
+        self.core = Core(address=self.target_mac, adapter=self.gateway.resolve_adapter())
+        logger.debug({"event": "ble_bridge_init", "mac": self.target_mac, "adapter": self.gateway.resolve_adapter()})
 
     def connect_bb8(self):
+        logger.debug({"event": "connect_bb8_start", "timeout": self.timeout})
         try:
             device = self.gateway.scan_for_device(timeout=self.timeout)
+            logger.debug({"event": "connect_bb8_scan_result", "device": str(device)})
             if not device:
                 msg = "BB-8 not found. Please tap robot or remove from charger and try again."
                 publish_bb8_error(msg)
-                logger.error(f"BB-8 STATUS: {msg}")
+                logger.error({"event": "connect_bb8_not_found", "msg": msg})
                 return None
-            # Attach and check for required characteristic
-            self.controller.attach_device(device)
-            # Simulate characteristic check (replace with actual check if available)
+            if self.controller is not None:
+                logger.debug({"event": "connect_bb8_attach_device", "controller": str(type(self.controller)), "device": str(device)})
+                self.controller.attach_device(device)
+            else:
+                logger.error({"event": "connect_bb8_controller_none"})
+                return None
             if not hasattr(device, 'services') or not any(
                 '22bb746f-2bbd-7554-2d6f-726568705327' in str(s) for s in getattr(device, 'services', [])):
                 msg = "BB-8 not awake. Please tap robot or remove from charger and try again."
                 publish_bb8_error(msg)
-                logger.error(f"BB-8 STATUS: {msg}")
+                logger.error({"event": "connect_bb8_not_awake", "msg": msg, "device": str(device)})
                 raise BleakCharacteristicNotFoundError('22bb746f-2bbd-7554-2d6f-726568705327')
+            logger.info({"event": "connect_bb8_success", "device": str(device)})
             return device
         except BleakCharacteristicNotFoundError:
-            # Already handled above
+            logger.error({"event": "connect_bb8_characteristic_not_found"})
             return None
         except Exception as e:
             publish_bb8_error(str(e))
-            logger.error(f"BB-8 STATUS: {e}")
+            logger.error({"event": "connect_bb8_exception", "error": str(e)})
             return None
 
     def connect(self):
+        logger.debug({"event": "connect_start", "timeout": self.timeout})
         device = self.gateway.scan_for_device(timeout=self.timeout)
+        logger.debug({"event": "connect_scan_result", "device": str(device)})
         if not device:
-            logger.error("No BB-8 device found.")
+            logger.error({"event": "connect_no_device_found"})
             return None
-        self.controller.attach_device(device)
+        if self.controller is not None:
+            logger.debug({"event": "connect_attach_device", "controller": str(type(self.controller)), "device": str(device)})
+            self.controller.attach_device(device)
+        else:
+            logger.error({"event": "connect_controller_none"})
+            return None
+        logger.info({"event": "connect_success", "device": str(device)})
         return device
 
     def diagnostics(self):
-        return self.controller.get_diagnostics_for_mqtt()
+        logger.debug({"event": "diagnostics_start"})
+        if self.controller is not None:
+            diag = self.controller.get_diagnostics_for_mqtt()
+            logger.debug({"event": "diagnostics_result", "diagnostics": diag})
+            return diag
+        else:
+            logger.error({"event": "diagnostics_controller_none"})
+            return {"error": "controller is None"}
 
     def shutdown(self):
+        logger.debug({"event": "shutdown_start"})
         self.gateway.shutdown()
-        self.controller.disconnect()
+        if self.controller is not None:
+            logger.debug({"event": "shutdown_controller_disconnect"})
+            self.controller.disconnect()
+        else:
+            logger.warning({"event": "shutdown_controller_none"})
 
-async def scan_and_connect():
-    logger.info("[BB-8] Scanning for BLE devices...")
-    devices = await BleakScanner.discover()
-    for d in devices:
-        logger.info(f"[BLE] Found: {d.address} ({d.name})")
-        if d.address.upper() == BB8_MAC or d.name == BB8_NAME:
-            logger.info(f"[BB-8] Target device found: {d.address} ({d.name})")
-            async with BleakClient(d.address) as client:
-                logger.info("[BB-8] Connected to BB-8!")
-                # TODO: Implement further BB-8 GATT communication
-            break
-    else:
-        logger.info("[BB-8] BB-8 not found. Ensure it is awake and nearby.")
+    # Example guard wherever controller is used later:
+    def _with_controller(self, fn_name: str, *args, **kwargs):
+        ctrl = self.controller
+        if not ctrl:
+            logger.debug({"event": "controller_missing", "fn": fn_name})
+            return None
+        fn = getattr(ctrl, fn_name, None)
+        if not callable(fn):
+            logger.debug({"event": "controller_attr_missing", "fn": fn_name})
+            return None
+        return fn(*args, **kwargs)
 
 def bb8_find(timeout=10):
     logger.info("[BB-8] Scanning for BB-8...")
@@ -95,25 +151,20 @@ def bb8_find(timeout=10):
     logger.info("[BB-8] BB-8 not found after scan.")
     return None
 
-def bb8_power_on_sequence():
-    logger.info("[BB-8] Power ON sequence: beginning...")
-    try:
-        bridge = BLEBridge()
-        bb8 = bridge.connect_bb8()
-        logger.info(f"[BB-8] After connect_bb8(): {bb8}")
-        if not bb8:
-            logger.error("[BB-8] Power on failed: device not found or not awake.")
-            return
-        logger.info("[BB-8] After BB-8 connect...")
-        # Use context manager for production BB-8 device
-        # type: ignore[attr-defined]
-        with bb8:
-            _bb8_power_on_sequence_body(bb8)
-        logger.info("[BB-8] Power ON sequence: complete.")
-    except Exception as e:
-        logger.error(f"[BB-8][ERROR] Exception in power ON sequence: {e}", exc_info=True)
+def bb8_power_on_sequence(core_or_facade, *args, **kwargs):
+    cm = getattr(core_or_facade, "__enter__", None)
+    if callable(cm):
+        with core_or_facade:
+            return _power_on_sequence_body(core_or_facade, *args, **kwargs)
+    else:
+        logger.debug({"event": "power_on_no_context_manager"})
+        core_or_facade.connect()
+        try:
+            return _power_on_sequence_body(core_or_facade, *args, **kwargs)
+        finally:
+            core_or_facade.disconnect()
 
-def _bb8_power_on_sequence_body(bb8):
+def _power_on_sequence_body(bb8):
     # Defensive: check connection status if available
     is_connected = getattr(bb8, 'is_connected', lambda: None)
     if callable(is_connected):
@@ -208,7 +259,7 @@ def bb8_power_off_sequence():
 
 def publish_bb8_error(msg):
     try:
-        publish.single("bb8/state/error", msg, hostname=os.environ.get("MQTT_BROKER", "localhost"))
+        publish.single("bb8/state/error", msg, hostname=os.environ.get("MQTT_BROKER", "core-mosquitto"))
     except Exception as e:
         logger.error(f"[BB-8][ERROR] Failed to publish error to MQTT: {e}")
 
@@ -234,7 +285,7 @@ def ble_command_with_retry(cmd_func, max_attempts=4, initial_cooldown=3, *args, 
 
 def publish_discovery(topic, payload):
     try:
-        publish.single(topic, json.dumps(payload), hostname=os.environ.get("MQTT_BROKER", "localhost"))
+        publish.single(topic, json.dumps(payload), hostname=os.environ.get("MQTT_BROKER", "core-mosquitto"))
     except Exception as e:
         logger.error(f"[BB-8][ERROR] Failed to publish discovery to MQTT: {e}")
 

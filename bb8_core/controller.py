@@ -1,6 +1,7 @@
-# Unified BB-8 Controller for Home Assistant add-on
-# Migrated from legacy ha_sphero_bb8.controller (2025-08-04)
-
+"""
+Unified BB-8 Controller for Home Assistant add-on
+Migrated from legacy ha_sphero_bb8.controller (2025-08-04)
+"""
 import time
 from enum import Enum
 from dataclasses import dataclass
@@ -38,9 +39,11 @@ class BB8Controller:
         self.device_connected = True if device is not None else False
         self.mqtt_handler = mqtt_handler
         logger.debug({"event": "controller_init_debug", "mode": self.mode.value, "device": str(self.device), "mqtt_handler": str(self.mqtt_handler)})
+        logger.debug({"event": "controller_init_state", "device_connected": self.device_connected, "class": str(type(self))})
 
     def roll(self, speed: int, heading: int, timeout: float = 2.0, roll_mode: int = 0, reverse_flag: bool = False) -> dict:
         logger.info({"event": "controller_roll_start", "device": str(self.device)})
+        logger.debug({"event": "controller_roll_args", "speed": speed, "heading": heading, "timeout": timeout, "roll_mode": roll_mode, "reverse_flag": reverse_flag})
         if self.device is None:
             logger.warning({"event": "controller_roll_no_device"})
             return self._create_error_result("roll", "No device present")
@@ -48,9 +51,11 @@ class BB8Controller:
         self.last_command = "roll"
         logger.info({"event": "controller_roll_attempt", "speed": speed, "heading": heading, "timeout": timeout, "roll_mode": roll_mode, "reverse_flag": reverse_flag})
         try:
+            logger.debug({"event": "controller_roll_device_check", "hasattr": hasattr(self.device, "roll"), "callable": callable(getattr(self.device, "roll", None))})
             if hasattr(self.device, "roll") and callable(self.device.roll):
                 result = self.device.roll(speed=speed, heading=heading, timeout=timeout)
                 logger.info({"event": "controller_roll_result", "result": result})
+                logger.debug({"event": "controller_roll_result_debug", "result_type": str(type(result)), "result": result})
                 return result if isinstance(result, dict) else {"success": result is None, "command": "roll", "result": result}
             else:
                 logger.warning({"event": "controller_roll_not_supported"})
@@ -62,6 +67,7 @@ class BB8Controller:
 
     def stop(self) -> Dict[str, Any]:
         logger.info({"event": "controller_stop_start", "device": str(self.device)})
+        logger.debug({"event": "controller_stop_args", "device": str(self.device)})
         if self.device is None:
             logger.warning({"event": "controller_stop_no_device"})
             return self._create_error_result("stop", "No device present")
@@ -69,9 +75,11 @@ class BB8Controller:
         self.last_command = "stop"
         logger.info({"event": "controller_stop_attempt"})
         try:
+            logger.debug({"event": "controller_stop_device_check", "hasattr": hasattr(self.device, "stop"), "callable": callable(getattr(self.device, "stop", None))})
             if hasattr(self.device, "stop") and callable(self.device.stop):
                 result = self.device.stop()
                 logger.info({"event": "controller_stop_result", "result": result})
+                logger.debug({"event": "controller_stop_result_debug", "result_type": str(type(result)), "result": result})
                 return {"success": result is True or result is None, "command": "stop", "result": result}
             else:
                 logger.warning({"event": "controller_stop_not_supported"})
@@ -82,13 +90,16 @@ class BB8Controller:
             return self._create_error_result("stop", str(e))
 
     def set_led(self, r: int, g: int, b: int) -> dict:
+        logger.debug({"event": "controller_set_led_args", "r": r, "g": g, "b": b, "device": str(self.device)})
         try:
             if self.device is None:
                 logger.warning({"event": "controller_set_led_no_device"})
                 return {"success": False, "command": "set_led", "error": "No device present"}
+            logger.debug({"event": "controller_set_led_device_check", "hasattr": hasattr(self.device, "set_led"), "callable": callable(getattr(self.device, "set_led", None))})
             if hasattr(self.device, "set_led") and callable(self.device.set_led):
                 result = self.device.set_led(r, g, b)
                 logger.info({"event": "controller_set_led_result", "result": result})
+                logger.debug({"event": "controller_set_led_result_debug", "result_type": str(type(result)), "result": result})
                 return result if isinstance(result, dict) else {"success": result is None, "command": "set_led", "result": result}
             else:
                 logger.warning({"event": "controller_set_led_not_supported"})
@@ -149,7 +160,18 @@ class BB8Controller:
 
     def attach_device(self, device):
         """Attach a BLE device to the controller and update state."""
+        logger.debug({"event": "controller_attach_device_start", "device": str(device)})
         self.device = device
         self.device_connected = device is not None
         logger.info({"event": "controller_attach_device", "device": str(device)})
         logger.debug({"event": "controller_attach_device_debug", "device": str(self.device), "device_connected": self.device_connected})
+
+
+# --- Module-level helper for MQTT discovery publishing ---
+def publish_discovery_if_available(client, controller, base_topic, qos, retain):
+    """No-op if controller has its own discovery publisher."""
+    try:
+        if hasattr(controller, "publish_discovery"):
+            controller.publish_discovery(client, base_topic, qos=qos, retain=retain)
+    except Exception as e:
+        logger.error({"event": "discovery_publish_error", "error": repr(e)})

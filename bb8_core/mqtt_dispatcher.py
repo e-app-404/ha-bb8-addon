@@ -1,20 +1,26 @@
-# MQTT Dispatcher: Core MQTT event handling for Home Assistant add-on
+#
+"""
+mqtt_dispatcher.py
+
+Connects to the MQTT broker, subscribes to command topics, dispatches commands to the BLE bridge/controller, and publishes status and discovery information for Home Assistant.
+"""
 # Finalized for Home Assistant runtime (2025-08-04)
 
-import json
-import time
-from typing import Optional
-import paho.mqtt.client as mqtt
-import paho.mqtt.publish as publish
+from __future__ import annotations
+from typing import Optional, Any
+import socket
 import os
-from spherov2.scanner import find_toys
-from spherov2.toy.bb8 import BB8
-from spherov2.adapter.bleak_adapter import BleakAdapter
-from bb8_core.ble_bridge import bb8_power_on_sequence, bb8_power_off_sequence
-from spherov2.sphero_edu import SpheroEduAPI
-from spherov2.types import Color
-from spherov2.commands.core import IntervalOptions
-from bb8_core.logging_setup import logger
+import paho.mqtt.client as mqtt
+from .logging_setup import logger
+
+REASONS = {
+    0: "success",
+    1: "unacceptable_protocol_version",
+    2: "identifier_rejected",
+    3: "server_unavailable",
+    4: "bad_username_or_password",
+    5: "not_authorized",
+}
 
 # Placeholder for BLE bridge import
 try:
@@ -22,142 +28,102 @@ try:
 except ImportError:
     BLEBridge = None
 
-
 def start_mqtt_dispatcher(
     mqtt_host: str,
     mqtt_port: int,
     mqtt_topic: str,
-    mqtt_user: Optional[str] = None,
-    mqtt_password: Optional[str] = None,
-    status_topic: Optional[str] = None,
-) -> None:
-    """Blocking MQTT dispatcher for BB-8 BLE bridge with robust connect/retry and LWT/discovery."""
-    import socket
-    bridge = BLEBridge() if BLEBridge else None
-    client = mqtt.Client(client_id="bb8-addon", clean_session=True)
-    # LWT for Home Assistant availability
-    mqtt_prefix = os.environ.get("MQTT_TOPIC_PREFIX", "bb8")
-    client.will_set(f"{mqtt_prefix}/status", payload="offline", qos=1, retain=True)
-    if mqtt_user and mqtt_password:
-        client.username_pw_set(mqtt_user, mqtt_password)
-    # Optional: Enable TLS if needed
-    # client.tls_set()
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+    controller: Any = None,
+    client_id: str = "bb8-addon",
+    keepalive: int = 60,
+    qos: int = 1,
+    retain: bool = True,
+    status_topic: str = "bb8/status",
+    gateway: Optional[BleGateway] = None,
+    tls: bool = False,
+) -> mqtt.Client:
+    """
+    Single entry-point used by bridge_controller via the compat shim.
+    Explicit arg names (mqtt_host/mqtt_port/mqtt_topic) remove ambiguity.
 
-    def on_connect(client, userdata, flags, rc):
+    - Publishes LWT: status_topic=offline (retain)
+    - On connect: status_topic=online (retain), hands the client to controller
+    - Reason-logged connect/disconnect
+    - Optional TLS (default False)
+    """
+    resolved = None
+    try:
+        resolved = socket.gethostbyname(mqtt_host)
+    except Exception:
+        resolved = "unresolved"
+
+    logger.info({
+        "event": "mqtt_connect_attempt",
+        "host": mqtt_host,
+        "port": mqtt_port,
+        "resolved": resolved,
+        "client_id": client_id,
+        "user": bool(username),
+        "tls": tls,
+        "topic": mqtt_topic,
+        "status_topic": status_topic,
+    })
+
+    # Paho v2 API (compatible with our version); v311 is fine for HA
+    client = mqtt.Client(client_id=client_id, protocol=mqtt.MQTTv311, clean_session=True)
+
+    # Auth
+    if username is not None:
+        client.username_pw_set(username=username, password=(password or ""))
+
+    # TLS (optional)
+    if tls:
+        client.tls_set()           # customize CA/cert paths if needed
+        # client.tls_insecure_set(True)  # only if you accept self-signed risk
+
+    # LWT/availability
+    client.will_set(status_topic, payload="offline", qos=qos, retain=True)
+
+    # Reconnect backoff (let paho handle retries)
+    client.reconnect_delay_set(min_delay=1, max_delay=30)
+
+    # ---- Callbacks ----
+    def _on_connect(c, u, flags, rc, properties=None):
+        reason = REASONS.get(rc, f"unknown_{rc}")
         if rc == 0:
-            logger.info(f"Connected to MQTT broker at {mqtt_host}:{mqtt_port}")
-            client.subscribe(mqtt_topic)
-            client.subscribe("bb8/command/power")
-            logger.info(f"Subscribed to topic: {mqtt_topic} and bb8/command/power")
-            if status_topic:
-                publish_status(client, status_topic, bridge)
-            # Publish online status and emit discovery
-            client.publish(f"{mqtt_prefix}/status", "online", qos=1, retain=True)
-            try:
-                publish_mqtt_discovery(client)
-            except Exception as e:
-                logger.warning(f"Discovery emit failed: {e}")
+            logger.info({"event": "mqtt_connected", "rc": rc, "reason": reason})
+            # mark online
+            c.publish(status_topic, payload="online", qos=qos, retain=True)
+
+            # Hand the client to the BB-8 controller (subscribe/publish wiring)
+            # Expected to implement: attach_mqtt(client, topic, qos, retain)
+            if hasattr(controller, "attach_mqtt"):
+                try:
+                    controller.attach_mqtt(c, mqtt_topic, qos=qos, retain=retain)
+                except Exception as e:
+                    logger.error({"event": "controller_attach_mqtt_error", "error": repr(e)})
+                # Publish discovery if available
+                try:
+                    from bb8_core.controller import publish_discovery_if_available
+                    publish_discovery_if_available(c, controller, mqtt_topic, qos, retain)
+                except Exception as e:
+                    logger.error({"event": "discovery_publish_import_error", "error": repr(e)})
         else:
-            logger.error(f"Failed to connect to MQTT broker: {rc}")
+            logger.error({"event": "mqtt_connect_failed", "rc": rc, "reason": reason})
 
-    def on_message(client, userdata, msg):
-        try:
-            logger.debug(f"[DISPATCH] on_message called. Raw msg: {msg}")
-            topic = msg.topic
-            logger.debug(f"[DISPATCH] Message topic: {topic}")
-            try:
-                payload = msg.payload.decode('utf-8').strip()
-                logger.debug({"event": "mqtt_payload_decoded", "payload": payload, "type": str(type(payload))})
-            except Exception as e:
-                logger.error({"event": "mqtt_payload_decode_error", "error": str(e)})
-                return
-            logger.info({"event": "mqtt_message_received", "topic": topic, "payload": payload})
-            # Power command handler for Home Assistant switch
-            if topic == "bb8/command/power":
-                logger.debug({"event": "mqtt_power_command", "payload": payload})
-                if payload == "ON":
-                    logger.debug({"event": "mqtt_power_on_handler", "function": str(bb8_power_on_sequence)})
-                    try:
-                        bb8_power_on_sequence()
-                        logger.debug({"event": "mqtt_power_on_sequence_completed"})
-                    except Exception as e:
-                        logger.error({"event": "mqtt_power_on_sequence_error", "error": str(e)}, exc_info=True)
-                elif payload == "OFF":
-                    logger.debug({"event": "mqtt_power_off_handler", "function": str(bb8_power_off_sequence)})
-                    try:
-                        bb8_power_off_sequence()
-                        logger.debug({"event": "mqtt_power_off_sequence_completed"})
-                    except Exception as e:
-                        logger.error({"event": "mqtt_power_off_sequence_error", "error": str(e)}, exc_info=True)
-                else:
-                    logger.warning({"event": "mqtt_power_command_unknown", "payload": payload})
-                return
-            try:
-                payload_json = json.loads(payload)
-                command = payload_json.get("command")
-                if not command:
-                    logger.error({"event": "mqtt_command_missing", "payload": payload})
-                    return
-                if bridge:
-                    # Accepts 'roll', 'stop', 'set_led' commands
-                    if hasattr(bridge.controller, 'roll') and command == 'roll':
-                        result = bridge.controller.roll(**payload_json)
-                    elif hasattr(bridge.controller, 'stop') and command == 'stop':
-                        result = bridge.controller.stop()
-                    elif hasattr(bridge.controller, 'set_led') and command == 'set_led':
-                        result = bridge.controller.set_led(
-                            payload_json.get('r', 0), payload_json.get('g', 0), payload_json.get('b', 0)
-                        )
-                    else:
-                        logger.error({"event": "mqtt_command_unknown", "command": command})
-                        result = {"success": False, "error": f"Unknown command: {command}"}
-                    logger.info({"event": "mqtt_command_dispatched", "command": command, "result": result})
-                else:
-                    logger.warning({"event": "mqtt_bridge_unavailable", "command": command})
-            except json.JSONDecodeError as e:
-                logger.error({"event": "mqtt_json_decode_error", "error": str(e)})
-            except Exception as e:
-                logger.error({"event": "mqtt_message_handle_error", "error": str(e)})
-        except Exception as e:
-            logger.error({"event": "mqtt_on_message_unhandled_exception", "error": str(e)}, exc_info=True)
+    def _on_disconnect(c, u, rc, properties=None):
+        # rc==0 = clean; >0 = unexpected
+        logger.warning({"event": "mqtt_disconnected", "rc": rc})
 
-    def on_disconnect(client, userdata, rc):
-        logger.warning(f"MQTT disconnected (rc={rc}). Attempting reconnect in 5s...")
-        time.sleep(5)
-        try:
-            client.reconnect()
-        except Exception as e:
-            logger.error(f"Reconnect failed: {e}")
+    client.on_connect = _on_connect
+    client.on_disconnect = _on_disconnect
 
-    def publish_status(client, topic, bridge):
-        try:
-            status = bridge.diagnostics() if bridge else {"status": "no_bridge"}
-            client.publish(topic, json.dumps(status))
-            logger.info(f"Published status to {topic}")
-        except Exception as e:
-            logger.error(f"Failed to publish status: {e}")
+    # Async connect + network loop
+    client.connect_async(mqtt_host, mqtt_port, keepalive)
+    client.loop_start()
 
-    client.on_connect = on_connect
-    client.on_message = on_message
-    client.on_disconnect = on_disconnect
-
-    # Robust connect/retry loop with host fallback
-    hosts_to_try = [mqtt_host, "core-mosquitto", "localhost"]
-    connected = False
-    while not connected:
-        for host in hosts_to_try:
-            try:
-                resolved_host = socket.gethostbyname(host)
-                logger.info(f"Attempting MQTT connect to {host}:{mqtt_port} (resolved: {resolved_host})")
-                client.connect(host, mqtt_port, keepalive=60)
-                connected = True
-                break
-            except Exception as e:
-                logger.error(f"MQTT connect failed for {host}:{mqtt_port}: {e}")
-        if not connected:
-            logger.warning("All MQTT broker hosts failed. Retrying in 10 seconds...")
-            time.sleep(10)
-    client.loop_forever()
+    return client
 
 
 def publish_mqtt_discovery(client=None):
@@ -169,11 +135,16 @@ def publish_mqtt_discovery(client=None):
     mqtt_prefix = os.environ.get("MQTT_TOPIC_PREFIX", "bb8")
     device_id = f"bb8_{BB8_MAC.replace(':','').lower()}"
     def _emit(topic, payload):
+        logger.debug({"event": "discovery_emit_start", "topic": topic, "payload": payload, "client": str(client)})
+        logger.info({"event": "mqtt_discovery_publish", "topic": topic, "payload": payload})
         if client:
+            logger.debug({"event": "discovery_emit_client_publish", "topic": topic})
             client.publish(topic, payload=payload, qos=1, retain=True)
         else:
+            logger.debug({"event": "discovery_emit_single_publish", "topic": topic, "MQTT_HOST": MQTT_HOST, "MQTT_PORT": MQTT_PORT})
             publish.single(topic, payload, hostname=MQTT_HOST, port=MQTT_PORT,
-                           auth={"username": MQTT_USER, "password": MQTT_PASSWORD} if MQTT_USER and MQTT_PASSWORD else None)
+                           auth={"username": MQTT_USER, "password": MQTT_PASSWORD} if MQTT_USER and MQTT_PASSWORD else None,
+                           retain=True)
     # Presence sensor
     cfg_presence = {
         "name": "BB-8 Presence",
@@ -240,12 +211,35 @@ def turn_off_bb8():
     for toy in devices:
         if isinstance(toy, BB8):
             bb8 = BB8(toy.address, adapter_cls=BleakAdapter)
-            bb8.sleep(IntervalOptions.NONE, 0, 0, 0)
+            # Ensure correct enum type for sleep
+            bb8.sleep(IntervalOptions(IntervalOptions.NONE), 0, 0, 0)  # type: ignore
             logger.info("[BB-8] OFF (sleep) command sent.")
             return True
     logger.warning("[BB-8] No BB-8 found for sleep.")
     return False
 
 
+def main():
+    # Obtain gateway from config/env or instantiate default
+    ble_adapter = os.environ.get("BLE_ADAPTER", "hci0")
+    gateway = BleGateway(mode="bleak", adapter=ble_adapter)
+    mqtt_host = os.environ.get("MQTT_HOST", "localhost")
+    mqtt_port = int(os.environ.get("MQTT_PORT", "1883"))
+    mqtt_topic = os.environ.get("MQTT_TOPIC", "bb8/command/#")
+    mqtt_user = os.environ.get("MQTT_USER")
+    mqtt_password = os.environ.get("MQTT_PASSWORD")
+    status_topic = os.environ.get("STATUS_TOPIC", "bb8/status")
+
+    start_mqtt_dispatcher(
+        mqtt_host=mqtt_host,
+        mqtt_port=mqtt_port,
+        mqtt_topic=mqtt_topic,
+        mqtt_user=mqtt_user,
+        mqtt_password=mqtt_password,
+        status_topic=status_topic,
+        gateway=gateway,  # Pass gateway explicitly
+    )
+
+
 # Call this at container startup
-publish_mqtt_discovery()
+
