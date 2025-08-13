@@ -4,11 +4,8 @@ ble_gateway.py
 
 Handles BLE adapter selection, device scanning, and connection status for BB-8 device management.
 """
-import logging
-import platform
-import time
 from typing import Optional
-from bb8_core.logging_setup import logger
+from .logging_setup import logger
 
 try:
     from bleak import BleakScanner

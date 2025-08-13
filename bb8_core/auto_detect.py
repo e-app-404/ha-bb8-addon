@@ -19,8 +19,10 @@ from .logging_setup import logger
 from .ble_gateway import BleGateway
 
 # module constants at top-level so Pylance can resolve symbols in all scopes
-CACHE_PATH: str = os.environ.get("BB8_MAC_CACHE_PATH", "/data/bb8_mac_cache.json")
-CACHE_DEFAULT_TTL_HOURS: int = 24
+from .addon_config import load_config
+CFG, SRC = load_config()
+CACHE_PATH: str = CFG.get("CACHE_PATH", "/data/bb8_mac_cache.json")
+CACHE_DEFAULT_TTL_HOURS: int = CFG.get("CACHE_DEFAULT_TTL_HOURS", 24)
 
 __all__ = [
     "resolve_bb8_mac",
@@ -129,13 +131,14 @@ def resolve_bb8_mac(
     return mac
 
 def load_mac_from_cache(ttl_hours: int = CACHE_DEFAULT_TTL_HOURS) -> Optional[str]:
+    cache_path = CFG.get("CACHE_PATH", CACHE_PATH)
     try:
-        st = os.stat(CACHE_PATH)
+        st = os.stat(cache_path)
         age_hours = (time.time() - st.st_mtime) / 3600.0
         if age_hours > max(1, ttl_hours):
             logger.debug({"event":"auto_detect_cache_stale","age_hours":age_hours})
             return None
-        with open(CACHE_PATH, "r", encoding="utf-8") as f:
+        with open(cache_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         mac = data.get("bb8_mac")
         return mac
@@ -146,9 +149,10 @@ def load_mac_from_cache(ttl_hours: int = CACHE_DEFAULT_TTL_HOURS) -> Optional[st
         return None
 
 def save_mac_to_cache(mac: str) -> None:
+    cache_path = CFG.get("CACHE_PATH", CACHE_PATH)
     try:
-        os.makedirs(os.path.dirname(CACHE_PATH) or ".", exist_ok=True)
-        with open(CACHE_PATH, "w", encoding="utf-8") as f:
+        os.makedirs(os.path.dirname(cache_path) or ".", exist_ok=True)
+        with open(cache_path, "w", encoding="utf-8") as f:
             json.dump({"bb8_mac": mac, "saved_at": time.time()}, f)
     except Exception as e:
         logger.warning({"event":"auto_detect_cache_write_error","error":repr(e)})

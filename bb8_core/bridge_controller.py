@@ -19,10 +19,7 @@ import os
 import json
 import logging
 
-try:
-    import yaml  # PyYAML
-except Exception:  # pragma: no cover
-    yaml = None  # handled gracefully; options.json is valid JSON which yaml.safe_load can parse too
+from .addon_config import load_config
 
 # Internal imports
 from .version_probe import probe
@@ -30,7 +27,12 @@ from .logging_setup import logger
 from .auto_detect import resolve_bb8_mac
 from .ble_gateway import BleGateway
 from .ble_bridge import BLEBridge
+from .facade import BB8Facade
 from .mqtt_dispatcher import start_mqtt_dispatcher
+
+from .ble_link import BLELink
+import asyncio
+from .evidence_capture import EvidenceRecorder
 
 
 # -------- Config helpers --------
@@ -43,80 +45,7 @@ def _as_bool(v: Any, default: bool) -> bool:
         return bool(v)
     s = str(v).strip().lower()
     return s in {"1", "true", "yes", "y", "on"}
-
-
-def _read_options(path: str) -> Dict[str, Any]:
-    """Read /data/options.json (JSON, but YAML loader also accepts it). Return {} on failure."""
-    try:
-        if not os.path.exists(path):
-            return {}
-        with open(path, "r", encoding="utf-8") as f:
-            text = f.read()
-        # Prefer yaml.safe_load to accept both JSON and YAML
-        if yaml is not None:
-            return yaml.safe_load(text) or {}
-        return json.loads(text or "{}")
-    except Exception as e:
-        logger.warning({"event": "options_read_failed", "path": path, "error": repr(e)})
-        return {}
-
-
-def load_runtime_config() -> Dict[str, Any]:
-    """
-    Coalesce runtime config from env -> /data/options.json -> safe defaults.
-    Returns a dict with normalized keys used by the controller.
-    """
-    opts_path = "/data/options.json"
-    opts = _read_options(opts_path)
-
-    # BLE / BB-8
-    bb8_mac = (os.environ.get("BB8_MAC_OVERRIDE") or opts.get("bb8_mac") or "").strip() or None
-    ble_adapter = os.environ.get("BLE_ADAPTER") or opts.get("ble_adapter") or "hci0"
-
-    # MQTT
-    mqtt_host = os.environ.get("MQTT_BROKER") or opts.get("mqtt_broker") or "core-mosquitto"
-    mqtt_port_raw = os.environ.get("MQTT_PORT") or opts.get("mqtt_port") or "1883"
-    try:
-        mqtt_port = int(mqtt_port_raw)
-    except Exception:
-        mqtt_port = 1883
-
-    mqtt_user = os.environ.get("MQTT_USERNAME") or opts.get("mqtt_username")
-    mqtt_password = os.environ.get("MQTT_PASSWORD") or opts.get("mqtt_password")
-    mqtt_topic = os.environ.get("MQTT_TOPIC_PREFIX") or opts.get("mqtt_topic_prefix") or "bb8"
-
-    # Behavior
-    scan_seconds = int(os.environ.get("SCAN_SECONDS") or opts.get("scan_seconds") or 5)
-    rescan_on_fail = _as_bool(os.environ.get("RESCAN_ON_FAIL") or opts.get("rescan_on_fail"), True)
-    cache_ttl_hours = int(os.environ.get("CACHE_TTL_HOURS") or opts.get("cache_ttl_hours") or 24)
-
-    # Dispatcher tuning
-    client_id = os.environ.get("MQTT_CLIENT_ID") or opts.get("mqtt_client_id") or "bb8-addon"
-    keepalive = int(os.environ.get("MQTT_KEEPALIVE") or opts.get("mqtt_keepalive") or 60)
-    qos = int(os.environ.get("MQTT_QOS") or opts.get("mqtt_qos") or 1)
-    retain = _as_bool(os.environ.get("MQTT_RETAIN") or opts.get("mqtt_retain"), True)
-    tls = _as_bool(os.environ.get("MQTT_TLS") or opts.get("mqtt_tls"), False)
-
-    cfg: Dict[str, Any] = {
-        "bb8_mac": bb8_mac,
-        "ble_adapter": ble_adapter,
-        "mqtt_host": mqtt_host,
-        "mqtt_port": mqtt_port,
-        "mqtt_user": mqtt_user,
-        "mqtt_password": mqtt_password,
-        "mqtt_topic": mqtt_topic,
-        "scan_seconds": scan_seconds,
-        "rescan_on_fail": rescan_on_fail,
-        "cache_ttl_hours": cache_ttl_hours,
-        "client_id": client_id,
-        "keepalive": keepalive,
-        "qos": qos,
-        "retain": retain,
-        "tls": tls,
-    }
-    logger.debug({"event": "runtime_config_loaded", **{k: (v if k not in {"mqtt_password"} else bool(v)) for k, v in cfg.items()}})
-    return cfg
-
+    # ...removed: replaced by addon_config.py...
 
 # -------- Dispatcher compatibility shim --------
 def _start_dispatcher_compat(func, supplied: Dict[str, Any]) -> Any:
@@ -245,16 +174,48 @@ def start_bridge_controller(cfg: Dict[str, Any]) -> None:
     else:
         logger.info({"event": "bb8_mac_resolve_bypass", "reason": "env_or_options", "bb8_mac": target_mac})
 
-    # Construct bridge
+    # Construct bridge and facade
     bridge = BLEBridge(gateway=gw, target_mac=target_mac, ble_adapter=cfg.get("ble_adapter"))
     logger.info({"event": "ble_bridge_init", "target_mac": target_mac})
+    facade = BB8Facade(bridge)
+    controller_for_mqtt = facade
 
-    # MQTT parameters
+
+    # MQTT parameters (all config and defaults handled in load_runtime_config)
     mqtt_host = cfg.get("mqtt_host") or "localhost"
-    mqtt_port = int(cfg.get("mqtt_port") or 1883)
+    mqtt_port_raw = cfg.get("mqtt_port")
+    if mqtt_port_raw is not None:
+        try:
+            mqtt_port = int(mqtt_port_raw)
+        except Exception:
+            mqtt_port = 1883
+    else:
+        mqtt_port = 1883
     mqtt_topic = cfg.get("mqtt_topic") or "bb8"
     mqtt_user = cfg.get("mqtt_user")
     mqtt_password = cfg.get("mqtt_password")
+
+    _connected = False  # will be updated by BLELink
+    def _emit_connected(val: bool):
+        nonlocal _connected
+        _connected = val
+        client.publish(f"{mqtt_topic}/connected", "online" if val else "offline", qos=1, retain=True)
+    def _emit_rssi(rssi):
+        if rssi is not None:
+            client.publish(f"{mqtt_topic}/rssi", str(int(rssi)), qos=0, retain=False)
+
+    # Start BLE link (stable, verified)
+    bb8_mac = os.environ.get("BB8_MAC") or getattr(bridge, "target_mac", None)
+    if not bb8_mac:
+        logger.warning({"event":"ble_link_mac_missing"})
+    else:
+        try:
+            loop = asyncio.get_event_loop()
+            ble = BLELink(bb8_mac, on_connected=_emit_connected, on_rssi=_emit_rssi)
+            loop.create_task(ble.start())
+            logger.info({"event":"ble_link_started", "mac": bb8_mac})
+        except Exception as e:
+            logger.warning({"event":"ble_link_error", "error":repr(e)})
 
     logger.info({
         "event": "mqtt_dispatcher_start",
@@ -265,7 +226,8 @@ def start_bridge_controller(cfg: Dict[str, Any]) -> None:
         "password_supplied": bool(mqtt_password),
     })
 
-
+    # status_topic: configurable or derived from mqtt_topic
+    status_topic = cfg.get("status_topic") or f"{mqtt_topic}/status"
     client = _start_dispatcher_compat(
         start_mqtt_dispatcher,
         {
@@ -274,15 +236,77 @@ def start_bridge_controller(cfg: Dict[str, Any]) -> None:
             "topic": mqtt_topic,
             "user": mqtt_user,
             "password": mqtt_password,
-            "status_topic": "bb8/status",
-            "controller": bridge,
+            "status_topic": status_topic,
+            "controller": controller_for_mqtt,  # now facade
             "client_id": cfg.get("client_id"),
-            "keepalive": cfg.get("keepalive", 60),
-            "qos": cfg.get("qos", 1),
-            "retain": cfg.get("retain", True),
-            "tls": cfg.get("tls", False),
+            "keepalive": cfg.get("keepalive"),
+            "qos": cfg.get("qos"),
+            "retain": cfg.get("retain"),
+            "tls": cfg.get("tls"),
         },
     )
+
+    # Start evidence recorder (subscriber-only, unified config)
+    # Provenance-aware config loading
+    enable_evidence, src_enable = cfg.get("enable_stp4_evidence", True), cfg.get("_prov_enable_stp4_evidence", "default")
+    report_path, src_report = cfg.get("evidence_report_path", "/app/reports/ha_mqtt_trace_snapshot.jsonl"), cfg.get("_prov_evidence_report_path", "default")
+    topic_prefix, src_topic = cfg.get("mqtt_topic", "bb8"), cfg.get("_prov_mqtt_topic", "default")
+    if enable_evidence:
+        try:
+            EvidenceRecorder(client, topic_prefix, report_path).start()
+            logger.info({
+                "event": "stp4_evidence_recorder_started",
+                "report_path": report_path,
+                "provenance": {
+                    "enable_stp4_evidence": src_enable,
+                    "evidence_report_path": src_report,
+                    "mqtt_topic": src_topic,
+                }
+            })
+        except Exception as e:
+            logger.warning({
+                "event": "stp4_evidence_recorder_error",
+                "error": repr(e),
+                "provenance": {
+                    "enable_stp4_evidence": src_enable,
+                    "evidence_report_path": src_report,
+                    "mqtt_topic": src_topic,
+                }
+            })
+
+    # Start telemetry (presence + RSSI) only if enabled
+    enable_bridge_telemetry = cfg.get("enable_bridge_telemetry", True)
+    telemetry_interval = cfg.get("telemetry_interval_s", 20)
+    if enable_bridge_telemetry:
+        try:
+            from .telemetry import Telemetry
+            logger.info({"event": "telemetry_start", "interval_s": telemetry_interval, "role": "bridge"})
+            telemetry = Telemetry(bridge)
+            telemetry.start()
+            logger.info({"event": "telemetry_loop_started", "interval_s": telemetry_interval, "role": "bridge"})
+        except Exception as e:
+            logger.warning({"event": "telemetry_error", "error": repr(e), "role": "bridge"})
+    else:
+        logger.info({"event": "telemetry_skipped", "reason": "scanner_owns_telemetry", "role": "bridge"})
+
+    # Register quick-echo handler for power/set topic inside the running controller
+    def _on_power_set(_c, _u, msg):
+        try:
+            payload = msg.payload.decode("utf-8", "ignore").strip().upper()
+            if payload not in ("ON","OFF"): return
+            # Quick echo so HA has immediate feedback, but tag as "facade"
+            client.publish(
+                f"{mqtt_topic}/power/state",
+                json.dumps({"value": payload, "source": "facade"}),
+                qos=1,
+                retain=False
+            )
+            logger.info({"event":"power_ack", "value":payload})
+        except Exception as e:
+            logger.warning({"event":"power_ack_error", "error":repr(e)})
+
+    # Subscribe to power/set topic for quick-echo after client creation
+    client.message_callback_add(f"{mqtt_topic}/power/set", _on_power_set)
 
     # ⬇️ keep the service alive; shuts down cleanly on SIGTERM/SIGINT
     _wait_forever(client, bridge)
@@ -292,7 +316,16 @@ def start_bridge_controller(cfg: Dict[str, Any]) -> None:
 def main() -> None:
     # Single, final version probe (no preface “missing” lines)
     logging.getLogger("bb8_addon").info(probe())
-    cfg = load_runtime_config()
+    CFG, SRC = load_config()
+    cfg = CFG
+    # Emit one-shot INFO banner of all active config keys and their sources
+    info_cfg = {k: cfg[k] for k in cfg.keys()}
+    info_src = {k: SRC.get(k, None) for k in cfg.keys()}
+    logger.info({
+        "event": "config_effective",
+        "cfg": info_cfg,
+        "source": info_src
+    })
     start_bridge_controller(cfg)
 
 

@@ -3,7 +3,7 @@ import time
 import json
 from unittest.mock import MagicMock, patch
 import paho.mqtt.client as mqtt # pyright: ignore[reportMissingImports]
-from bb8_core.logging_setup import logger
+from .logging_setup import logger
 
 # Test parameters
 MQTT_HOST = "test.mosquitto.org"
@@ -44,7 +44,7 @@ def publish_test_messages():
     logger.info({"event": "test_publish_valid_command", "payload": payload})
     time.sleep(1)
     # Publish malformed payload
-    client.publish(MQTT_TOPIC, "{invalid_json")w
+    client.publish(MQTT_TOPIC, "{invalid_json")
     logger.info({"event": "test_publish_malformed_payload", "payload": "{invalid_json"})
     time.sleep(1)
     client.loop_stop()

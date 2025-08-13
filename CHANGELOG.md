@@ -1,6 +1,261 @@
 
 <!-- markdownlint-disable MD022 MD032 MD024 -->
+<!-- Refer to meta schema section at the end of this document for changelog entry format guidance -->
 # Changelog
+<!-- Current version for updating starts here -->
+<!-- ## [2025.08.16] - 2025-08-13 -->
+
+<!-- Current version for updating ends here -->
+## [2025.08.15] - 2025-08-13
+
+### Major
+
+Patch to resolve static fallbacks and hardcoded config variables:
+
+#### `bb8_presence_scanner.py`
+
+- All hardcoded "bb8/" topic prefixes replaced with dynamic MQTT_TOPIC_PREFIX from config.
+- All references to MQTT_BASE changed to MQTT_TOPIC_PREFIX for clarity.
+- DISCOVERY_RETAIN now loaded from config (options.discovery_retain).
+- MQTT client ID is now dynamic (CFG.get("MQTT_CLIENT_ID", "bb8_presence_scanner")).
+- Model hint is now dynamic (CFG.get("BB8_NAME", "S33 BB84 LE")).
+- Added HA_DISCOVERY_TOPIC as a configurable value for Home Assistant discovery topics.
+- All Home Assistant discovery topic prefixes now use HA_DISCOVERY_TOPIC.
+- Added a TODO to store and map "device_defaults" from facade_mapping_table.json for future dynamic mapping.
+- Ensured all CLI defaults and static values are loaded from config or have config fallbacks.
+- Fixed function signature for publish_discovery to avoid type errors (never passes None for model/name).
+
+All hardcoded topic prefixes, static config fallbacks, and inconsistent config keys in bb8_presence_scanner.py have been unified to use the dynamic config loader in addon_config.py. All MQTT topics now use MQTT_BASE, and config keys like MQTT_USERNAME, MQTT_CLIENT_ID, AVAIL_ON, and AVAIL_OFF are resolved via the loader. No errors remain.
+
+- Added support for the scanner to respect the `ENABLE_SCANNER_TELEMETRY` toggle. Telemetry publishing and related log events will only occur if enabled, and all telemetry logs include "role": "scanner" for clarity.
+- `ENABLE_SCANNER_TELEMETRY` is loaded via the shared config loader (CFG/SRC), not directly from environment variables.
+
+#### `facade.py`
+
+- MQTT QoS, retain, and D-Bus path defaults are now loaded dynamically from config (`addon_config.py`).
+- Uses `MQTT_TOPIC_PREFIX` and `HA_DISCOVERY_TOPIC` from config for topic construction and discovery.
+- All helper functions and config lookups are now properly scoped within the attach_mqtt method.
+- Added a TODO to store and map "device_defaults" from facade_mapping_table.json for future dynamic mapping.
+- Removed static defaults and fixed indentation/scoping errors.
+- Resolved a broken `from .discovery_publish` import to import publish_discovery directly from `bb8_presence_scanner.py`, matching the current codebase
+
+- Refactored `BB8Facade.attach_mqtt` to remove duplicate local function definitions.
+- Eliminated redundant second block of `_pub`, `_parse_color`, `_handle_power`, `_handle_led`, and `_handle_stop` functions.
+- Removed duplicate telemetry publisher bindings, subscriptions, and logger.info calls.
+- Ensured only one definition of each local function and one block of subscriptions remain for correct scoping.
+- No changes to logic; patch restores maintainability and eliminates lint errors.
+
+#### `ble_bridge.py`
+
+All static values and topic prefixes in `ble_bridge.py` are now loaded dynamically from `addon_config.py`, using all available config keys.
+
+#### `addon_config.py`
+
+Now loads all relevant config keys from config.yaml, including discovery_retain, log_path, scan_seconds, rescan_on_fail, cache_ttl_hours, mqtt_tls, ble_adapter, and ha_discovery_topic.
+
+Now supports dynamic lookups for command_topic, status_topic, availability_topic, keepalive, qos, and retain as config keys with sensible defaults
+
+Optimized the `load_config()` function:
+
+- All MQTT topics are constructed using the resolved config value for MQTT_BASE.
+- Type safety is added for booleans and integers (e.g., RETAIN, QOS, KEEPALIVE, etc.).
+- The precedence order is clarified and maintainable.
+- The code is more robust and consistent for all config keys.
+
+Toggles:
+
+Config source toggles in `addon_config.py` are now directly mapped to user-facing boolean toggles in `config.yaml`. This ensures all runtime config values (including telemetry, retain, and other booleans) are consistently loaded from the options UI and YAML schema, with correct precedence and type safety.
+
+#### `bridge_controller.py` and `auto_detect.py`
+
+- Unified config loading in `auto_detect.py` and `bridge_controller.py` to use addon_config.py, and added support for CACHE_PATH and CACHE_DEFAULT_TTL_HOURS in the config loader. All config values are now resolved via load_config().
+
+- The evidence recorder section in `bridge_controller.py` is now refactored for full config unification and provenance logging.
+
+- Telemetry in the bridge will now only start if the `enable_bridge_telemetry` toggle is on, and all related log events will include the `"role": "bridge"` field for clarity. If telemetry is not started due to the config toggle, the following will be logged with a log statement.
+
+- The config banner now emits a one-shot INFO log at startup, showing all available active config keys and their sources at startup. This makes it easy to verify the active configuration without second-guessing.
+
+#### `config.yaml`
+
+The options and schema in config.yaml are now logically structured into clear sections:
+
+- Telemetry & Logging
+- Device Identification
+- MQTT Configuration
+
+#### README
+
+The `README.md` directory structure is now fully up-to-date, reflecting all current components, scripts, and config systems. It also includes a summary of the unified configuration and evidence collection systems.
+
+### Hotfixes
+
+Updated `PYTHONPATH` to include the correct folder paths for the current structure and ensure add-on imports work as expected.
+
+<!-- Current version for updating ends here -->
+## [2025.08.14] - 2025-08-12
+
+### Major
+
+Exposed all BB-8 actuator bridge hooks (power, stop, LED, heading, speed, drive) via MQTT in `bb8_presence_scanner.py`, centralizing all Home Assistant discovery and actuator control logic in the scanner and retiring legacy `discovery*.py` logic.
+Scanner now subscribes to both flat and legacy MQTT command topics for all actuators (LED, stop, drive, heading, speed, power), and state publishing now echoes to both flat and legacy state topics, ensuring full backward compatibility and eliminating topic mismatches.
+Unified all extended Home Assistant discovery topics and command/state handlers to use the flat namespace (`bb8/led`, `bb8/speed`, `bb8/heading`, `bb8/drive`, etc.) for all entities, with consistent payloads and topic formatting for future-proof, device-specific support (e.g., `bb8/<device_id>/led/set`).
+Home Assistant MQTT JSON light compliance: LED entity now uses `schema: json` and publishes state in the HA-compatible format (`{"state":"ON","color":{"r":..,"g":..,"b":..},"color_mode":"rgb"}` and `{"state":"OFF"}`), with support for `brightness` (discovery advertises `supported_color_modes: ["rgb", "brightness"]`, and handlers accept/publish a `brightness` field).
+Scanner supports direct robot control from Home Assistant entities (light/button/number), not just state echo, and all changes are backward-compatible and future-proofed for multi-device and brightness support.
+Added flat alias for power command (`bb8/power/set`), subscribing and routing to the power handler for consistency with other flat topics.
+
+### Fixed
+
+- Guarded call to `is_connected` with `callable()` in `TelemetryLoop` to prevent `TypeError: 'NoneType' object is not callable` in telemetry error logs.
+
+### Improved
+
+### Config Unification & Provenance Logging
+
+- **Unified Configuration Loader:** All configuration for the scanner is now loaded via a single-source-of-truth config loader (`bb8_core.addon_config.load_config`). This loader merges environment variables, YAML, and options.json, and tracks provenance for each setting.
+- **Provenance-Aware Debug Logging:** The scanner now logs the provenance (source) of each config value at startup, making it easy to audit and debug configuration issues.
+- **Removed Legacy Config Logic:** All legacy config loading functions, environment variable fallbacks, and debug banners have been removed from `bb8_presence_scanner.py`. All references now use the unified config loader (`CFG`).
+- **CLI Defaults Unified:** All CLI argument defaults and device block logic now use values from the unified config loader, ensuring consistency and maintainability.
+- **Error Handling Improved:** Lint and runtime errors caused by legacy config references have been resolved. The scanner is now robust against missing or malformed config sources.
+
+### Deprecation notice
+- `discovery.py` and `discovery_publish.py` are now thin shims that re-export `publish_discovery` from `bb8_presence_scanner.py`. All Home Assistant discovery logic is unified in the scanner.
+
+### Major update: Unified Scanner & Discovery Logic
+
+`bb8_presence_scanner.py` now subsumes `discovery.py` and `discovery_publish.py`:
+
+Publishes full Home Assistant MQTT discovery payloads for Presence and RSSI sensors.
+Adds complete device block with MAC, D-Bus path, and add-on version (sw_version).
+Availability (birth and last-will) now handled automatically.
+Improved BLE device metadata extraction:
+Extracts MAC and D-Bus path directly from BLE scan details.
+Uses MAC in identifiers and connections to ensure uniqueness.
+
+Simplified deployment:
+
+Older discovery scripts are now redundant; scanner handles telemetry + discovery in one process.
+
+Telemetry updates:
+
+`bb8/sensor/presence` publishes on/off (retained).
+`bb8/sensor/rssi` publishes integer dBm values (retained).
+
+- Integrated extended Home Assistant discovery/entities (LED, sleep, drive, heading, speed) into `bb8_presence_scanner.py`.
+  - Scanner now publishes all discovery configs and echoes state for extended entities.
+  - Extended entities enabled by default; can be toggled via `--extended/--no-extended` CLI or `BB8_EXTENDED` env var.
+  - Device/topic helpers and unified extended discovery publisher added.
+- Deprecated `discovery.py` and `discovery_publish.py` (now raise `DeprecationWarning`).
+- No changes to BLE scanning, presence/RSSI telemetry, or availability topics.
+
+## [2025.08.12] - 2025-08-11
+
+### Added
+- New `bb8_core/ble_link.py`: Implements a minimal, observable BLE link class with connection and RSSI callbacks for device observability.
+- BLE link is now wired into `bridge_controller.py`, publishing MQTT observability topics for connection status and RSSI.
+- Home Assistant discovery now publishes new entities for `connected` (binary_sensor) and `rssi` (sensor) on every MQTT connect, ensuring these are always available and discoverable.
+
+### Changed
+- Evidence collector script (`ops/evidence/collect_stp4.py`) updated to implement strict ordering, prestate, source, and device-echo logic. Annotates commands, checks for device-originated state echoes, and enforces stricter roundtrip validation.
+- Power quick-echo in MQTT publish for `power/state` is now tagged as `"source": "facade"` in `facade.py`, allowing the evidence collector to distinguish façade-originated echoes.
+- Discovery is now published on every MQTT connect, ensuring all entities are visible and retained in Home Assistant.
+
+### Fixed
+- Fixed bug in `bb8_core/ble_link.py`: `is_connected` is now accessed as a property, not awaited as a coroutine, resolving the "Object of type 'bool' is not callable" error.
+- Fixed indentation and parameter issues in `bridge_controller.py` for BLE link and MQTT observability publishing; all lint errors addressed.
+### Changed
+
+- MQTT/HA controller is now always the `BB8Facade` (not the bridge), ensuring all MQTT and Home Assistant logic is centralized and device-agnostic.
+- `bridge_controller.py` now passes the facade to the dispatcher, keeping BLEBridge device-only and simplifying teardown.
+- `mqtt_dispatcher.py` no longer publishes Home Assistant discovery; this is now handled exclusively by the facade, preventing duplicate retained configs.
+- `facade.py` discovery call is now explicit and correct (no unsupported `qos` argument).
+- `bridge_controller.py` now starts the `EvidenceRecorder` (if enabled) and telemetry loop after MQTT connect, with configuration via environment variables.
+- Updated import in `bridge_controller.py` to use local `evidence_capture.py` for compatibility with Home Assistant add-on/container environments.
+
+### Added
+
+- Logging now supports the `BB8_LOG_PATH` environment variable and a robust fallback: if the configured log path is unwritable (e.g., read-only `/config`), logs are written to `/tmp/bb8_addon.log` with a one-time warning. This is controlled by the new logic in `logging_setup.py`.
+- `config.yaml` and `run.sh` now support an optional `log_path` override, plumbed through to the environment for flexible deployment.
+- STP4 evidence automation: Added Makefile targets `evidence-stp4` and `evidence-clean` for automated evidence bundle generation and cleanup.
+- New script `ops/evidence/collect_stp4.py` to collect MQTT/HA roundtrip evidence, outputting discovery and trace artifacts for compliance.
+- New module `bb8_core/evidence_capture.py` with `EvidenceRecorder` class for in-process MQTT roundtrip evidence capture.
+
+### Fixed
+
+- YAML schema in `config.yaml` is now valid and deduplicated; schema and options are separate and error-free.
+- All facade and dispatcher changes are Pylance/static-analysis clean, and all discovery publishing is idempotent and non-duplicated.
+- Fixed `ModuleNotFoundError: No module named 'ops'` by moving `evidence_capture.py` into `bb8_core/` and updating the import path.
+
+### Developer Notes
+
+- To test logging fallback, set `BB8_LOG_PATH` to an unwritable location and confirm a fallback warning and log output in `/tmp`.
+- To test discovery, ensure only one `discovery_published` event appears after connect, and that all entities are visible in Home Assistant.
+- To generate an STP4 evidence bundle, run `make evidence-stp4` (or invoke the collector script directly if `make` is unavailable).
+- The evidence collector and recorder require `paho-mqtt` and `PyYAML` (add to requirements if missing).
+
+### Added
+
+- Public handler surface (`power`, `stop`, `set_led_off`, `set_led_rgb`, `sleep`, `is_connected`, `get_rssi`, `attach_mqtt`) is now exposed on both `BB8Facade` and `BLEBridge`.
+- `BLEBridge` now provides thin, typed delegates for all handler methods, ensuring interface compatibility and silencing Pylance/IDE warnings. All methods are safe no-ops until real Sphero BLE logic is implemented.
+- `attach_mqtt` method added to `BLEBridge` class: wires up MQTT command handlers and telemetry publishers for Home Assistant integration. Supports power, stop, and LED commands, and exposes presence/RSSI publishers.
+- Home Assistant MQTT Discovery publishing is now called automatically after MQTT connect (in `start_mqtt_dispatcher`), ensuring all entities are visible and retained in Home Assistant. Uses `publish_discovery` from `bb8_core/discovery_publish.py`.
+- Home Assistant discovery is now always re-published after MQTT connect, using `publish_discovery` directly after `controller.attach_mqtt` in the dispatcher.
+- Telemetry loop (`TelemetryLoop` in `bb8_core/telemetry.py`) is now started after BLE connect and stopped on shutdown in the controller, providing periodic presence and RSSI updates to Home Assistant.
+
+### Improved
+
+- All handler methods are now available on both the facade and bridge, so any code (now or future) can call either interface safely. This keeps the bridge device-focused but compatible with handler contracts.
+
+- Cleaned up imports in `bb8_core/mqtt_dispatcher.py`: only modules actually used are imported at the top level.
+- Dispatcher now supports both `username`/`password` and legacy `mqtt_user`/`mqtt_password` parameters (with internal unification and deprecation warning).
+- BLE/Sphero dependencies are now lazy-imported inside the minimal functions that require them, keeping the dispatcher module transport-focused and lightweight.
+- `paho.mqtt.publish` import is now only enabled if `publish.single` is actually used; otherwise, all MQTT publishing is done via the connected client.
+- Discovery publishing is now idempotent and safe to re-publish on reconnect; all configs are retained for Home Assistant auto-entity creation.
+
+### Fixed
+
+- All dispatcher import errors and legacy parameter issues resolved; file is now clean, error-free, and back-compatible.
+
+### Development
+
+- Facade and bridge handler surfaces are now fully interface-compatible. Pylance and static analysis are satisfied for all handler method signatures.
+
+- Dispatcher code and API are now fully back-compatible and ready for further refactor or migration away from legacy argument names.
+
+---
+## [2025.08.14] - 2025-08-12
+
+### Major
+- Exposed all BB-8 actuator bridge hooks (power, stop, LED, heading, speed, drive) via MQTT in `bb8_presence_scanner.py`.
+- Retired legacy `discovery*.py` logic; all Home Assistant discovery and actuator control is now centralized in the scanner.
+- Scanner now supports direct robot control from Home Assistant entities (light/button/number), not just state echo.
+
+### Added
+- Optional bridge integration: scanner auto-loads `BB8Facade` with a `BLEBridge` if available, or falls back to a safe no-op facade if not.
+- Subscribes to new command topics:
+  - `bb8/cmd/power_set` ("ON"|"OFF")
+  - `bb8/cmd/stop_press` (momentary)
+  - `bb8/cmd/led_set` ({r,g,b}|{"hex":...}|"OFF")
+  - `bb8/cmd/heading_set` (0..359)
+  - `bb8/cmd/speed_set` (0..255)
+  - `bb8/cmd/drive_press` (momentary)
+- Publishes state echoes for all actuators:
+  - `bb8/state/led` (retained)
+  - `bb8/state/heading` (retained)
+  - `bb8/state/speed` (retained)
+  - `bb8/state/stop` (pressed→idle, non-retained)
+- Minimal JSON/hex parsing and clamping helpers for robust command handling.
+- All command handling and bridge calls are guarded; scanner runs and logs cleanly even if the bridge is not present.
+
+### Improved
+- Home Assistant extended entities (light/button/number) now operate the robot through MQTT, not just echo state.
+- All actuator commands are validated, clamped, and logged for traceability and safety.
+- Retained/non-retained state echoes match Home Assistant expectations for UI and automation feedback.
+
+### Fixed
+- Fixed all runtime and lint errors related to missing bridge/facade methods and payload parsing.
+- Fixed memoryview/bytes payload handling for MQTT command callbacks.
+- All scanner command handlers are now robust to missing bridge/facade and invalid payloads.
 
 ## [2025.08.11] - 2025-08-11
 
@@ -41,7 +296,7 @@
 - Refactored dispatcher for explicit parameter handling and robust logging, with clear separation from legacy code.
 - Dockerfile, config, and test polish for Home Assistant add-on builder and multi-arch support.
 
-<!-- Refer to meta schema section below for changelog entry format guidance -->
+---
 
 ## [2025.08.10] - 2025-08-10
 
@@ -76,6 +331,8 @@
 
 - `run.sh` now probes and prints package versions (bleak, paho-mqtt, spherov2) using importlib.metadata
 - Services run file updated to remove user/group switching, resolving s6-applyuidgid error in HA add-on environment
+
+---
 
 ## [2025.08.9] - 2025-08-10
 

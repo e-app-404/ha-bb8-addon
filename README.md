@@ -25,18 +25,81 @@ Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT.
 ```text
 local/
 ├─beep_boop_bb8/
-├─── app/
-│   └── test_ble_adapter.py
-├─── bb8_core/
-│   └── ... (core Python modules)
-├─── .devcontainer/
-│   ├── devcontainer.json
-│   └── Dockerfile
-├─── run.sh
-├─── config.yaml
-├─── Dockerfile
-├─── README.md
+│   ├── app/
+│   │   ├── bb8_bletest_diag.sh
+│   │   ├── ble_test_diag.sh
+│   │   └── test_ble_adapter.py
+│   ├── bb8_core/
+│   │   ├── __init__.py
+│   │   ├── addon_config.py
+│   │   ├── auto_detect.py
+│   │   ├── bb8_presence_scanner.py
+│   │   ├── ble_bridge.py
+│   │   ├── ble_gateway.py
+│   │   ├── ble_link.py
+│   │   ├── ble_utils.py
+│   │   ├── bridge_controller.py
+│   │   ├── controller.py
+│   │   ├── core.py
+│   │   ├── discovery.py
+│   │   ├── discovery_publish.py
+│   │   ├── evidence_capture.py
+│   │   ├── facade.py
+│   │   ├── logging_setup.py
+│   │   ├── mqtt_dispatcher.py
+│   │   ├── telemetry.py
+│   │   ├── test_mqtt_dispatcher.py
+│   │   ├── util.py
+│   │   └── version_probe.py
+│   ├── .devcontainer/
+│   │   ├── Dockerfile
+│   │   └── devcontainer.json
+│   ├── ops/
+│   │   ├── blebridge_handler_surface_check.py
+│   │   ├── delta_contract.yaml
+│   │   ├── entity_set.json
+│   │   ├── entity_set_extended.json
+│   │   ├── evidence/
+│   │   │   ├── collect_stp4.py
+│   │   │   └── evidence_capture.py
+│   │   ├── facade_mapping_table.json
+│   │   ├── intervention_plan.json
+│   │   ├── strategic_assessment.json
+│   │   └── test_facade_attach_mqtt.py
+│   ├── reports/
+│   │   └── (various .json and stp4_* evidence bundles)
+│   ├── services.d/
+│   │   └── ble_bridge/
+│   │       └── run
+│   ├── tests/
+│   │   ├── test_facade.py
+│   │   └── test_mqtt_smoke.py
+│   ├── CHANGELOG.md
+│   ├── Dockerfile
+│   ├── Makefile
+│   ├── README.md
+│   ├── apparor.txt
+│   ├── config.yaml
+│   ├── copilot_patch_overview.log
+│   ├── pyproject.toml
+│   ├── requirements-dev.txt
+│   ├── requirements.in
+│   ├── requirements.txt
+│   ├── run.sh
+│   ├── scan_bb8_gatt.py
+│   ├── tox.ini
 ```
+
+## Configuration System
+
+- All runtime config is unified via `bb8_core/addon_config.py`, which loads from `/data/options.json`, environment, and YAML, with provenance logging.
+- MQTT topics, client IDs, device names, and toggles (e.g., telemetry) are dynamically constructed from config. No hardcoded prefixes remain.
+- Telemetry publishing is controlled by `ENABLE_BRIDGE_TELEMETRY` and `ENABLE_SCANNER_TELEMETRY`, both loaded via the config loader.
+
+## Evidence Collection
+
+- Evidence scripts live in `ops/evidence/`, and can be run via Makefile (`make evidence-stp4`). Output is stored in `reports/`.
+- See `CHANGELOG.md` for recent config and evidence system changes.
 
 ## Development
 

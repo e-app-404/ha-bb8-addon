@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Optional
-from bb8_core.logging_setup import logger
+from .logging_setup import logger
 
 class Core:
     """

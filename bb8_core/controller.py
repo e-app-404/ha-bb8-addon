@@ -1,13 +1,26 @@
 """
-Unified BB-8 Controller for Home Assistant add-on
-Migrated from legacy ha_sphero_bb8.controller (2025-08-04)
+Unified BB-8 Controller for Home Assistant add-on.
+
+This module provides the main controller class for BB-8 integration with Home Assistant, including BLE device management, command dispatch, and MQTT diagnostics.
+
+Classes
+-------
+ControllerMode : Enum for controller operation mode.
+ControllerStatus : Dataclass for controller state and diagnostics.
+BB8Controller : Main controller class for BB-8 device and MQTT integration.
+
+Example
+-------
+>>> ctrl = BB8Controller()
+>>> ctrl.roll(50, 0)
+>>> ctrl.stop()
 """
 import time
 from enum import Enum
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
-from bb8_core.ble_gateway import BleGateway
-from bb8_core.logging_setup import logger
+from .ble_gateway import BleGateway
+from .logging_setup import logger
 
 class ControllerMode(Enum):
     HARDWARE = "hardware"
@@ -26,6 +39,18 @@ class ControllerStatus:
 
 class BB8Controller:
     def __init__(self, mode: ControllerMode = ControllerMode.HARDWARE, device=None, mqtt_handler=None):
+        """
+        Initialize a BB8Controller instance.
+
+        Parameters
+        ----------
+        mode : ControllerMode, optional
+            Controller operation mode (default: ControllerMode.HARDWARE).
+        device : object, optional
+            BLE device instance to attach (default: None).
+        mqtt_handler : object, optional
+            Optional MQTT handler for integration (default: None).
+        """
         self.mode = mode
         logger.info({"event": "controller_init", "mode": self.mode.value})
         self.device = device
@@ -38,10 +63,32 @@ class BB8Controller:
         self.last_command = None
         self.device_connected = True if device is not None else False
         self.mqtt_handler = mqtt_handler
+        self.telemetry = None
         logger.debug({"event": "controller_init_debug", "mode": self.mode.value, "device": str(self.device), "mqtt_handler": str(self.mqtt_handler)})
         logger.debug({"event": "controller_init_state", "device_connected": self.device_connected, "class": str(type(self))})
 
     def roll(self, speed: int, heading: int, timeout: float = 2.0, roll_mode: int = 0, reverse_flag: bool = False) -> dict:
+        """
+        Roll the BB-8 device at a given speed and heading.
+
+        Parameters
+        ----------
+        speed : int
+            Speed value (0-255).
+        heading : int
+            Heading in degrees (0-359).
+        timeout : float, optional
+            Roll duration in seconds (default: 2.0).
+        roll_mode : int, optional
+            Roll mode flag (default: 0).
+        reverse_flag : bool, optional
+            Whether to reverse direction (default: False).
+
+        Returns
+        -------
+        dict
+            Result dictionary with success, command, and result/error fields.
+        """
         logger.info({"event": "controller_roll_start", "device": str(self.device)})
         logger.debug({"event": "controller_roll_args", "speed": speed, "heading": heading, "timeout": timeout, "roll_mode": roll_mode, "reverse_flag": reverse_flag})
         if self.device is None:
@@ -66,6 +113,14 @@ class BB8Controller:
             return self._create_error_result("roll", str(e))
 
     def stop(self) -> Dict[str, Any]:
+        """
+        Stop the BB-8 device.
+
+        Returns
+        -------
+        dict
+            Result dictionary with success, command, and result/error fields.
+        """
         logger.info({"event": "controller_stop_start", "device": str(self.device)})
         logger.debug({"event": "controller_stop_args", "device": str(self.device)})
         if self.device is None:
@@ -90,6 +145,23 @@ class BB8Controller:
             return self._create_error_result("stop", str(e))
 
     def set_led(self, r: int, g: int, b: int) -> dict:
+        """
+        Set the LED color of the BB-8 device.
+
+        Parameters
+        ----------
+        r : int
+            Red value (0-255).
+        g : int
+            Green value (0-255).
+        b : int
+            Blue value (0-255).
+
+        Returns
+        -------
+        dict
+            Result dictionary with success, command, and result/error fields.
+        """
         logger.debug({"event": "controller_set_led_args", "r": r, "g": g, "b": b, "device": str(self.device)})
         try:
             if self.device is None:
@@ -109,6 +181,14 @@ class BB8Controller:
             return {"success": False, "command": "set_led", "error": str(e)}
 
     def get_diagnostics_for_mqtt(self) -> Dict[str, Any]:
+        """
+        Get controller diagnostics for MQTT publishing.
+
+        Returns
+        -------
+        dict
+            Diagnostics payload for MQTT.
+        """
         status = self.get_controller_status()
         payload = {
             "controller": {
@@ -127,10 +207,33 @@ class BB8Controller:
         return payload
 
     def disconnect(self):
+        """
+        Disconnect the controller and stop telemetry loop if running.
+
+        Returns
+        -------
+        dict
+            Result dictionary with success and message fields.
+        """
         logger.info({"event": "controller_disconnect"})
+        # Stop telemetry loop on disconnect
+        if hasattr(self, "telemetry") and self.telemetry:
+            try:
+                self.telemetry.stop()
+                logger.info({"event": "telemetry_loop_stopped"})
+            except Exception as e:
+                logger.warning({"event": "telemetry_loop_stop_error", "error": str(e)})
         return {"success": True, "message": "BB8Controller: disconnect called"}
 
     def get_controller_status(self) -> ControllerStatus:
+        """
+        Get the current status of the controller.
+
+        Returns
+        -------
+        ControllerStatus
+            Dataclass with controller state and diagnostics.
+        """
         uptime = time.time() - self.start_time
         ble_status = "unknown"
         features = {
@@ -150,6 +253,21 @@ class BB8Controller:
         return status
 
     def _create_error_result(self, command: str, error: str) -> Dict[str, Any]:
+        """
+        Helper to create a standardized error result dictionary.
+
+        Parameters
+        ----------
+        command : str
+            Command name.
+        error : str
+            Error message.
+
+        Returns
+        -------
+        dict
+            Error result dictionary.
+        """
         logger.error({"event": "controller_error_result", "command": command, "error": error})
         return {
             "success": False,
@@ -159,17 +277,53 @@ class BB8Controller:
         }
 
     def attach_device(self, device):
-        """Attach a BLE device to the controller and update state."""
+        """
+        Attach a BLE device to the controller and update state.
+
+        Starts the telemetry loop after BLE connect.
+
+        Parameters
+        ----------
+        device : object
+            BLE device instance to attach.
+        """
         logger.debug({"event": "controller_attach_device_start", "device": str(device)})
         self.device = device
         self.device_connected = device is not None
         logger.info({"event": "controller_attach_device", "device": str(device)})
         logger.debug({"event": "controller_attach_device_debug", "device": str(self.device), "device_connected": self.device_connected})
+        # Start telemetry loop after BLE connect
+        try:
+            from .telemetry import Telemetry
+            if self.telemetry:
+                self.telemetry.stop()
+            self.telemetry = Telemetry(self)
+            self.telemetry.start()
+            logger.info({"event": "telemetry_loop_started"})
+        except Exception as e:
+            logger.warning({"event": "telemetry_loop_error", "error": str(e)})
 
 
 # --- Module-level helper for MQTT discovery publishing ---
 def publish_discovery_if_available(client, controller, base_topic, qos, retain):
-    """No-op if controller has its own discovery publisher."""
+    """
+    Publish MQTT discovery if the controller supports it.
+
+    No-op if the controller has its own discovery publisher.
+
+    Parameters
+    ----------
+    client : object
+        MQTT client instance.
+    controller : object
+        Controller instance (may have publish_discovery method).
+    base_topic : str
+        MQTT base topic.
+    qos : int
+        MQTT QoS level.
+    retain : bool
+        MQTT retain flag.
+    """
     try:
         if hasattr(controller, "publish_discovery"):
             controller.publish_discovery(client, base_topic, qos=qos, retain=retain)

@@ -3,6 +3,8 @@ import logging
 import os
 import re
 import sys
+import pathlib
+import tempfile
 
 
 # Expanded redaction pattern
@@ -25,22 +27,44 @@ class JsonRedactingHandler(logging.StreamHandler):
         except Exception:
             super().emit(record)
 
-# Set log path to new location
-LOG_PATH = os.environ.get("BB8_LOG_PATH", "/config/hestia/diagnostics/reports/bb8_addon_logs.log")
-LOG_LEVEL = os.environ.get("BB8_LOG_LEVEL", "DEBUG")
 
 logger = logging.getLogger("bb8_addon")
+
+def _writable(path: str) -> bool:
+    try:
+        p = pathlib.Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with open(p, "a"):
+            pass
+        return True
+    except Exception:
+        return False
+
+def init_file_handler(default_path="/config/hestia/diagnostics/reports/bb8_addon_logs.log") -> logging.Handler:
+    """
+    Prefer BB8_LOG_PATH env, fall back to default_path, then /tmp, then stderr.
+    Emits one warning on fallback.
+    """
+    candidate = os.environ.get("BB8_LOG_PATH", default_path)
+    if not _writable(candidate):
+        tmp = os.path.join(tempfile.gettempdir(), "bb8_addon.log")
+        candidate = tmp if _writable(tmp) else None
+        logger.warning({"event": "log_path_fallback", "target": candidate or "stderr"})
+    if candidate:
+        return logging.FileHandler(candidate)
+    return logging.StreamHandler()
+
+LOG_LEVEL = os.environ.get("BB8_LOG_LEVEL", "DEBUG")
 logger.setLevel(LOG_LEVEL)
 formatter = logging.Formatter('%(asctime)s %(levelname)s:%(name)s: %(message)s')
 
 try:
-    os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
-    fh = logging.FileHandler(LOG_PATH)
+    fh = init_file_handler()
     fh.setLevel(LOG_LEVEL)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 except Exception as e:
-    print(f"Failed to open log file {LOG_PATH}: {e}", file=sys.stderr)
+    print(f"Failed to open log file: {e}", file=sys.stderr)
 
 ch = logging.StreamHandler(sys.stdout)
 ch.setLevel(LOG_LEVEL)
@@ -49,4 +73,8 @@ logger.addHandler(ch)
 
 logger.setLevel(logging.INFO)
 if not logger.handlers:
-    logger.addHandler(JsonRedactingHandler())
+    h = logging.StreamHandler()
+    fmt = logging.Formatter("%(asctime)s %(levelname)s:%(name)s:%(message)s")
+    h.setFormatter(fmt)
+    logger.addHandler(h)
+    logger.propagate = False

@@ -7,11 +7,14 @@ Connects to the MQTT broker, subscribes to command topics, dispatches commands t
 # Finalized for Home Assistant runtime (2025-08-04)
 
 from __future__ import annotations
+
 from typing import Optional, Any
 import socket
-import os
 import paho.mqtt.client as mqtt
+import paho.mqtt.publish as publish  # uncommented because publish.single is used
 from .logging_setup import logger
+from .addon_config import load_config
+CFG, SRC = load_config()
 
 REASONS = {
     0: "success",
@@ -29,19 +32,20 @@ except ImportError:
     BLEBridge = None
 
 def start_mqtt_dispatcher(
-    mqtt_host: str,
-    mqtt_port: int,
-    mqtt_topic: str,
+    mqtt_host: Optional[str] = None,
+    mqtt_port: Optional[int] = None,
+    mqtt_topic: Optional[str] = None,
     username: Optional[str] = None,
     password: Optional[str] = None,
     controller: Any = None,
-    client_id: str = "bb8-addon",
-    keepalive: int = 60,
-    qos: int = 1,
-    retain: bool = True,
-    status_topic: str = "bb8/status",
-    gateway: Optional[BleGateway] = None,
-    tls: bool = False,
+    client_id: Optional[str] = None,
+    keepalive: Optional[int] = None,
+    qos: Optional[int] = None,
+    retain: Optional[bool] = None,
+    status_topic: Optional[str] = None,
+    tls: Optional[bool] = None,
+    mqtt_user: Optional[str] = None,
+    mqtt_password: Optional[str] = None,
 ) -> mqtt.Client:
     """
     Single entry-point used by bridge_controller via the compat shim.
@@ -52,6 +56,19 @@ def start_mqtt_dispatcher(
     - Reason-logged connect/disconnect
     - Optional TLS (default False)
     """
+    # Dynamic config lookups
+    mqtt_host = mqtt_host or CFG.get("MQTT_HOST", "localhost")
+    mqtt_port = mqtt_port or int(CFG.get("MQTT_PORT", 1883))
+    mqtt_topic = mqtt_topic or f"{CFG.get('MQTT_BASE', 'bb8')}/command/#"
+    username = username or CFG.get("MQTT_USERNAME", "mqtt_bb8")
+    password = password or CFG.get("MQTT_PASSWORD", None)
+    client_id = client_id or CFG.get("MQTT_CLIENT_ID", "bb8-addon")
+    keepalive = keepalive or 60
+    qos = qos if qos is not None else 1
+    retain = retain if retain is not None else True
+    status_topic = status_topic or f"{CFG.get('MQTT_BASE', 'bb8')}/status"
+    tls = tls if tls is not None else CFG.get("MQTT_TLS", False)
+
     resolved = None
     try:
         resolved = socket.gethostbyname(mqtt_host)
@@ -89,30 +106,36 @@ def start_mqtt_dispatcher(
     client.reconnect_delay_set(min_delay=1, max_delay=30)
 
     # ---- Callbacks ----
-    def _on_connect(c, u, flags, rc, properties=None):
+
+    def _on_connect(client, userdata, flags, rc, properties=None):
         reason = REASONS.get(rc, f"unknown_{rc}")
         if rc == 0:
             logger.info({"event": "mqtt_connected", "rc": rc, "reason": reason})
             # mark online
-            c.publish(status_topic, payload="online", qos=qos, retain=True)
+            client.publish(status_topic, payload="online", qos=qos, retain=True)
 
+            # Always publish discovery for connected/rssi entities on connect (non-retained)
+            try:
+                import os
+                from bb8_core.discovery_publish import publish_discovery
+                dev_id = (getattr(controller, "target_mac", None) or "bb8").replace(":", "").lower()
+                dbus_path = getattr(controller, "dbus_path", None) or CFG.get("BB8_DBUS_PATH", "/org/bluez/hci0")
+                name = os.environ.get("BB8_NAME", "BB-8")
+                publish_discovery(client, dev_id, dbus_path, name=name)
+            except Exception as e:
+                logger.warning({"event":"discovery_dispatcher_disabled","reason":repr(e)})
             # Hand the client to the BB-8 controller (subscribe/publish wiring)
             # Expected to implement: attach_mqtt(client, topic, qos, retain)
             if hasattr(controller, "attach_mqtt"):
                 try:
-                    controller.attach_mqtt(c, mqtt_topic, qos=qos, retain=retain)
+                    controller.attach_mqtt(client, mqtt_topic, qos=qos, retain=retain)
                 except Exception as e:
                     logger.error({"event": "controller_attach_mqtt_error", "error": repr(e)})
-                # Publish discovery if available
-                try:
-                    from bb8_core.controller import publish_discovery_if_available
-                    publish_discovery_if_available(c, controller, mqtt_topic, qos, retain)
-                except Exception as e:
-                    logger.error({"event": "discovery_publish_import_error", "error": repr(e)})
         else:
             logger.error({"event": "mqtt_connect_failed", "rc": rc, "reason": reason})
 
-    def _on_disconnect(c, u, rc, properties=None):
+
+    def _on_disconnect(client, userdata, rc, properties=None):
         # rc==0 = clean; >0 = unexpected
         logger.warning({"event": "mqtt_disconnected", "rc": rc})
 
@@ -126,70 +149,17 @@ def start_mqtt_dispatcher(
     return client
 
 
-def publish_mqtt_discovery(client=None):
-    BB8_MAC = os.environ.get("BB8_MAC", "B8:17:C2:A8:ED:45")
-    MQTT_HOST = os.environ.get("MQTT_HOST", "localhost")
-    MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
-    MQTT_USER = os.environ.get("MQTT_USER")
-    MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD")
-    mqtt_prefix = os.environ.get("MQTT_TOPIC_PREFIX", "bb8")
-    device_id = f"bb8_{BB8_MAC.replace(':','').lower()}"
-    def _emit(topic, payload):
-        logger.debug({"event": "discovery_emit_start", "topic": topic, "payload": payload, "client": str(client)})
-        logger.info({"event": "mqtt_discovery_publish", "topic": topic, "payload": payload})
-        if client:
-            logger.debug({"event": "discovery_emit_client_publish", "topic": topic})
-            client.publish(topic, payload=payload, qos=1, retain=True)
-        else:
-            logger.debug({"event": "discovery_emit_single_publish", "topic": topic, "MQTT_HOST": MQTT_HOST, "MQTT_PORT": MQTT_PORT})
-            publish.single(topic, payload, hostname=MQTT_HOST, port=MQTT_PORT,
-                           auth={"username": MQTT_USER, "password": MQTT_PASSWORD} if MQTT_USER and MQTT_PASSWORD else None,
-                           retain=True)
-    # Presence sensor
-    cfg_presence = {
-        "name": "BB-8 Presence",
-        "unique_id": f"{device_id}_presence",
-        "device_class": "presence",
-        "state_topic": f"{mqtt_prefix}/presence",
-        "availability_topic": f"{mqtt_prefix}/status",
-        "payload_on": "present",
-        "payload_off": "absent",
-        "device": {
-            "identifiers": [device_id],
-            "manufacturer": "Sphero",
-            "model": "BB-8",
-            "name": "BB-8"
-        }
-    }
-    # RSSI sensor
-    cfg_rssi = {
-        "name": "BB-8 RSSI",
-        "unique_id": f"{device_id}_rssi",
-        "state_topic": f"{mqtt_prefix}/rssi",
-        "availability_topic": f"{mqtt_prefix}/status",
-        "unit_of_measurement": "dBm",
-        "state_class": "measurement",
-        "device_class": "signal_strength",
-        "device": cfg_presence["device"]
-    }
-    # Power switch
-    cfg_power = {
-        "name": "BB-8 Power",
-        "unique_id": f"{device_id}_power",
-        "command_topic": f"{mqtt_prefix}/command/power",
-        "state_topic": f"{mqtt_prefix}/state/power",
-        "payload_on": "ON",
-        "payload_off": "OFF",
-        "availability_topic": f"{mqtt_prefix}/status",
-        "device": cfg_presence["device"]
-    }
-    _emit(f"homeassistant/binary_sensor/{device_id}_presence/config", json.dumps(cfg_presence))
-    _emit(f"homeassistant/sensor/{device_id}_rssi/config", json.dumps(cfg_rssi))
-    _emit(f"homeassistant/switch/{device_id}_power/config", json.dumps(cfg_power))
+    # Discovery is published by facade.attach_mqtt(). Avoid duplicates here.
 
 
 def turn_on_bb8():
     logger.info("[BB-8] Scanning for device...")
+    # Lazy import to localize BLE/Sphero dependencies
+    from spherov2.scanner import find_toys
+    from spherov2.toy.bb8 import BB8
+    from spherov2.adapter.bleak_adapter import BleakAdapter
+    from spherov2.sphero_edu import SpheroEduAPI
+    from spherov2.types import Color
     devices = find_toys()
     for toy in devices:
         if isinstance(toy, BB8):
@@ -207,6 +177,11 @@ def turn_on_bb8():
 
 def turn_off_bb8():
     logger.info("[BB-8] Scanning for device to sleep...")
+    # Lazy import to localize BLE/Sphero dependencies
+    from spherov2.scanner import find_toys
+    from spherov2.toy.bb8 import BB8
+    from spherov2.adapter.bleak_adapter import BleakAdapter
+    from spherov2.commands.core import IntervalOptions
     devices = find_toys()
     for toy in devices:
         if isinstance(toy, BB8):
@@ -220,24 +195,21 @@ def turn_off_bb8():
 
 
 def main():
-    # Obtain gateway from config/env or instantiate default
-    ble_adapter = os.environ.get("BLE_ADAPTER", "hci0")
-    gateway = BleGateway(mode="bleak", adapter=ble_adapter)
-    mqtt_host = os.environ.get("MQTT_HOST", "localhost")
-    mqtt_port = int(os.environ.get("MQTT_PORT", "1883"))
-    mqtt_topic = os.environ.get("MQTT_TOPIC", "bb8/command/#")
-    mqtt_user = os.environ.get("MQTT_USER")
-    mqtt_password = os.environ.get("MQTT_PASSWORD")
-    status_topic = os.environ.get("STATUS_TOPIC", "bb8/status")
+    # Dynamic config lookups
+    mqtt_host = CFG.get("MQTT_HOST", "localhost")
+    mqtt_port = int(CFG.get("MQTT_PORT", 1883))
+    mqtt_topic = f"{CFG.get('MQTT_BASE', 'bb8')}/command/#"
+    username = CFG.get("MQTT_USERNAME", "mqtt_bb8")
+    password = CFG.get("MQTT_PASSWORD", None)
+    status_topic = f"{CFG.get('MQTT_BASE', 'bb8')}/status"
 
     start_mqtt_dispatcher(
         mqtt_host=mqtt_host,
         mqtt_port=mqtt_port,
         mqtt_topic=mqtt_topic,
-        mqtt_user=mqtt_user,
-        mqtt_password=mqtt_password,
+        username=username,
+        password=password,
         status_topic=status_topic,
-        gateway=gateway,  # Pass gateway explicitly
     )
 
 

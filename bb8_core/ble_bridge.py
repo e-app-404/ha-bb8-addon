@@ -1,41 +1,36 @@
-#
+from __future__ import annotations
+from .addon_config import load_config
+CFG, SRC = load_config()
+
 """
 ble_bridge.py
 
 Orchestrates BLE operations for BB-8, manages device connection, and exposes diagnostics for Home Assistant add-on integration.
 """
-# Extracted from legacy launch_bb8.py (CLI/config removed)
-
-from __future__ import annotations
 
 from typing import Optional, Any, List, Tuple
-import contextlib
-import re
 import asyncio
 import importlib.metadata
 import json
-import logging
 import os
 import time
 
-from bleak import BleakScanner, BleakClient
+from bleak import BleakClient
 from bleak.exc import BleakCharacteristicNotFoundError
 import paho.mqtt.publish as publish
-
-from bb8_core.controller import BB8Controller
-from bb8_core.ble_gateway import BleGateway
-from bb8_core.logging_setup import logger
+from .logging_setup import logger
 from spherov2.adapter.bleak_adapter import BleakAdapter
 from spherov2.commands.core import IntervalOptions
-from spherov2.commands.sphero import RollModes, ReverseFlags
 from spherov2.scanner import find_toys
 from spherov2.toy.bb8 import BB8
 
 from .ble_utils import resolve_services
 from .core import Core
 
-BB8_NAME = os.environ.get("BB8_NAME", "BB-8")
-BB8_MAC = os.environ.get("BB8_MAC", "B8:17:C2:A8:ED:45")
+
+# Use config for device name and MAC
+BB8_NAME = CFG.get("BB8_NAME", "BB-8")
+BB8_MAC = CFG.get("BB8_MAC", "B8:17:C2:A8:ED:45")
 
 try:
     bleak_version = importlib.metadata.version("bleak")
@@ -48,7 +43,218 @@ except Exception:
 logger.info({"event": "version_probe", "bleak": bleak_version, "spherov2": spherov2_version})
 
 class BLEBridge:
+    # --------- Extended shims (safe no-ops until wired) ---------
+    def set_heading(self, degrees: int) -> None:
+        try:
+            v = max(0, min(359, int(degrees)))
+            # TODO: implement via spherov2 API (orientation)
+            logger.info({"event": "ble_heading_set", "degrees": v})
+        except Exception as e:
+            logger.error({"event": "ble_heading_error", "error": repr(e)})
+
+    def set_speed(self, speed: int) -> None:
+        try:
+            v = max(0, min(255, int(speed)))
+            # TODO: store/apply speed to drive profiles
+            logger.info({"event": "ble_speed_set", "speed": v})
+        except Exception as e:
+            logger.error({"event": "ble_speed_error", "error": repr(e)})
+
+    def drive(self, heading: int, speed: int) -> None:
+        """Placeholder drive action; replace with timed roll when wired."""
+        try:
+            logger.info({"event": "ble_drive", "heading": int(heading), "speed": int(speed)})
+            # TODO: spherov2 roll for a short burst
+        except Exception as e:
+            logger.error({"event": "ble_drive_error", "error": repr(e)})
+    # =======================
+    # Public handler surface
+    # =======================
+    def power(self, on: bool) -> None:
+        """High-level power shim: ON -> connect(); OFF -> sleep(None)."""
+        try:
+            if on:
+                self.connect()
+            else:
+                self.sleep(None)
+        except Exception as e:
+            logger.error({"event": "ble_power_error", "on": on, "error": repr(e)})
+
+    def stop(self) -> None:
+        """Halt motion; safe no-op if not connected."""
+        with self._lock:
+            try:
+                if not getattr(self, "_toy", None):
+                    logger.info({"event": "ble_stop_noop", "reason": "toy_not_connected"})
+                    return
+                # TODO: implement real stop via spherov2
+                logger.info({"event": "ble_stop"})
+            except Exception as e:
+                logger.error({"event": "ble_stop_error", "error": repr(e)})
+
+    def set_led_off(self) -> None:
+        """Turn off LEDs."""
+        self.set_led_rgb(0, 0, 0)
+
+    def set_led_rgb(self, r: int, g: int, b: int) -> None:
+        """Set LED color; clamps inputs; safe no-op if not connected."""
+        r = max(0, min(255, int(r))); g = max(0, min(255, int(g))); b = max(0, min(255, int(b)))
+        with self._lock:
+            try:
+                if not getattr(self, "_toy", None):
+                    logger.info({"event": "ble_led_noop", "reason": "toy_not_connected", "r": r, "g": g, "b": b})
+                    return
+                # TODO: implement real LED set via spherov2
+                logger.info({"event": "ble_led_set", "r": r, "g": g, "b": b})
+            except Exception as e:
+                logger.error({"event": "ble_led_error", "r": r, "g": g, "b": b, "error": repr(e)})
+
+    def sleep(self, after_ms: Optional[int] = None) -> None:
+        """Put device to sleep; default immediate. Safe no-op if not connected."""
+        with self._lock:
+            try:
+                if not getattr(self, "_toy", None):
+                    logger.info({"event": "ble_sleep_noop", "reason": "toy_not_connected", "after_ms": after_ms})
+                    return
+                # TODO: implement real sleep via spherov2 (respect after_ms if desired)
+                logger.info({"event": "ble_sleep", "after_ms": after_ms})
+            except Exception as e:
+                logger.error({"event": "ble_sleep_error", "after_ms": after_ms, "error": repr(e)})
+
+    def is_connected(self) -> bool:
+        """Best-effort connection flag for telemetry/presence."""
+        return bool(getattr(self, "_connected", False))
+
+    def get_rssi(self) -> int:
+        """Return RSSI dBm if the gateway exposes it; else 0."""
+        try:
+            gw_get = getattr(self.gateway, "get_rssi", None)
+            if callable(gw_get):
+                val = gw_get(self.target_mac)
+                if isinstance(val, (int, float)):
+                    return int(val)
+        except Exception as e:
+            logger.debug({"event": "ble_get_rssi_error", "error": repr(e)})
+        return 0
+    def attach_mqtt(self, client, base_topic: str, qos: int = 1, retain: bool = True) -> None:
+        """
+        Wire MQTT subscriptions for commands and set up state publishers.
+        Expected topics (under base_topic):
+          - power:    {base}/power/set   (payload: "ON"|"OFF")    -> {base}/power/state
+          - stop:     {base}/stop/press  (payload: any)           -> {base}/stop/state ("pressed" then "idle")
+          - led:      {base}/led/set     (json: {"r":..,"g":..,"b":..} or {"hex":"#rrggbb"} or "OFF")
+                      -> {base}/led/state (json {"r":..,"g":..,"b":..} or {"state":"OFF"})
+        Telemetry publishers (you can call these from your periodic loop):
+          - presence: {base}/presence/state  ("ON"|"OFF")
+          - rssi:     {base}/rssi/state      (int dBm)
+        """
+        from .logging_setup import logger
+        import json
+        import threading
+        import time
+
+        self._mqtt = {"client": client, "base": base_topic, "qos": qos, "retain": retain}
+
+        def _pub(topic_suffix: str, payload, r: bool = retain):
+            t = f"{base_topic}/{topic_suffix}"
+            if isinstance(payload, (dict, list)):
+                payload = json.dumps(payload, separators=(",", ":"))
+            client.publish(t, payload=payload, qos=qos, retain=r)
+
+        # --- Command handlers ---
+        def _handle_power(_client, _userdata, msg):
+            try:
+                val = (msg.payload or b"").decode("utf-8").strip().upper()
+                if val == "ON":
+                    # Wake/connect
+                    if hasattr(self, "connect") and callable(self.connect):
+                        self.connect()
+                    _pub("power/state", "ON")
+                elif val == "OFF":
+                    # Sleep/disconnect
+                    if hasattr(self, "sleep") and callable(self.sleep):
+                        self.sleep()
+                    _pub("power/state", "OFF")
+                else:
+                    logger.warning({"event": "power_invalid_payload", "payload": val})
+            except Exception as e:
+                logger.error({"event": "power_handler_error", "error": repr(e)})
+
+        def _parse_color(raw: str):
+            raw = raw.strip()
+            if raw.upper() == "OFF":
+                return None
+            try:
+                obj = json.loads(raw)
+                if isinstance(obj, dict):
+                    if "hex" in obj and isinstance(obj["hex"], str):
+                        h = obj["hex"].lstrip("#")
+                        return {"r": int(h[0:2], 16), "g": int(h[2:4], 16), "b": int(h[4:6], 16)}
+                    r = int(obj.get("r", 0)); g = int(obj.get("g", 0)); b = int(obj.get("b", 0))
+                    return {"r": max(0, min(255, r)), "g": max(0, min(255, g)), "b": max(0, min(255, b))}
+            except Exception:
+                pass
+            return None
+
+        def _handle_led(_client, _userdata, msg):
+            try:
+                raw = (msg.payload or b"").decode("utf-8")
+                rgb = _parse_color(raw)
+                if rgb is None:
+                    # OFF
+                    if hasattr(self, "set_led_off"):
+                        self.set_led_off()
+                    _pub("led/state", {"state": "OFF"})
+                else:
+                    if hasattr(self, "set_led_rgb"):
+                        self.set_led_rgb(rgb["r"], rgb["g"], rgb["b"])
+                    _pub("led/state", {"r": rgb["r"], "g": rgb["g"], "b": rgb["b"]})
+            except Exception as e:
+                logger.error({"event": "led_handler_error", "error": repr(e)})
+
+        def _handle_stop(_client, _userdata, _msg):
+            try:
+                if hasattr(self, "stop"):
+                    self.stop()
+                _pub("stop/state", "pressed", r=False)
+                # auto-reset the momentary state to "idle" after a beat
+                def _reset():
+                    time.sleep(0.5)
+                    _pub("stop/state", "idle", r=False)
+                threading.Thread(target=_reset, daemon=True).start()
+            except Exception as e:
+                logger.error({"event": "stop_handler_error", "error": repr(e)})
+
+        # --- Subscriptions ---
+        client.message_callback_add(f"{base_topic}/power/set", _handle_power)
+        client.subscribe(f"{base_topic}/power/set", qos=qos)
+
+        client.message_callback_add(f"{base_topic}/led/set", _handle_led)
+        client.subscribe(f"{base_topic}/led/set", qos=qos)
+
+        client.message_callback_add(f"{base_topic}/stop/press", _handle_stop)
+        client.subscribe(f"{base_topic}/stop/press", qos=qos)
+
+        # --- Telemetry helpers (call from your polling loop) ---
+        def publish_presence(online: bool):
+            _pub("presence/state", "ON" if online else "OFF")
+
+        def publish_rssi(dbm: int):
+            _pub("rssi/state", str(int(dbm)))
+
+        # expose helpers
+        self.publish_presence = publish_presence  # type: ignore[attr-defined]
+        self.publish_rssi = publish_rssi          # type: ignore[attr-defined]
+        def attach_mqtt(self, client, base_topic: str, qos: int = 1, retain: bool = True) -> None:
+            """Deprecated: forwarding to facade to avoid transport concerns in bridge."""
+            from .facade import BB8Facade  # lazy import to avoid circular import
+            BB8Facade(self).attach_mqtt(client, base_topic, qos=qos, retain=retain)
     def __init__(self, gateway, target_mac: Optional[str] = None, mac: Optional[str] = None, **kwargs) -> None:
+        import threading
+        self._lock = threading.RLock()
+        self._connected: bool = False
+        self.publish_presence = None
+        self.publish_rssi = None
         self.gateway = gateway
         self.target_mac: Optional[str] = target_mac or mac
         if not self.target_mac:
@@ -259,7 +465,9 @@ def bb8_power_off_sequence():
 
 def publish_bb8_error(msg):
     try:
-        publish.single("bb8/state/error", msg, hostname=os.environ.get("MQTT_BROKER", "core-mosquitto"))
+        broker = CFG.get("MQTT_HOST", "localhost")
+        topic_prefix = CFG.get("MQTT_BASE", "bb8")
+        publish.single(f"{topic_prefix}/state/error", msg, hostname=broker)
     except Exception as e:
         logger.error(f"[BB-8][ERROR] Failed to publish error to MQTT: {e}")
 
@@ -285,7 +493,8 @@ def ble_command_with_retry(cmd_func, max_attempts=4, initial_cooldown=3, *args, 
 
 def publish_discovery(topic, payload):
     try:
-        publish.single(topic, json.dumps(payload), hostname=os.environ.get("MQTT_BROKER", "core-mosquitto"))
+        broker = CFG.get("MQTT_HOST", "localhost")
+        publish.single(topic, json.dumps(payload), hostname=broker)
     except Exception as e:
         logger.error(f"[BB-8][ERROR] Failed to publish discovery to MQTT: {e}")
 
@@ -316,79 +525,81 @@ async def connect_bb8_with_retry(address, max_attempts=5, retry_delay=3, adapter
 
 def register_bb8_entities(bb8_mac):
     base_device = {
-        "identifiers": [f"bb8_{bb8_mac.replace(':','')}"] ,
-        "name": "Sphero BB-8",
-        "model": "BB-8",
+        "identifiers": [f"{CFG.get('MQTT_BASE', 'bb8')}_{bb8_mac.replace(':','')}"] ,
+        "name": BB8_NAME,
+        "model": BB8_NAME,
         "manufacturer": "Sphero"
     }
+    ha_disc = CFG.get("HA_DISCOVERY_TOPIC", "homeassistant")
+    topic_prefix = CFG.get("MQTT_BASE", "bb8")
     publish_discovery(
-        "homeassistant/switch/bb8_power/config",
+        f"{ha_disc}/switch/{topic_prefix}_power/config",
         {
-            "name": "BB-8 Power",
-            "unique_id": "bb8_power_switch",
-            "command_topic": "bb8/command/power",
-            "state_topic": "bb8/state/power",
+            "name": f"{BB8_NAME} Power",
+            "unique_id": f"{topic_prefix}_power_switch",
+            "command_topic": f"{topic_prefix}/command/power",
+            "state_topic": f"{topic_prefix}/state/power",
             "payload_on": "ON",
             "payload_off": "OFF",
             "device": base_device,
         }
     )
     publish_discovery(
-        "homeassistant/light/bb8_led/config",
+        f"{ha_disc}/light/{topic_prefix}_led/config",
         {
-            "name": "BB-8 LED",
-            "unique_id": "bb8_led",
-            "command_topic": "bb8/command",
+            "name": f"{BB8_NAME} LED",
+            "unique_id": f"{topic_prefix}_led",
+            "command_topic": f"{topic_prefix}/command",
             "schema": "json",
             "rgb_command_template": "{{ {'command': 'set_led', 'r': red, 'g': green, 'b': blue} | tojson }}",
             "device": base_device,
         }
     )
     publish_discovery(
-        "homeassistant/button/bb8_roll/config",
+        f"{ha_disc}/button/{topic_prefix}_roll/config",
         {
-            "name": "BB-8 Roll",
-            "unique_id": "bb8_roll",
-            "command_topic": "bb8/command",
+            "name": f"{BB8_NAME} Roll",
+            "unique_id": f"{topic_prefix}_roll",
+            "command_topic": f"{topic_prefix}/command",
             "payload_press": '{"command": "roll", "heading": 0, "speed": 50}',
             "device": base_device,
         }
     )
     publish_discovery(
-        "homeassistant/button/bb8_stop/config",
+        f"{ha_disc}/button/{topic_prefix}_stop/config",
         {
-            "name": "BB-8 Stop",
-            "unique_id": "bb8_stop",
-            "command_topic": "bb8/command",
+            "name": f"{BB8_NAME} Stop",
+            "unique_id": f"{topic_prefix}_stop",
+            "command_topic": f"{topic_prefix}/command",
             "payload_press": '{"command": "stop"}',
             "device": base_device,
         }
     )
     publish_discovery(
-        "homeassistant/sensor/bb8_heartbeat/config",
+        f"{ha_disc}/sensor/{topic_prefix}_heartbeat/config",
         {
-            "name": "BB-8 Heartbeat",
-            "unique_id": "bb8_heartbeat",
-            "state_topic": "bb8/state/heartbeat",
+            "name": f"{BB8_NAME} Heartbeat",
+            "unique_id": f"{topic_prefix}_heartbeat",
+            "state_topic": f"{topic_prefix}/state/heartbeat",
             "device": base_device,
         }
     )
     publish_discovery(
-        "homeassistant/sensor/bb8_error/config",
+        f"{ha_disc}/sensor/{topic_prefix}_error/config",
         {
-            "name": "BB-8 Error State",
-            "unique_id": "bb8_error",
-            "state_topic": "bb8/state/error",
+            "name": f"{BB8_NAME} Error State",
+            "unique_id": f"{topic_prefix}_error",
+            "state_topic": f"{topic_prefix}/state/error",
             "device": base_device,
         }
     )
     # MQTT Discovery for presence
     publish_discovery(
-        "homeassistant/binary_sensor/bb8_presence/config",
+        f"{ha_disc}/binary_sensor/{topic_prefix}_presence/config",
         {
-            "name": "BB-8 Presence",
-            "unique_id": "bb8_presence_001",
-            "state_topic": "bb8/sensor/presence",
+            "name": f"{BB8_NAME} Presence",
+            "unique_id": f"{topic_prefix}_presence_001",
+            "state_topic": f"{topic_prefix}/sensor/presence",
             "payload_on": "on",
             "payload_off": "off",
             "device_class": "connectivity",
@@ -397,11 +608,11 @@ def register_bb8_entities(bb8_mac):
     )
     # MQTT Discovery for RSSI
     publish_discovery(
-        "homeassistant/sensor/bb8_rssi/config",
+        f"{ha_disc}/sensor/{topic_prefix}_rssi/config",
         {
-            "name": "BB-8 RSSI",
-            "unique_id": "bb8_rssi_001",
-            "state_topic": "bb8/sensor/rssi",
+            "name": f"{BB8_NAME} RSSI",
+            "unique_id": f"{topic_prefix}_rssi_001",
+            "state_topic": f"{topic_prefix}/sensor/rssi",
             "unit_of_measurement": "dBm",
             "device": base_device,
         }
