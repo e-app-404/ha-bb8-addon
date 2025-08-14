@@ -1,0 +1,59 @@
+rehydration_seed:
+  session:
+    label: "BB8-AddOn–Extended-Profile–2025-08-11"
+    trace_id: "sess-147d9f1d"
+    project: "beep_boop_bb8"
+    version: "2025.08.12-snapshot"
+  bootloader_sequence:
+    - scan_project_files
+    - validate_yaml_parse
+    - load_protocols_by_priority
+    - activate_oversight_mode
+  required_documents:
+    - document_id: system_instruction
+      filename: /mnt/data/system_instruction.yaml
+      sha256: f6d8c80069c9533f8440c17cf36ece15e3ba88e1421153e01322e366705de77c
+    - document_id: persona_core
+      filename: /mnt/data/2025-06-18_strategos_v1.3.yaml
+      sha256: 6c290183fb5fc56b30297d2679321cadcf994681bc82ac6a0052b1d7453155dc
+  relevant_documents:
+    - document_id: persona_expansion
+      filename: /mnt/data/20250803_xp_strategos_v1.6.yaml
+      sha256: 8d148705f7f2cbb6af1bdf4e469fdaf25eb4703699c429050af6b6b0cc971fee
+    - document_id: dual_mode_xp
+      filename: /mnt/data/dual_mode_xp_v1_250615.yaml
+      sha256: dad9253ee974f379f903d5244237d804da81b59f5608966ddf77a9587067cb98
+    - document_id: project_snapshot
+      filename: /mnt/data/bb8_snapshot_2025.8.12.tar.gz
+      sha256: 147d9f1d1531783f5540a43ee5052ba5da63697fc1a5ce750e208c9ea6cc1a7c
+    - document_id: patch_plan_delta
+      filename: /mnt/data/pr_2025-08-12-a.delta
+      sha256: 96d8b5407a44860f45bac78da296eada987be0c10d6e4368f1ed761891bc852a
+    - document_id: facade_mapping
+      filename: repo:/beep_boop_bb8/bb8_core/facade_mapping_table.json
+    - document_id: entity_set
+      filename: repo:/beep_boop_bb8/bb8_core/entity_set.json
+    - document_id: stp4_collector
+      filename: repo:/beep_boop_bb8/ops/evidence/collect_stp4.py
+    - document_id: makefile
+      filename: repo:/beep_boop_bb8/Makefile
+  governance:
+    evidence_tolerance_level: 0
+    confidence_minimum: 0.85
+    binary_acceptance: true
+  strategic_context:
+    mode: "extended_discovery"
+    priorities:
+      [
+        "telemetry_loop",
+        "spherov2_actions",
+        "stp4_evidence",
+        "multi_arch_release",
+      ]
+  next_actions:
+    - "Review & adapt pr_2025-08-12-a.delta against latest tree"
+    - "Implement telemetry loop: presence/RSSI periodic publish"
+    - "Wire spherov2 LED + short roll; guard all BLE ops"
+    - "Capture ha_mqtt_trace_snapshot with per-entity echo <= 2s"
+    - "Run: make evidence-stp4 MQTT_HOST=<broker> MQTT_USER=<user> MQTT_PASSWORD=<pwd> MQTT_BASE=bb8"
+    - "Store resulting reports/stp4_*/evidence_manifest.json and ha_mqtt_trace_snapshot.json as artifacts"

@@ -1,2 +1,8 @@
-#!/bin/sh
-exec /app/run.sh
+#!/usr/bin/with-contenv bash
+set -euo pipefail
+
+# Always start from /app so bb8_core is importable
+cd /app
+
+# PATH was set in Dockerfile to include /opt/venv/bin
+exec /bin/bash /app/run.sh

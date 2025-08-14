@@ -3,7 +3,7 @@ import time
 import json
 from unittest.mock import MagicMock, patch
 import paho.mqtt.client as mqtt # pyright: ignore[reportMissingImports]
-from bb8_core.logging_setup import logger
+from .logging_setup import logger
 
 # Test parameters
 MQTT_HOST = "test.mosquitto.org"

@@ -1,9 +1,10 @@
-# ╔═════════════════════════════════════════════════════════════════════╗
-#   BB-8 BLE GATT Scanner • Prints all Services and Characteristics   #
-#   Requirements: bleak==0.20+, Python 3.8+                           #
-#   Usage: python3 scan_bb8_gatt.py --adapter hci0 [--bb8_name BB8]   #
-# ╚═════════════════════════════════════════════════════════════════════╝
-
+"""
+╔═════════════════════════════════════════════════════════════════════╗
+  BB-8 BLE GATT Scanner • Prints all Services and Characteristics   #
+  Requirements: bleak==0.20+, Python 3.8+                           #
+  Usage: python3 scan_bb8_gatt.py --adapter hci0 [--bb8_name BB8]   #
+╚═════════════════════════════════════════════════════════════════════╝
+"""
 import argparse
 import asyncio
 from bleak import BleakScanner, BleakClient

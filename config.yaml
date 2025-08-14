@@ -1,7 +1,7 @@
 name: "BB-8 BLE/MQTT Add-on"
 description: "Control Sphero BB-8 via BLE with MQTT discovery"
-version: "2025.8.5"
-slug: "bb8_addon"
+version: "2025.08.15"
+slug: "beep_boop_bb8"
 startup: application
 init: false
 arch:
@@ -10,41 +10,56 @@ arch:
   - armhf
   - armv7
 boot: auto
-privileged:
-  - SYS_RAWIO
-  - NET_ADMIN
-  - SYS_ADMIN
 host_dbus: true
+udev: true
+apparmor: false
+privileged:
+  - NET_ADMIN
 uart: true
 devices:
   - /dev/hci0
 options:
-  # Optional override. When empty/omitted, add-on will auto-discover.
-  bb8_mac: ""
-  # BLE discovery window in seconds (used when override/cache absent or invalid)
-  scan_seconds: 5
-  # If an override or cached MAC fails to connect, do a one-time scan and retry
-  rescan_on_fail: true
-  # Hours before a cached MAC is considered stale; 0 disables TTL
-  cache_ttl_hours: 720
-schema:
-  bb8_mac:
-    type: str
-    required: false
-    default: ""
-  scan_seconds:
-    type: int
-    required: false
-    default: 5
-  rescan_on_fail:
-    type: bool
-    required: false
-    default: true
-  cache_ttl_hours:
-    type: int
-    required: false
-    default: 720
+  # --- Telemetry & Logging ---
+  enable_bridge_telemetry: false
+  discovery_retain: false
+  log_path: "/addons/local/beep_boop_bb8/reports/ha_bb8_addon.log"
 
-privileges:
-  - NET_ADMIN
-  - SYS_ADMIN
+  # --- Device Identification ---
+  bb8_mac: "ED:ED:87:D7:27:50"
+  bb8_name: "S33 BB84 LE"
+  scan_seconds: 5
+  rescan_on_fail: true
+  cache_ttl_hours: 24
+  ble_adapter: hci0
+
+  # --- MQTT Configuration ---
+  mqtt_broker: 192.168.0.129
+  mqtt_port: 1883
+  mqtt_username: mqtt_bb8
+  mqtt_password: mqtt_bb8
+  mqtt_topic_prefix: bb8
+  ha_discovery_topic: homeassistant
+  mqtt_tls: false
+
+schema:
+  # --- Telemetry & Logging ---
+  enable_bridge_telemetry: bool
+  discovery_retain: bool
+  log_path: "str?"
+
+  # --- Device Identification ---
+  bb8_mac: "str"
+  bb8_name: "str?"
+  scan_seconds: "int?"
+  rescan_on_fail: "bool?"
+  cache_ttl_hours: "int?"
+  ble_adapter: "str?"
+
+  # --- MQTT Configuration ---
+  mqtt_broker: "str"
+  mqtt_port: "int?"
+  mqtt_username: "str?"
+  mqtt_password: "str?"
+  mqtt_topic_prefix: "str"
+  ha_discovery_topic: "str"
+  mqtt_tls: "bool?"

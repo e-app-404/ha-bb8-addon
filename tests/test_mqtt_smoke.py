@@ -31,13 +31,20 @@ def test_discovery_and_dispatcher_smoke():
     device_id = "testbb8"
     name = "Test BB-8"
     # Publish discovery
-    publish_discovery(mqtt, device_id, name, log)
+    publish_discovery(mqtt, device_id, name)
     assert any("discovery: published" in e[1] for e in log.entries)
     # Start dispatcher
     from bb8_core.facade import Bb8Facade, Rgb
-    from bb8_core.dispatcher import Bb8Dispatcher
-    disp = Bb8Dispatcher(FakeToy(), mqtt, device_id, log)
-    disp.start()
+        # Use start_mqtt_dispatcher with minimal valid arguments for smoke test
+    start_mqtt_dispatcher(
+            mqtt_host="localhost",
+            mqtt_port=1883,
+            mqtt_topic="bb8/command/#",
+            username=None,
+            password=None,
+            controller=None
+        )
+    # disp.start() removed: no dispatcher object in use
     # Simulate LED set
     mqtt.trigger(f"bb8/{device_id}/cmd/led/set", json.dumps({"r": 1, "g": 2, "b": 3}))
     # Simulate sleep
