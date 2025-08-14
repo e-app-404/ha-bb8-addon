@@ -14,7 +14,7 @@ c.username_pw_set(USER, PWD)
 
 def pub(topic, payload, qos=1, retain=False):
     if isinstance(payload,(dict,list)):
-        payload=json.dumps(payload, ensure_ascii=False)
+        payload=json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     c.publish(topic, payload, qos=qos, retain=retain)
 
 def on_msg(_c,_u,m):
@@ -24,30 +24,37 @@ def on_msg(_c,_u,m):
     if t==f"{BASE}/power/set":
         v=s.upper()
         if v in ("ON","OFF"):
-            pub(f"{BASE}/power/state", {"value":v, "source":"facade"}, qos=1, retain=True)
+            pub(f"{BASE}/power/state", {"value":v, "source":"facade"}, qos=1, retain=False)
     elif t==f"{BASE}/stop/press":
-        pub(f"{BASE}/stop/state","pressed", qos=1, retain=False)
-        pub(f"{BASE}/stop/state","idle", qos=1, retain=False)
+        pub(f"{BASE}/stop/state", "pressed", qos=1, retain=False)
+        pub(f"{BASE}/stop/state", "idle", qos=1, retain=False)
     elif t==f"{BASE}/led/set":
         try:
             d=json.loads(s) if s else {}
             if "hex" in d:
                 hx=d["hex"].lstrip("#")
                 d={"r":int(hx[0:2],16),"g":int(hx[2:4],16),"b":int(hx[4:6],16)}
-            elif {"r","g","b"}.issubset(d): d={"r":int(d["r"]), "g":int(d["g"]), "b":int(d["b"])}
-            else: return
-            pub(f"{BASE}/led/state", d, qos=1, retain=True)
-        except: pass
+            elif {"r","g","b"}.issubset(d):
+                d={"r":int(d["r"]), "g":int(d["g"]), "b":int(d["b"])}
+            else:
+                return
+            # Publish LED state as compact JSON (no spaces)
+            payload=json.dumps(d, separators=(",", ":"), ensure_ascii=False)
+            c.publish(f"{BASE}/led/state", payload, qos=1, retain=False)
+        except Exception as e:
+            pass
     elif t==f"{BASE}/sleep/press":
-        pub(f"{BASE}/sleep/state","pressed", qos=1, retain=False)
-        pub(f"{BASE}/sleep/state","idle", qos=1, retain=False)
+        pub(f"{BASE}/sleep/state", "pressed", qos=1, retain=False)
+        pub(f"{BASE}/sleep/state", "idle", qos=1, retain=False)
     elif t==f"{BASE}/heading/set":
-        pub(f"{BASE}/heading/state",s, qos=1, retain=True)
+        # Always publish a fresh echo for heading after each command as raw string
+        c.publish(f"{BASE}/heading/state", s, qos=1, retain=False)
     elif t==f"{BASE}/speed/set":
-        pub(f"{BASE}/speed/state",s, qos=1, retain=True)
+        # Always publish a fresh echo for speed after each command as raw string
+        c.publish(f"{BASE}/speed/state", s, qos=1, retain=False)
     elif t==f"{BASE}/drive/press":
-        pub(f"{BASE}/drive/state","pressed", qos=1, retain=False)
-        pub(f"{BASE}/drive/state","idle", qos=1, retain=False)
+        pub(f"{BASE}/drive/state", "pressed", qos=1, retain=False)
+        pub(f"{BASE}/drive/state", "idle", qos=1, retain=False)
 
 c.on_message = on_msg
 c.connect(HOST, 1883, 60)

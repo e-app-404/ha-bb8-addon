@@ -17,6 +17,7 @@ evidence-stp4:
 		--host "$(MQTT_HOST)" --port $(MQTT_PORT) \
 		--user "$(MQTT_USER)" --password "$(MQTT_PASSWORD)" \
 		--base "$(MQTT_BASE)" \
+		--timeout 3.0 \
 		--out "reports/stp4_$(STAMP)"
 
 evidence-clean:

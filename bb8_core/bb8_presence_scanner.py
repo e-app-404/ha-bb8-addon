@@ -523,7 +523,7 @@ def publish_discovery(client: mqtt.Client, mac: str, dbus_path: str, model: str 
     presence_disc = {
         "name": f"{name_hint} Presence",
         "unique_id": f"bb8_presence_{uid_suffix}",
-        "state_topic": f"{base}/sensor/presence",
+        "state_topic": f"{base}/presence/state",
         "payload_on": "on",
         "payload_off": "off",
         "device_class": "connectivity",
@@ -533,7 +533,7 @@ def publish_discovery(client: mqtt.Client, mac: str, dbus_path: str, model: str 
     rssi_disc = {
         "name": f"{name_hint} RSSI",
         "unique_id": f"bb8_rssi_{uid_suffix}",
-        "state_topic": f"{base}/sensor/rssi",
+        "state_topic": f"{base}/rssi/state",
         "unit_of_measurement": "dBm",
         "state_class": "measurement",
         "device_class": "signal_strength",

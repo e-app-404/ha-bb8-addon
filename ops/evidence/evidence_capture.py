@@ -2,6 +2,9 @@ from __future__ import annotations
 import json, time, threading, queue, os
 from typing import Any, Dict, Optional
 
+"""
+Your collector already honors REQUIRE_DEVICE_ECHO with default requirement ON (anything not "device" becomes facade_only). That logic is sound—keep it. Use REQUIRE_DEVICE_ECHO=0 while the shim stands in, then flip to 1 for real hardware acceptance. (See the env/logic in record(...).)
+"""
 class EvidenceRecorder:
 	"""
 	Subscribes to command and state topics and records round-trip evidence.

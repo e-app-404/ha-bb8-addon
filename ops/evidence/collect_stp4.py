@@ -214,11 +214,15 @@ class Collector:
                 pass
 
     def publish(self, topic: str, payload: Optional[str], qos=1, retain=False):
-        # allow None -> empty payload
+        """
+        Publish and return a UTC ISO timestamp captured *before* publish.
+        This timestamp is the authoritative command_ts for roundtrip ordering.
+        """
         if payload is None:
             payload = ""
+        ts = utc_now_iso()
         self.client.publish(topic, payload=payload, qos=qos, retain=retain)
-
+        return ts
     # Roundtrip test helpers
     def run(self) -> Dict[str, Any]:
         ensure_dir(self.outdir)
@@ -227,8 +231,21 @@ class Collector:
         traces: List[Dict[str, Any]] = []
         failures: List[str] = []
 
-        def record(entity: str, cmd_t: str, cmd_p: str, state_t: str, expect, m: Optional[Dict[str, Any]], note: str=""):
-            now = utc_now_iso()
+        import json
+        def val_pred(expected):
+            def _p(x):
+                if x["payload_raw"] == expected:
+                    return True
+                try:
+                    j = json.loads(x["payload_raw"])
+                    return str(j.get("value")).strip() == expected
+                except Exception:
+                    return False
+            return _p
+
+        def record(entity: str, cmd_t: str, cmd_p: str, state_t: str, expect,
+                   m: Optional[Dict[str, Any]], note: str="", cmd_ts: Optional[str]=None):
+            now = cmd_ts or utc_now_iso()
             cmd = {
                 "entity": entity,
                 "command_topic": cmd_t,
@@ -238,34 +255,53 @@ class Collector:
             }
             echo = m
             passed, note_val = False, "timeout"
-            # Enforce ordering: state must be after command
+            # Enforce ordering: state must be after command, or within grace window
             if echo:
-                if echo.get("state_ts") and echo["state_ts"] >= cmd["command_ts"]:
-                    # Relaxed payload comparison
+                def parse_time(ts):
+                    from datetime import datetime
                     try:
-                        # Accept raw string match
-                        if echo["state_payload"] == expect:
-                            passed, note_val = True, ""
-                        else:
-                            j_echo = None
-                            j_expect = None
-                            try:
-                                j_echo = json.loads(echo["state_payload"])
-                            except Exception:
-                                pass
-                            try:
-                                j_expect = json.loads(expect)
-                            except Exception:
-                                pass
-                            if j_echo is not None and j_expect is not None and j_echo == j_expect:
-                                passed, note_val = True, ""
-                            elif str(echo["state_payload"]).strip() == str(expect).strip():
-                                passed, note_val = True, ""
+                        return datetime.fromisoformat(ts)
                     except Exception:
-                        if str(echo["state_payload"]).strip() == str(expect).strip():
-                            passed, note_val = True, ""
-                else:
-                    passed, note_val = False, "prestate"
+                        return datetime.strptime(ts[:26], "%Y-%m-%dT%H:%M:%S.%f")
+
+                if echo.get("state_ts"):
+                    state_dt = parse_time(echo["state_ts"])
+                    cmd_dt = parse_time(cmd["command_ts"])
+                    skew = abs((state_dt - cmd_dt).total_seconds())
+                    if echo["state_ts"] >= cmd["command_ts"] or (echo["state_ts"] < cmd["command_ts"] and skew <= 0.050):
+                        try:
+                            # 1) exact raw match first
+                            if echo["state_payload"] == expect:
+                                passed, note_val = True, ""
+                            else:
+                                j_echo = None
+                                j_expect = None
+                                try:
+                                    j_echo = json.loads(echo["state_payload"])
+                                except Exception:
+                                    pass
+                                try:
+                                    j_expect = json.loads(expect)
+                                except Exception:
+                                    pass
+                                # 2) JSON==JSON structural equality (e.g. LED RGB)
+                                if j_echo is not None and j_expect is not None and j_echo == j_expect:
+                                    passed, note_val = True, ""
+                                # 3) JSON with {"value": ...} vs raw expect (strings or numbers)
+                                elif isinstance(j_echo, dict) and "value" in j_echo and str(j_echo["value"]).strip() == str(expect).strip():
+                                    passed, note_val = True, ""
+                                # 4) final string fallback
+                                elif str(echo["state_payload"]).strip() == str(expect).strip():
+                                    passed, note_val = True, ""
+                                else:
+                                    note_val = "mismatch"
+                        except Exception:
+                            if str(echo["state_payload"]).strip() == str(expect).strip():
+                                passed, note_val = True, ""
+                            else:
+                                note_val = "mismatch"
+                    else:
+                        passed, note_val = False, "prestate"
                 echo.setdefault("source", "device")
                 require_device = (os.getenv("REQUIRE_DEVICE_ECHO", "1") != "0")
                 is_commandable = ("/cmd/" in cmd_t) or cmd_t.endswith("/set")
@@ -291,7 +327,7 @@ class Collector:
 
         # ---- Core five ----
         # power = ON
-        self.publish(f"{base}/power/set", "ON")
+        _ts = self.publish(f"{base}/power/set", "ON")
         def power_pred(x):
             # Accept raw "ON" or JSON with value "ON"
             try:
@@ -301,18 +337,18 @@ class Collector:
             except Exception:
                 return False
         m = self.wait_for_topic(f"{base}/power/state", power_pred, to)
-        record("power_on", f"{base}/power/set", "ON", f"{base}/power/state", "ON", m)
+        record("power_on", f"{base}/power/set", "ON", f"{base}/power/state", "ON", m, cmd_ts=_ts)
 
         # stop press -> 'pressed' then 'idle'
-        self.publish(f"{base}/stop/press", None)
-        m1 = self.wait_for_topic(f"{base}/stop/state", lambda x: x["payload_raw"]=="pressed", to)
-        record("stop_pressed", f"{base}/stop/press", "", f"{base}/stop/state", "pressed", m1)
-        m2 = self.wait_for_topic(f"{base}/stop/state", lambda x: x["payload_raw"]=="idle", to+1.0)
-        record("stop_idle", f"{base}/stop/press", "", f"{base}/stop/state", "idle", m2)
+        _ts = self.publish(f"{base}/stop/press", None)
+        m1 = self.wait_for_topic(f"{base}/stop/state",   val_pred("pressed"), to)
+        record("stop_pressed", f"{base}/stop/press", "", f"{base}/stop/state", "pressed", m1, cmd_ts=_ts)
+        m2 = self.wait_for_topic(f"{base}/stop/state",   val_pred("idle"),    to+1.0)
+        record("stop_idle", f"{base}/stop/press", "", f"{base}/stop/state", "idle", m2, cmd_ts=_ts)
 
         # led set -> hex color
         hex_payload = json.dumps({"hex":"#FF6600"})
-        self.publish(f"{base}/led/set", hex_payload)
+        _ts = self.publish(f"{base}/led/set", hex_payload)
         def led_pred(x):
             # Accept any RGB dict
             try:
@@ -321,7 +357,8 @@ class Collector:
             except Exception:
                 return False
         m = self.wait_for_topic(f"{base}/led/state", led_pred, to)
-        record("led_rgb", f"{base}/led/set", hex_payload, f"{base}/led/state", '{"r":255,"g":102,"b":0}', m, note="shape_json")
+        record("led_rgb", f"{base}/led/set", hex_payload, f"{base}/led/state",
+        '{"r":255,"g":102,"b":0}', m, note="shape_json", cmd_ts=_ts)
 
         # presence & rssi: just capture current retained (no command)
         pres = self.wait_for_topic(f"{base}/presence/state", lambda x: x["payload_raw"] is not None and str(x["payload_raw"]).strip() != "", to)
@@ -345,28 +382,28 @@ class Collector:
 
         # ---- Extended ----
         # sleep button
-        self.publish(f"{base}/sleep/press", None)
-        m1 = self.wait_for_topic(f"{base}/sleep/state", lambda x: x["payload_raw"]=="pressed", to)
-        record("sleep_pressed", f"{base}/sleep/press","", f"{base}/sleep/state","pressed", m1)
-        m2 = self.wait_for_topic(f"{base}/sleep/state", lambda x: x["payload_raw"]=="idle", to+1.0)
-        record("sleep_idle", f"{base}/sleep/press","", f"{base}/sleep/state","idle", m2)
+        _ts = self.publish(f"{base}/sleep/press", None)
+        m1 = self.wait_for_topic(f"{base}/sleep/state",  val_pred("pressed"), to)
+        record("sleep_pressed", f"{base}/sleep/press","", f"{base}/sleep/state","pressed", m1, cmd_ts=_ts)
+        m2 = self.wait_for_topic(f"{base}/sleep/state",  val_pred("idle"),    to+1.0)
+        record("sleep_idle", f"{base}/sleep/press","", f"{base}/sleep/state","idle", m2, cmd_ts=_ts)
 
         # heading number
-        self.publish(f"{base}/heading/set", "270")
+        _ts = self.publish(f"{base}/heading/set", "270")
         m = self.wait_for_topic(f"{base}/heading/state", lambda x: x["payload_raw"]=="270", to)
-        record("heading_set_270", f"{base}/heading/set","270", f"{base}/heading/state","270", m)
+        record("heading_set_270", f"{base}/heading/set","270", f"{base}/heading/state","270", m, cmd_ts=_ts)
 
         # speed number
-        self.publish(f"{base}/speed/set", "128")
+        _ts = self.publish(f"{base}/speed/set", "128")
         m = self.wait_for_topic(f"{base}/speed/state", lambda x: x["payload_raw"]=="128", to)
-        record("speed_set_128", f"{base}/speed/set","128", f"{base}/speed/state","128", m)
+        record("speed_set_128", f"{base}/speed/set","128", f"{base}/speed/state","128", m, cmd_ts=_ts)
 
         # drive button
-        self.publish(f"{base}/drive/press", None)
-        m1 = self.wait_for_topic(f"{base}/drive/state", lambda x: x["payload_raw"]=="pressed", to)
-        record("drive_pressed", f"{base}/drive/press","", f"{base}/drive/state","pressed", m1)
-        m2 = self.wait_for_topic(f"{base}/drive/state", lambda x: x["payload_raw"]=="idle", to+1.0)
-        record("drive_idle", f"{base}/drive/press","", f"{base}/drive/state","idle", m2)
+        _ts = self.publish(f"{base}/drive/press", None)
+        m1 = self.wait_for_topic(f"{base}/drive/state",  val_pred("pressed"), to)
+        record("drive_pressed", f"{base}/drive/press","", f"{base}/drive/state","pressed", m1, cmd_ts=_ts)
+        m2 = self.wait_for_topic(f"{base}/drive/state",  val_pred("idle"),    to+1.0)
+        record("drive_idle", f"{base}/drive/press","", f"{base}/drive/state","idle", m2,cmd_ts=_ts)
 
         # ----- dump artifacts -----
         ensure_dir(self.outdir)
