@@ -356,9 +356,6 @@ class BB8Facade:
                 pass
 
 
-
-
-
 def sleep(self) -> None:
     """Emit 5-step LED pattern for sleep; SINGLE emission path via `_emit_led`."""
     pattern = _sleep_led_pattern()
