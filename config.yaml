@@ -1,6 +1,6 @@
-name: "BB-8 BLE/MQTT Add-on"
-description: "Control Sphero BB-8 via BLE with MQTT discovery"
-version: "2025.08.15"
+name: "HA-BB-8"
+description: "Homeassistant Sphero BB-8 bluetooth integration using MQTT discovery"
+version: "2025.08.19"
 slug: "beep_boop_bb8"
 startup: application
 init: false
@@ -21,8 +21,16 @@ devices:
 options:
   # --- Telemetry & Logging ---
   enable_bridge_telemetry: false
+  cache_path: "/data/bb8_mac_cache.json"
+  cache_default_ttl_hours: 24
+  mqtt_client_id: "bb8_presence_scanner"
+  keepalive: 60
+  qos: 1
+  telemetry_interval_s: 20
+  bb8_scan_interval: 10
+  dispatcher_discovery_enabled: false
   discovery_retain: false
-  log_path: "/addons/local/beep_boop_bb8/reports/ha_bb8_addon.log"
+  log_path: "/Volumes/addons/local/beep_boop_bb8/reports/ha_bb8_addon.log"
 
   # --- Device Identification ---
   bb8_mac: "ED:ED:87:D7:27:50"
@@ -43,8 +51,16 @@ options:
 
 schema:
   # --- Telemetry & Logging ---
-  enable_bridge_telemetry: bool
-  discovery_retain: bool
+  enable_bridge_telemetry: "bool?"
+  cache_path: "str"
+  cache_default_ttl_hours: "int?"
+  mqtt_client_id: "str"
+  keepalive: "int?"
+  qos: "int?"
+  telemetry_interval_s: "int?"
+  bb8_scan_interval: "int?"
+  dispatcher_discovery_enabled: "bool?"
+  discovery_retain: "bool?"
   log_path: "str?"
 
   # --- Device Identification ---

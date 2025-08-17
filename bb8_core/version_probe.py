@@ -1,6 +1,8 @@
 # bb8_core/version_probe.py
 
-from importlib.metadata import version, PackageNotFoundError as E
+from importlib.metadata import PackageNotFoundError as E
+from importlib.metadata import version
+
 
 def probe():
     pkgs = ("bleak", "paho-mqtt", "spherov2")

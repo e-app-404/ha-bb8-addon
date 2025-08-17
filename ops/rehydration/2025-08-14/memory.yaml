@@ -1,0 +1,40 @@
+rehydration_memory:
+  last_valid_patch: "H3 (telemetry guards + bridge telemetry toggle + config provenance)"
+  last_changeset_landed: "strict-prep (shim gating, BLE loop thread, device echoes, types centralisation)"
+  last_decision_checkpoint: "DCP-STP4-STRICT-READY-2025-08-14"
+  clustered_entities:
+    list:
+      [
+        "bb8",
+        "bridge_controller",
+        "ble_link",
+        "ble_bridge",
+        "facade/shim",
+        "scanner",
+        "mqtt_client",
+        "home_assistant",
+        "evidence_collector",
+      ]
+    count: 9
+    aliases:
+      facade: ["shim"]
+      evidence_collector: ["collect_stp4.py"]
+  inclusion_coverage:
+    areas:
+      [
+        "roundtrip",
+        "schema",
+        "discovery (scoped to BB-8)",
+        "timeouts",
+        "ordering",
+        "payload shapes",
+      ]
+    status: "high (strict device-echo verification pending)"
+  semantic_summary: >
+    System operates on flat MQTT namespace (bb8/...), scanner owns discovery; strict acceptance
+    requires device-originated scalar echoes with source:'device' and LED as pure RGB JSON; BLE loop
+    runs on a dedicated thread with no get_event_loop warnings.
+  open_validation_loops:
+    - id: "STP4-STRICT-GRAD"
+      need: "Strict evidence run artifacts (manifest, trace, log)"
+      owner: "Strategos for binary acceptance"

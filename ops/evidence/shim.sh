@@ -1,6 +1,7 @@
 #!/bin/bash
+
 python3 - <<'PY'
-import json, os
+import json, os, sys
 import paho.mqtt.client as mqtt
 from paho.mqtt.client import CallbackAPIVersion
 
@@ -8,6 +9,11 @@ HOST=os.getenv("MQTT_HOST","192.168.0.129")
 USER=os.getenv("MQTT_USER","mqtt_bb8")
 PWD =os.getenv("MQTT_PASSWORD","mqtt_bb8")
 BASE=os.getenv("MQTT_BASE","bb8")
+REQUIRE_DEVICE_ECHO = os.getenv("REQUIRE_DEVICE_ECHO","1")
+
+if REQUIRE_DEVICE_ECHO == "1":
+    print("[shim] Disabled: REQUIRE_DEVICE_ECHO=1 (strict mode). No facade echoes will be published.", file=sys.stderr)
+    sys.exit(0)
 
 c = mqtt.Client(protocol=mqtt.MQTTv5, callback_api_version=CallbackAPIVersion.VERSION2)
 c.username_pw_set(USER, PWD)

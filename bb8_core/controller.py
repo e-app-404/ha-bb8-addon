@@ -15,16 +15,19 @@ Example
 >>> ctrl.roll(50, 0)
 >>> ctrl.stop()
 """
+
 import time
-from enum import Enum
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
-from .ble_gateway import BleGateway
+from enum import Enum
+from typing import Any, Dict, Optional
+
 from .logging_setup import logger
+
 
 class ControllerMode(Enum):
     HARDWARE = "hardware"
     OFFLINE = "offline"
+
 
 @dataclass
 class ControllerStatus:
@@ -37,8 +40,14 @@ class ControllerStatus:
     uptime: float = 0.0
     features_available: Optional[Dict[str, bool]] = None
 
+
 class BB8Controller:
-    def __init__(self, mode: ControllerMode = ControllerMode.HARDWARE, device=None, mqtt_handler=None):
+    def __init__(
+        self,
+        mode: ControllerMode = ControllerMode.HARDWARE,
+        device=None,
+        mqtt_handler=None,
+    ):
         """
         Initialize a BB8Controller instance.
 
@@ -64,10 +73,30 @@ class BB8Controller:
         self.device_connected = True if device is not None else False
         self.mqtt_handler = mqtt_handler
         self.telemetry = None
-        logger.debug({"event": "controller_init_debug", "mode": self.mode.value, "device": str(self.device), "mqtt_handler": str(self.mqtt_handler)})
-        logger.debug({"event": "controller_init_state", "device_connected": self.device_connected, "class": str(type(self))})
+        logger.debug(
+            {
+                "event": "controller_init_debug",
+                "mode": self.mode.value,
+                "device": str(self.device),
+                "mqtt_handler": str(self.mqtt_handler),
+            }
+        )
+        logger.debug(
+            {
+                "event": "controller_init_state",
+                "device_connected": self.device_connected,
+                "class": str(type(self)),
+            }
+        )
 
-    def roll(self, speed: int, heading: int, timeout: float = 2.0, roll_mode: int = 0, reverse_flag: bool = False) -> dict:
+    def roll(
+        self,
+        speed: int,
+        heading: int,
+        timeout: float = 2.0,
+        roll_mode: int = 0,
+        reverse_flag: bool = False,
+    ) -> dict:
         """
         Roll the BB-8 device at a given speed and heading.
 
@@ -90,26 +119,76 @@ class BB8Controller:
             Result dictionary with success, command, and result/error fields.
         """
         logger.info({"event": "controller_roll_start", "device": str(self.device)})
-        logger.debug({"event": "controller_roll_args", "speed": speed, "heading": heading, "timeout": timeout, "roll_mode": roll_mode, "reverse_flag": reverse_flag})
+        logger.debug(
+            {
+                "event": "controller_roll_args",
+                "speed": speed,
+                "heading": heading,
+                "timeout": timeout,
+                "roll_mode": roll_mode,
+                "reverse_flag": reverse_flag,
+            }
+        )
         if self.device is None:
             logger.warning({"event": "controller_roll_no_device"})
             return self._create_error_result("roll", "No device present")
         self.command_count += 1
         self.last_command = "roll"
-        logger.info({"event": "controller_roll_attempt", "speed": speed, "heading": heading, "timeout": timeout, "roll_mode": roll_mode, "reverse_flag": reverse_flag})
+        logger.info(
+            {
+                "event": "controller_roll_attempt",
+                "speed": speed,
+                "heading": heading,
+                "timeout": timeout,
+                "roll_mode": roll_mode,
+                "reverse_flag": reverse_flag,
+            }
+        )
         try:
-            logger.debug({"event": "controller_roll_device_check", "hasattr": hasattr(self.device, "roll"), "callable": callable(getattr(self.device, "roll", None))})
+            logger.debug(
+                {
+                    "event": "controller_roll_device_check",
+                    "hasattr": hasattr(self.device, "roll"),
+                    "callable": callable(getattr(self.device, "roll", None)),
+                }
+            )
             if hasattr(self.device, "roll") and callable(self.device.roll):
                 result = self.device.roll(speed=speed, heading=heading, timeout=timeout)
                 logger.info({"event": "controller_roll_result", "result": result})
-                logger.debug({"event": "controller_roll_result_debug", "result_type": str(type(result)), "result": result})
-                return result if isinstance(result, dict) else {"success": result is None, "command": "roll", "result": result}
+                logger.debug(
+                    {
+                        "event": "controller_roll_result_debug",
+                        "result_type": str(type(result)),
+                        "result": result,
+                    }
+                )
+                # Publish echo
+                from .mqtt_echo import echo_scalar
+
+                if hasattr(self, "mqtt_handler") and self.mqtt_handler:
+                    echo_scalar(
+                        self.mqtt_handler,
+                        "bb8",
+                        "roll",
+                        {"speed": speed, "heading": heading},
+                    )
+                return (
+                    result
+                    if isinstance(result, dict)
+                    else {
+                        "success": result is None,
+                        "command": "roll",
+                        "result": result,
+                    }
+                )
             else:
                 logger.warning({"event": "controller_roll_not_supported"})
                 return self._create_error_result("roll", "Device does not support roll")
         except Exception as e:
             self.error_count += 1
-            logger.error({"event": "controller_roll_error", "error": str(e)}, exc_info=True)
+            logger.error(
+                {"event": "controller_roll_error", "error": str(e)}, exc_info=True
+            )
             return self._create_error_result("roll", str(e))
 
     def stop(self) -> Dict[str, Any]:
@@ -130,18 +209,41 @@ class BB8Controller:
         self.last_command = "stop"
         logger.info({"event": "controller_stop_attempt"})
         try:
-            logger.debug({"event": "controller_stop_device_check", "hasattr": hasattr(self.device, "stop"), "callable": callable(getattr(self.device, "stop", None))})
+            logger.debug(
+                {
+                    "event": "controller_stop_device_check",
+                    "hasattr": hasattr(self.device, "stop"),
+                    "callable": callable(getattr(self.device, "stop", None)),
+                }
+            )
             if hasattr(self.device, "stop") and callable(self.device.stop):
                 result = self.device.stop()
                 logger.info({"event": "controller_stop_result", "result": result})
-                logger.debug({"event": "controller_stop_result_debug", "result_type": str(type(result)), "result": result})
-                return {"success": result is True or result is None, "command": "stop", "result": result}
+                logger.debug(
+                    {
+                        "event": "controller_stop_result_debug",
+                        "result_type": str(type(result)),
+                        "result": result,
+                    }
+                )
+                # Publish echo
+                from .mqtt_echo import echo_scalar
+
+                if hasattr(self, "mqtt_handler") and self.mqtt_handler:
+                    echo_scalar(self.mqtt_handler, "bb8", "stop", True)
+                return {
+                    "success": result is True or result is None,
+                    "command": "stop",
+                    "result": result,
+                }
             else:
                 logger.warning({"event": "controller_stop_not_supported"})
                 return self._create_error_result("stop", "Device does not support stop")
         except Exception as e:
             self.error_count += 1
-            logger.error({"event": "controller_stop_error", "error": str(e)}, exc_info=True)
+            logger.error(
+                {"event": "controller_stop_error", "error": str(e)}, exc_info=True
+            )
             return self._create_error_result("stop", str(e))
 
     def set_led(self, r: int, g: int, b: int) -> dict:
@@ -162,33 +264,68 @@ class BB8Controller:
         dict
             Result dictionary with success, command, and result/error fields.
         """
-        logger.debug({"event": "controller_set_led_args", "r": r, "g": g, "b": b, "device": str(self.device)})
+        logger.debug(
+            {
+                "event": "controller_set_led_args",
+                "r": r,
+                "g": g,
+                "b": b,
+                "device": str(self.device),
+            }
+        )
         try:
             if self.device is None:
                 logger.warning({"event": "controller_set_led_no_device"})
-                return {"success": False, "command": "set_led", "error": "No device present"}
-            logger.debug({"event": "controller_set_led_device_check", "hasattr": hasattr(self.device, "set_led"), "callable": callable(getattr(self.device, "set_led", None))})
+                return {
+                    "success": False,
+                    "command": "set_led",
+                    "error": "No device present",
+                }
+            logger.debug(
+                {
+                    "event": "controller_set_led_device_check",
+                    "hasattr": hasattr(self.device, "set_led"),
+                    "callable": callable(getattr(self.device, "set_led", None)),
+                }
+            )
             if hasattr(self.device, "set_led") and callable(self.device.set_led):
                 result = self.device.set_led(r, g, b)
                 logger.info({"event": "controller_set_led_result", "result": result})
-                logger.debug({"event": "controller_set_led_result_debug", "result_type": str(type(result)), "result": result})
-                return result if isinstance(result, dict) else {"success": result is None, "command": "set_led", "result": result}
+                logger.debug(
+                    {
+                        "event": "controller_set_led_result_debug",
+                        "result_type": str(type(result)),
+                        "result": result,
+                    }
+                )
+                # Publish echo
+                from .mqtt_echo import echo_led
+
+                if hasattr(self, "mqtt_handler") and self.mqtt_handler:
+                    echo_led(self.mqtt_handler, "bb8", r, g, b)
+                return (
+                    result
+                    if isinstance(result, dict)
+                    else {
+                        "success": result is None,
+                        "command": "set_led",
+                        "result": result,
+                    }
+                )
             else:
                 logger.warning({"event": "controller_set_led_not_supported"})
-                return {"success": False, "command": "set_led", "error": "Not supported by this device"}
+                return {
+                    "success": False,
+                    "command": "set_led",
+                    "error": "Not supported by this device",
+                }
         except Exception as e:
-            logger.warning({"event": "controller_set_led_error", "error": str(e)}, exc_info=True)
+            logger.warning(
+                {"event": "controller_set_led_error", "error": str(e)}, exc_info=True
+            )
             return {"success": False, "command": "set_led", "error": str(e)}
 
     def get_diagnostics_for_mqtt(self) -> Dict[str, Any]:
-        """
-        Get controller diagnostics for MQTT publishing.
-
-        Returns
-        -------
-        dict
-            Diagnostics payload for MQTT.
-        """
         status = self.get_controller_status()
         payload = {
             "controller": {
@@ -199,22 +336,14 @@ class BB8Controller:
                 "commands_executed": status.command_count,
                 "errors": status.error_count,
                 "last_command": status.last_command,
-                "features": status.features_available
+                "features": status.features_available,
             },
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
         logger.debug({"event": "controller_diagnostics", "payload": payload})
         return payload
 
     def disconnect(self):
-        """
-        Disconnect the controller and stop telemetry loop if running.
-
-        Returns
-        -------
-        dict
-            Result dictionary with success and message fields.
-        """
         logger.info({"event": "controller_disconnect"})
         # Stop telemetry loop on disconnect
         if hasattr(self, "telemetry") and self.telemetry:
@@ -226,19 +355,9 @@ class BB8Controller:
         return {"success": True, "message": "BB8Controller: disconnect called"}
 
     def get_controller_status(self) -> ControllerStatus:
-        """
-        Get the current status of the controller.
-
-        Returns
-        -------
-        ControllerStatus
-            Dataclass with controller state and diagnostics.
-        """
         uptime = time.time() - self.start_time
         ble_status = "unknown"
-        features = {
-            "ble_gateway": self.ble_gateway is not None
-        }
+        features = {"ble_gateway": self.ble_gateway is not None}
         status = ControllerStatus(
             mode=self.mode,
             device_connected=self.device_connected,
@@ -247,7 +366,7 @@ class BB8Controller:
             command_count=self.command_count,
             error_count=self.error_count,
             uptime=uptime,
-            features_available=features
+            features_available=features,
         )
         logger.debug({"event": "controller_status", "status": status.__dict__})
         return status
@@ -268,12 +387,14 @@ class BB8Controller:
         dict
             Error result dictionary.
         """
-        logger.error({"event": "controller_error_result", "command": command, "error": error})
+        logger.error(
+            {"event": "controller_error_result", "command": command, "error": error}
+        )
         return {
             "success": False,
             "command": command,
             "error": error,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
     def attach_device(self, device):
@@ -291,10 +412,17 @@ class BB8Controller:
         self.device = device
         self.device_connected = device is not None
         logger.info({"event": "controller_attach_device", "device": str(device)})
-        logger.debug({"event": "controller_attach_device_debug", "device": str(self.device), "device_connected": self.device_connected})
+        logger.debug(
+            {
+                "event": "controller_attach_device_debug",
+                "device": str(self.device),
+                "device_connected": self.device_connected,
+            }
+        )
         # Start telemetry loop after BLE connect
         try:
             from .telemetry import Telemetry
+
             if self.telemetry:
                 self.telemetry.stop()
             self.telemetry = Telemetry(self)

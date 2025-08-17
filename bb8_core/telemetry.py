@@ -1,10 +1,14 @@
-
 from __future__ import annotations
+
 import threading
 import time
-import logging
+from typing import TYPE_CHECKING, Callable, Optional
+
 from .logging_setup import logger
-from typing import Optional, Callable
+
+if TYPE_CHECKING:
+    pass
+
 
 class Telemetry:
     def __init__(
@@ -53,7 +57,9 @@ class Telemetry:
                     try:
                         cb_presence(online)
                     except Exception as e:
-                        logger.warning({"event": "telemetry_presence_cb_error", "error": repr(e)})
+                        logger.warning(
+                            {"event": "telemetry_presence_cb_error", "error": repr(e)}
+                        )
 
                 # --- rssi probe ---
                 get_rssi = getattr(self.bridge, "get_rssi", None)
@@ -62,7 +68,9 @@ class Telemetry:
                     try:
                         dbm = get_rssi()
                     except Exception as e:
-                        logger.warning({"event": "telemetry_rssi_probe_error", "error": repr(e)})
+                        logger.warning(
+                            {"event": "telemetry_rssi_probe_error", "error": repr(e)}
+                        )
 
                 # --- rssi publish ---
                 cb_rssi = self._cb_rssi
@@ -73,11 +81,14 @@ class Telemetry:
                         if isinstance(dbm, (int, float, str)):
                             cb_rssi(int(dbm))
                         else:
-                            logger.warning({"event": "telemetry_invalid_rssi", "dbm": repr(dbm)})
+                            logger.warning(
+                                {"event": "telemetry_invalid_rssi", "dbm": repr(dbm)}
+                            )
                     except Exception as e:
-                        logger.warning({"event": "telemetry_rssi_cb_error", "error": repr(e)})
+                        logger.warning(
+                            {"event": "telemetry_rssi_cb_error", "error": repr(e)}
+                        )
             except Exception as e:
                 logger.warning({"event": "telemetry_error", "error": repr(e)})
             finally:
                 time.sleep(self.interval_s)
-
