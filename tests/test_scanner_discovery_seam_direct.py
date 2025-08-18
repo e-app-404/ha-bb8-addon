@@ -10,10 +10,14 @@ def test_scanner_discovery_seam_direct():
     # Patch the seam function so invocation MUST use our stub
     from unittest.mock import patch
 
-    with patch("bb8_core.mqtt_dispatcher._get_scanner_publisher", return_value=stub):
+    with patch(
+        "bb8_core.mqtt_dispatcher._get_scanner_publisher", return_value=stub
+    ):
         print("HOOK id before:", id(getattr(md, "SCANNER_PUBLISH_HOOK", None)))
         print("stub id:", id(stub))
         print("dispatcher func id:", id(md._trigger_discovery_connected))
         md._trigger_discovery_connected()
         print("HOOK id after:", id(getattr(md, "SCANNER_PUBLISH_HOOK", None)))
-        assert stub.called, "seam: stub was not called via _get_scanner_publisher"
+        assert stub.called, (
+            "seam: stub was not called via _get_scanner_publisher"
+        )

@@ -79,7 +79,8 @@ def on_speed(client, value):
 
 
 def on_led_set(client, r, g, b):
-    """Direct LED state publication helper. Does **not** publish to command topics."""
+    """Direct LED state publication helper.
+    Does **not** publish to command topics."""
     payload = json.dumps({"r": int(r), "g": int(g), "b": int(b)})
     client.publish(STATE_TOPICS["led"], payload=payload, qos=1, retain=False)
 

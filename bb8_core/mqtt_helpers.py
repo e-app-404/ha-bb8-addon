@@ -30,5 +30,5 @@ async def publish_retain(
     except TypeError:
         pass
     # Last resort: synchronous publish (returns immediately)
-    res = mqtt.publish(topic, data, qos, retain)  # type: ignore[call-arg]
+    mqtt.publish(topic, data, qos, retain)  # type: ignore[call-arg]
     return None

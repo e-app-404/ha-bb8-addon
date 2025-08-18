@@ -136,7 +136,12 @@ def resolve_bb8_mac(
         logger.info({"event": "auto_detect_rescan_retry"})
         devices = scan_for_bb8(scan_seconds=scan_seconds, adapter=adapter)
         mac = pick_bb8_mac(devices)
-        logger.info({"event": "auto_detect_rescan_complete", "count": len(devices)})
+        logger.info(
+            {
+                "event": "auto_detect_rescan_complete",
+                "count": len(devices),
+            }
+        )
         if not mac:
             raise RuntimeError("BB-8 not found after rescan")
     save_mac_to_cache(mac)
@@ -150,7 +155,12 @@ def load_mac_from_cache(ttl_hours: int = CACHE_DEFAULT_TTL_HOURS) -> str | None:
         st = os.stat(cache_path)
         age_hours = (time.time() - st.st_mtime) / 3600.0
         if age_hours > max(1, ttl_hours):
-            logger.debug({"event": "auto_detect_cache_stale", "age_hours": age_hours})
+            logger.debug(
+                {
+                    "event": "auto_detect_cache_stale",
+                    "age_hours": age_hours,
+                }
+            )
             return None
         with open(cache_path, encoding="utf-8") as f:
             data = json.load(f)
@@ -170,7 +180,12 @@ def save_mac_to_cache(mac: str) -> None:
         with open(cache_path, "w", encoding="utf-8") as f:
             json.dump({"bb8_mac": mac, "saved_at": time.time()}, f)
     except Exception as e:
-        logger.warning({"event": "auto_detect_cache_write_error", "error": repr(e)})
+        logger.warning(
+            {
+                "event": "auto_detect_cache_write_error",
+                "error": repr(e),
+            }
+        )
 
 
 def scan_for_bb8(scan_seconds: int, adapter: str | None) -> list[dict]:

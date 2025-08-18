@@ -108,11 +108,11 @@ def init_file_handler(
     default_path="/addons/docs/reports/ha_bb8_addon.log",
 ) -> logging.Handler:
     """
-    Prefer LOG_PATH from config, then BB8_LOG_PATH env, then default_path, then /tmp,
+    Pref config LOG_PATH, then BB8_LOG_PATH env, then default_path, then /tmp,
     then stderr. Emits one warning on fallback.
     """
     candidate = _cfg.get("LOG_PATH") or os.environ.get("BB8_LOG_PATH") or default_path
-    # Detect environment: if running in HA, /addons is present and /Volumes is not
+    # Detect env: if running in HA, /addons is present and /Volumes is not
     is_ha = os.path.exists("/addons") and not os.path.exists("/Volumes")
     # If running in HA and candidate starts with /Volumes, strip it
     if is_ha and candidate.startswith("/Volumes"):
@@ -125,10 +125,16 @@ def init_file_handler(
     if not _writable(candidate):
         tmp = os.path.join(tempfile.gettempdir(), "bb8_addon.log")
         print(
-            f"[LOGGING DEBUG] Fallback to temp log path: {tmp}, Writable: {_writable(tmp)}"
+            f"[LOGGING DEBUG] Fallback to temp log path: {tmp}, "
+            f"Writable: {_writable(tmp)}"
         )
         candidate = tmp if _writable(tmp) else None
-        logger.warning({"event": "log_path_fallback", "target": candidate or "stderr"})
+        logger.warning(
+            {
+                "event": "log_path_fallback",
+                "target": candidate or "stderr",
+            }
+        )
     if candidate:
         return logging.FileHandler(candidate)
     return logging.StreamHandler()

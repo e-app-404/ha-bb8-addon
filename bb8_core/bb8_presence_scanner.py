@@ -43,7 +43,9 @@ def _device_block(mac_upper: str) -> dict[str, Any]:
     }
 
 
-async def publish_discovery(mqtt, mac_upper: str) -> None:
+async def publish_discovery(
+    mqtt, mac_upper: str, dbus_path: str | None = None, **_ignored
+) -> None:
     """
     Publish Home Assistant discovery for presence & rssi.
     `mqtt` is an async bus with publish(topic, payload, retain=False, qos=0).
@@ -235,8 +237,9 @@ ensure_discovery_initialized()
 
 def publish_extended_discovery(client, base, device_id, device_block):
     """
-    Publish extended Home Assistant discovery configs for LED, sleep, drive, heading,
-    speed. Topics and payloads match those in discovery_publish.py for compatibility.
+    Publish extended Home Assistant discovery configs for LED, sleep, drive,
+    heading, speed. Topics and payloads match those in discovery_publish.py for
+    compatibility.
     """
     avail = {
         "availability_topic": "bb8/status",
@@ -410,7 +413,8 @@ async def scan_and_publish():
                     rssi = getattr(d, "rssi", None)
                     if rssi is None:
                         rssi = (
-                            (getattr(d, "details", {}) or {}).get("props", {}) or {}
+                            (getattr(d, "details", {}) or {}).get("props", {})
+                            or {}
                         ).get("RSSI")
                     mac, dbus_path = _extract_mac_and_dbus(d)
                     # Ensure dbus_path is a string
@@ -420,9 +424,10 @@ async def scan_and_publish():
                         d.name,
                         mac,
                         rssi,
-                        ((getattr(d, "details", {}) or {}).get("props", {}) or {}).get(
-                            "UUIDs"
-                        ),
+                        (
+                            (getattr(d, "details", {}) or {}).get("props", {})
+                            or {}
+                        ).get("UUIDs"),
                     )
                     break
 
@@ -533,10 +538,14 @@ if __name__ == "__main__":
         help="MQTT broker port",
     )
     parser.add_argument(
-        "--mqtt_user", default=CFG.get("MQTT_USERNAME", None), help="MQTT username"
+        "--mqtt_user",
+        default=CFG.get("MQTT_USERNAME", None),
+        help="MQTT username",
     )
     parser.add_argument(
-        "--mqtt_password", default=CFG.get("MQTT_PASSWORD", None), help="MQTT password"
+        "--mqtt_password",
+        default=CFG.get("MQTT_PASSWORD", None),
+        help="MQTT password",
     )
     parser.add_argument(
         "--print", action="store_true", help="Print discovery payloads and exit"
@@ -584,7 +593,12 @@ if __name__ == "__main__":
 
             async def _once():
                 devices = await BleakScanner.discover()
-                res = {"found": False, "name": BB8_NAME, "address": None, "rssi": None}
+                res = {
+                    "found": False,
+                    "name": BB8_NAME,
+                    "address": None,
+                    "rssi": None,
+                }
                 for d in devices:
                     if BB8_NAME.lower() in (d.name or "").lower():
                         res = {
@@ -597,7 +611,9 @@ if __name__ == "__main__":
                 if args.json:
                     print(json.dumps(res))
                 else:
-                    tick_log(res["found"], res["name"], res["address"], res["rssi"])
+                    tick_log(
+                        res["found"], res["name"], res["address"], res["rssi"]
+                    )
 
             asyncio.run(_once())
         else:
@@ -741,24 +757,22 @@ LEGACY_SPEED_STATE = f"{MQTT_BASE}/state/speed"
 def _on_connect(client, userdata, flags, rc, properties=None):
     client.publish(AVAIL_TOPIC, payload=AVAIL_ON, qos=1, retain=False)
     # Subscribe to both legacy and flat command topics for actuator control
-    client.subscribe(
-        [
-            # legacy
-            (CMD_POWER_SET, 1),
-            (CMD_STOP_PRESS, 1),
-            (CMD_LED_SET, 1),
-            (CMD_HEADING_SET, 1),
-            (CMD_SPEED_SET, 1),
-            (CMD_DRIVE_PRESS, 1),
-            # flat (advertised by discovery)
-            (FLAT_POWER_SET, 1),
-            (FLAT_LED_SET, 1),
-            (FLAT_STOP_PRESS, 1),
-            (FLAT_DRIVE_SET, 1),
-            (FLAT_HEADING_SET, 1),
-            (FLAT_SPEED_SET, 1),
-        ]
-    )
+    client.subscribe([
+        # legacy
+        (CMD_POWER_SET, 1),
+        (CMD_STOP_PRESS, 1),
+        (CMD_LED_SET, 1),
+        (CMD_HEADING_SET, 1),
+        (CMD_SPEED_SET, 1),
+        (CMD_DRIVE_PRESS, 1),
+        # flat (advertised by discovery)
+        (FLAT_POWER_SET, 1),
+        (FLAT_LED_SET, 1),
+        (FLAT_STOP_PRESS, 1),
+        (FLAT_DRIVE_SET, 1),
+        (FLAT_HEADING_SET, 1),
+        (FLAT_SPEED_SET, 1),
+    ])
     # Route both sets to the same callbacks
     client.message_callback_add(CMD_POWER_SET, _cb_power_set)
     client.message_callback_add(CMD_STOP_PRESS, _cb_stop_press)
@@ -973,7 +987,11 @@ def build_device_block(
 
 
 def publish_discovery_old(
-    client: mqtt.Client, mac: str, dbus_path: str, model: str = "", name: str = ""
+    client: mqtt.Client,
+    mac: str,
+    dbus_path: str,
+    model: str = "",
+    name: str = "",
 ):
     """
     Publish Home Assistant discovery for Presence and RSSI with full device block.
@@ -983,7 +1001,9 @@ def publish_discovery_old(
     model_hint = model if model else CFG.get("BB8_NAME", "S33 BB84 LE")
     name_hint = name if name else CFG.get("BB8_NAME", "BB-8")
     base = MQTT_BASE
-    device = build_device_block(mac, dbus_path, model=model_hint, name=name_hint)
+    device = build_device_block(
+        mac, dbus_path, model=model_hint, name=name_hint
+    )
     uid_suffix = mac.replace(":", "").lower()
     availability = {
         "availability_topic": AVAIL_TOPIC,
@@ -1034,15 +1054,13 @@ def tick_log(found: bool, name: str, addr: str | None, rssi):
         return
     if args.json:
         print(
-            json.dumps(
-                {
-                    "ts": int(time.time()),
-                    "found": found,
-                    "name": name,
-                    "address": addr,
-                    "rssi": rssi,
-                }
-            )
+            json.dumps({
+                "ts": int(time.time()),
+                "found": found,
+                "name": name,
+                "address": addr,
+                "rssi": rssi,
+            })
         )
     else:
         if found:

@@ -5,19 +5,19 @@ class StubCore:
     calls: list[tuple] = []
 
     @staticmethod
-    def sleep(toy, interval_option, unk, unk2, proc=None):
+    def sleep(_toy, interval_option, unk, unk2, _proc=None):
         StubCore.calls.append(("sleep", interval_option, unk, unk2))
 
     @staticmethod
-    def set_main_led(toy, r, g, b, proc=None):
+    def set_main_led(_toy, r, g, b, _proc=None):
         StubCore.calls.append(("led", r, g, b))
 
     @staticmethod
-    def set_heading(toy, h, proc=None):
+    def set_heading(_toy, h, _proc=None):
         StubCore.calls.append(("heading", h))
 
     @staticmethod
-    def set_speed(toy, s, proc=None):
+    def set_speed(_toy, s, _proc=None):
         StubCore.calls.append(("speed", s))
 
 
@@ -45,7 +45,7 @@ def test_sleep_mapping(monkeypatch):
     facade.BB8Facade.Core = StubCore  # Patch before instantiation
     f = facade.BB8Facade(bridge=object())
     # Simulate fade by calling set_led_rgb multiple times
-    for i in range(5):
+    for _ in range(5):
         f.set_led_rgb(10, 0, 0)
     # Diagnostic prints for recorder locations
     from bb8_core import facade as fmod
@@ -64,5 +64,5 @@ def test_drive_autostop(monkeypatch):
 
     monkeypatch.setattr(facade, "Core", StubCore, raising=False)
     StubCore.calls.clear()
-    monkeypatch.setattr(time, "sleep", lambda s: None, raising=False)
+    monkeypatch.setattr(time, "sleep", lambda _s: None, raising=False)
     # BB8Facade does not have drive method, skip test

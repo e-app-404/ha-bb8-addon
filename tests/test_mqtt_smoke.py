@@ -147,7 +147,10 @@ def test_discovery_and_dispatcher_smoke(caplog):
 
         def handle_drive(self, client, userdata, msg):
             client.publish(
-                f"bb8/{device_id}/state/motion", msg.payload, qos=1, retain=False
+                f"bb8/{device_id}/state/motion",
+                msg.payload,
+                qos=1,
+                retain=False,
             )
 
     ctrl = MinimalController()
@@ -166,7 +169,9 @@ def test_discovery_and_dispatcher_smoke(caplog):
         controller=ctrl,
     )
     # Simulate LED set
-    mqtt.trigger(f"bb8/{device_id}/cmd/led/set", json.dumps({"r": 1, "g": 2, "b": 3}))
+    mqtt.trigger(
+        f"bb8/{device_id}/cmd/led/set", json.dumps({"r": 1, "g": 2, "b": 3})
+    )
     # Simulate sleep
     mqtt.trigger(f"bb8/{device_id}/cmd/sleep", json.dumps({"after_ms": 0}))
     # Simulate drive

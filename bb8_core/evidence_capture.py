@@ -79,8 +79,7 @@ class EvidenceRecorder:
     def _runner(self):
         lines = 0
         os.makedirs(os.path.dirname(self.report_path), exist_ok=True)
-        out = open(self.report_path, "a", encoding="utf-8")
-        try:
+        with open(self.report_path, "a", encoding="utf-8") as out:
             while not self._stop.is_set() and lines < self.max_lines:
                 try:
                     cmd = self._cmd_q.get(timeout=0.5)
@@ -108,5 +107,3 @@ class EvidenceRecorder:
                 out.write(json.dumps(record, ensure_ascii=False) + "\n")
                 out.flush()
                 lines += 1
-        finally:
-            out.close()

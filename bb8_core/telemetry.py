@@ -56,7 +56,10 @@ class Telemetry:
                         cb_presence(online)
                     except Exception as e:
                         logger.warning(
-                            {"event": "telemetry_presence_cb_error", "error": repr(e)}
+                            {
+                                "event": "telemetry_presence_cb_error",
+                                "error": repr(e),
+                            }
                         )
 
                 # --- rssi probe ---
@@ -67,7 +70,10 @@ class Telemetry:
                         dbm = get_rssi()
                     except Exception as e:
                         logger.warning(
-                            {"event": "telemetry_rssi_probe_error", "error": repr(e)}
+                            {
+                                "event": "telemetry_rssi_probe_error",
+                                "error": repr(e),
+                            }
                         )
 
                 # --- rssi publish ---
@@ -80,11 +86,17 @@ class Telemetry:
                             cb_rssi(int(dbm))
                         else:
                             logger.warning(
-                                {"event": "telemetry_invalid_rssi", "dbm": repr(dbm)}
+                                {
+                                    "event": "telemetry_invalid_rssi",
+                                    "dbm": repr(dbm),
+                                }
                             )
                     except Exception as e:
                         logger.warning(
-                            {"event": "telemetry_rssi_cb_error", "error": repr(e)}
+                            {
+                                "event": "telemetry_rssi_cb_error",
+                                "error": repr(e),
+                            }
                         )
             except Exception as e:
                 logger.warning({"event": "telemetry_error", "error": repr(e)})

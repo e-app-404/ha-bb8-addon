@@ -20,7 +20,7 @@ Example
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from .logging_setup import logger
 
@@ -35,11 +35,11 @@ class ControllerStatus:
     mode: ControllerMode
     device_connected: bool
     ble_status: str
-    last_command: Optional[str] = None
+    last_command: str | None = None
     command_count: int = 0
     error_count: int = 0
     uptime: float = 0.0
-    features_available: Optional[dict[str, bool]] = None
+    features_available: dict[str, bool] | None = None
 
 
 class BB8Controller:
@@ -70,7 +70,7 @@ class BB8Controller:
         self.start_time = time.time()
         self.command_count = 0
         self.error_count = 0
-        self.last_command: Optional[str] = None
+        self.last_command: str | None = None
         self.device_connected = bool(device)
         self.mqtt_handler = mqtt_handler
         self.telemetry = None
@@ -119,7 +119,12 @@ class BB8Controller:
         dict
             Result dictionary with success, command, and result/error fields.
         """
-        logger.info({"event": "controller_roll_start", "device": str(self.device)})
+        logger.info(
+            {
+                "event": "controller_roll_start",
+                "device": str(self.device),
+            }
+        )
         logger.debug(
             {
                 "event": "controller_roll_args",
@@ -155,7 +160,12 @@ class BB8Controller:
             )
             if hasattr(self.device, "roll") and callable(self.device.roll):
                 result = self.device.roll(speed=speed, heading=heading, timeout=timeout)
-                logger.info({"event": "controller_roll_result", "result": result})
+                logger.info(
+                    {
+                        "event": "controller_roll_result",
+                        "result": result,
+                    }
+                )
                 logger.debug(
                     {
                         "event": "controller_roll_result_debug",
@@ -188,7 +198,8 @@ class BB8Controller:
         except Exception as e:
             self.error_count += 1
             logger.error(
-                {"event": "controller_roll_error", "error": str(e)}, exc_info=True
+                {"event": "controller_roll_error", "error": str(e)},
+                exc_info=True,
             )
             return self._create_error_result("roll", str(e))
 
@@ -201,8 +212,18 @@ class BB8Controller:
         dict
             Result dictionary with success, command, and result/error fields.
         """
-        logger.info({"event": "controller_stop_start", "device": str(self.device)})
-        logger.debug({"event": "controller_stop_args", "device": str(self.device)})
+        logger.info(
+            {
+                "event": "controller_stop_start",
+                "device": str(self.device),
+            }
+        )
+        logger.debug(
+            {
+                "event": "controller_stop_args",
+                "device": str(self.device),
+            }
+        )
         if self.device is None:
             logger.warning({"event": "controller_stop_no_device"})
             return self._create_error_result("stop", "No device present")
@@ -219,7 +240,12 @@ class BB8Controller:
             )
             if hasattr(self.device, "stop") and callable(self.device.stop):
                 result = self.device.stop()
-                logger.info({"event": "controller_stop_result", "result": result})
+                logger.info(
+                    {
+                        "event": "controller_stop_result",
+                        "result": result,
+                    }
+                )
                 logger.debug(
                     {
                         "event": "controller_stop_result_debug",
@@ -243,7 +269,8 @@ class BB8Controller:
         except Exception as e:
             self.error_count += 1
             logger.error(
-                {"event": "controller_stop_error", "error": str(e)}, exc_info=True
+                {"event": "controller_stop_error", "error": str(e)},
+                exc_info=True,
             )
             return self._create_error_result("stop", str(e))
 
@@ -291,7 +318,12 @@ class BB8Controller:
             )
             if hasattr(self.device, "set_led") and callable(self.device.set_led):
                 result = self.device.set_led(r, g, b)
-                logger.info({"event": "controller_set_led_result", "result": result})
+                logger.info(
+                    {
+                        "event": "controller_set_led_result",
+                        "result": result,
+                    }
+                )
                 logger.debug(
                     {
                         "event": "controller_set_led_result_debug",
@@ -322,7 +354,8 @@ class BB8Controller:
                 }
         except Exception as e:
             logger.warning(
-                {"event": "controller_set_led_error", "error": str(e)}, exc_info=True
+                {"event": "controller_set_led_error", "error": str(e)},
+                exc_info=True,
             )
             return {"success": False, "command": "set_led", "error": str(e)}
 
@@ -352,7 +385,12 @@ class BB8Controller:
                 self.telemetry.stop()
                 logger.info({"event": "telemetry_loop_stopped"})
             except Exception as e:
-                logger.warning({"event": "telemetry_loop_stop_error", "error": str(e)})
+                logger.warning(
+                    {
+                        "event": "telemetry_loop_stop_error",
+                        "error": str(e),
+                    }
+                )
         return {"success": True, "message": "BB8Controller: disconnect called"}
 
     def get_controller_status(self) -> ControllerStatus:
@@ -389,7 +427,11 @@ class BB8Controller:
             Error result dictionary.
         """
         logger.error(
-            {"event": "controller_error_result", "command": command, "error": error}
+            {
+                "event": "controller_error_result",
+                "command": command,
+                "error": error,
+            }
         )
         return {
             "success": False,
@@ -409,10 +451,20 @@ class BB8Controller:
         device : object
             BLE device instance to attach.
         """
-        logger.debug({"event": "controller_attach_device_start", "device": str(device)})
+        logger.debug(
+            {
+                "event": "controller_attach_device_start",
+                "device": str(device),
+            }
+        )
         self.device = device
         self.device_connected = device is not None
-        logger.info({"event": "controller_attach_device", "device": str(device)})
+        logger.info(
+            {
+                "event": "controller_attach_device",
+                "device": str(device),
+            }
+        )
         logger.debug(
             {
                 "event": "controller_attach_device_debug",

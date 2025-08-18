@@ -14,7 +14,13 @@ class Core:
         self.adapter = adapter
         self._connected = False
         self.publish_led_rgb = None  # Optional LED publisher seam
-        logger.info({"event": "core_init", "address": address, "adapter": adapter})
+        logger.info(
+            {
+                "event": "core_init",
+                "address": address,
+                "adapter": adapter,
+            }
+        )
 
     def __enter__(self) -> Core:
         logger.info({"event": "core_enter", "address": self.address})
@@ -23,7 +29,11 @@ class Core:
 
     def __exit__(self, exc_type, _, __) -> None:
         logger.info(
-            {"event": "core_exit", "address": self.address, "exc_type": str(exc_type)}
+            {
+                "event": "core_exit",
+                "address": self.address,
+                "exc_type": str(exc_type),
+            }
         )
         self.disconnect()
         self.disconnect()
@@ -83,7 +93,8 @@ class Core:
 
     # Optional seam used by facade/tests
     def emit_led(self, bridge, r: int, g: int, b: int) -> None:
-        """Emit LED RGB; tests may spy on this seam. Production forwards to publisher."""
+        """Emit LED RGB; tests may spy on this seam.
+        Production forwards to publisher."""
         if hasattr(self, "publish_led_rgb") and callable(self.publish_led_rgb):
             self.publish_led_rgb(bridge, r, g, b)
         else:

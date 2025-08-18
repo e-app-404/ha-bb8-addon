@@ -168,7 +168,8 @@ def load_config() -> tuple[dict[str, Any], Path | None]:
         merged["mqtt_password"] = final_pass
 
         # ---- Availability topic (scanner is the single owner) ----
-        # Bridge must NOT advertise availability when scanner_owns_telemetry is true.
+        # Bridge must NOT advertise availability when
+        # scanner_owns_telemetry is true.
         avail = f"{merged['MQTT_BASE']}/availability/scanner"
         merged["availability_topic_scanner"] = avail
         merged["availability_payload_online"] = "online"

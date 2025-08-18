@@ -12,8 +12,8 @@ from .auto_detect import resolve_bb8_mac
 from .ble_bridge import BLEBridge
 from .ble_gateway import BleGateway
 from .ble_link import BLELink
-from .common import (  # noqa: F401  (used via constants)
-    CMD_TOPICS,
+from .common import (
+    CMD_TOPICS,  # noqa: F401  (used via constants)
     STATE_TOPICS,
     publish_device_echo,
 )
@@ -64,7 +64,8 @@ def get_client():
     client = _get_client()
     if client is None:
         raise RuntimeError(
-            "MQTT client unavailable: start mqtt_dispatcher before bridge_controller."
+            "MQTT client unavailable: start mqtt_dispatcher before "
+            "bridge_controller."
         )
     return client
 
@@ -96,7 +97,8 @@ def on_power_set(payload):
         return
     publish_device_echo(c, STATE_TOPICS["power"], payload)
     logger.info(
-        "echo_pub topic=%s retain=false qos=1 source=device", STATE_TOPICS["power"]
+        "echo_pub topic=%s retain=false qos=1 source=device",
+        STATE_TOPICS["power"],
     )
 
 
@@ -107,7 +109,8 @@ def on_stop():
         return
     publish_device_echo(c, STATE_TOPICS["stop"], "pressed")
     logger.info(
-        "echo_pub topic=%s retain=false qos=1 source=device", STATE_TOPICS["stop"]
+        "echo_pub topic=%s retain=false qos=1 source=device",
+        STATE_TOPICS["stop"],
     )
 
 
@@ -118,7 +121,8 @@ def on_sleep():
         return
     publish_device_echo(c, STATE_TOPICS["sleep"], "idle")
     logger.info(
-        "echo_pub topic=%s retain=false qos=1 source=device", STATE_TOPICS["sleep"]
+        "echo_pub topic=%s retain=false qos=1 source=device",
+        STATE_TOPICS["sleep"],
     )
 
 
@@ -129,7 +133,8 @@ def on_drive(value=None):
         return
     publish_device_echo(c, STATE_TOPICS["drive"], value)
     logger.info(
-        "echo_pub topic=%s retain=false qos=1 source=device", STATE_TOPICS["drive"]
+        "echo_pub topic=%s retain=false qos=1 source=device",
+        STATE_TOPICS["drive"],
     )
 
 
@@ -140,7 +145,8 @@ def on_heading(value=None):
         return
     publish_device_echo(c, STATE_TOPICS["heading"], value)
     logger.info(
-        "echo_pub topic=%s retain=false qos=1 source=device", STATE_TOPICS["heading"]
+        "echo_pub topic=%s retain=false qos=1 source=device",
+        STATE_TOPICS["heading"],
     )
 
 
@@ -151,7 +157,8 @@ def on_speed(value=None):
         return
     publish_device_echo(c, STATE_TOPICS["speed"], value)
     logger.info(
-        "echo_pub topic=%s retain=false qos=1 source=device", STATE_TOPICS["speed"]
+        "echo_pub topic=%s retain=false qos=1 source=device",
+        STATE_TOPICS["speed"],
     )
 
 
@@ -177,7 +184,11 @@ def _mqtt_publish(
     if client is None:
         raise RuntimeError("MQTT client not available for publish")
     log.info(
-        "echo_pub topic=%s retain=%s qos=%s payload=%s", topic, retain, qos, payload
+        "echo_pub topic=%s retain=%s qos=%s payload=%s",
+        topic,
+        retain,
+        qos,
+        payload,
     )
     client.publish(topic, payload, qos=qos, retain=retain)
 
@@ -429,7 +440,10 @@ def start_bridge_controller(
         )
     if not target_mac:
         logger.error(
-            {"event": "ble_bridge_init_failed", "reason": "target_mac_missing"}
+            {
+                "event": "ble_bridge_init_failed",
+                "reason": "target_mac_missing",
+            }
         )
         raise SystemExit("BB-8 MAC address could not be resolved. Exiting.")
     bridge = BLEBridge(gw, target_mac)
@@ -500,7 +514,10 @@ def _wait_forever(client, bridge, ble=None) -> None:
     # Construct bridge and facade (requires target_mac to be non-None)
     if not target_mac:
         logger.error(
-            {"event": "ble_bridge_init_failed", "reason": "target_mac_missing"}
+            {
+                "event": "ble_bridge_init_failed",
+                "reason": "target_mac_missing",
+            }
         )
         raise SystemExit("BB-8 MAC address could not be resolved. Exiting.")
     bridge = BLEBridge(gw, target_mac)
@@ -651,7 +668,11 @@ def _wait_forever(client, bridge, ble=None) -> None:
             )
         except Exception as e:
             logger.warning(
-                {"event": "telemetry_error", "error": repr(e), "role": "bridge"}
+                {
+                    "event": "telemetry_error",
+                    "error": repr(e),
+                    "role": "bridge",
+                }
             )
     else:
         logger.info(
