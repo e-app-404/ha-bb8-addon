@@ -10,7 +10,7 @@ def test_scanner_discovery_uses_hook_when_set():
     stub = MagicMock(name="scanner_publish_discovery")
     try:
         # 1) Module-level hook so **any** thread can see it
-        setattr(md, "SCANNER_PUBLISH_HOOK", stub)
+        md.SCANNER_PUBLISH_HOOK = stub
         # 2) Patch the seam function so lookup MUST return our stub
         with patch(
             "bb8_core.mqtt_dispatcher._get_scanner_publisher", return_value=stub
@@ -23,7 +23,7 @@ def test_scanner_discovery_uses_hook_when_set():
                 time.sleep(0.05)
         assert stub.called, "seam: hook/seam stub was not called"
     finally:
-        setattr(md, "SCANNER_PUBLISH_HOOK", None)
+        md.SCANNER_PUBLISH_HOOK = None
 
 
 def test_scanner_only_discovery_when_bridge_telemetry_enabled():
@@ -32,7 +32,7 @@ def test_scanner_only_discovery_when_bridge_telemetry_enabled():
     stub = MagicMock(name="scanner_publish_discovery")
     try:
         # 1) Set the module-level hook so *any* thread can see it
-        setattr(md, "SCANNER_PUBLISH_HOOK", stub)
+        md.SCANNER_PUBLISH_HOOK = stub
         # 2) Patch the seam to return the stub (covers any aliasing/caching)
         with patch(
             "bb8_core.mqtt_dispatcher._get_scanner_publisher", return_value=stub
@@ -47,4 +47,4 @@ def test_scanner_only_discovery_when_bridge_telemetry_enabled():
                 time.sleep(0.05)
         assert stub.called, "dispatcher: scanner publish_discovery was not called"
     finally:
-        setattr(md, "SCANNER_PUBLISH_HOOK", None)
+        md.SCANNER_PUBLISH_HOOK = None

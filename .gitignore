@@ -1,12 +1,3 @@
-env/
-homeassistant/
-dbus/
-run/
-dist/
-build/
-local.addons/
-*.bak/
-dist/
 __pycache__/
 *.pyc
 *.pyo
@@ -28,7 +19,6 @@ htmlcov/
 .vscode/
 .DS_Store
 node_modules/
-
 # ADR-0001 guards
 .github/
 reports/
