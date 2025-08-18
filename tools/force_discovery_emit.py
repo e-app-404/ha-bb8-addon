@@ -34,6 +34,9 @@ def main() -> int:
     user = os.getenv("MQTT_USERNAME")
     pw = os.getenv("MQTT_PASSWORD")
     mac = (os.getenv("BB8_MAC") or find_mac_from_logs() or "AA:BB:CC:DD:EE:FF").upper()
+    if mac == "AA:BB:CC:DD:EE:FF":
+        print("ERROR: Real MAC not provided or detectable. Set BB8_MAC=XX:XX:XX:XX:XX:XX and retry.", file=sys.stderr)
+        return 2
     uid = mac.replace(":", "").lower()
     version = os.getenv("BB8_VERSION", "2025.08.20")
     dev = {
