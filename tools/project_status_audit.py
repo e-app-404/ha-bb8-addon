@@ -76,11 +76,20 @@ def main():
     # --- Version & key files ---
     addon_version = read_text_safe(ROOT / "addon" / "VERSION")
     status["addon_version"] = addon_version or None
+    # Accept bb8_core under root OR under addon/ (symlink-aware)
+    bb8_init_root = ROOT / "bb8_core" / "__init__.py"
+    bb8_init_addon = ROOT / "addon" / "bb8_core" / "__init__.py"
+    bb8_init_path = (
+        bb8_init_root
+        if bb8_init_root.exists()
+        else (bb8_init_addon if bb8_init_addon.exists() else None)
+    )
+    status["bb8_core_path"] = str(bb8_init_path) if bb8_init_path else None
     status["files"] = {
         "pytest.ini": file_exists("pytest.ini"),
         "ruff.toml": file_exists("ruff.toml"),
         "mypy.ini": file_exists("mypy.ini"),
-        "bb8_core/__init__.py": file_exists("bb8_core/__init__.py"),
+        "bb8_core/__init__.py (root|addon)": bool(bb8_init_path),
         "tools/verify_discovery.py": file_exists("tools/verify_discovery.py"),
     }
 

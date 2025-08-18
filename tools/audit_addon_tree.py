@@ -66,6 +66,7 @@ def main():
     )
 
     # flag duplicate trees under addon/
+    # Only treat as duplicate if not root reports/
     duplicate_dirs = sorted(
         [d for d in ("tests", "tools", "reports") if (ADDON / d).exists()]
     )

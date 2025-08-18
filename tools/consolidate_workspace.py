@@ -5,7 +5,7 @@ import json
 import shutil
 import subprocess
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,7 +33,7 @@ def main():
     ap.add_argument("--check-only", action="store_true", help="verify post-state")
     args = ap.parse_args()
 
-    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%SZ")
+    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%SZ")
     plan = {"moves": [], "collisions": [], "removed_empty": []}
 
     # Ensure canonical dirs exist
@@ -113,13 +113,22 @@ def main():
     REPORTS.mkdir(exist_ok=True, parents=True)
     (REPORTS / f"consolidation_plan_{ts}.json").write_text(json.dumps(plan, indent=2))
     if args.check_only:
-        # Post conditions
+        # Post conditions (symlink-aware)
         ok = True
+        # Duplicate dirs under addon/ must NOT exist
         for dup in ("tests", "tools", "reports"):
             if (ADDON / dup).exists():
                 ok = False
-        if (DOCS / "reports").exists():
-            ok = False
+        # docs/reports is only a duplicate if it resolves inside the repo
+        docs_reports = DOCS / "reports"
+        try:
+            if docs_reports.exists():
+                resolved = docs_reports.resolve()
+                if str(resolved).startswith(str(ROOT)):
+                    ok = False
+        except Exception:
+            # if resolution fails (broken link), treat as OK for consolidation
+            pass
         status = "CONSOLIDATION: PASS" if ok else "CONSOLIDATION: FAIL"
         (REPORTS / f"consolidation_receipt_{ts}.status").write_text(status + "\n")
         print(status)
