@@ -1,0 +1,7 @@
+{
+  "status": "CONSOLIDATION: FAIL",
+  "reasons": [
+    "addon duplicate present: /Users/evertappels/Projects/HA-BB8/addon/reports"
+  ],
+  "root": "/Users/evertappels/Projects/HA-BB8"
+}

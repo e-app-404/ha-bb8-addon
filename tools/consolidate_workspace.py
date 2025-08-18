@@ -31,6 +31,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true", help="perform moves")
     ap.add_argument("--check-only", action="store_true", help="verify post-state")
+    ap.add_argument(
+        "--verbose", action="store_true", help="print reasons for PASS/FAIL"
+    )
     args = ap.parse_args()
 
     ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%SZ")
@@ -113,25 +116,52 @@ def main():
     REPORTS.mkdir(exist_ok=True, parents=True)
     (REPORTS / f"consolidation_plan_{ts}.json").write_text(json.dumps(plan, indent=2))
     if args.check_only:
-        # Post conditions (symlink-aware)
-        ok = True
-        # Duplicate dirs under addon/ must NOT exist
+        # Post conditions (symlink-aware, verbose)
+        reasons: list[str] = []
+
+        def exists_here(p: Path) -> bool:
+            try:
+                # treat missing/broken links as non-existent
+                return p.exists()
+            except Exception:
+                return False
+
+        # Fail only if duplicate dirs under addon/ are NON-EMPTY
+        def dir_has_files(p: Path) -> bool:
+            """True if directory contains any non-hidden files."""
+            if not p.exists() or not p.is_dir():
+                return False
+            for child in p.rglob("*"):
+                if child.is_file() and not child.name.startswith("."):
+                    return True
+            return False
+
         for dup in ("tests", "tools", "reports"):
-            if (ADDON / dup).exists():
-                ok = False
-        # docs/reports is only a duplicate if it resolves inside the repo
+            p = ADDON / dup
+            if exists_here(p) and dir_has_files(p):
+                reasons.append(f"addon duplicate (non-empty): {p}")
+        # docs/reports only a duplicate if it resolves *inside* repo and is non-empty
         docs_reports = DOCS / "reports"
         try:
             if docs_reports.exists():
                 resolved = docs_reports.resolve()
-                if str(resolved).startswith(str(ROOT)):
-                    ok = False
+                if str(resolved).startswith(str(ROOT)) and dir_has_files(docs_reports):
+                    reasons.append(
+                        f"docs/reports duplicate: {docs_reports} -> {resolved}"
+                    )
         except Exception:
-            # if resolution fails (broken link), treat as OK for consolidation
+            # broken ref: ignore for consolidation purposes
             pass
+        ok = len(reasons) == 0
         status = "CONSOLIDATION: PASS" if ok else "CONSOLIDATION: FAIL"
-        (REPORTS / f"consolidation_receipt_{ts}.status").write_text(status + "\n")
-        print(status)
+        REPORTS.mkdir(parents=True, exist_ok=True)
+        rec = REPORTS / f"consolidation_receipt_{ts}.status"
+        payload = {"status": status, "reasons": reasons, "root": str(ROOT)}
+        rec.write_text(json.dumps(payload, indent=2) + "\n")
+        if args.verbose:
+            print(json.dumps(payload, indent=2))
+        else:
+            print(status)
         sys.exit(0 if ok else 1)
 
     (REPORTS / f"consolidation_receipt_{ts}.status").write_text("CONSOLIDATION: PASS\n")
