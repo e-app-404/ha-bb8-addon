@@ -36,6 +36,15 @@
         "envFile": "${workspaceFolder}/.env"
       },
       "group": "test"
+    },
+    {
+      "label": "audit: lint+type+verify",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "source .venv/bin/activate && set -euo pipefail; mkdir -p reports; ts=$(date -u +%Y%m%d_%H%M%SZ); ruff check . --fix | tee reports/ruff_fix_$ts.log; ruff check . | tee reports/ruff_after_$ts.log; mypy bb8_core | tee reports/mypy_$ts.log; python tools/verify_discovery.py | tee reports/verify_discovery_$ts.log; echo RECEIPTS: reports/ruff_after_$ts.log reports/mypy_$ts.log reports/verify_discovery_$ts.log"
+      ]
     }
   ]
 }

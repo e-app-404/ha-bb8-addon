@@ -1,0 +1,104 @@
+E501 Line too long (112 > 88)
+  --> tests/conftest.py:23:89
+   |
+22 | # Provide a stable event loop for tests that touch asyncio/BLE helpers.
+23 | # With asyncio_mode=auto this is usually not necessary, but it guards environments where plugin policies differ.
+   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^
+24 | @pytest.fixture(scope="session")
+25 | def event_loop():
+   |
+
+B007 Loop control variable `i` not used within loop body
+  --> tests/test_facade.py:48:9
+   |
+46 |     f = facade.BB8Facade(bridge=object())
+47 |     # Simulate fade by calling set_led_rgb multiple times
+48 |     for i in range(5):
+   |         ^
+49 |         f.set_led_rgb(10, 0, 0)
+50 |     # Diagnostic prints for recorder locations
+   |
+help: Rename unused `i` to `_i`
+
+UP038 Use `X | Y` in `isinstance` call instead of `(X, Y)`
+  --> tests/test_mqtt_smoke.py:73:20
+   |
+71 |             def __init__(self, topic, payload):
+72 |                 self.topic = topic
+73 |                 if isinstance(payload, (bytes, bytearray)):
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+74 |                     self.payload = bytes(payload)
+75 |                 elif payload is None:
+   |
+help: Convert to `X | Y`
+
+E501 Line too long (96 > 88)
+  --> tools/scan_bb8_gatt.py:35:89
+   |
+33 |     if not device:
+34 |         print(
+35 |             "BB-8 not found. Is it awake and advertising? Try tapping or removing from charger."
+   |                                                                                         ^^^^^^^^
+36 |         )
+37 |         return
+   |
+
+E501 Line too long (96 > 88)
+  --> tools/scan_bb8_gatt.py:47:89
+   |
+45 |                 props = ",".join(char.properties)
+46 |                 print(
+47 |                     f"  [Characteristic] {char.uuid} | {char.description} | properties: {props}"
+   |                                                                                         ^^^^^^^^
+48 |                 )
+   |
+
+UP038 Use `X | Y` in `isinstance` call instead of `(X, Y)`
+  --> tools/trace_smoke_check.py:62:13
+   |
+60 |         isinstance(entry, dict)
+61 |         and entry.get("source") == "device"
+62 |         and isinstance(entry.get("value"), (int, float, str))
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+63 |     ):
+64 |         found_device_scalar = True
+   |
+help: Convert to `X | Y`
+
+SIM102 Use a single `if` statement instead of nested `if` statements
+  --> tools/trace_smoke_check.py:72:5
+   |
+70 |   # 1c) LED entries match {"r":int,"g":int,"b":int}
+71 |   for entry in lines:
+72 | /     if isinstance(entry, dict) and all(k in entry for k in ("r", "g", "b")):
+73 | |         if not all(isinstance(entry[k], int) for k in ("r", "g", "b")):
+   | |_______________________________________________________________________^
+74 |               print(f"FAIL: LED entry not int: {entry}")
+75 |               sys.exit(1)
+   |
+help: Combine `if` statements using `and`
+
+E501 Line too long (111 > 88)
+  --> tools/verify_discovery.py:55:89
+   |
+53 | print("\nDiscovery Verification Results:")
+54 | print(
+55 |     "Topic                      | Retained | stat_t              | avty_t      | sw_version      | identifiers"
+   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^
+56 | )
+57 | print(
+   |
+
+E501 Line too long (113 > 88)
+  --> tools/verify_discovery.py:76:89
+   |
+74 |     )
+75 |     print(
+76 |         f"{t:27} | {str(retained.get(t, False)):8} | {stat_t:19} | {avty_t:11} | {sw_version:14} | {identifiers}"
+   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^
+77 |     )
+78 |     if not ok:
+   |
+
+Found 16 errors (7 fixed, 9 remaining).
+No fixes available (3 hidden fixes can be enabled with the `--unsafe-fixes` option).

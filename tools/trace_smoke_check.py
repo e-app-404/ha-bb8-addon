@@ -39,7 +39,7 @@ else:
 print(f"[INFO] Using trace file: {trace_path}")
 
 
-with open(trace_path, "r", encoding="utf-8") as f:
+with open(trace_path, encoding="utf-8") as f:
     if trace_path.endswith(".jsonl"):
         lines = [json.loads(line) for line in f if line.strip()]
     else:
@@ -59,7 +59,7 @@ for entry in lines:
     if (
         isinstance(entry, dict)
         and entry.get("source") == "device"
-        and isinstance(entry.get("value"), (int, float, str))
+        and isinstance(entry.get("value"), int | float | str)
     ):
         found_device_scalar = True
         break
@@ -69,9 +69,12 @@ if not found_device_scalar:
 
 # 1c) LED entries match {"r":int,"g":int,"b":int}
 for entry in lines:
-    if isinstance(entry, dict) and all(k in entry for k in ("r", "g", "b")):
-        if not all(isinstance(entry[k], int) for k in ("r", "g", "b")):
-            print(f"FAIL: LED entry not int: {entry}")
-            sys.exit(1)
+    if (
+        isinstance(entry, dict)
+        and all(k in entry for k in ("r", "g", "b"))
+        and not all(isinstance(entry[k], int) for k in ("r", "g", "b"))
+    ):
+        print(f"FAIL: LED entry not int: {entry}")
+        sys.exit(1)
 
 print("PASS: Trace smoke check OK.")

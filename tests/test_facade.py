@@ -45,7 +45,7 @@ def test_sleep_mapping(monkeypatch):
     facade.BB8Facade.Core = StubCore  # Patch before instantiation
     f = facade.BB8Facade(bridge=object())
     # Simulate fade by calling set_led_rgb multiple times
-    for i in range(5):
+    for _i in range(5):
         f.set_led_rgb(10, 0, 0)
     # Diagnostic prints for recorder locations
     from bb8_core import facade as fmod

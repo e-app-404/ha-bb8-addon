@@ -32,7 +32,8 @@ async def main(adapter, bb8_name):
                     break
     if not device:
         print(
-            "BB-8 not found. Is it awake and advertising? Try tapping or removing from charger."
+            "BB-8 not found. Is it awake and advertising? "
+            "Try tapping or removing from charger."
         )
         return
 
@@ -44,7 +45,8 @@ async def main(adapter, bb8_name):
             for char in service.characteristics:
                 props = ",".join(char.properties)
                 print(
-                    f"  [Characteristic] {char.uuid} | {char.description} | properties: {props}"
+                    f"  [Characteristic] {char.uuid} | {char.description} | "
+                    f"properties: {props}"
                 )
 
 

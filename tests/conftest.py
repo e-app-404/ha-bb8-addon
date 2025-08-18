@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+
 # --- BEGIN: ensure repo root on sys.path + test MQTT host before any imports ---
 import os
 import sys
@@ -19,7 +20,8 @@ os.environ.setdefault("MQTT_HOST", "127.0.0.1")
 
 
 # Provide a stable event loop for tests that touch asyncio/BLE helpers.
-# With asyncio_mode=auto this is usually not necessary, but it guards environments where plugin policies differ.
+# With asyncio_mode=auto this is usually not necessary,
+# but it guards environments where plugin policies differ.
 @pytest.fixture(scope="session")
 def event_loop():
     loop = asyncio.new_event_loop()
