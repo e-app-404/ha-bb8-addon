@@ -1,0 +1,60 @@
+{
+  "ts": "20250818_204515Z",
+  "root": "/Users/evertappels/Projects/HA-BB8",
+  "git_present": true,
+  "git": {
+    "branch": "main",
+    "remote": "origin\thttps://github.com/e-app-404/ha-bb8-addon.git (fetch)\norigin\thttps://github.com/e-app-404/ha-bb8-addon.git (push)",
+    "dirty": true,
+    "last_tag": "v2025.08.20",
+    "recent_commits": [
+      "83c9cb7 chore(audit): make tools symlink-aware; accept addon/bb8_core; fix consolidation check",
+      "86eb668 Finalize local main before force push",
+      "668ad48 chore(repo): prune __pycache__/ *.pyc; finalize green build receipts",
+      "15258a1 chore(tests): fix single Ruff E501 in tests/conftest.py; project full green"
+    ]
+  },
+  "addon_version": "dev",
+  "bb8_core_path": "/Users/evertappels/Projects/HA-BB8/addon/bb8_core/__init__.py",
+  "files": {
+    "pytest.ini": true,
+    "ruff.toml": true,
+    "mypy.ini": true,
+    "bb8_core/__init__.py (root|addon)": true,
+    "tools/verify_discovery.py": true
+  },
+  "duplicate_dirs_present": {},
+  "addon_audit": {
+    "rc": 0,
+    "stderr": ""
+  },
+  "consolidation": {
+    "rc": 0,
+    "stderr": "",
+    "out": "CONSOLIDATION: PASS"
+  },
+  "imports_tests": {
+    "rc": 1,
+    "out": "FF                                                                       [100%]\n=================================== FAILURES ===================================\n____________________ test_no_runtimewarning_on_import_order ____________________\n\n    def test_no_runtimewarning_on_import_order():\n        \"\"\"\n        Guard against:\n        RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of\n        package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'\n        \"\"\"\n        # Ensure clean state\n        for mod in (\n            \"bb8_core.bridge_controller\",\n            \"bb8_core.bb8_presence_scanner\",\n            \"bb8_core.ble_link\",\n            \"bb8_core\",\n        ):\n            sys.modules.pop(mod, None)\n        with warnings.catch_warnings():\n            warnings.filterwarnings(\n                \"error\",\n                message=r\".*found in sys\\.modules after import of package 'bb8_core'.*\",\n                category=RuntimeWarning,\n            )\n            importlib.import_module(\"bb8_core\")  # package first\n>           importlib.import_module(\"bb8_core.bridge_controller\")  # submodule next\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_import_order_warning.py:27: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n<frozen importlib._bootstrap>:1387: in _gcd_import\n    ???\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nname = 'bb8_core.bridge_controller'\nimport_ = <function _gcd_import at 0x100dac4a0>\n\n>   ???\nE   ModuleNotFoundError: No module named 'bb8_core.bridge_controller'\n\n<frozen importlib._bootstrap>:1324: ModuleNotFoundError\n______________________________ test_imports_clean ______________________________\n\n    def test_imports_clean():\n        import importlib\n    \n>       import bb8_core.bb8_presence_scanner as s\nE       ModuleNotFoundError: No module named 'bb8_core.bb8_presence_scanner'\n\ntests/test_imports_no_cycles.py:4: ModuleNotFoundError\n=========================== short test summary info ============================\nFAILED tests/test_import_order_warning.py::test_no_runtimewarning_on_import_order\nFAILED tests/test_imports_no_cycles.py::test_imports_clean - ModuleNotFoundEr...",
+    "err": ""
+  },
+  "lint": {
+    "ruff_rc": 1,
+    "ruff_summary": [
+      "",
+      "Found 1 error.",
+      "No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option)."
+    ],
+    "mypy_rc": 2,
+    "mypy_summary": []
+  },
+  "bridge_client_stub_present": false,
+  "eager_imports_in_init": false,
+  "verify_discovery": {
+    "rc": 0,
+    "skipped": true,
+    "reason": "no broker env or script missing"
+  },
+  "overall_verdict": "WARN",
+  "notes": []
+}

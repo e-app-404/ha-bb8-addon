@@ -1,0 +1,10 @@
+{
+  "moves": [
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/reports/ha_bb8_addon.log",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/addon/ha_bb8_addon.log"
+    }
+  ],
+  "collisions": [],
+  "removed_empty": []
+}

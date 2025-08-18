@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from bb8_core.bb8_presence_scanner import publish_discovery
 from bb8_core.mqtt_dispatcher import start_mqtt_dispatcher
 
@@ -70,7 +72,7 @@ class FakeMQTT:
 
             def __init__(self, topic, payload):
                 self.topic = topic
-                if isinstance(payload, (bytes, bytearray)):
+                if isinstance(payload, bytes | bytearray):
                     self.payload = bytes(payload)
                 elif payload is None:
                     self.payload = b""
@@ -109,10 +111,10 @@ class FakeToy:
     pass
 
 
-def test_discovery_and_dispatcher_smoke(caplog):
+@pytest.mark.asyncio
+async def test_discovery_and_dispatcher_smoke(caplog):
     mqtt = FakeMQTT()
     device_id = "testbb8"
-    name = "Test BB-8"
     import logging
     from io import StringIO
 
@@ -123,7 +125,7 @@ def test_discovery_and_dispatcher_smoke(caplog):
     try:
         caplog.set_level(logging.INFO)
         # Publish discovery
-        publish_discovery(mqtt, device_id, name)
+        await publish_discovery(mqtt, device_id)
         # Aggregate captured messages from all loggers
         logs = "\n".join(rec.getMessage() for rec in caplog.records)
         assert (
