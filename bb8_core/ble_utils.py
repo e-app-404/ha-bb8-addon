@@ -1,5 +1,9 @@
-from typing import Any, Awaitable, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:
+    pass
 import inspect
+
 
 async def resolve_services(client: Any) -> Optional[Any]:
     """

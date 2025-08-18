@@ -2,10 +2,154 @@
 <!-- markdownlint-disable MD022 MD032 MD024 -->
 <!-- Refer to meta schema section at the end of this document for changelog entry format guidance -->
 # Changelog
-<!-- Current version for updating starts here -->
-<!-- ## [2025.08.16] - 2025-08-13 -->
+<!-- Version [2025.08.20] - 2025-08-16 for updating starts here -->
 
 <!-- Current version for updating ends here -->
+## [2025.08.19] - 2025-08-16
+
+### PATCH-BUNDLE-STP4-20250816-H
+
+#### Major
+- Refactored scanner discovery logic for deterministic, thread-safe, and idempotent operation.
+- Finalized robust test coverage for dispatcher and facade, with all seam/hook integration tests passing reliably.
+
+#### Added
+- Explicit seam and test hooks in the MQTT dispatcher.
+- Exported `start_bridge_controller` and other key entry points for explicit import and modularity.
+- Dispatcher smoke test log lines for telemetry and discovery.
+
+#### Improved
+- Sleep/LED mapping instrumentation in the facade, enabling robust test patching and reliable assertions.
+- Test instrumentation with StubCore and monkeypatching for sleep/LED and dispatcher logic.
+- Code clarity by cleaning up unused globals/locals and addressing legacy test failures.
+
+#### Fixed
+- Import order and compliance with `from __future__ import annotations`, resolving circular import and syntax errors.
+- Deduplicated and clamped LED emits, ensuring single-path emission and correct test recording.
+- Updated integration tests to use dual seam injection (module-level hook and patched seam function), ensuring deterministic invocation of stubs in threaded MQTT callbacks.
+
+#### Result
+The codebase is now deterministic, testable, and robust for scanner discovery, sleep/LED mapping, and MQTT dispatcher integration, with all critical tests passing and instrumentation in place for future development.
+
+## [2025.08.18] - 2025-08-16
+
+### bb8: deterministic discovery seam + race fix
+
+Refactored MQTT dispatcher to resolve scanner publisher at call time (no cached aliases).
+Added stable seam (SCANNER_PUBLISH_HOOK) for deterministic, thread-safe test injection.
+Updated tests for robust coverage of discovery and seam logic.
+No public API changes; all changes are internal and covered by focused tests.
+
+## [2025.08.17] - 2025-08-15
+
+### Major Patch to Improve Device Discovery Logic
+
+#### Race fix & idempotency
+
+- `_DISCOVERY_PUBLISHED` is now a set of per-entity keys (using `uniq_id`).
+- In `maybe_publish_bb8_discovery()`, discovery only runs if the client is connected; otherwise, logs and returns without marking published.
+- Each entity is marked as published only after a successful publish (`wait_for_publish()`).
+- All config publishes use `retain=True` and `json.dumps(..., separators=(",", ":"))`.
+
+#### High-signal logs
+
+**At gate**: `discovery_enabled=<bool> source=<yaml|env|default>`
+**Before each publish**: `publishing_discovery topic=<topic> retain=True keys=<sorted_keys>`
+**After publish**: `discovery_publish_result topic=<topic> mid=<mid> wait_ok=<bool>`
+**On skip**: `discovery_skip reason=<reason> entity=<uniq_id>`
+
+#### Tests
+
+- **Added** `test_mqtt_discovery.py`
+- Tests use only the real API, with a stub publish_fn and `wait_for_publish()`.
+- **Assert**: valid JSON payloads, correct HA domains, `retain=True`, idempotency
+
+- `_DISCOVERY_PUBLISHED` is now a set of per-entity keys (using uniq_id).
+- `In_maybe_publish_bb8_discovery()`, discovery only runs if the client is connected; otherwise, logs and returns without marking published.
+- Each entity is marked as published only after a successful publish `(wait_for_publish())`.
+- All config publishes use `retain=True` and `json.dumps(..., separators=(",", ":"))`.
+
+#### High-signal logs
+
+- **At gate**: `discovery_enabled=<bool> source=<yaml|env|default>`
+- **Before each publish**: `publishing_discovery topic=<topic> retain=True keys=<sorted_keys>`
+- **After publish**: `discovery_publish_result topic=<topic> mid=<mid> wait_ok=<bool>`
+- **On skip**: `discovery_skip reason=<reason> entity=<uniq_id>`
+
+#### Tests
+
+- **Added** `test_mqtt_discovery.py`
+- Tests use only the real API, with a stub publish_fn and `wait_for_publish()`.
+- **Assert**: valid JSON payloads, correct HA domains, `retain=True`, idempotency
+
+#### No API changes
+
+- `publish_bb8_discovery(publish_fn)` and entity construction are unchanged.
+`_maybe_publish_bb8_discovery()` is still callable from all current sites.
+
+## [2025.08.16] - 2025-08-15
+
+### Major
+
+#### Device Echo and Topic Split
+- Migrated all MQTT topic usage to split `CMD_TOPICS` (commands) and `STATE_TOPICS` (state/echo) in `common.py`.
+- Updated all device echo handlers in `bridge_controller.py` and related modules to use strict echo publishing (raw and JSON) on state topics.
+- Added detailed echo logging for all device state publications.
+
+#### Home Assistant Discovery and LED Support
+- Added Home Assistant discovery publishing for RGB LED entity, gated by config.
+- Improved discovery payloads for drive, sleep, and presence entities; fixed missing/invalid discovery for some entities.
+
+#### BLE Shutdown and Loop Management
+- Enhanced BLE link runner with clean shutdown logic, draining pending tasks and logging exceptions.
+- Added BLELink class facade for compatibility with legacy callers/tests.
+- Improved type hints and coroutine scheduling for BLE operations.
+
+#### Config Loader and Environment Overlay
+- Refactored config loader for strict precedence: Home Assistant options.json > YAML > environment > defaults.
+- Added environment variable overlay for MQTT config keys, with type-safe parsing and logging.
+- Improved error handling and logging for config resolution and loading failures.
+
+#### Dispatcher and Collector Guards
+- Added singleton guard to `mqtt_dispatcher.py` to ensure only one dispatcher instance per process.
+- Updated evidence collector to use environment fallback for MQTT host/port, with improved error reporting.
+
+#### Lint, Type, and Test Config
+- Updated and enforced ruff.toml, mypy.ini, and pytest.ini for consistent linting, type checking, and test discovery.
+- All import sorting, line length, and type hints are now enforced.
+- Pytest config stabilizes asyncio mode and narrows test discovery to avoid errors and recursion.
+
+#### Miscellaneous
+- Removed deprecated topic symbols and files, cleaned up circular imports and duplicate code blocks.
+- Improved logging and error reporting throughout the codebase.
+- All modules now use shared constants and helpers from `common.py`.
+- Config precedence for MQTT host/port/base/user/pass now follows: ENV > options.json > YAML > fallback. User-provided YAML fallback is respected if not overridden.
+
+#### Patches Applied
+- PATCH-STP4-250814-config-path
+- PATCH-STP4-250814-device-echo
+- PATCH-STP4-250814-device-echo-v2
+- PATCH-STP4-250815-addon-config-api-compat
+- PATCH-STP4-250815-addon-config-lint-fixes
+- PATCH-STP4-250815-addon-config-order-fix
+- PATCH-STP4-250815-dispatcher-singleton
+- PATCH-STP4-250815-mypy-config
+- PATCH-STP4-250815-mypy-root-config
+- PATCH-STP4-250815-pytest-root-config
+- PATCH-STP4-250815-pytest-stabilize
+- PATCH-STP4-250815-ruff-config
+- PATCH-STP4-250815-topic-split-and-echo-fix
+- PATCH-STP4-250815-echo-logging
+- PATCH-STP4-250815-led-discovery
+- PATCH-STP4-250815-mqtt-config-binding
+- PATCH-STP4-250815-ble-init-guard
+- PATCH-STP4-250815-ble-loop-runner-v2
+- PATCH-STP4-250815-ble-shutdown-cleanup
+- PATCH-STP4-250815-blelink-class-facade
+- PATCH-STP4-250815-blelink-type-hints
+- PATCH-STP4-250815-collector-connect-guard
+- PATCH-STP4-250815-config-precedence-mqtt-host
+
 ## [2025.08.15] - 2025-08-13
 
 ### Major
