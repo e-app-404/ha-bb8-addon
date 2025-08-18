@@ -1,0 +1,7 @@
+# Existing lines in .gitignore
+node_modules/
+dist/
+.DS_Store
+
+# Environment variable file
+.env

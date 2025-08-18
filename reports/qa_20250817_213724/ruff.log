@@ -1,0 +1,1193 @@
+E501 Line too long (106 > 88)
+   --> bb8_core/__init__.py:116:89
+    |
+115 | # Optional: expose classes from aliased modules at package top-level if desired.
+116 | # e.g., make `from bb8_core.facade import BB8Facade` work AND `from bb8_core import BB8Facade` (optional):
+    |                                                                                         ^^^^^^^^^^^^^^^^^^
+117 | try:
+118 |     _facade = sys.modules.get("bb8_core.facade")
+    |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:8:1
+   |
+ 6 | Device discovery and auto-detection logic, scans for BB-8 and caches MAC address.
+ 7 | """
+ 8 | import asyncio
+   | ^^^^^^^^^^^^^^
+ 9 | import contextlib
+10 | import json
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:9:1
+   |
+ 7 | """
+ 8 | import asyncio
+ 9 | import contextlib
+   | ^^^^^^^^^^^^^^^^^
+10 | import json
+11 | import os
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:10:1
+   |
+ 8 | import asyncio
+ 9 | import contextlib
+10 | import json
+   | ^^^^^^^^^^^
+11 | import os
+12 | import re
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:11:1
+   |
+ 9 | import contextlib
+10 | import json
+11 | import os
+   | ^^^^^^^^^
+12 | import re
+13 | import threading
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:12:1
+   |
+10 | import json
+11 | import os
+12 | import re
+   | ^^^^^^^^^
+13 | import threading
+14 | import time
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:13:1
+   |
+11 | import os
+12 | import re
+13 | import threading
+   | ^^^^^^^^^^^^^^^^
+14 | import time
+15 | from typing import Any, Iterable, List, Optional, Tuple
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:14:1
+   |
+12 | import re
+13 | import threading
+14 | import time
+   | ^^^^^^^^^^^
+15 | from typing import Any, Iterable, List, Optional, Tuple
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:15:1
+   |
+13 | import threading
+14 | import time
+15 | from typing import Any, Iterable, List, Optional, Tuple
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |
+17 | from .addon_config import load_config
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:17:1
+   |
+15 | from typing import Any, Iterable, List, Optional, Tuple
+16 |
+17 | from .addon_config import load_config
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 | from .ble_gateway import BleGateway
+19 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:18:1
+   |
+17 | from .addon_config import load_config
+18 | from .ble_gateway import BleGateway
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:19:1
+   |
+17 | from .addon_config import load_config
+18 | from .ble_gateway import BleGateway
+19 | from .logging_setup import logger
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |
+21 | # Lazy import for testability
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:8:1
+   |
+ 6 | Implements Home Assistant MQTT Discovery, explicit birth/LWT, and a rich device block.
+ 7 | """
+ 8 | import argparse
+   | ^^^^^^^^^^^^^^^
+ 9 | import asyncio
+10 | import json
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:9:1
+   |
+ 7 | """
+ 8 | import argparse
+ 9 | import asyncio
+   | ^^^^^^^^^^^^^^
+10 | import json
+11 | import logging
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:10:1
+   |
+ 8 | import argparse
+ 9 | import asyncio
+10 | import json
+   | ^^^^^^^^^^^
+11 | import logging
+12 | import os
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:11:1
+   |
+ 9 | import asyncio
+10 | import json
+11 | import logging
+   | ^^^^^^^^^^^^^^
+12 | import os
+13 | import threading
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:12:1
+   |
+10 | import json
+11 | import logging
+12 | import os
+   | ^^^^^^^^^
+13 | import threading
+14 | import time
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:13:1
+   |
+11 | import logging
+12 | import os
+13 | import threading
+   | ^^^^^^^^^^^^^^^^
+14 | import time
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:14:1
+   |
+12 | import os
+13 | import threading
+14 | import time
+   | ^^^^^^^^^^^
+15 |
+16 | import paho.mqtt.client as mqtt
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:16:1
+   |
+14 | import time
+15 |
+16 | import paho.mqtt.client as mqtt
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+17 | from bleak import BleakScanner
+18 | from paho.mqtt.enums import CallbackAPIVersion
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:17:1
+   |
+16 | import paho.mqtt.client as mqtt
+17 | from bleak import BleakScanner
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 | from paho.mqtt.enums import CallbackAPIVersion
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:18:1
+   |
+16 | import paho.mqtt.client as mqtt
+17 | from bleak import BleakScanner
+18 | from paho.mqtt.enums import CallbackAPIVersion
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |
+20 | from .addon_config import load_config
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:20:1
+   |
+18 | from paho.mqtt.enums import CallbackAPIVersion
+19 |
+20 | from .addon_config import load_config
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | from .mqtt_dispatcher import ensure_dispatcher_started, is_dispatcher_started
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:21:1
+   |
+20 | from .addon_config import load_config
+21 | from .mqtt_dispatcher import ensure_dispatcher_started, is_dispatcher_started
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |
+23 | logger = logging.getLogger("bb8_presence_scanner")
+   |
+
+E501 Line too long (90 > 88)
+  --> bb8_core/bb8_presence_scanner.py:52:89
+   |
+50 |     try:
+51 |         d = json.loads(raw) if raw else {}
+52 |         # Accept HA-native: {"state":"ON","color":{"r":..,"g":..,"b":..},"brightness":...}
+   |                                                                                         ^^
+53 |         if isinstance(d, dict) and d.get("state", "").upper() == "ON":
+54 |             col = d.get("color") or {}
+   |
+
+E501 Line too long (127 > 88)
+ --> bb8_core/ble_bridge.py:6:89
+  |
+4 | ble_bridge.py
+5 |
+6 | Orchestrates BLE operations for BB-8, manages device connection, and exposes diagnostics for Home Assistant add-on integration.
+  |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7 | """
+8 | import asyncio
+  |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:8:1
+   |
+ 6 | Orchestrates BLE operations for BB-8, manages device connection, and exposes diagnostics for Home Assistant add-on integration.
+ 7 | """
+ 8 | import asyncio
+   | ^^^^^^^^^^^^^^
+ 9 | import importlib.metadata
+10 | import json
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:9:1
+   |
+ 7 | """
+ 8 | import asyncio
+ 9 | import importlib.metadata
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^
+10 | import json
+11 | import os
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:10:1
+   |
+ 8 | import asyncio
+ 9 | import importlib.metadata
+10 | import json
+   | ^^^^^^^^^^^
+11 | import os
+12 | import threading
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:11:1
+   |
+ 9 | import importlib.metadata
+10 | import json
+11 | import os
+   | ^^^^^^^^^
+12 | import threading
+13 | import time
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:12:1
+   |
+10 | import json
+11 | import os
+12 | import threading
+   | ^^^^^^^^^^^^^^^^
+13 | import time
+14 | from typing import TYPE_CHECKING, Any, Optional
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:13:1
+   |
+11 | import os
+12 | import threading
+13 | import time
+   | ^^^^^^^^^^^
+14 | from typing import TYPE_CHECKING, Any, Optional
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:14:1
+   |
+12 | import threading
+13 | import time
+14 | from typing import TYPE_CHECKING, Any, Optional
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+15 |
+16 | import paho.mqtt.publish as publish
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:16:1
+   |
+14 | from typing import TYPE_CHECKING, Any, Optional
+15 |
+16 | import paho.mqtt.publish as publish
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+17 | from bleak import BleakClient
+18 | from bleak.exc import BleakCharacteristicNotFoundError
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:17:1
+   |
+16 | import paho.mqtt.publish as publish
+17 | from bleak import BleakClient
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 | from bleak.exc import BleakCharacteristicNotFoundError
+19 | from spherov2.adapter.bleak_adapter import BleakAdapter
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:18:1
+   |
+16 | import paho.mqtt.publish as publish
+17 | from bleak import BleakClient
+18 | from bleak.exc import BleakCharacteristicNotFoundError
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 | from spherov2.adapter.bleak_adapter import BleakAdapter
+20 | from spherov2.commands.core import IntervalOptions
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:19:1
+   |
+17 | from bleak import BleakClient
+18 | from bleak.exc import BleakCharacteristicNotFoundError
+19 | from spherov2.adapter.bleak_adapter import BleakAdapter
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | from spherov2.commands.core import IntervalOptions
+21 | from spherov2.scanner import find_toys
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:20:1
+   |
+18 | from bleak.exc import BleakCharacteristicNotFoundError
+19 | from spherov2.adapter.bleak_adapter import BleakAdapter
+20 | from spherov2.commands.core import IntervalOptions
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | from spherov2.scanner import find_toys
+22 | from spherov2.toy.bb8 import BB8
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:21:1
+   |
+19 | from spherov2.adapter.bleak_adapter import BleakAdapter
+20 | from spherov2.commands.core import IntervalOptions
+21 | from spherov2.scanner import find_toys
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 | from spherov2.toy.bb8 import BB8
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:22:1
+   |
+20 | from spherov2.commands.core import IntervalOptions
+21 | from spherov2.scanner import find_toys
+22 | from spherov2.toy.bb8 import BB8
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |
+24 | from .addon_config import load_config
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:24:1
+   |
+22 | from spherov2.toy.bb8 import BB8
+23 |
+24 | from .addon_config import load_config
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 | from .ble_utils import resolve_services
+26 | from .core import Core
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:25:1
+   |
+24 | from .addon_config import load_config
+25 | from .ble_utils import resolve_services
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 | from .core import Core
+27 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:26:1
+   |
+24 | from .addon_config import load_config
+25 | from .ble_utils import resolve_services
+26 | from .core import Core
+   | ^^^^^^^^^^^^^^^^^^^^^^
+27 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:27:1
+   |
+25 | from .ble_utils import resolve_services
+26 | from .core import Core
+27 | from .logging_setup import logger
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 |
+29 | CFG, SRC = load_config()
+   |
+
+F841 Local variable `bleak_version` is assigned to but never used
+  --> bb8_core/ble_bridge.py:70:17
+   |
+68 |                 bleak_version = importlib.metadata.version("bleak")
+69 |             except Exception:
+70 |                 bleak_version = "unknown"
+   |                 ^^^^^^^^^^^^^
+71 |             try:
+72 |                 spherov2_version = importlib.metadata.version("spherov2")
+   |
+help: Remove assignment to unused variable `bleak_version`
+
+F841 Local variable `spherov2_version` is assigned to but never used
+  --> bb8_core/ble_bridge.py:74:17
+   |
+72 |                 spherov2_version = importlib.metadata.version("spherov2")
+73 |             except Exception:
+74 |                 spherov2_version = "unknown"
+   |                 ^^^^^^^^^^^^^^^^
+75 |             return
+76 |         try:
+   |
+help: Remove assignment to unused variable `spherov2_version`
+
+E501 Line too long (103 > 88)
+   --> bb8_core/ble_bridge.py:274:89
+    |
+272 |                 logger.error({"event": "ble_cmd_led_handler_error", "error": repr(e)})
+273 |
+274 |         # Removed unused _handle_stop function and replaced self.stop() with self.shutdown() if needed.
+    |                                                                                         ^^^^^^^^^^^^^^^
+275 |         # If you need to handle a stop command, implement it as needed, for example:
+276 |         def handle_stop_command():
+    |
+
+E501 Line too long (109 > 88)
+   --> bb8_core/ble_bridge.py:714:89
+    |
+712 |             "command_topic": f"{topic_prefix}/command",
+713 |             "schema": "json",
+714 |             "rgb_command_template": "{{ {'command': 'set_led', 'r': red, 'g': green, 'b': blue} | tojson }}",
+    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^
+715 |             "device": base_device,
+716 |         },
+    |
+
+E501 Line too long (97 > 88)
+ --> bb8_core/ble_gateway.py:4:89
+  |
+2 | ble_gateway.py
+3 |
+4 | Handles BLE adapter selection, device scanning, and connection status for BB-8 device management.
+  |                                                                                         ^^^^^^^^^
+5 | """
+  |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:19:1
+   |
+17 | All code lives inside functions; only the __main__ guard executes main().
+18 | """
+19 | import asyncio
+   | ^^^^^^^^^^^^^^
+20 | import json
+21 | import os  # Needed for os.environ
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:20:1
+   |
+18 | """
+19 | import asyncio
+20 | import json
+   | ^^^^^^^^^^^
+21 | import os  # Needed for os.environ
+22 | import threading
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:21:1
+   |
+19 | import asyncio
+20 | import json
+21 | import os  # Needed for os.environ
+   | ^^^^^^^^^
+22 | import threading
+23 | from typing import Any, Dict, Optional
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:22:1
+   |
+20 | import json
+21 | import os  # Needed for os.environ
+22 | import threading
+   | ^^^^^^^^^^^^^^^^
+23 | from typing import Any, Dict, Optional
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:23:1
+   |
+21 | import os  # Needed for os.environ
+22 | import threading
+23 | from typing import Any, Dict, Optional
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 |
+25 | from .addon_config import load_config
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:25:1
+   |
+23 | from typing import Any, Dict, Optional
+24 |
+25 | from .addon_config import load_config
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 | from .auto_detect import resolve_bb8_mac
+27 | from .ble_bridge import BLEBridge
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:26:1
+   |
+25 | from .addon_config import load_config
+26 | from .auto_detect import resolve_bb8_mac
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 | from .ble_bridge import BLEBridge
+28 | from .ble_gateway import BleGateway
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:27:1
+   |
+25 | from .addon_config import load_config
+26 | from .auto_detect import resolve_bb8_mac
+27 | from .ble_bridge import BLEBridge
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 | from .ble_gateway import BleGateway
+29 | from .ble_link import BLELink
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:28:1
+   |
+26 | from .auto_detect import resolve_bb8_mac
+27 | from .ble_bridge import BLEBridge
+28 | from .ble_gateway import BleGateway
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 | from .ble_link import BLELink
+30 | from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:29:1
+   |
+27 | from .ble_bridge import BLEBridge
+28 | from .ble_gateway import BleGateway
+29 | from .ble_link import BLELink
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+30 | from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+31 | from .evidence_capture import EvidenceRecorder
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:30:1
+   |
+28 | from .ble_gateway import BleGateway
+29 | from .ble_link import BLELink
+30 | from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 | from .evidence_capture import EvidenceRecorder
+32 | from .facade import BB8Facade
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:31:1
+   |
+29 | from .ble_link import BLELink
+30 | from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+31 | from .evidence_capture import EvidenceRecorder
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 | from .facade import BB8Facade
+33 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:32:1
+   |
+30 | from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+31 | from .evidence_capture import EvidenceRecorder
+32 | from .facade import BB8Facade
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:33:1
+   |
+31 | from .evidence_capture import EvidenceRecorder
+32 | from .facade import BB8Facade
+33 | from .logging_setup import logger
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+34 |
+35 | DEFAULT_MQTT_HOST = "localhost"
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:55:1
+   |
+54 | # so later divergent attempts (e.g., localhost) are suppressed.
+55 | from .mqtt_dispatcher import ensure_dispatcher_started
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+56 |
+57 | ensure_dispatcher_started()
+   |
+
+E501 Line too long (168 > 88)
+   --> bb8_core/bridge_controller.py:183:89
+    |
+181 | …
+182 | …e function signature.
+183 | …rd','controller') and new-style ('mqtt_host','mqtt_port','mqtt_topic','username','passwd','bridge') names.
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+184 | …
+185 | …
+    |
+
+F841 Local variable `stop` is assigned to but never used
+   --> bb8_core/bridge_controller.py:315:5
+    |
+313 | def _wait_forever(client, bridge, ble=None) -> None:
+314 |     """Block the main thread until SIGTERM/SIGINT; then shutdown cleanly."""
+315 |     stop = threading.Event()
+    |     ^^^^
+316 |
+317 |     def _handle(sig, _frame):
+    |
+help: Remove assignment to unused variable `stop`
+
+N806 Variable `MQTT_TOPIC_DEFAULT` in function should be lowercase
+   --> bb8_core/bridge_controller.py:393:5
+    |
+391 |         mqtt_port = 1883
+392 |
+393 |     MQTT_TOPIC_DEFAULT = "bb8"
+    |     ^^^^^^^^^^^^^^^^^^
+394 |     mqtt_topic = cfg.get("mqtt_topic") or MQTT_TOPIC_DEFAULT
+395 |     mqtt_user = cfg.get("mqtt_user")
+    |
+
+F841 Local variable `status_topic` is assigned to but never used
+   --> bb8_core/bridge_controller.py:441:5
+    |
+439 |     )
+440 |     # Removed unused status_topic assignment
+441 |     status_topic = cfg.get("status_topic") if cfg else f"{mqtt_topic}/status"
+    |     ^^^^^^^^^^^^
+442 |     # Example usage of dispatcher (replace with actual call)
+443 |     # If you need to use dispatcher_args, ensure you reference it later in the code.
+    |
+help: Remove assignment to unused variable `status_topic`
+
+E402 Module level import not at top of file
+  --> bb8_core/common.py:86:1
+   |
+85 | # BLE loop thread setup
+86 | import asyncio
+   | ^^^^^^^^^^^^^^
+87 | import threading
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/common.py:87:1
+   |
+85 | # BLE loop thread setup
+86 | import asyncio
+87 | import threading
+   | ^^^^^^^^^^^^^^^^
+88 |
+89 | ble_loop = asyncio.new_event_loop()
+   |
+
+E501 Line too long (161 > 88)
+ --> bb8_core/controller.py:4:89
+  |
+2 | …
+3 | …
+4 | …tegration with Home Assistant, including BLE device management, command dispatch, and MQTT diagnostics.
+  |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+5 | …
+6 | …
+  |
+
+E501 Line too long (89 > 88)
+  --> bb8_core/core.py:90:89
+   |
+88 |     # Optional seam used by facade/tests
+89 |     def emit_led(self, bridge, r: int, g: int, b: int) -> None:
+90 |         """Emit LED RGB; tests may spy on this seam. Production forwards to publisher."""
+   |                                                                                         ^
+91 |         if hasattr(self, "publish_led_rgb") and callable(self.publish_led_rgb):
+92 |             self.publish_led_rgb(bridge, r, g, b)
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> bb8_core/facade.py:1:1
+   |
+ 1 | / import json
+ 2 | | import os
+ 3 | | import threading
+ 4 | | import time
+ 5 | | import sys
+ 6 | | import logging
+ 7 | | from typing import Any, Callable, Optional
+ 8 | |
+ 9 | | from .bb8_presence_scanner import publish_discovery  # use retained cfg payloads
+10 | | from .common import STATE_TOPICS
+11 | | from .logging_setup import logger
+12 | | from .addon_config import load_config
+   | |_____________________________________^
+   |
+help: Organize imports
+
+N806 Variable `CFG` in function should be lowercase
+   --> bb8_core/facade.py:167:9
+    |
+166 |         # Load config and set up MQTT topics
+167 |         CFG, _ = load_config()
+    |         ^^^
+168 |         MQTT_BASE = CFG.get("MQTT_BASE", "bb8")
+169 |         MQTT_CLIENT_ID = CFG.get("MQTT_CLIENT_ID", "bb8_presence_scanner")
+    |
+
+N806 Variable `MQTT_BASE` in function should be lowercase
+   --> bb8_core/facade.py:168:9
+    |
+166 |         # Load config and set up MQTT topics
+167 |         CFG, _ = load_config()
+168 |         MQTT_BASE = CFG.get("MQTT_BASE", "bb8")
+    |         ^^^^^^^^^
+169 |         MQTT_CLIENT_ID = CFG.get("MQTT_CLIENT_ID", "bb8_presence_scanner")
+170 |         BB8_NAME = CFG.get("BB8_NAME", "S33 BB84 LE")
+    |
+
+N806 Variable `MQTT_CLIENT_ID` in function should be lowercase
+   --> bb8_core/facade.py:169:9
+    |
+167 |         CFG, _ = load_config()
+168 |         MQTT_BASE = CFG.get("MQTT_BASE", "bb8")
+169 |         MQTT_CLIENT_ID = CFG.get("MQTT_CLIENT_ID", "bb8_presence_scanner")
+    |         ^^^^^^^^^^^^^^
+170 |         BB8_NAME = CFG.get("BB8_NAME", "S33 BB84 LE")
+171 |         qos_val = qos if qos is not None else CFG.get("QOS", 1)
+    |
+
+N806 Variable `BB8_NAME` in function should be lowercase
+   --> bb8_core/facade.py:170:9
+    |
+168 |         MQTT_BASE = CFG.get("MQTT_BASE", "bb8")
+169 |         MQTT_CLIENT_ID = CFG.get("MQTT_CLIENT_ID", "bb8_presence_scanner")
+170 |         BB8_NAME = CFG.get("BB8_NAME", "S33 BB84 LE")
+    |         ^^^^^^^^
+171 |         qos_val = qos if qos is not None else CFG.get("QOS", 1)
+172 |         retain_val = retain if retain is not None else CFG.get("RETAIN", True)
+    |
+
+N806 Variable `REQUIRE_DEVICE_ECHO` in function should be lowercase
+   --> bb8_core/facade.py:220:9
+    |
+219 |         # Local config: device echo required?
+220 |         REQUIRE_DEVICE_ECHO = os.environ.get("REQUIRE_DEVICE_ECHO", "1") not in (
+    |         ^^^^^^^^^^^^^^^^^^^
+221 |             "0",
+222 |             "false",
+    |
+
+E501 Line too long (98 > 88)
+   --> bb8_core/logging_setup.py:115:89
+    |
+113 | ) -> logging.Handler:
+114 |     """
+115 |     Prefer LOG_PATH from config, then BB8_LOG_PATH env, then default_path, then /tmp, then stderr.
+    |                                                                                         ^^^^^^^^^^
+116 |     Emits one warning on fallback.
+117 |     """
+    |
+
+E501 Line too long (94 > 88)
+   --> bb8_core/logging_setup.py:119:89
+    |
+117 |     """
+118 |     candidate = _cfg.get("LOG_PATH") or os.environ.get("BB8_LOG_PATH") or default_path
+119 |     # Detect environment: if running in Home Assistant, /addons is present and /Volumes is not
+    |                                                                                         ^^^^^^
+120 |     is_ha = os.path.exists("/addons") and not os.path.exists("/Volumes")
+121 |     # If running in HA and candidate starts with /Volumes, strip it
+    |
+
+E501 Line too long (91 > 88)
+   --> bb8_core/logging_setup.py:132:89
+    |
+130 |         tmp = os.path.join(tempfile.gettempdir(), "bb8_addon.log")
+131 |         print(
+132 |             f"[LOGGING DEBUG] Fallback to temp log path: {tmp}, Writable: {_writable(tmp)}"
+    |                                                                                         ^^^
+133 |         )
+134 |         candidate = tmp if _writable(tmp) else None
+    |
+
+E501 Line too long (175 > 88)
+ --> bb8_core/mqtt_dispatcher.py:6:89
+  |
+4 | …
+5 | …
+6 | …ches commands to the BLE bridge/controller, and publishes status and discovery information for Home Assistant.
+  |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7 | …
+8 | …
+  |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:8:1
+   |
+ 6 | Connects to the MQTT broker, subscribes to command topics, dispatches commands to the BLE bridge/controller, and publishes status and …
+ 7 | """
+ 8 | import inspect
+   | ^^^^^^^^^^^^^^
+ 9 | import json
+10 | import logging
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:9:1
+   |
+ 7 | """
+ 8 | import inspect
+ 9 | import json
+   | ^^^^^^^^^^^
+10 | import logging
+11 | import os
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:10:1
+   |
+ 8 | import inspect
+ 9 | import json
+10 | import logging
+   | ^^^^^^^^^^^^^^
+11 | import os
+12 | import socket
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:11:1
+   |
+ 9 | import json
+10 | import logging
+11 | import os
+   | ^^^^^^^^^
+12 | import socket
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:12:1
+   |
+10 | import logging
+11 | import os
+12 | import socket
+   | ^^^^^^^^^^^^^
+13 |
+14 | # --- at module scope ---
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:15:1
+   |
+14 | # --- at module scope ---
+15 | from typing import Any, Callable, Optional, Set, Tuple
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |
+17 | import paho.mqtt.client as mqtt
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:17:1
+   |
+15 | from typing import Any, Callable, Optional, Set, Tuple
+16 |
+17 | import paho.mqtt.client as mqtt
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 |
+19 | from .addon_config import CONFIG, CONFIG_SOURCE, init_config
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:19:1
+   |
+17 | import paho.mqtt.client as mqtt
+18 |
+19 | from .addon_config import CONFIG, CONFIG_SOURCE, init_config
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | from .common import CMD_TOPICS, STATE_TOPICS
+21 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:20:1
+   |
+19 | from .addon_config import CONFIG, CONFIG_SOURCE, init_config
+20 | from .common import CMD_TOPICS, STATE_TOPICS
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:21:1
+   |
+19 | from .addon_config import CONFIG, CONFIG_SOURCE, init_config
+20 | from .common import CMD_TOPICS, STATE_TOPICS
+21 | from .logging_setup import logger
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |
+23 | log = logging.getLogger(__name__)
+   |
+
+E501 Line too long (118 > 88)
+   --> bb8_core/mqtt_dispatcher.py:106:89
+    |
+104 | log = logging.getLogger(__name__)
+105 |
+106 | publish_discovery = None  # No cached scanner aliases; all scanner discovery routed via _trigger_discovery_connected()
+    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+
+E501 Line too long (93 > 88)
+   --> bb8_core/mqtt_dispatcher.py:169:89
+    |
+167 |                     args = _pytest_args_for(pub)
+168 |                     log.debug("Calling publisher with dummy args: %r", args)
+169 |                     # Always call _get_scanner_publisher again before calling with dummy args
+    |                                                                                         ^^^^^
+170 |                     pub = _get_scanner_publisher()
+171 |                     pub(*args)
+    |
+
+F841 Local variable `ha_prefix` is assigned to but never used
+   --> bb8_core/mqtt_dispatcher.py:245:5
+    |
+243 |     if not CONFIG.get("dispatcher_discovery_enabled", False):
+244 |         return
+245 |     ha_prefix = CONFIG.get("ha_discovery_topic", "homeassistant")
+    |     ^^^^^^^^^
+246 |     obj_id = "bb8_led"
+247 |     # Call the default BB-8 discovery publisher if enabled
+    |
+help: Remove assignment to unused variable `ha_prefix`
+
+F841 Local variable `obj_id` is assigned to but never used
+   --> bb8_core/mqtt_dispatcher.py:246:5
+    |
+244 |         return
+245 |     ha_prefix = CONFIG.get("ha_discovery_topic", "homeassistant")
+246 |     obj_id = "bb8_led"
+    |     ^^^^^^
+247 |     # Call the default BB-8 discovery publisher if enabled
+248 |     publish_bb8_discovery(publish_fn)
+    |
+help: Remove assignment to unused variable `obj_id`
+
+E501 Line too long (98 > 88)
+   --> bb8_core/mqtt_dispatcher.py:632:89
+    |
+630 |         ok = getattr(mid, "wait_for_publish", lambda timeout=3: True)(timeout=3)
+631 |         log.info(
+632 |             f"discovery_publish_result topic={topic} mid={getattr(mid, 'mid', None)} wait_ok={ok}"
+    |                                                                                         ^^^^^^^^^^
+633 |         )
+634 |         if ok:
+    |
+
+F841 Local variable `password` is assigned to but never used
+   --> bb8_core/mqtt_dispatcher.py:684:9
+    |
+682 |             or CONFIG.get("mqtt_username")
+683 |         )
+684 |         password = (
+    |         ^^^^^^^^
+685 |             kwargs.get("password")
+686 |             or CONFIG.get("MQTT_PASSWORD")
+    |
+help: Remove assignment to unused variable `password`
+
+E501 Line too long (100 > 88)
+   --> bb8_core/mqtt_dispatcher.py:694:89
+    |
+692 |         user_flag = bool(username)
+693 |         logger.info(
+694 |             "Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s",
+    |                                                                                         ^^^^^^^^^^^^
+695 |             host,
+696 |             port,
+    |
+
+E501 Line too long (91 > 88)
+   --> bb8_core/mqtt_dispatcher.py:719:89
+    |
+717 |             port = 1883  # fallback to default port
+718 |
+719 |         # Start the dispatcher here (you may need to call start_mqtt_dispatcher or similar)
+    |                                                                                         ^^^
+720 |         # For demonstration, we just set the flag
+721 |         _DISPATCHER_STARTED = True
+    |
+
+E501 Line too long (92 > 88)
+   --> bb8_core/mqtt_dispatcher.py:846:89
+    |
+844 |     client.loop_start()
+845 |
+846 |     # Do not proactively trigger here; on_connect will handle publication deterministically.
+    |                                                                                         ^^^^
+847 |     return client
+    |
+
+E501 Line too long (118 > 88)
+  --> ops/evidence/collect_stp4.py:65:89
+   |
+63 |             return {}
+64 |     logging.warning(
+65 |         "[CONFIG] load_config is not available. This usually means the module import failed or PYTHONPATH is not set."
+   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+66 |     )
+67 |     return {}
+   |
+
+E501 Line too long (135 > 88)
+  --> ops/evidence/collect_stp4.py:89:89
+   |
+87 |     if missing_host or missing_port:
+88 |         print(
+89 |             "[ERROR] MQTT config missing: host and/or port not set. Please set MQTT_HOST and MQTT_PORT in your environment or config.",
+   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+90 |             file=sys.stderr,
+91 |         )
+   |
+
+E501 Line too long (89 > 88)
+   --> ops/evidence/collect_stp4.py:298:89
+    |
+296 |                 for m in reversed(self.msg_log):
+297 |                     if m["topic"] == topic and predicate(m):
+298 |                         # Only accept state with ts >= command_ts (reject stale/prestate)
+    |                                                                                         ^
+299 |                         return self._extract_state(m)
+300 |         return None
+    |
+
+E501 Line too long (96 > 88)
+   --> ops/evidence/collect_stp4.py:429:89
+    |
+427 | …                     ):
+428 | …                         passed, note_val = True, ""
+429 | …                     # 3) JSON with {"value": ...} vs raw expect (strings or numbers)
+    |                                                                               ^^^^^^^^
+430 | …                     elif (
+431 | …                         isinstance(j_echo, dict)
+    |
+
+E501 Line too long (185 > 88)
+   --> ops/evidence/collect_stp4.py:459:89
+    |
+457 | …/set")
+458 | …
+459 | …EVICE_ECHO')}, require_device={require_device}, is_commandable={is_commandable}, echo_source={echo.get('source')}"
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+460 | …
+461 | …ce") != "device":
+    |
+
+E501 Line too long (284 > 88)
+  --> ops/evidence/evidence_capture.py:11:89
+   |
+10 | …
+11 | …hing not "device" becomes facade_only). That logic is sound—keep it. Use REQUIRE_DEVICE_ECHO=0 while the shim stands in, then flip to 1 for real hardware acceptance. (See the env/logic in record(...).)
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+12 | …
+   |
+
+E501 Line too long (96 > 88)
+  --> scan_bb8_gatt.py:35:89
+   |
+33 |     if not device:
+34 |         print(
+35 |             "BB-8 not found. Is it awake and advertising? Try tapping or removing from charger."
+   |                                                                                         ^^^^^^^^
+36 |         )
+37 |         return
+   |
+
+E501 Line too long (96 > 88)
+  --> scan_bb8_gatt.py:47:89
+   |
+45 |                 props = ",".join(char.properties)
+46 |                 print(
+47 |                     f"  [Characteristic] {char.uuid} | {char.description} | properties: {props}"
+   |                                                                                         ^^^^^^^^
+48 |                 )
+   |
+
+E501 Line too long (112 > 88)
+  --> tests/conftest.py:23:89
+   |
+22 | # Provide a stable event loop for tests that touch asyncio/BLE helpers.
+23 | # With asyncio_mode=auto this is usually not necessary, but it guards environments where plugin policies differ.
+   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^
+24 | @pytest.fixture(scope="session")
+25 | def event_loop():
+   |
+
+Found 110 errors.
+[*] 1 fixable with the `--fix` option (7 hidden fixes can be enabled with the `--unsafe-fixes` option).

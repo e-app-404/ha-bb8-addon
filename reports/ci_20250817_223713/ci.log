@@ -1,0 +1,193 @@
+bandit -q -r bb8_core | tee reports/qa_20250817_223713/bandit.log || true
+Run started:2025-08-17 21:37:21.796918
+
+Test results:
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html
+   Location: bb8_core/__init__.py:21:4
+20	            __all__.append("start_bridge_controller")
+21	    except Exception:
+22	        pass
+23	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html
+   Location: bb8_core/__init__.py:122:0
+121	        __all__.append("BB8Facade")
+122	except Exception:
+123	    pass
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html
+   Location: bb8_core/bb8_presence_scanner.py:753:4
+752	                    return ("RGB", (r, g, b))
+753	    except Exception:
+754	        pass
+755	    return ("INVALID", None)
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html
+   Location: bb8_core/ble_bridge.py:256:12
+255	                    pass
+256	            except Exception:
+257	                pass
+258	            return None
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html
+   Location: bb8_core/bridge_controller.py:229:4
+228	        logger.debug({"event": "dispatcher_call_args", **dbg})
+229	    except Exception:
+230	        pass
+231	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html
+   Location: bb8_core/bridge_controller.py:322:8
+321	            logger.info({"event": "shutdown_signal", "signal": int(sig)})
+322	        except Exception:
+323	            pass
+324	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html
+   Location: bb8_core/evidence_capture.py:73:16
+72	                    old(client, userdata, msg)
+73	                except Exception:
+74	                    pass
+75	            on_message(client, userdata, msg)
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html
+   Location: bb8_core/facade.py:140:8
+139	            time.sleep(max(per_call_ms, 0) / 1000.0)
+140	        except Exception:
+141	            pass
+142	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html
+   Location: bb8_core/facade.py:215:12
+214	                    }
+215	            except Exception:
+216	                pass
+217	            return None
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html
+   Location: bb8_core/facade.py:349:16
+348	                    time.sleep(max(int(os.getenv("BB8_LED_FADE_MS", "25")), 0) / 1000.0)
+349	                except Exception:
+350	                    pass
+351	            try:
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html
+   Location: bb8_core/facade.py:355:12
+354	                )
+355	            except Exception:
+356	                pass
+357	
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html
+   Location: bb8_core/facade.py:366:8
+365	            time.sleep(max(int(os.getenv("BB8_LED_FADE_MS", "25")), 0) / 1000.0)
+366	        except Exception:
+367	            pass
+368	    try:
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html
+   Location: bb8_core/facade.py:372:4
+371	        )
+372	    except Exception:
+373	        pass
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html
+   Location: bb8_core/mqtt_dispatcher.py:137:4
+136	            return True
+137	    except Exception:
+138	        pass
+139	    t = type(func)
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 4707
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 14
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 0
+		High: 14
+Files skipped (0):
+safety scan --full-report | tee reports/qa_20250817_223713/safety.log || true
+Safety 3.6.0 scanning /Volumes/addons/local/beep_boop_bb8
+2025-08-17 21:37:23 UTC
+
+Account: babylon-Git, e.appels@gmail.com 
+ Git branch: feat/strict-stp4-device-echo
+ Environment: Stage.development
+ Scan policy: None, using Safety CLI default policies
+
+Python detected. Found 1 Python pyproject.toml file and 1 Python requirement file
+
+✅ pyproject.toml: No issues found.
+
+✅ requirements.txt: No issues found.
+
+Tested 4 dependencies for security issues using default Safety CLI policies
+4 vulnerabilities found, 4 ignored due to policy.
+0 fixes suggested, resolving 0 vulnerabilities.
+

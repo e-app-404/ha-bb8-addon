@@ -1,0 +1,7 @@
+{
+  "phase": "STP2",
+  "goal": "Verify no-secret logging, confirm health endpoint is functional.",
+  "probe": { "http_status": 200, "mqtt_status": "healthy" },
+  "grep_summary": { "matches": [] },
+  "attestation": "STP2/no-secrets: PASS"
+}

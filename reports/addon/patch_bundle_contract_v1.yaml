@@ -1,0 +1,23 @@
+patch_bundle_id: PATCH-BUNDLE-STP4-20250815-FINAL
+summary: >
+  STP4 strict device-echo compliance, BLE dedicated loop, import-cycle removal,
+  config path clarity + add-on options merge, and scanner/dispatcher singleton.
+files_changed:
+  - bb8_core/common.py # publish_device_echo(), TOPICS
+  - bb8_core/bridge_controller.py # handlers wired to helper; LED {r,g,b}; BLE thread
+  - bb8_core/ble_link.py # dedicated loop handoff (set_loop/run_coroutine_threadsafe)
+  - bb8_core/facade.py # imports via common; TYPE_CHECKING for types
+  - bb8_core/bb8_presence_scanner.py # discovery guarded via mqtt_dispatcher singleton
+  - bb8_core/mqtt_dispatcher.py # ensure/is_dispatcher_started singleton API
+  - bb8_core/addon_config.py # options.json+YAML merge; ordered paths; LOG alias; exports
+patch_ids:
+  - PATCH-STP4-250814-device-echo
+  - PATCH-STP4-250814-device-echo-v2
+  - PATCH-STP4-250815-dispatcher-singleton
+  - PATCH-STP4-250814-config-path
+  - PATCH-STP4-250815-addon-config-api-compat
+  - PATCH-STP4-250815-addon-config-lint-fixes
+  - PATCH-STP4-250815-pytest-root-config
+  - PATCH-STP4-250815-mypy-root-config
+  - PATCH-STP4-250815-addon-config-order-fix
+verdict: PASS

@@ -1,0 +1,19 @@
+{
+  "milestones": [
+    {
+      "name": "M1 (STP2 audit)",
+      "due": "12-Aug-2025",
+      "owner": "Evert Appels"
+    },
+    {
+      "name": "M2 (STP4 roundtrip)",
+      "due": "16-Aug-2025",
+      "owner": "Evert Appels"
+    },
+    {
+      "name": "M3 (final regression & release)",
+      "due": "22-Aug-2025",
+      "owner": "Evert Appels"
+    }
+  ]
+}

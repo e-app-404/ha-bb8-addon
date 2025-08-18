@@ -1,0 +1,41 @@
+{
+    "verdict": "PASS",
+    "log_path": "/Users/evertappels/Projects/HA-BB8/addon/reports/ha_bb8_addon.log",
+    "version": "bleak: 0.22.3, spherov2: 0.12.1, paho-mqtt: 2.1.0",
+    "effective_env": {
+        "MQTT_HOST": "192.168.0.129",
+        "MQTT_PORT": 1883,
+        "MQTT_BASE": "bb8",
+        "REQUIRE_DEVICE_ECHO": 1,
+        "ENABLE_BRIDGE_TELEMETRY": 1,
+        "LOG_LEVEL": null
+    },
+    "mqtt": {
+        "connected": true,
+        "client_id": "bb8_presence_scanner",
+        "reconnects": 0
+    },
+    "ble": {
+        "started": true,
+        "adapter": "hci0",
+        "connected_events": 1,
+        "disconnected_events": 1
+    },
+    "shim": {
+        "disabled_in_strict": true
+    },
+    "discovery": {
+        "published_count": null,
+        "owner": "scanner"
+    },
+    "telemetry": {
+        "enabled": true
+    },
+    "warnings": [],
+    "errors": [],
+    "apparmor_denials": 0,
+    "timing_sec": {
+        "start_to_ble_started": 1.0,
+        "ble_started_to_first_publish": 1.0
+    }
+}

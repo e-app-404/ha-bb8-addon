@@ -1,0 +1,3267 @@
+B009 [*] Do not call `getattr` with a constant attribute value. It is not any safer than normal property access.
+  --> bb8_core/__init__.py:19:39
+   |
+17 |         _mod = importlib.import_module("bb8_core.bridge_controller")
+18 |         if hasattr(_mod, "start_bridge_controller"):
+19 |             start_bridge_controller = getattr(_mod, "start_bridge_controller")
+   |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |             __all__.append("start_bridge_controller")
+21 |     except Exception:
+   |
+help: Replace `getattr` with attribute access
+
+E501 Line too long (106 > 88)
+   --> bb8_core/__init__.py:116:89
+    |
+115 | # Optional: expose classes from aliased modules at package top-level if desired.
+116 | # e.g., make `from bb8_core.facade import BB8Facade` work AND `from bb8_core import BB8Facade` (optional):
+    |                                                                                         ^^^^^^^^^^^^^^^^^^
+117 | try:
+118 |     _facade = sys.modules.get("bb8_core.facade")
+    |
+
+B009 [*] Do not call `getattr` with a constant attribute value. It is not any safer than normal property access.
+   --> bb8_core/__init__.py:120:21
+    |
+118 |     _facade = sys.modules.get("bb8_core.facade")
+119 |     if _facade and hasattr(_facade, "BB8Facade"):
+120 |         BB8Facade = getattr(_facade, "BB8Facade")
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+121 |         __all__.append("BB8Facade")
+122 | except Exception:
+    |
+help: Replace `getattr` with attribute access
+
+UP035 `typing.Dict` is deprecated, use `dict` instead
+ --> bb8_core/addon_config.py:7:1
+  |
+5 | import os
+6 | from pathlib import Path
+7 | from typing import Any, Dict, List, Optional, Tuple
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+8 |
+9 | import yaml
+  |
+
+UP035 `typing.List` is deprecated, use `list` instead
+ --> bb8_core/addon_config.py:7:1
+  |
+5 | import os
+6 | from pathlib import Path
+7 | from typing import Any, Dict, List, Optional, Tuple
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+8 |
+9 | import yaml
+  |
+
+UP035 `typing.Tuple` is deprecated, use `tuple` instead
+ --> bb8_core/addon_config.py:7:1
+  |
+5 | import os
+6 | from pathlib import Path
+7 | from typing import Any, Dict, List, Optional, Tuple
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+8 |
+9 | import yaml
+  |
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+  --> bb8_core/addon_config.py:16:9
+   |
+15 | # Public module-level handles; populated by init_config()
+16 | CONFIG: Dict[str, Any] = {}
+   |         ^^^^
+17 | CONFIG_SOURCE: Optional[Path] = None
+   |
+help: Replace with `dict`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/addon_config.py:17:16
+   |
+15 | # Public module-level handles; populated by init_config()
+16 | CONFIG: Dict[str, Any] = {}
+17 | CONFIG_SOURCE: Optional[Path] = None
+   |                ^^^^^^^^^^^^^^
+   |
+help: Convert to `X | None`
+
+UP006 [*] Use `list` instead of `List` for type annotation
+  --> bb8_core/addon_config.py:20:27
+   |
+20 | def _candidate_paths() -> List[Path]:
+   |                           ^^^^
+21 |     """
+22 |     Ordered config locations (HA first, then add-on, then local/dev).
+   |
+help: Replace with `list`
+
+UP006 [*] Use `list` instead of `List` for type annotation
+  --> bb8_core/addon_config.py:26:12
+   |
+24 |     """
+25 |     env_path = os.environ.get("CONFIG_PATH")
+26 |     paths: List[Path] = []
+   |            ^^^^
+27 |     if env_path:
+28 |         paths.append(Path(env_path))
+   |
+help: Replace with `list`
+
+UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+  --> bb8_core/addon_config.py:44:6
+   |
+42 | def _load_options_json(
+43 |     path: Path = Path("/data/options.json"),
+44 | ) -> Tuple[Dict[str, Any], Optional[Path]]:
+   |      ^^^^^
+45 |     """
+46 |     Load Home Assistant add-on options (JSON). Returns (data, source_path).
+   |
+help: Replace with `tuple`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+  --> bb8_core/addon_config.py:44:12
+   |
+42 | def _load_options_json(
+43 |     path: Path = Path("/data/options.json"),
+44 | ) -> Tuple[Dict[str, Any], Optional[Path]]:
+   |            ^^^^
+45 |     """
+46 |     Load Home Assistant add-on options (JSON). Returns (data, source_path).
+   |
+help: Replace with `dict`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/addon_config.py:44:28
+   |
+42 | def _load_options_json(
+43 |     path: Path = Path("/data/options.json"),
+44 | ) -> Tuple[Dict[str, Any], Optional[Path]]:
+   |                            ^^^^^^^^^^^^^^
+45 |     """
+46 |     Load Home Assistant add-on options (JSON). Returns (data, source_path).
+   |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/addon_config.py:65:12
+   |
+64 | def _load_yaml_cfg(
+65 |     paths: Optional[List[Path]] = None,
+   |            ^^^^^^^^^^^^^^^^^^^^
+66 | ) -> Tuple[Dict[str, Any], Optional[Path]]:
+67 |     """
+   |
+help: Convert to `X | None`
+
+UP006 [*] Use `list` instead of `List` for type annotation
+  --> bb8_core/addon_config.py:65:21
+   |
+64 | def _load_yaml_cfg(
+65 |     paths: Optional[List[Path]] = None,
+   |                     ^^^^
+66 | ) -> Tuple[Dict[str, Any], Optional[Path]]:
+67 |     """
+   |
+help: Replace with `list`
+
+UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+  --> bb8_core/addon_config.py:66:6
+   |
+64 | def _load_yaml_cfg(
+65 |     paths: Optional[List[Path]] = None,
+66 | ) -> Tuple[Dict[str, Any], Optional[Path]]:
+   |      ^^^^^
+67 |     """
+68 |     Load YAML config from the first available candidate path.
+   |
+help: Replace with `tuple`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+  --> bb8_core/addon_config.py:66:12
+   |
+64 | def _load_yaml_cfg(
+65 |     paths: Optional[List[Path]] = None,
+66 | ) -> Tuple[Dict[str, Any], Optional[Path]]:
+   |            ^^^^
+67 |     """
+68 |     Load YAML config from the first available candidate path.
+   |
+help: Replace with `dict`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/addon_config.py:66:28
+   |
+64 | def _load_yaml_cfg(
+65 |     paths: Optional[List[Path]] = None,
+66 | ) -> Tuple[Dict[str, Any], Optional[Path]]:
+   |                            ^^^^^^^^^^^^^^
+67 |     """
+68 |     Load YAML config from the first available candidate path.
+   |
+help: Convert to `X | None`
+
+UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+  --> bb8_core/addon_config.py:92:22
+   |
+92 | def load_config() -> Tuple[Dict[str, Any], Optional[Path]]:
+   |                      ^^^^^
+93 |     """
+94 |     Produce the effective configuration.
+   |
+help: Replace with `tuple`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+  --> bb8_core/addon_config.py:92:28
+   |
+92 | def load_config() -> Tuple[Dict[str, Any], Optional[Path]]:
+   |                            ^^^^
+93 |     """
+94 |     Produce the effective configuration.
+   |
+help: Replace with `dict`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/addon_config.py:92:44
+   |
+92 | def load_config() -> Tuple[Dict[str, Any], Optional[Path]]:
+   |                                            ^^^^^^^^^^^^^^
+93 |     """
+94 |     Produce the effective configuration.
+   |
+help: Convert to `X | None`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> bb8_core/addon_config.py:101:13
+    |
+ 99 |     yml, yml_src = _load_yaml_cfg()
+100 |
+101 |     merged: Dict[str, Any] = {}
+    |             ^^^^
+102 |     if yml:
+103 |         merged.update(yml)
+    |
+help: Replace with `dict`
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:8:1
+   |
+ 6 | Device discovery and auto-detection logic, scans for BB-8 and caches MAC address.
+ 7 | """
+ 8 | import asyncio
+   | ^^^^^^^^^^^^^^
+ 9 | import contextlib
+10 | import json
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:9:1
+   |
+ 7 | """
+ 8 | import asyncio
+ 9 | import contextlib
+   | ^^^^^^^^^^^^^^^^^
+10 | import json
+11 | import os
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:10:1
+   |
+ 8 | import asyncio
+ 9 | import contextlib
+10 | import json
+   | ^^^^^^^^^^^
+11 | import os
+12 | import re
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:11:1
+   |
+ 9 | import contextlib
+10 | import json
+11 | import os
+   | ^^^^^^^^^
+12 | import re
+13 | import threading
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:12:1
+   |
+10 | import json
+11 | import os
+12 | import re
+   | ^^^^^^^^^
+13 | import threading
+14 | import time
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:13:1
+   |
+11 | import os
+12 | import re
+13 | import threading
+   | ^^^^^^^^^^^^^^^^
+14 | import time
+15 | from typing import Any, Iterable, List, Optional, Tuple
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:14:1
+   |
+12 | import re
+13 | import threading
+14 | import time
+   | ^^^^^^^^^^^
+15 | from typing import Any, Iterable, List, Optional, Tuple
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:15:1
+   |
+13 | import threading
+14 | import time
+15 | from typing import Any, Iterable, List, Optional, Tuple
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |
+17 | from .addon_config import load_config
+   |
+
+UP035 [*] Import from `collections.abc` instead: `Iterable`
+  --> bb8_core/auto_detect.py:15:1
+   |
+13 | import threading
+14 | import time
+15 | from typing import Any, Iterable, List, Optional, Tuple
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |
+17 | from .addon_config import load_config
+   |
+help: Import from `collections.abc`
+
+UP035 `typing.List` is deprecated, use `list` instead
+  --> bb8_core/auto_detect.py:15:1
+   |
+13 | import threading
+14 | import time
+15 | from typing import Any, Iterable, List, Optional, Tuple
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |
+17 | from .addon_config import load_config
+   |
+
+UP035 `typing.Tuple` is deprecated, use `tuple` instead
+  --> bb8_core/auto_detect.py:15:1
+   |
+13 | import threading
+14 | import time
+15 | from typing import Any, Iterable, List, Optional, Tuple
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |
+17 | from .addon_config import load_config
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:17:1
+   |
+15 | from typing import Any, Iterable, List, Optional, Tuple
+16 |
+17 | from .addon_config import load_config
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 | from .ble_gateway import BleGateway
+19 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:18:1
+   |
+17 | from .addon_config import load_config
+18 | from .ble_gateway import BleGateway
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/auto_detect.py:19:1
+   |
+17 | from .addon_config import load_config
+18 | from .ble_gateway import BleGateway
+19 | from .logging_setup import logger
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |
+21 | # Lazy import for testability
+   |
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/auto_detect.py:55:64
+   |
+55 | def load_cache(now: float, ttl_hours: int, cache_path: str) -> Optional[Candidate]:
+   |                                                                ^^^^^^^^^^^^^^^^^^^
+56 |     if not cache_path or not os.path.exists(cache_path):
+57 |         return None
+   |
+help: Convert to `X | None`
+
+UP015 [*] Unnecessary mode argument
+  --> bb8_core/auto_detect.py:59:31
+   |
+57 |         return None
+58 |     try:
+59 |         with open(cache_path, "r") as f:
+   |                               ^^^
+60 |             data = json.load(f)
+61 |         if ttl_hours > 0:
+   |
+help: Remove mode argument
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/auto_detect.py:86:27
+   |
+86 | def is_probable_bb8(name: Optional[str]) -> bool:
+   |                           ^^^^^^^^^^^^^
+87 |     if not name:
+88 |         return False
+   |
+help: Convert to `X | None`
+
+UP006 [*] Use `list` instead of `List` for type annotation
+  --> bb8_core/auto_detect.py:93:52
+   |
+93 | async def async_scan_for_bb8(scan_seconds: int) -> List[Candidate]:
+   |                                                    ^^^^
+94 |     devices = await BleakScanner.discover(timeout=scan_seconds)  # type: ignore[name-defined]
+95 |     out: List[Candidate] = []
+   |
+help: Replace with `list`
+
+UP006 [*] Use `list` instead of `List` for type annotation
+  --> bb8_core/auto_detect.py:95:10
+   |
+93 | async def async_scan_for_bb8(scan_seconds: int) -> List[Candidate]:
+94 |     devices = await BleakScanner.discover(timeout=scan_seconds)  # type: ignore[name-defined]
+95 |     out: List[Candidate] = []
+   |          ^^^^
+96 |     for d in devices:
+97 |         name = getattr(d, "name", None)
+   |
+help: Replace with `list`
+
+UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+   --> bb8_core/auto_detect.py:108:32
+    |
+107 |     # Sort: exact name first, stronger RSSI, then MAC
+108 |     def score(c: Candidate) -> Tuple[int, int, str]:
+    |                                ^^^^^
+109 |         exact = 1 if c.name.lower() == "bb-8" else 0
+110 |         rssi = c.rssi if isinstance(c.rssi, int) else -999
+    |
+help: Replace with `tuple`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/auto_detect.py:121:14
+    |
+119 |     cache_ttl_hours: int,
+120 |     rescan_on_fail: bool,
+121 |     adapter: Optional[str] = None,
+    |              ^^^^^^^^^^^^^
+122 | ) -> str:
+123 |     mac = load_mac_from_cache(ttl_hours=cache_ttl_hours)
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/auto_detect.py:146:70
+    |
+146 | def load_mac_from_cache(ttl_hours: int = CACHE_DEFAULT_TTL_HOURS) -> Optional[str]:
+    |                                                                      ^^^^^^^^^^^^^
+147 |     cache_path = CFG.get("CACHE_PATH", CACHE_PATH)
+148 |     try:
+    |
+help: Convert to `X | None`
+
+UP015 [*] Unnecessary mode argument
+   --> bb8_core/auto_detect.py:154:31
+    |
+152 |             logger.debug({"event": "auto_detect_cache_stale", "age_hours": age_hours})
+153 |             return None
+154 |         with open(cache_path, "r", encoding="utf-8") as f:
+    |                               ^^^
+155 |             data = json.load(f)
+156 |         mac = data.get("bb8_mac")
+    |
+help: Remove mode argument
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/auto_detect.py:175:46
+    |
+175 | def scan_for_bb8(scan_seconds: int, adapter: Optional[str]) -> list[dict]:
+    |                                              ^^^^^^^^^^^^^
+176 |     gw = BleGateway(mode="bleak", adapter=adapter)
+177 |     try:
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/auto_detect.py:192:46
+    |
+192 | def pick_bb8_mac(devices: Iterable[dict]) -> Optional[str]:
+    |                                              ^^^^^^^^^^^^^
+193 |     candidates = []
+194 |     for d in devices:
+    |
+help: Convert to `X | None`
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:8:1
+   |
+ 6 | Implements Home Assistant MQTT Discovery, explicit birth/LWT, and a rich device block.
+ 7 | """
+ 8 | import argparse
+   | ^^^^^^^^^^^^^^^
+ 9 | import asyncio
+10 | import json
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:9:1
+   |
+ 7 | """
+ 8 | import argparse
+ 9 | import asyncio
+   | ^^^^^^^^^^^^^^
+10 | import json
+11 | import logging
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:10:1
+   |
+ 8 | import argparse
+ 9 | import asyncio
+10 | import json
+   | ^^^^^^^^^^^
+11 | import logging
+12 | import os
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:11:1
+   |
+ 9 | import asyncio
+10 | import json
+11 | import logging
+   | ^^^^^^^^^^^^^^
+12 | import os
+13 | import threading
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:12:1
+   |
+10 | import json
+11 | import logging
+12 | import os
+   | ^^^^^^^^^
+13 | import threading
+14 | import time
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:13:1
+   |
+11 | import logging
+12 | import os
+13 | import threading
+   | ^^^^^^^^^^^^^^^^
+14 | import time
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:14:1
+   |
+12 | import os
+13 | import threading
+14 | import time
+   | ^^^^^^^^^^^
+15 |
+16 | import paho.mqtt.client as mqtt
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:16:1
+   |
+14 | import time
+15 |
+16 | import paho.mqtt.client as mqtt
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+17 | from bleak import BleakScanner
+18 | from paho.mqtt.enums import CallbackAPIVersion
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:17:1
+   |
+16 | import paho.mqtt.client as mqtt
+17 | from bleak import BleakScanner
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 | from paho.mqtt.enums import CallbackAPIVersion
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:18:1
+   |
+16 | import paho.mqtt.client as mqtt
+17 | from bleak import BleakScanner
+18 | from paho.mqtt.enums import CallbackAPIVersion
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |
+20 | from .addon_config import load_config
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:20:1
+   |
+18 | from paho.mqtt.enums import CallbackAPIVersion
+19 |
+20 | from .addon_config import load_config
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | from .mqtt_dispatcher import ensure_dispatcher_started, is_dispatcher_started
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bb8_presence_scanner.py:21:1
+   |
+20 | from .addon_config import load_config
+21 | from .mqtt_dispatcher import ensure_dispatcher_started, is_dispatcher_started
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |
+23 | logger = logging.getLogger("bb8_presence_scanner")
+   |
+
+E501 Line too long (90 > 88)
+  --> bb8_core/bb8_presence_scanner.py:52:89
+   |
+50 |     try:
+51 |         d = json.loads(raw) if raw else {}
+52 |         # Accept HA-native: {"state":"ON","color":{"r":..,"g":..,"b":..},"brightness":...}
+   |                                                                                         ^^
+53 |         if isinstance(d, dict) and d.get("state", "").upper() == "ON":
+54 |             col = d.get("color") or {}
+   |
+
+UP038 Use `X | Y` in `isinstance` call instead of `(X, Y)`
+   --> bb8_core/bb8_presence_scanner.py:721:12
+    |
+719 |         if isinstance(raw, memoryview):
+720 |             raw = raw.tobytes()
+721 |         if isinstance(raw, (bytes, bytearray)):
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+722 |             raw = raw.decode("utf-8", "ignore")
+723 |         s = str(raw).strip()
+    |
+help: Convert to `X | Y`
+
+E501 Line too long (127 > 88)
+ --> bb8_core/ble_bridge.py:6:89
+  |
+4 | ble_bridge.py
+5 |
+6 | Orchestrates BLE operations for BB-8, manages device connection, and exposes diagnostics for Home Assistant add-on integration.
+  |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7 | """
+8 | import asyncio
+  |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:8:1
+   |
+ 6 | Orchestrates BLE operations for BB-8, manages device connection, and exposes diagnostics for Home Assistant add-on integration.
+ 7 | """
+ 8 | import asyncio
+   | ^^^^^^^^^^^^^^
+ 9 | import importlib.metadata
+10 | import json
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:9:1
+   |
+ 7 | """
+ 8 | import asyncio
+ 9 | import importlib.metadata
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^
+10 | import json
+11 | import os
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:10:1
+   |
+ 8 | import asyncio
+ 9 | import importlib.metadata
+10 | import json
+   | ^^^^^^^^^^^
+11 | import os
+12 | import threading
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:11:1
+   |
+ 9 | import importlib.metadata
+10 | import json
+11 | import os
+   | ^^^^^^^^^
+12 | import threading
+13 | import time
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:12:1
+   |
+10 | import json
+11 | import os
+12 | import threading
+   | ^^^^^^^^^^^^^^^^
+13 | import time
+14 | from typing import TYPE_CHECKING, Any, Optional
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:13:1
+   |
+11 | import os
+12 | import threading
+13 | import time
+   | ^^^^^^^^^^^
+14 | from typing import TYPE_CHECKING, Any, Optional
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:14:1
+   |
+12 | import threading
+13 | import time
+14 | from typing import TYPE_CHECKING, Any, Optional
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+15 |
+16 | import paho.mqtt.publish as publish
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:16:1
+   |
+14 | from typing import TYPE_CHECKING, Any, Optional
+15 |
+16 | import paho.mqtt.publish as publish
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+17 | from bleak import BleakClient
+18 | from bleak.exc import BleakCharacteristicNotFoundError
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:17:1
+   |
+16 | import paho.mqtt.publish as publish
+17 | from bleak import BleakClient
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 | from bleak.exc import BleakCharacteristicNotFoundError
+19 | from spherov2.adapter.bleak_adapter import BleakAdapter
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:18:1
+   |
+16 | import paho.mqtt.publish as publish
+17 | from bleak import BleakClient
+18 | from bleak.exc import BleakCharacteristicNotFoundError
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 | from spherov2.adapter.bleak_adapter import BleakAdapter
+20 | from spherov2.commands.core import IntervalOptions
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:19:1
+   |
+17 | from bleak import BleakClient
+18 | from bleak.exc import BleakCharacteristicNotFoundError
+19 | from spherov2.adapter.bleak_adapter import BleakAdapter
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | from spherov2.commands.core import IntervalOptions
+21 | from spherov2.scanner import find_toys
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:20:1
+   |
+18 | from bleak.exc import BleakCharacteristicNotFoundError
+19 | from spherov2.adapter.bleak_adapter import BleakAdapter
+20 | from spherov2.commands.core import IntervalOptions
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | from spherov2.scanner import find_toys
+22 | from spherov2.toy.bb8 import BB8
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:21:1
+   |
+19 | from spherov2.adapter.bleak_adapter import BleakAdapter
+20 | from spherov2.commands.core import IntervalOptions
+21 | from spherov2.scanner import find_toys
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 | from spherov2.toy.bb8 import BB8
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:22:1
+   |
+20 | from spherov2.commands.core import IntervalOptions
+21 | from spherov2.scanner import find_toys
+22 | from spherov2.toy.bb8 import BB8
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |
+24 | from .addon_config import load_config
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:24:1
+   |
+22 | from spherov2.toy.bb8 import BB8
+23 |
+24 | from .addon_config import load_config
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 | from .ble_utils import resolve_services
+26 | from .core import Core
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:25:1
+   |
+24 | from .addon_config import load_config
+25 | from .ble_utils import resolve_services
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 | from .core import Core
+27 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:26:1
+   |
+24 | from .addon_config import load_config
+25 | from .ble_utils import resolve_services
+26 | from .core import Core
+   | ^^^^^^^^^^^^^^^^^^^^^^
+27 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/ble_bridge.py:27:1
+   |
+25 | from .ble_utils import resolve_services
+26 | from .core import Core
+27 | from .logging_setup import logger
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 |
+29 | CFG, SRC = load_config()
+   |
+
+F841 Local variable `bleak_version` is assigned to but never used
+  --> bb8_core/ble_bridge.py:70:17
+   |
+68 |                 bleak_version = importlib.metadata.version("bleak")
+69 |             except Exception:
+70 |                 bleak_version = "unknown"
+   |                 ^^^^^^^^^^^^^
+71 |             try:
+72 |                 spherov2_version = importlib.metadata.version("spherov2")
+   |
+help: Remove assignment to unused variable `bleak_version`
+
+F841 Local variable `spherov2_version` is assigned to but never used
+  --> bb8_core/ble_bridge.py:74:17
+   |
+72 |                 spherov2_version = importlib.metadata.version("spherov2")
+73 |             except Exception:
+74 |                 spherov2_version = "unknown"
+   |                 ^^^^^^^^^^^^^^^^
+75 |             return
+76 |         try:
+   |
+help: Remove assignment to unused variable `spherov2_version`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/ble_bridge.py:167:31
+    |
+165 |                 )
+166 |
+167 |     def sleep(self, after_ms: Optional[int] = None) -> None:
+    |                               ^^^^^^^^^^^^^
+168 |         """Put device to sleep; default immediate. Safe no-op if not connected."""
+169 |         with self._lock:
+    |
+help: Convert to `X | None`
+
+UP038 Use `X | Y` in `isinstance` call instead of `(X, Y)`
+   --> bb8_core/ble_bridge.py:207:20
+    |
+205 |             if callable(gw_get):
+206 |                 val = gw_get(self.target_mac)
+207 |                 if isinstance(val, (int, float)):
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+208 |                     return int(val)
+209 |         except Exception as e:
+    |
+help: Convert to `X | Y`
+
+UP038 Use `X | Y` in `isinstance` call instead of `(X, Y)`
+   --> bb8_core/ble_bridge.py:227:16
+    |
+225 |                 r = retain
+226 |             t = f"{base_topic}/{topic_suffix}"
+227 |             if isinstance(payload, (dict, list)):
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+228 |                 payload = json.dumps(payload, separators=(",", ":"))
+229 |             client.publish(t, payload=payload, qos=qos, retain=r)
+    |
+help: Convert to `X | Y`
+
+E501 Line too long (103 > 88)
+   --> bb8_core/ble_bridge.py:274:89
+    |
+272 |                 logger.error({"event": "ble_cmd_led_handler_error", "error": repr(e)})
+273 |
+274 |         # Removed unused _handle_stop function and replaced self.stop() with self.shutdown() if needed.
+    |                                                                                         ^^^^^^^^^^^^^^^
+275 |         # If you need to handle a stop command, implement it as needed, for example:
+276 |         def handle_stop_command():
+    |
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/ble_bridge.py:294:21
+    |
+292 |         self,
+293 |         gateway,
+294 |         target_mac: Optional[str] = None,
+    |                     ^^^^^^^^^^^^^
+295 |         mac: Optional[str] = None,
+296 |         **kwargs,
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/ble_bridge.py:295:14
+    |
+293 |         gateway,
+294 |         target_mac: Optional[str] = None,
+295 |         mac: Optional[str] = None,
+    |              ^^^^^^^^^^^^^
+296 |         **kwargs,
+297 |     ) -> None:
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/ble_bridge.py:305:26
+    |
+303 |         self.publish_rssi = None
+304 |         self.gateway = gateway
+305 |         self.target_mac: Optional[str] = target_mac or mac
+    |                          ^^^^^^^^^^^^^
+306 |         if not self.target_mac:
+307 |             raise ValueError("BLEBridge requires target_mac/mac to be provided")
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/ble_bridge.py:310:26
+    |
+308 |         # Runtime/control attributes referenced elsewhere
+309 |         self.timeout: float = float(kwargs.get("timeout", 10.0))
+310 |         self.controller: Optional[Any] = kwargs.get("controller")
+    |                          ^^^^^^^^^^^^^
+311 |         # Low-level core
+312 |         self.core = Core(
+    |
+help: Convert to `X | None`
+
+SIM108 Use ternary operator `connected = is_connected() if callable(is_connected) else is_connected` instead of `if`-`else`-block
+   --> bb8_core/ble_bridge.py:461:5
+    |
+459 |       # Defensive: check connection status if available
+460 |       is_connected = getattr(bb8, "is_connected", lambda: None)
+461 | /     if callable(is_connected):
+462 | |         connected = is_connected()
+463 | |     else:
+464 | |         connected = is_connected
+    | |________________________________^
+465 |       logger.info(f"[BB-8] is_connected: {connected}")
+466 |       if connected is not None and not connected:
+    |
+help: Replace `if`-`else`-block with `connected = is_connected() if callable(is_connected) else is_connected`
+
+SIM108 Use ternary operator `connected = is_connected() if callable(is_connected) else is_connected` instead of `if`-`else`-block
+   --> bb8_core/ble_bridge.py:523:13
+    |
+521 |           with bb8:
+522 |               is_connected = getattr(bb8, "is_connected", lambda: None)
+523 | /             if callable(is_connected):
+524 | |                 connected = is_connected()
+525 | |             else:
+526 | |                 connected = is_connected
+    | |________________________________________^
+527 |               logger.info(f"[BB-8] is_connected: {connected}")
+528 |               if connected is not None and not connected:
+    |
+help: Replace `if`-`else`-block with `connected = is_connected() if callable(is_connected) else is_connected`
+
+E501 Line too long (109 > 88)
+   --> bb8_core/ble_bridge.py:714:89
+    |
+712 |             "command_topic": f"{topic_prefix}/command",
+713 |             "schema": "json",
+714 |             "rgb_command_template": "{{ {'command': 'set_led', 'r': red, 'g': green, 'b': blue} | tojson }}",
+    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^
+715 |             "device": base_device,
+716 |         },
+    |
+
+E501 Line too long (97 > 88)
+ --> bb8_core/ble_gateway.py:4:89
+  |
+2 | ble_gateway.py
+3 |
+4 | Handles BLE adapter selection, device scanning, and connection status for BB-8 device management.
+  |                                                                                         ^^^^^^^^^
+5 | """
+  |
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/ble_gateway.py:32:54
+   |
+31 | class BleGateway:
+32 |     def __init__(self, mode: str = "bleak", adapter: Optional[str] = None) -> None:
+   |                                                      ^^^^^^^^^^^^^
+33 |         self.mode = mode
+34 |         self.adapter = adapter
+   |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/ble_gateway.py:54:34
+   |
+52 |         )
+53 |
+54 |     def resolve_adapter(self) -> Optional[str]:
+   |                                  ^^^^^^^^^^^^^
+55 |         logger.debug({"event": "ble_gateway_resolve_adapter", "adapter": self.adapter})
+56 |         return self.adapter
+   |
+help: Convert to `X | None`
+
+UP047 Generic function `run_coro` should use type parameters
+   --> bb8_core/ble_link.py:136:5
+    |
+136 | def run_coro(coro: Coroutine[Any, Any, T]) -> Future[T]:
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+137 |     """Schedule a coroutine on the dedicated BLE loop."""
+138 |     if _loop is None:
+    |
+help: Use type parameters
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/ble_utils.py:8:44
+   |
+ 8 | async def resolve_services(client: Any) -> Optional[Any]:
+   |                                            ^^^^^^^^^^^^^
+ 9 |     """
+10 |     Works with Bleak versions where:
+   |
+help: Convert to `X | None`
+
+B009 [*] Do not call `getattr` with a constant attribute value. It is not any safer than normal property access.
+  --> bb8_core/ble_utils.py:27:16
+   |
+25 |     # Fallback to property-style access
+26 |     if hasattr(client, "services"):
+27 |         return getattr(client, "services")
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 |
+29 |     return None
+   |
+help: Replace `getattr` with attribute access
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:19:1
+   |
+17 | All code lives inside functions; only the __main__ guard executes main().
+18 | """
+19 | import asyncio
+   | ^^^^^^^^^^^^^^
+20 | import json
+21 | import os  # Needed for os.environ
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:20:1
+   |
+18 | """
+19 | import asyncio
+20 | import json
+   | ^^^^^^^^^^^
+21 | import os  # Needed for os.environ
+22 | import threading
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:21:1
+   |
+19 | import asyncio
+20 | import json
+21 | import os  # Needed for os.environ
+   | ^^^^^^^^^
+22 | import threading
+23 | from typing import Any, Dict, Optional
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:22:1
+   |
+20 | import json
+21 | import os  # Needed for os.environ
+22 | import threading
+   | ^^^^^^^^^^^^^^^^
+23 | from typing import Any, Dict, Optional
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:23:1
+   |
+21 | import os  # Needed for os.environ
+22 | import threading
+23 | from typing import Any, Dict, Optional
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 |
+25 | from .addon_config import load_config
+   |
+
+UP035 `typing.Dict` is deprecated, use `dict` instead
+  --> bb8_core/bridge_controller.py:23:1
+   |
+21 | import os  # Needed for os.environ
+22 | import threading
+23 | from typing import Any, Dict, Optional
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 |
+25 | from .addon_config import load_config
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:25:1
+   |
+23 | from typing import Any, Dict, Optional
+24 |
+25 | from .addon_config import load_config
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 | from .auto_detect import resolve_bb8_mac
+27 | from .ble_bridge import BLEBridge
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:26:1
+   |
+25 | from .addon_config import load_config
+26 | from .auto_detect import resolve_bb8_mac
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 | from .ble_bridge import BLEBridge
+28 | from .ble_gateway import BleGateway
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:27:1
+   |
+25 | from .addon_config import load_config
+26 | from .auto_detect import resolve_bb8_mac
+27 | from .ble_bridge import BLEBridge
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 | from .ble_gateway import BleGateway
+29 | from .ble_link import BLELink
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:28:1
+   |
+26 | from .auto_detect import resolve_bb8_mac
+27 | from .ble_bridge import BLEBridge
+28 | from .ble_gateway import BleGateway
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+29 | from .ble_link import BLELink
+30 | from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:29:1
+   |
+27 | from .ble_bridge import BLEBridge
+28 | from .ble_gateway import BleGateway
+29 | from .ble_link import BLELink
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+30 | from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+31 | from .evidence_capture import EvidenceRecorder
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:30:1
+   |
+28 | from .ble_gateway import BleGateway
+29 | from .ble_link import BLELink
+30 | from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 | from .evidence_capture import EvidenceRecorder
+32 | from .facade import BB8Facade
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:31:1
+   |
+29 | from .ble_link import BLELink
+30 | from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+31 | from .evidence_capture import EvidenceRecorder
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+32 | from .facade import BB8Facade
+33 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:32:1
+   |
+30 | from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+31 | from .evidence_capture import EvidenceRecorder
+32 | from .facade import BB8Facade
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:33:1
+   |
+31 | from .evidence_capture import EvidenceRecorder
+32 | from .facade import BB8Facade
+33 | from .logging_setup import logger
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+34 |
+35 | DEFAULT_MQTT_HOST = "localhost"
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/bridge_controller.py:55:1
+   |
+54 | # so later divergent attempts (e.g., localhost) are suppressed.
+55 | from .mqtt_dispatcher import ensure_dispatcher_started
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+56 |
+57 | ensure_dispatcher_started()
+   |
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/bridge_controller.py:58:12
+   |
+57 | ensure_dispatcher_started()
+58 | _ble_loop: Optional[asyncio.AbstractEventLoop] = None
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+59 | _ble_inited: bool = False
+60 | client = None
+   |
+help: Convert to `X | None`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> bb8_core/bridge_controller.py:180:46
+    |
+179 | # -------- Dispatcher compatibility shim --------
+180 | def _start_dispatcher_compat(func, supplied: Dict[str, Any]) -> Any:
+    |                                              ^^^^
+181 |     """
+182 |     Start MQTT dispatcher, pruning/aliasing kwargs to match the function signature.
+    |
+help: Replace with `dict`
+
+E501 Line too long (168 > 88)
+   --> bb8_core/bridge_controller.py:183:89
+    |
+181 | …
+182 | …e function signature.
+183 | …rd','controller') and new-style ('mqtt_host','mqtt_port','mqtt_topic','username','passwd','bridge') names.
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+184 | …
+185 | …
+    |
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> bb8_core/bridge_controller.py:216:13
+    |
+214 |     }
+215 |
+216 |     pruned: Dict[str, Any] = {}
+    |             ^^^^
+217 |     for name in sig.parameters.keys():
+218 |         if name in offered:
+    |
+help: Replace with `dict`
+
+SIM118 Use `key in dict` instead of `key in dict.keys()`
+   --> bb8_core/bridge_controller.py:217:9
+    |
+216 |     pruned: Dict[str, Any] = {}
+217 |     for name in sig.parameters.keys():
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+218 |         if name in offered:
+219 |             pruned[name] = offered[name]
+    |
+help: Remove `.keys()`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/bridge_controller.py:238:13
+    |
+236 | # Canonical entry point for controller startup
+237 | def start_bridge_controller(
+238 |     config: Optional[Dict[str, Any]] = None,
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^
+239 | ) -> Optional[BB8Facade]:
+240 |     """
+    |
+help: Convert to `X | None`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> bb8_core/bridge_controller.py:238:22
+    |
+236 | # Canonical entry point for controller startup
+237 | def start_bridge_controller(
+238 |     config: Optional[Dict[str, Any]] = None,
+    |                      ^^^^
+239 | ) -> Optional[BB8Facade]:
+240 |     """
+    |
+help: Replace with `dict`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/bridge_controller.py:239:6
+    |
+237 | def start_bridge_controller(
+238 |     config: Optional[Dict[str, Any]] = None,
+239 | ) -> Optional[BB8Facade]:
+    |      ^^^^^^^^^^^^^^^^^^^
+240 |     """
+241 |     Canonical entry point for starting the BB-8 bridge controller.
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/bridge_controller.py:271:17
+    |
+269 |         }
+270 |     )
+271 |     target_mac: Optional[str] = (cfg.get("bb8_mac") or "").strip() or None
+    |                 ^^^^^^^^^^^^^
+272 |     if not target_mac:
+273 |         logger.info(
+    |
+help: Convert to `X | None`
+
+F841 Local variable `stop` is assigned to but never used
+   --> bb8_core/bridge_controller.py:315:5
+    |
+313 | def _wait_forever(client, bridge, ble=None) -> None:
+314 |     """Block the main thread until SIGTERM/SIGINT; then shutdown cleanly."""
+315 |     stop = threading.Event()
+    |     ^^^^
+316 |
+317 |     def _handle(sig, _frame):
+    |
+help: Remove assignment to unused variable `stop`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/bridge_controller.py:348:17
+    |
+347 |     # Resolve BB-8 MAC if not provided
+348 |     target_mac: Optional[str] = (cfg.get("bb8_mac") or "").strip() or None
+    |                 ^^^^^^^^^^^^^
+349 |     if not target_mac:
+350 |         logger.info(
+    |
+help: Convert to `X | None`
+
+F841 Local variable `status_topic` is assigned to but never used
+   --> bb8_core/bridge_controller.py:441:5
+    |
+439 |     )
+440 |     # Removed unused status_topic assignment
+441 |     status_topic = cfg.get("status_topic") if cfg else f"{mqtt_topic}/status"
+    |     ^^^^^^^^^^^^
+442 |     # Example usage of dispatcher (replace with actual call)
+443 |     # If you need to use dispatcher_args, ensure you reference it later in the code.
+    |
+help: Remove assignment to unused variable `status_topic`
+
+UP035 `typing.Dict` is deprecated, use `dict` instead
+ --> bb8_core/common.py:5:1
+  |
+3 | import json
+4 | import os
+5 | from typing import Any, Dict, List
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+UP035 `typing.List` is deprecated, use `list` instead
+ --> bb8_core/common.py:5:1
+  |
+3 | import json
+4 | import os
+5 | from typing import Any, Dict, List
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+  --> bb8_core/common.py:14:13
+   |
+13 | # Command topics (inbound). We support both /set and /press where applicable.
+14 | CMD_TOPICS: Dict[str, List[str]] = {
+   |             ^^^^
+15 |     "power": [f"{_mqtt_base()}/power/set"],
+16 |     "stop": [f"{_mqtt_base()}/stop/press", f"{_mqtt_base()}/stop/set"],
+   |
+help: Replace with `dict`
+
+UP006 [*] Use `list` instead of `List` for type annotation
+  --> bb8_core/common.py:14:23
+   |
+13 | # Command topics (inbound). We support both /set and /press where applicable.
+14 | CMD_TOPICS: Dict[str, List[str]] = {
+   |                       ^^^^
+15 |     "power": [f"{_mqtt_base()}/power/set"],
+16 |     "stop": [f"{_mqtt_base()}/stop/press", f"{_mqtt_base()}/stop/set"],
+   |
+help: Replace with `list`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+  --> bb8_core/common.py:25:15
+   |
+24 | # State topics (outbound) — STP4 expects '/state' suffix consistently
+25 | STATE_TOPICS: Dict[str, str] = {
+   |               ^^^^
+26 |     "power": f"{_mqtt_base()}/power/state",
+27 |     "stop": f"{_mqtt_base()}/stop/state",
+   |
+help: Replace with `dict`
+
+UP038 Use `X | Y` in `isinstance` call instead of `(X, Y)`
+  --> bb8_core/common.py:37:8
+   |
+36 | def _coerce_raw(value: Any) -> str | int | float:
+37 |     if isinstance(value, (int, float, str)):
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+38 |         return value
+39 |     return str(value)
+   |
+help: Convert to `X | Y`
+
+E402 Module level import not at top of file
+  --> bb8_core/common.py:86:1
+   |
+85 | # BLE loop thread setup
+86 | import asyncio
+   | ^^^^^^^^^^^^^^
+87 | import threading
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/common.py:87:1
+   |
+85 | # BLE loop thread setup
+86 | import asyncio
+87 | import threading
+   | ^^^^^^^^^^^^^^^^
+88 |
+89 | ble_loop = asyncio.new_event_loop()
+   |
+
+E501 Line too long (161 > 88)
+ --> bb8_core/controller.py:4:89
+  |
+2 | …
+3 | …
+4 | …tegration with Home Assistant, including BLE device management, command dispatch, and MQTT diagnostics.
+  |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+5 | …
+6 | …
+  |
+
+UP035 `typing.Dict` is deprecated, use `dict` instead
+  --> bb8_core/controller.py:22:1
+   |
+20 | from dataclasses import dataclass
+21 | from enum import Enum
+22 | from typing import Any, Dict, Optional
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 |
+24 | from .logging_setup import logger
+   |
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/controller.py:37:19
+   |
+35 |     device_connected: bool
+36 |     ble_status: str
+37 |     last_command: Optional[str] = None
+   |                   ^^^^^^^^^^^^^
+38 |     command_count: int = 0
+39 |     error_count: int = 0
+   |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/controller.py:41:25
+   |
+39 |     error_count: int = 0
+40 |     uptime: float = 0.0
+41 |     features_available: Optional[Dict[str, bool]] = None
+   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: Convert to `X | None`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+  --> bb8_core/controller.py:41:34
+   |
+39 |     error_count: int = 0
+40 |     uptime: float = 0.0
+41 |     features_available: Optional[Dict[str, bool]] = None
+   |                                  ^^^^
+   |
+help: Replace with `dict`
+
+SIM210 Remove unnecessary `True if ... else False`
+  --> bb8_core/controller.py:73:33
+   |
+71 |         self.error_count = 0
+72 |         self.last_command = None
+73 |         self.device_connected = True if device is not None else False
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+74 |         self.mqtt_handler = mqtt_handler
+75 |         self.telemetry = None
+   |
+help: Remove unnecessary `True if ... else False`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> bb8_core/controller.py:194:23
+    |
+192 |             return self._create_error_result("roll", str(e))
+193 |
+194 |     def stop(self) -> Dict[str, Any]:
+    |                       ^^^^
+195 |         """
+196 |         Stop the BB-8 device.
+    |
+help: Replace with `dict`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> bb8_core/controller.py:328:43
+    |
+326 |             return {"success": False, "command": "set_led", "error": str(e)}
+327 |
+328 |     def get_diagnostics_for_mqtt(self) -> Dict[str, Any]:
+    |                                           ^^^^
+329 |         status = self.get_controller_status()
+330 |         payload = {
+    |
+help: Replace with `dict`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> bb8_core/controller.py:374:65
+    |
+372 |         return status
+373 |
+374 |     def _create_error_result(self, command: str, error: str) -> Dict[str, Any]:
+    |                                                                 ^^^^
+375 |         """
+376 |         Helper to create a standardized error result dictionary.
+    |
+help: Replace with `dict`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/core.py:14:47
+   |
+12 |     """
+13 |
+14 |     def __init__(self, address: str, adapter: Optional[str] = None) -> None:
+   |                                               ^^^^^^^^^^^^^
+15 |         self.address = address
+16 |         self.adapter = adapter
+   |
+help: Convert to `X | None`
+
+UP037 [*] Remove quotes from type annotation
+  --> bb8_core/core.py:21:28
+   |
+19 |         logger.info({"event": "core_init", "address": address, "adapter": adapter})
+20 |
+21 |     def __enter__(self) -> "Core":
+   |                            ^^^^^^
+22 |         logger.info({"event": "core_enter", "address": self.address})
+23 |         self.connect()
+   |
+help: Remove quotes
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/core.py:46:48
+   |
+45 |     def set_main_led(
+46 |         self, r: int, g: int, b: int, persist: Optional[bool] = None
+   |                                                ^^^^^^^^^^^^^^
+47 |     ) -> None:
+48 |         logger.info(
+   |
+help: Convert to `X | None`
+
+E501 Line too long (89 > 88)
+  --> bb8_core/core.py:90:89
+   |
+88 |     # Optional seam used by facade/tests
+89 |     def emit_led(self, bridge, r: int, g: int, b: int) -> None:
+90 |         """Emit LED RGB; tests may spy on this seam. Production forwards to publisher."""
+   |                                                                                         ^
+91 |         if hasattr(self, "publish_led_rgb") and callable(self.publish_led_rgb):
+92 |             self.publish_led_rgb(bridge, r, g, b)
+   |
+
+UP035 `typing.Dict` is deprecated, use `dict` instead
+ --> bb8_core/evidence_capture.py:8:1
+  |
+6 | import threading
+7 | import time
+8 | from typing import Any, Dict, Optional
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+UP037 [*] Remove quotes from type annotation
+  --> bb8_core/evidence_capture.py:32:22
+   |
+30 |         self.max_lines = max_lines
+31 |         self.timeout_s = timeout_s
+32 |         self._cmd_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+   |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 |         self._evt_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+34 |         self._stop = threading.Event()
+   |
+help: Remove quotes
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+  --> bb8_core/evidence_capture.py:32:35
+   |
+30 |         self.max_lines = max_lines
+31 |         self.timeout_s = timeout_s
+32 |         self._cmd_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+   |                                   ^^^^
+33 |         self._evt_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+34 |         self._stop = threading.Event()
+   |
+help: Replace with `dict`
+
+UP037 [*] Remove quotes from type annotation
+  --> bb8_core/evidence_capture.py:33:22
+   |
+31 |         self.timeout_s = timeout_s
+32 |         self._cmd_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+33 |         self._evt_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+   |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+34 |         self._stop = threading.Event()
+35 |         self._t: Optional[threading.Thread] = None
+   |
+help: Remove quotes
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+  --> bb8_core/evidence_capture.py:33:35
+   |
+31 |         self.timeout_s = timeout_s
+32 |         self._cmd_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+33 |         self._evt_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+   |                                   ^^^^
+34 |         self._stop = threading.Event()
+35 |         self._t: Optional[threading.Thread] = None
+   |
+help: Replace with `dict`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/evidence_capture.py:35:18
+   |
+33 |         self._evt_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+34 |         self._stop = threading.Event()
+35 |         self._t: Optional[threading.Thread] = None
+   |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+36 |
+37 |     def start(self):
+   |
+help: Convert to `X | None`
+
+SIM105 Use `contextlib.suppress(Exception)` instead of `try`-`except`-`pass`
+  --> bb8_core/evidence_capture.py:71:17
+   |
+69 |           def chained(client, userdata, msg):
+70 |               if callable(old):
+71 | /                 try:
+72 | |                     old(client, userdata, msg)
+73 | |                 except Exception:
+74 | |                     pass
+   | |________________________^
+75 |               on_message(client, userdata, msg)
+   |
+help: Replace with `contextlib.suppress(Exception)`
+
+SIM115 Use a context manager for opening files
+  --> bb8_core/evidence_capture.py:82:15
+   |
+80 |         lines = 0
+81 |         os.makedirs(os.path.dirname(self.report_path), exist_ok=True)
+82 |         out = open(self.report_path, "a", encoding="utf-8")
+   |               ^^^^
+83 |         try:
+84 |             while not self._stop.is_set() and lines < self.max_lines:
+   |
+
+UP035 [*] Import from `collections.abc` instead: `Callable`
+ --> bb8_core/facade.py:7:1
+  |
+5 | import threading
+6 | import time
+7 | from typing import Any, Callable, Optional
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+8 |
+9 | from .addon_config import load_config
+  |
+help: Import from `collections.abc`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/facade.py:65:32
+   |
+63 |         self._mqtt = {"client": None, "base": None, "qos": 1, "retain": True}
+64 |         # telemetry publishers bound at attach_mqtt()
+65 |         self.publish_presence: Optional[Callable[[bool], None]] = None
+   |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+66 |         self.publish_rssi: Optional[Callable[[int], None]] = None
+   |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/facade.py:66:28
+   |
+64 |         # telemetry publishers bound at attach_mqtt()
+65 |         self.publish_presence: Optional[Callable[[bool], None]] = None
+66 |         self.publish_rssi: Optional[Callable[[int], None]] = None
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+67 |
+68 |     # --------- High-level actions (validate → delegate to bridge) ---------
+   |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/facade.py:162:14
+    |
+160 |         client,
+161 |         base_topic: str,
+162 |         qos: Optional[int] = None,
+    |              ^^^^^^^^^^^^^
+163 |         retain: Optional[bool] = None,
+164 |     ) -> None:
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/facade.py:163:17
+    |
+161 |         base_topic: str,
+162 |         qos: Optional[int] = None,
+163 |         retain: Optional[bool] = None,
+    |                 ^^^^^^^^^^^^^^
+164 |     ) -> None:
+    |
+help: Convert to `X | None`
+
+UP038 Use `X | Y` in `isinstance` call instead of `(X, Y)`
+   --> bb8_core/facade.py:184:16
+    |
+182 |         def _pub(suffix: str, payload, r: bool = retain_val):
+183 |             topic = f"{base_topic}/{suffix}"
+184 |             if isinstance(payload, (dict, list)):
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+185 |                 msg = json.dumps(payload, separators=(",", ":"))
+186 |             else:
+    |
+help: Convert to `X | Y`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/facade.py:196:39
+    |
+195 |         # Helper: parse color payload
+196 |         def _parse_color(raw: str) -> Optional[dict]:
+    |                                       ^^^^^^^^^^^^^^
+197 |             raw = raw.strip()
+198 |             if raw.upper() == "OFF":
+    |
+help: Convert to `X | None`
+
+E501 Line too long (90 > 88)
+   --> bb8_core/facade.py:343:89
+    |
+342 |         def sleep(self) -> None:
+343 |             """Emit 5-step LED pattern for sleep; SINGLE emission path via `_emit_led`."""
+    |                                                                                         ^^
+344 |             pattern = _sleep_led_pattern()
+345 |             for r, g, b in pattern:
+    |
+
+SIM105 Use `contextlib.suppress(Exception)` instead of `try`-`except`-`pass`
+   --> bb8_core/facade.py:347:17
+    |
+345 |               for r, g, b in pattern:
+346 |                   self._emit_led(r, g, b)
+347 | /                 try:
+348 | |                     time.sleep(max(int(os.getenv("BB8_LED_FADE_MS", "25")), 0) / 1000.0)
+349 | |                 except Exception:
+350 | |                     pass
+    | |________________________^
+351 |               try:
+352 |                   logging.getLogger(__name__).info(
+    |
+help: Replace with `contextlib.suppress(Exception)`
+
+SIM105 Use `contextlib.suppress(Exception)` instead of `try`-`except`-`pass`
+   --> bb8_core/facade.py:351:13
+    |
+349 |                   except Exception:
+350 |                       pass
+351 | /             try:
+352 | |                 logging.getLogger(__name__).info(
+353 | |                     "facade_sleep_to_led=true count=%d", len(pattern)
+354 | |                 )
+355 | |             except Exception:
+356 | |                 pass
+    | |____________________^
+    |
+help: Replace with `contextlib.suppress(Exception)`
+
+SIM105 Use `contextlib.suppress(Exception)` instead of `try`-`except`-`pass`
+   --> bb8_core/facade.py:364:9
+    |
+362 |       for r, g, b in pattern:
+363 |           self._emit_led(r, g, b)
+364 | /         try:
+365 | |             time.sleep(max(int(os.getenv("BB8_LED_FADE_MS", "25")), 0) / 1000.0)
+366 | |         except Exception:
+367 | |             pass
+    | |________________^
+368 |       try:
+369 |           logging.getLogger(__name__).info(
+    |
+help: Replace with `contextlib.suppress(Exception)`
+
+SIM105 Use `contextlib.suppress(Exception)` instead of `try`-`except`-`pass`
+   --> bb8_core/facade.py:368:5
+    |
+366 |           except Exception:
+367 |               pass
+368 | /     try:
+369 | |         logging.getLogger(__name__).info(
+370 | |             "facade_sleep_to_led=true count=%d", len(pattern)
+371 | |         )
+372 | |     except Exception:
+373 | |         pass
+    | |____________^
+    |
+help: Replace with `contextlib.suppress(Exception)`
+
+SIM108 Use ternary operator `line = json.dumps(msg, default=str) if isinstance(msg, dict) else str(msg)` instead of `if`-`else`-block
+  --> bb8_core/logging_setup.py:32:13
+   |
+30 |           try:
+31 |               msg = record.msg
+32 | /             if isinstance(msg, dict):
+33 | |                 line = json.dumps(msg, default=str)
+34 | |             else:
+35 | |                 line = str(msg)
+   | |_______________________________^
+36 |               # Use new redact function
+37 |               line = redact(line)
+   |
+help: Replace `if`-`else`-block with `line = json.dumps(msg, default=str) if isinstance(msg, dict) else str(msg)`
+
+E501 Line too long (98 > 88)
+   --> bb8_core/logging_setup.py:115:89
+    |
+113 | ) -> logging.Handler:
+114 |     """
+115 |     Prefer LOG_PATH from config, then BB8_LOG_PATH env, then default_path, then /tmp, then stderr.
+    |                                                                                         ^^^^^^^^^^
+116 |     Emits one warning on fallback.
+117 |     """
+    |
+
+E501 Line too long (94 > 88)
+   --> bb8_core/logging_setup.py:119:89
+    |
+117 |     """
+118 |     candidate = _cfg.get("LOG_PATH") or os.environ.get("BB8_LOG_PATH") or default_path
+119 |     # Detect environment: if running in Home Assistant, /addons is present and /Volumes is not
+    |                                                                                         ^^^^^^
+120 |     is_ha = os.path.exists("/addons") and not os.path.exists("/Volumes")
+121 |     # If running in HA and candidate starts with /Volumes, strip it
+    |
+
+E501 Line too long (91 > 88)
+   --> bb8_core/logging_setup.py:132:89
+    |
+130 |         tmp = os.path.join(tempfile.gettempdir(), "bb8_addon.log")
+131 |         print(
+132 |             f"[LOGGING DEBUG] Fallback to temp log path: {tmp}, Writable: {_writable(tmp)}"
+    |                                                                                         ^^^
+133 |         )
+134 |         candidate = tmp if _writable(tmp) else None
+    |
+
+E501 Line too long (175 > 88)
+ --> bb8_core/mqtt_dispatcher.py:6:89
+  |
+4 | …
+5 | …
+6 | …ches commands to the BLE bridge/controller, and publishes status and discovery information for Home Assistant.
+  |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7 | …
+8 | …
+  |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:8:1
+   |
+ 6 | Connects to the MQTT broker, subscribes to command topics, dispatches commands to the BLE bridge/controller, and publishes status and …
+ 7 | """
+ 8 | import inspect
+   | ^^^^^^^^^^^^^^
+ 9 | import json
+10 | import logging
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:9:1
+   |
+ 7 | """
+ 8 | import inspect
+ 9 | import json
+   | ^^^^^^^^^^^
+10 | import logging
+11 | import os
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:10:1
+   |
+ 8 | import inspect
+ 9 | import json
+10 | import logging
+   | ^^^^^^^^^^^^^^
+11 | import os
+12 | import socket
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:11:1
+   |
+ 9 | import json
+10 | import logging
+11 | import os
+   | ^^^^^^^^^
+12 | import socket
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:12:1
+   |
+10 | import logging
+11 | import os
+12 | import socket
+   | ^^^^^^^^^^^^^
+13 |
+14 | # --- at module scope ---
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:15:1
+   |
+14 | # --- at module scope ---
+15 | from typing import Any, Callable, Optional, Set, Tuple
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |
+17 | import paho.mqtt.client as mqtt
+   |
+
+UP035 [*] Import from `collections.abc` instead: `Callable`
+  --> bb8_core/mqtt_dispatcher.py:15:1
+   |
+14 | # --- at module scope ---
+15 | from typing import Any, Callable, Optional, Set, Tuple
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |
+17 | import paho.mqtt.client as mqtt
+   |
+help: Import from `collections.abc`
+
+UP035 `typing.Set` is deprecated, use `set` instead
+  --> bb8_core/mqtt_dispatcher.py:15:1
+   |
+14 | # --- at module scope ---
+15 | from typing import Any, Callable, Optional, Set, Tuple
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |
+17 | import paho.mqtt.client as mqtt
+   |
+
+UP035 `typing.Tuple` is deprecated, use `tuple` instead
+  --> bb8_core/mqtt_dispatcher.py:15:1
+   |
+14 | # --- at module scope ---
+15 | from typing import Any, Callable, Optional, Set, Tuple
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |
+17 | import paho.mqtt.client as mqtt
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:17:1
+   |
+15 | from typing import Any, Callable, Optional, Set, Tuple
+16 |
+17 | import paho.mqtt.client as mqtt
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 |
+19 | from .addon_config import CONFIG, CONFIG_SOURCE, init_config
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:19:1
+   |
+17 | import paho.mqtt.client as mqtt
+18 |
+19 | from .addon_config import CONFIG, CONFIG_SOURCE, init_config
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | from .common import CMD_TOPICS, STATE_TOPICS
+21 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:20:1
+   |
+19 | from .addon_config import CONFIG, CONFIG_SOURCE, init_config
+20 | from .common import CMD_TOPICS, STATE_TOPICS
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | from .logging_setup import logger
+   |
+
+E402 Module level import not at top of file
+  --> bb8_core/mqtt_dispatcher.py:21:1
+   |
+19 | from .addon_config import CONFIG, CONFIG_SOURCE, init_config
+20 | from .common import CMD_TOPICS, STATE_TOPICS
+21 | from .logging_setup import logger
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |
+23 | log = logging.getLogger(__name__)
+   |
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/mqtt_dispatcher.py:25:23
+   |
+23 | log = logging.getLogger(__name__)
+24 |
+25 | SCANNER_PUBLISH_HOOK: Optional[Callable[..., None]] = None
+   |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |
+27 | # Idempotency set for direct discovery publisher (per-entity unique_id)
+   |
+help: Convert to `X | None`
+
+UP006 [*] Use `set` instead of `Set` for type annotation
+  --> bb8_core/mqtt_dispatcher.py:28:28
+   |
+27 | # Idempotency set for direct discovery publisher (per-entity unique_id)
+28 | _DISCOVERY_PUBLISHED_UIDS: Set[str] = set()
+   |                            ^^^
+   |
+help: Replace with `set`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/mqtt_dispatcher.py:34:23
+   |
+33 | # ---- Seam hook for tests (safe no-op in production) ----
+34 | SCANNER_PUBLISH_HOOK: Optional[Callable[..., None]] = None
+   |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: Convert to `X | None`
+
+E501 Line too long (118 > 88)
+   --> bb8_core/mqtt_dispatcher.py:106:89
+    |
+104 | log = logging.getLogger(__name__)
+105 |
+106 | publish_discovery = None  # No cached scanner aliases; all scanner discovery routed via _trigger_discovery_connected()
+    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+
+SIM112 Use capitalized environment variable `ENABLE_BRIDGE_TELEMETRY` instead of `enable_bridge_telemetry`
+   --> bb8_core/mqtt_dispatcher.py:126:51
+    |
+124 | def _telemetry_enabled() -> bool:
+125 |     v = os.environ.get(
+126 |         "ENABLE_BRIDGE_TELEMETRY", os.environ.get("enable_bridge_telemetry", "0")
+    |                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+127 |     )
+128 |     return str(v).lower() in ("1", "true", "yes", "on")
+    |
+help: Replace `enable_bridge_telemetry` with `ENABLE_BRIDGE_TELEMETRY`
+
+E501 Line too long (93 > 88)
+   --> bb8_core/mqtt_dispatcher.py:169:89
+    |
+167 |                     args = _pytest_args_for(pub)
+168 |                     log.debug("Calling publisher with dummy args: %r", args)
+169 |                     # Always call _get_scanner_publisher again before calling with dummy args
+    |                                                                                         ^^^^^
+170 |                     pub = _get_scanner_publisher()
+171 |                     pub(*args)
+    |
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:229:13
+    |
+227 | _DISPATCHER_STARTED: bool = False
+228 | # (host, port, topic, client_id, user_present)
+229 | _START_KEY: Optional[Tuple[str, int, str, str, bool]] = None
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+230 | CLIENT: Optional[Any] = None
+231 | _PENDING_SUBS: list = []
+    |
+help: Convert to `X | None`
+
+UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+   --> bb8_core/mqtt_dispatcher.py:229:22
+    |
+227 | _DISPATCHER_STARTED: bool = False
+228 | # (host, port, topic, client_id, user_present)
+229 | _START_KEY: Optional[Tuple[str, int, str, str, bool]] = None
+    |                      ^^^^^
+230 | CLIENT: Optional[Any] = None
+231 | _PENDING_SUBS: list = []
+    |
+help: Replace with `tuple`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:230:9
+    |
+228 | # (host, port, topic, client_id, user_present)
+229 | _START_KEY: Optional[Tuple[str, int, str, str, bool]] = None
+230 | CLIENT: Optional[Any] = None
+    |         ^^^^^^^^^^^^^
+231 | _PENDING_SUBS: list = []
+232 | _BOUND_TOPICS: set = set()
+    |
+help: Convert to `X | None`
+
+F841 Local variable `ha_prefix` is assigned to but never used
+   --> bb8_core/mqtt_dispatcher.py:245:5
+    |
+243 |     if not CONFIG.get("dispatcher_discovery_enabled", False):
+244 |         return
+245 |     ha_prefix = CONFIG.get("ha_discovery_topic", "homeassistant")
+    |     ^^^^^^^^^
+246 |     obj_id = "bb8_led"
+247 |     # Call the default BB-8 discovery publisher if enabled
+    |
+help: Remove assignment to unused variable `ha_prefix`
+
+F841 Local variable `obj_id` is assigned to but never used
+   --> bb8_core/mqtt_dispatcher.py:246:5
+    |
+244 |         return
+245 |     ha_prefix = CONFIG.get("ha_discovery_topic", "homeassistant")
+246 |     obj_id = "bb8_led"
+    |     ^^^^^^
+247 |     # Call the default BB-8 discovery publisher if enabled
+248 |     publish_bb8_discovery(publish_fn)
+    |
+help: Remove assignment to unused variable `obj_id`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:251:20
+    |
+251 | def _norm_mac(mac: Optional[str]) -> str:
+    |                    ^^^^^^^^^^^^^
+252 |     """
+253 |     Normalize a MAC address to uppercase, no separators.
+    |
+help: Convert to `X | None`
+
+E501 Line too long (98 > 88)
+   --> bb8_core/mqtt_dispatcher.py:632:89
+    |
+630 |         ok = getattr(mid, "wait_for_publish", lambda timeout=3: True)(timeout=3)
+631 |         log.info(
+632 |             f"discovery_publish_result topic={topic} mid={getattr(mid, 'mid', None)} wait_ok={ok}"
+    |                                                                                         ^^^^^^^^^^
+633 |         )
+634 |         if ok:
+    |
+
+F841 Local variable `password` is assigned to but never used
+   --> bb8_core/mqtt_dispatcher.py:684:9
+    |
+682 |             or CONFIG.get("mqtt_username")
+683 |         )
+684 |         password = (
+    |         ^^^^^^^^
+685 |             kwargs.get("password")
+686 |             or CONFIG.get("MQTT_PASSWORD")
+    |
+help: Remove assignment to unused variable `password`
+
+E501 Line too long (100 > 88)
+   --> bb8_core/mqtt_dispatcher.py:694:89
+    |
+692 |         user_flag = bool(username)
+693 |         logger.info(
+694 |             "Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s",
+    |                                                                                         ^^^^^^^^^^^^
+695 |             host,
+696 |             port,
+    |
+
+E501 Line too long (91 > 88)
+   --> bb8_core/mqtt_dispatcher.py:719:89
+    |
+717 |             port = 1883  # fallback to default port
+718 |
+719 |         # Start the dispatcher here (you may need to call start_mqtt_dispatcher or similar)
+    |                                                                                         ^^^
+720 |         # For demonstration, we just set the flag
+721 |         _DISPATCHER_STARTED = True
+    |
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:731:16
+    |
+730 | def start_mqtt_dispatcher(
+731 |     mqtt_host: Optional[str] = None,
+    |                ^^^^^^^^^^^^^
+732 |     mqtt_port: Optional[int] = None,
+733 |     mqtt_topic: Optional[str] = None,
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:732:16
+    |
+730 | def start_mqtt_dispatcher(
+731 |     mqtt_host: Optional[str] = None,
+732 |     mqtt_port: Optional[int] = None,
+    |                ^^^^^^^^^^^^^
+733 |     mqtt_topic: Optional[str] = None,
+734 |     username: Optional[str] = None,
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:733:17
+    |
+731 |     mqtt_host: Optional[str] = None,
+732 |     mqtt_port: Optional[int] = None,
+733 |     mqtt_topic: Optional[str] = None,
+    |                 ^^^^^^^^^^^^^
+734 |     username: Optional[str] = None,
+735 |     password: Optional[str] = None,
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:734:15
+    |
+732 |     mqtt_port: Optional[int] = None,
+733 |     mqtt_topic: Optional[str] = None,
+734 |     username: Optional[str] = None,
+    |               ^^^^^^^^^^^^^
+735 |     password: Optional[str] = None,
+736 |     controller: Any = None,
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:735:15
+    |
+733 |     mqtt_topic: Optional[str] = None,
+734 |     username: Optional[str] = None,
+735 |     password: Optional[str] = None,
+    |               ^^^^^^^^^^^^^
+736 |     controller: Any = None,
+737 |     client_id: Optional[str] = None,
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:737:16
+    |
+735 |     password: Optional[str] = None,
+736 |     controller: Any = None,
+737 |     client_id: Optional[str] = None,
+    |                ^^^^^^^^^^^^^
+738 |     keepalive: Optional[int] = None,
+739 |     qos: Optional[int] = None,
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:738:16
+    |
+736 |     controller: Any = None,
+737 |     client_id: Optional[str] = None,
+738 |     keepalive: Optional[int] = None,
+    |                ^^^^^^^^^^^^^
+739 |     qos: Optional[int] = None,
+740 |     retain: Optional[bool] = None,
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:739:10
+    |
+737 |     client_id: Optional[str] = None,
+738 |     keepalive: Optional[int] = None,
+739 |     qos: Optional[int] = None,
+    |          ^^^^^^^^^^^^^
+740 |     retain: Optional[bool] = None,
+741 |     status_topic: Optional[str] = None,
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:740:13
+    |
+738 |     keepalive: Optional[int] = None,
+739 |     qos: Optional[int] = None,
+740 |     retain: Optional[bool] = None,
+    |             ^^^^^^^^^^^^^^
+741 |     status_topic: Optional[str] = None,
+742 |     tls: Optional[bool] = None,
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:741:19
+    |
+739 |     qos: Optional[int] = None,
+740 |     retain: Optional[bool] = None,
+741 |     status_topic: Optional[str] = None,
+    |                   ^^^^^^^^^^^^^
+742 |     tls: Optional[bool] = None,
+743 |     mqtt_user: Optional[str] = None,
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:742:10
+    |
+740 |     retain: Optional[bool] = None,
+741 |     status_topic: Optional[str] = None,
+742 |     tls: Optional[bool] = None,
+    |          ^^^^^^^^^^^^^^
+743 |     mqtt_user: Optional[str] = None,
+744 |     mqtt_password: Optional[str] = None,
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:743:16
+    |
+741 |     status_topic: Optional[str] = None,
+742 |     tls: Optional[bool] = None,
+743 |     mqtt_user: Optional[str] = None,
+    |                ^^^^^^^^^^^^^
+744 |     mqtt_password: Optional[str] = None,
+745 | ) -> mqtt.Client:
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:744:20
+    |
+742 |     tls: Optional[bool] = None,
+743 |     mqtt_user: Optional[str] = None,
+744 |     mqtt_password: Optional[str] = None,
+    |                    ^^^^^^^^^^^^^
+745 | ) -> mqtt.Client:
+746 |     """
+    |
+help: Convert to `X | None`
+
+E501 Line too long (92 > 88)
+   --> bb8_core/mqtt_dispatcher.py:846:89
+    |
+844 |     client.loop_start()
+845 |
+846 |     # Do not proactively trigger here; on_connect will handle publication deterministically.
+    |                                                                                         ^^^^
+847 |     return client
+    |
+
+UP045 [*] Use `X | None` for type annotations
+   --> bb8_core/mqtt_dispatcher.py:894:21
+    |
+894 | def get_client() -> Optional[Any]:
+    |                     ^^^^^^^^^^^^^
+895 |     """Return the active MQTT client if available."""
+896 |     return CLIENT
+    |
+help: Convert to `X | None`
+
+SIM105 Use `contextlib.suppress(ValueError)` instead of `try`-`except`-`pass`
+   --> bb8_core/mqtt_dispatcher.py:933:13
+    |
+931 |       for topic, handler in list(_PENDING_SUBS):
+932 |           if _bind_subscription(topic, handler):
+933 | /             try:
+934 | |                 _PENDING_SUBS.remove((topic, handler))
+935 | |             except ValueError:
+936 | |                 pass
+    | |____________________^
+    |
+help: Replace with `contextlib.suppress(ValueError)`
+
+UP035 [*] Import from `collections.abc` instead: `Callable`
+ --> bb8_core/telemetry.py:5:1
+  |
+3 | import threading
+4 | import time
+5 | from typing import TYPE_CHECKING, Callable, Optional
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+6 |
+7 | from .logging_setup import logger
+  |
+help: Import from `collections.abc`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/telemetry.py:18:27
+   |
+16 |         bridge,
+17 |         interval_s: int = 20,
+18 |         publish_presence: Optional[Callable[[bool], None]] = None,
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |         publish_rssi: Optional[Callable[[int], None]] = None,
+20 |     ):
+   |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/telemetry.py:19:23
+   |
+17 |         interval_s: int = 20,
+18 |         publish_presence: Optional[Callable[[bool], None]] = None,
+19 |         publish_rssi: Optional[Callable[[int], None]] = None,
+   |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |     ):
+21 |         self.bridge = bridge
+   |
+help: Convert to `X | None`
+
+SIM108 Use ternary operator `online = bool(is_connected()) if callable(is_connected) else True` instead of `if`-`else`-block
+  --> bb8_core/telemetry.py:47:17
+   |
+45 |                   # --- connectivity probe ---
+46 |                   is_connected = getattr(self.bridge, "is_connected", None)
+47 | /                 if callable(is_connected):
+48 | |                     online = bool(is_connected())
+49 | |                 else:
+50 | |                     online = True  # or False, depending on your default
+   | |_________________________________^
+51 |
+52 |                   # --- presence publish ---
+   |
+help: Replace `if`-`else`-block with `online = bool(is_connected()) if callable(is_connected) else True`
+
+UP038 Use `X | Y` in `isinstance` call instead of `(X, Y)`
+  --> bb8_core/telemetry.py:81:28
+   |
+79 |                 if callable(cb_rssi) and dbm is not None:
+80 |                     try:
+81 |                         if isinstance(dbm, (int, float, str)):
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+82 |                             cb_rssi(int(dbm))
+83 |                         else:
+   |
+help: Convert to `X | Y`
+
+UP035 [*] Import from `collections.abc` instead: `Callable`
+ --> bb8_core/types.py:4:1
+  |
+2 | from __future__ import annotations
+3 |
+4 | from typing import Any, Callable, Optional, Protocol, Tuple, runtime_checkable
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+5 |
+6 | # ---------------------------
+  |
+help: Import from `collections.abc`
+
+UP035 `typing.Tuple` is deprecated, use `tuple` instead
+ --> bb8_core/types.py:4:1
+  |
+2 | from __future__ import annotations
+3 |
+4 | from typing import Any, Callable, Optional, Protocol, Tuple, runtime_checkable
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+5 |
+6 | # ---------------------------
+  |
+
+UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+  --> bb8_core/types.py:9:7
+   |
+ 7 | # Simple aliases (stable)
+ 8 | # ---------------------------
+ 9 | RGB = Tuple[int, int, int]
+   |       ^^^^^
+10 | Scalar = (
+11 |     "Scalar"  # alias for readable callbacks below (string-based to avoid 3.8 | syntax)
+   |
+help: Replace with `tuple`
+
+UP045 [*] Use `X | None` for type annotations
+  --> bb8_core/types.py:25:28
+   |
+23 | BoolCallback = Callable[[bool], None]
+24 | IntCallback = Callable[[int], None]
+25 | OptIntCallback = Callable[[Optional[int]], None]
+   |                            ^^^^^^^^^^^^^
+26 | RGBCallback = Callable[[int, int, int], None]
+27 | ScalarCallback = Callable[[Any], None]  # Scalar echo: bool|int|float|str
+   |
+help: Convert to `X | None`
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> bb8_core/version_probe.py:3:1
+  |
+1 |   # bb8_core/version_probe.py
+2 |
+3 | / from importlib.metadata import PackageNotFoundError as E
+4 | | from importlib.metadata import version
+  | |______________________________________^
+  |
+help: Organize imports
+
+UP035 `typing.Dict` is deprecated, use `dict` instead
+  --> ops/evidence/collect_stp4.py:21:1
+   |
+19 | import time
+20 | from datetime import datetime, timezone
+21 | from typing import Any, Dict, List, Optional, Tuple
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |
+23 | # Use shared config
+   |
+
+UP035 `typing.List` is deprecated, use `list` instead
+  --> ops/evidence/collect_stp4.py:21:1
+   |
+19 | import time
+20 | from datetime import datetime, timezone
+21 | from typing import Any, Dict, List, Optional, Tuple
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |
+23 | # Use shared config
+   |
+
+UP035 `typing.Tuple` is deprecated, use `tuple` instead
+  --> ops/evidence/collect_stp4.py:21:1
+   |
+19 | import time
+20 | from datetime import datetime, timezone
+21 | from typing import Any, Dict, List, Optional, Tuple
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |
+23 | # Use shared config
+   |
+
+E501 Line too long (118 > 88)
+  --> ops/evidence/collect_stp4.py:65:89
+   |
+63 |             return {}
+64 |     logging.warning(
+65 |         "[CONFIG] load_config is not available. This usually means the module import failed or PYTHONPATH is not set."
+   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+66 |     )
+67 |     return {}
+   |
+
+E501 Line too long (135 > 88)
+  --> ops/evidence/collect_stp4.py:89:89
+   |
+87 |     if missing_host or missing_port:
+88 |         print(
+89 |             "[ERROR] MQTT config missing: host and/or port not set. Please set MQTT_HOST and MQTT_PORT in your environment or config.",
+   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+90 |             file=sys.stderr,
+91 |         )
+   |
+
+UP017 [*] Use `datetime.UTC` alias
+   --> ops/evidence/collect_stp4.py:121:25
+    |
+119 | # ----- helpers -----
+120 | def utc_now_iso() -> str:
+121 |     return datetime.now(timezone.utc).isoformat()
+    |                         ^^^^^^^^^^^^
+    |
+help: Convert to `datetime.UTC` alias
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> ops/evidence/collect_stp4.py:134:33
+    |
+133 | # Minimal HA discovery key presence check
+134 | def validate_discovery_obj(obj: Dict[str, Any]) -> Tuple[bool, str]:
+    |                                 ^^^^
+135 |     required = ["name", "unique_id", "availability_topic"]
+136 |     for k in required:
+    |
+help: Replace with `dict`
+
+UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+   --> ops/evidence/collect_stp4.py:134:52
+    |
+133 | # Minimal HA discovery key presence check
+134 | def validate_discovery_obj(obj: Dict[str, Any]) -> Tuple[bool, str]:
+    |                                                    ^^^^^
+135 |     required = ["name", "unique_id", "availability_topic"]
+136 |     for k in required:
+    |
+help: Replace with `tuple`
+
+UP038 Use `X | Y` in `isinstance` call instead of `(X, Y)`
+   --> ops/evidence/collect_stp4.py:153:12
+    |
+151 |     relevant = []
+152 |     for item in configs:
+153 |         if isinstance(item, (list, tuple)) and len(item) >= 2:
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+154 |             topic, payload = item[0], item[1]
+155 |         elif isinstance(item, dict):
+    |
+help: Convert to `X | Y`
+
+SIM102 Use a single `if` statement instead of nested `if` statements
+   --> ops/evidence/collect_stp4.py:192:9
+    |
+190 |               continue
+191 |           # commandables need command_topic
+192 | /         if any(x in topic for x in ("/light/", "/switch/", "/button/", "/number/")):
+193 | |             if "command_topic" not in o:
+    | |________________________________________^
+194 |                   results.append(
+195 |                       {"topic": topic, "valid": False, "reason": "command_topic missing"}
+    |
+help: Combine `if` statements using `and`
+
+UP045 [*] Use `X | None` for type annotations
+   --> ops/evidence/collect_stp4.py:209:15
+    |
+207 |         host: str,
+208 |         port: int,
+209 |         user: Optional[str],
+    |               ^^^^^^^^^^^^^
+210 |         password: Optional[str],
+211 |         base: str,
+    |
+help: Convert to `X | None`
+
+UP045 [*] Use `X | None` for type annotations
+   --> ops/evidence/collect_stp4.py:210:19
+    |
+208 |         port: int,
+209 |         user: Optional[str],
+210 |         password: Optional[str],
+    |                   ^^^^^^^^^^^^^
+211 |         base: str,
+212 |         outdir: str,
+    |
+help: Convert to `X | None`
+
+UP006 [*] Use `list` instead of `List` for type annotation
+   --> ops/evidence/collect_stp4.py:224:23
+    |
+222 |         if user is not None:
+223 |             self.client.username_pw_set(user, password or None)
+224 |         self.msg_log: List[Dict[str, Any]] = []
+    |                       ^^^^
+225 |         self.msg_cv = threading.Condition()
+226 |         self.connected = threading.Event()
+    |
+help: Replace with `list`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> ops/evidence/collect_stp4.py:224:28
+    |
+222 |         if user is not None:
+223 |             self.client.username_pw_set(user, password or None)
+224 |         self.msg_log: List[Dict[str, Any]] = []
+    |                            ^^^^
+225 |         self.msg_cv = threading.Condition()
+226 |         self.connected = threading.Event()
+    |
+help: Replace with `dict`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> ops/evidence/collect_stp4.py:227:30
+    |
+225 |         self.msg_cv = threading.Condition()
+226 |         self.connected = threading.Event()
+227 |         self.discovery_dump: Dict[str, Any] = {}
+    |                              ^^^^
+228 |         # subscribe topic list
+229 |         self.state_topics = [
+    |
+help: Replace with `dict`
+
+UP045 [*] Use `X | None` for type annotations
+   --> ops/evidence/collect_stp4.py:282:10
+    |
+280 |     def wait_for_topic(
+281 |         self, topic: str, predicate, timeout: float
+282 |     ) -> Optional[Dict[str, Any]]:
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^
+283 |         deadline = time.time() + timeout
+284 |         with self.msg_cv:
+    |
+help: Convert to `X | None`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> ops/evidence/collect_stp4.py:282:19
+    |
+280 |     def wait_for_topic(
+281 |         self, topic: str, predicate, timeout: float
+282 |     ) -> Optional[Dict[str, Any]]:
+    |                   ^^^^
+283 |         deadline = time.time() + timeout
+284 |         with self.msg_cv:
+    |
+help: Replace with `dict`
+
+E501 Line too long (89 > 88)
+   --> ops/evidence/collect_stp4.py:298:89
+    |
+296 |                 for m in reversed(self.msg_log):
+297 |                     if m["topic"] == topic and predicate(m):
+298 |                         # Only accept state with ts >= command_ts (reject stale/prestate)
+    |                                                                                         ^
+299 |                         return self._extract_state(m)
+300 |         return None
+    |
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> ops/evidence/collect_stp4.py:302:35
+    |
+300 |         return None
+301 |
+302 |     def _extract_state(self, evt: Dict[str, Any]) -> Dict[str, Any]:
+    |                                   ^^^^
+303 |         src = "device"
+304 |         try:
+    |
+help: Replace with `dict`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> ops/evidence/collect_stp4.py:302:54
+    |
+300 |         return None
+301 |
+302 |     def _extract_state(self, evt: Dict[str, Any]) -> Dict[str, Any]:
+    |                                                      ^^^^
+303 |         src = "device"
+304 |         try:
+    |
+help: Replace with `dict`
+
+SIM105 Use `contextlib.suppress(Exception)` instead of `try`-`except`-`pass`
+   --> ops/evidence/collect_stp4.py:331:13
+    |
+329 |               self.client.disconnect()
+330 |           finally:
+331 | /             try:
+332 | |                 self.client.loop_stop()
+333 | |             except Exception:
+334 | |                 pass
+    | |____________________^
+335 |
+336 |       def publish(self, topic: str, payload: Optional[str], qos=1, retain=False):
+    |
+help: Replace with `contextlib.suppress(Exception)`
+
+UP045 [*] Use `X | None` for type annotations
+   --> ops/evidence/collect_stp4.py:336:44
+    |
+334 |                 pass
+335 |
+336 |     def publish(self, topic: str, payload: Optional[str], qos=1, retain=False):
+    |                                            ^^^^^^^^^^^^^
+337 |         """
+338 |         Publish and return a UTC ISO timestamp captured *before* publish.
+    |
+help: Convert to `X | None`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> ops/evidence/collect_stp4.py:348:22
+    |
+347 |     # Roundtrip test helpers
+348 |     def run(self) -> Dict[str, Any]:
+    |                      ^^^^
+349 |         ensure_dir(self.outdir)
+350 |         self.connect()
+    |
+help: Replace with `dict`
+
+UP006 [*] Use `list` instead of `List` for type annotation
+   --> ops/evidence/collect_stp4.py:352:17
+    |
+350 |         self.connect()
+351 |
+352 |         traces: List[Dict[str, Any]] = []
+    |                 ^^^^
+353 |         failures: List[str] = []
+    |
+help: Replace with `list`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> ops/evidence/collect_stp4.py:352:22
+    |
+350 |         self.connect()
+351 |
+352 |         traces: List[Dict[str, Any]] = []
+    |                      ^^^^
+353 |         failures: List[str] = []
+    |
+help: Replace with `dict`
+
+UP006 [*] Use `list` instead of `List` for type annotation
+   --> ops/evidence/collect_stp4.py:353:19
+    |
+352 |         traces: List[Dict[str, Any]] = []
+353 |         failures: List[str] = []
+    |                   ^^^^
+354 |
+355 |         import json
+    |
+help: Replace with `list`
+
+UP045 [*] Use `X | None` for type annotations
+   --> ops/evidence/collect_stp4.py:375:16
+    |
+373 |             state_t: str,
+374 |             expect,
+375 |             m: Optional[Dict[str, Any]],
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+376 |             note: str = "",
+377 |             cmd_ts: Optional[str] = None,
+    |
+help: Convert to `X | None`
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+   --> ops/evidence/collect_stp4.py:375:25
+    |
+373 |             state_t: str,
+374 |             expect,
+375 |             m: Optional[Dict[str, Any]],
+    |                         ^^^^
+376 |             note: str = "",
+377 |             cmd_ts: Optional[str] = None,
+    |
+help: Replace with `dict`
+
+UP045 [*] Use `X | None` for type annotations
+   --> ops/evidence/collect_stp4.py:377:21
+    |
+375 |             m: Optional[Dict[str, Any]],
+376 |             note: str = "",
+377 |             cmd_ts: Optional[str] = None,
+    |                     ^^^^^^^^^^^^^
+378 |         ):
+379 |             now = cmd_ts or utc_now_iso()
+    |
+help: Convert to `X | None`
+
+SIM105 Use `contextlib.suppress(Exception)` instead of `try`-`except`-`pass`
+   --> ops/evidence/collect_stp4.py:414:33
+    |
+412 |   …                     j_echo = None
+413 |   …                     j_expect = None
+414 | / …                     try:
+415 | | …                         j_echo = json.loads(echo["state_payload"])
+416 | | …                     except Exception:
+417 | | …                         pass
+    | |______________________________^
+418 |   …                     try:
+419 |   …                         j_expect = json.loads(expect)
+    |
+help: Replace with `contextlib.suppress(Exception)`
+
+SIM105 Use `contextlib.suppress(Exception)` instead of `try`-`except`-`pass`
+   --> ops/evidence/collect_stp4.py:418:33
+    |
+416 |   …                     except Exception:
+417 |   …                         pass
+418 | / …                     try:
+419 | | …                         j_expect = json.loads(expect)
+420 | | …                     except Exception:
+421 | | …                         pass
+    | |______________________________^
+422 |   …                     # 2) JSON==JSON structural equality (e.g. LED RGB)
+423 |   …                     if (
+    |
+help: Replace with `contextlib.suppress(Exception)`
+
+SIM114 [*] Combine `if` branches using logical `or` operator
+   --> ops/evidence/collect_stp4.py:423:33
+    |
+421 |   …                         pass
+422 |   …                     # 2) JSON==JSON structural equality (e.g. LED RGB)
+423 | / …                     if (
+424 | | …                         j_echo is not None
+425 | | …                         and j_expect is not None
+426 | | …                         and j_echo == j_expect
+427 | | …                     ):
+428 | | …                         passed, note_val = True, ""
+429 | | …                     # 3) JSON with {"value": ...} vs raw expect (strings or numbers)
+430 | | …                     elif (
+431 | | …                         isinstance(j_echo, dict)
+432 | | …                         and "value" in j_echo
+433 | | …                         and str(j_echo["value"]).strip()
+434 | | …                         == str(expect).strip()
+435 | | …                     ):
+436 | | …                         passed, note_val = True, ""
+    | |_____________________________________________________^
+437 |   …                     # 4) final string fallback
+438 |   …                     elif (
+    |
+help: Combine `if` branches
+
+E501 Line too long (96 > 88)
+   --> ops/evidence/collect_stp4.py:429:89
+    |
+427 | …                     ):
+428 | …                         passed, note_val = True, ""
+429 | …                     # 3) JSON with {"value": ...} vs raw expect (strings or numbers)
+    |                                                                               ^^^^^^^^
+430 | …                     elif (
+431 | …                         isinstance(j_echo, dict)
+    |
+
+SIM114 [*] Combine `if` branches using logical `or` operator
+   --> ops/evidence/collect_stp4.py:430:33
+    |
+428 |   …                         passed, note_val = True, ""
+429 |   …                     # 3) JSON with {"value": ...} vs raw expect (strings or numbers)
+430 | / …                     elif (
+431 | | …                         isinstance(j_echo, dict)
+432 | | …                         and "value" in j_echo
+433 | | …                         and str(j_echo["value"]).strip()
+434 | | …                         == str(expect).strip()
+435 | | …                     ):
+436 | | …                         passed, note_val = True, ""
+437 | | …                     # 4) final string fallback
+438 | | …                     elif (
+439 | | …                         str(echo["state_payload"]).strip()
+440 | | …                         == str(expect).strip()
+441 | | …                     ):
+442 | | …                         passed, note_val = True, ""
+    | |_____________________________________________________^
+443 |   …                     else:
+444 |   …                         note_val = "mismatch"
+    |
+help: Combine `if` branches
+
+E501 Line too long (185 > 88)
+   --> ops/evidence/collect_stp4.py:459:89
+    |
+457 | …/set")
+458 | …
+459 | …EVICE_ECHO')}, require_device={require_device}, is_commandable={is_commandable}, echo_source={echo.get('source')}"
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+460 | …
+461 | …ce") != "device":
+    |
+
+UP035 `typing.Dict` is deprecated, use `dict` instead
+  --> ops/evidence/evidence_capture.py:8:1
+   |
+ 6 | import threading
+ 7 | import time
+ 8 | from typing import Any, Dict, Optional
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 9 |
+10 | """
+   |
+
+E501 Line too long (284 > 88)
+  --> ops/evidence/evidence_capture.py:11:89
+   |
+10 | …
+11 | …hing not "device" becomes facade_only). That logic is sound—keep it. Use REQUIRE_DEVICE_ECHO=0 while the shim stands in, then flip to 1 for real hardware acceptance. (See the env/logic in record(...).)
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+12 | …
+   |
+
+UP037 [*] Remove quotes from type annotation
+  --> ops/evidence/evidence_capture.py:36:22
+   |
+34 |         self.max_lines = max_lines
+35 |         self.timeout_s = timeout_s
+36 |         self._cmd_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+   |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+37 |         self._evt_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+38 |         self._stop = threading.Event()
+   |
+help: Remove quotes
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+  --> ops/evidence/evidence_capture.py:36:35
+   |
+34 |         self.max_lines = max_lines
+35 |         self.timeout_s = timeout_s
+36 |         self._cmd_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+   |                                   ^^^^
+37 |         self._evt_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+38 |         self._stop = threading.Event()
+   |
+help: Replace with `dict`
+
+UP037 [*] Remove quotes from type annotation
+  --> ops/evidence/evidence_capture.py:37:22
+   |
+35 |         self.timeout_s = timeout_s
+36 |         self._cmd_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+37 |         self._evt_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+   |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+38 |         self._stop = threading.Event()
+39 |         self._t: Optional[threading.Thread] = None
+   |
+help: Remove quotes
+
+UP006 [*] Use `dict` instead of `Dict` for type annotation
+  --> ops/evidence/evidence_capture.py:37:35
+   |
+35 |         self.timeout_s = timeout_s
+36 |         self._cmd_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+37 |         self._evt_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+   |                                   ^^^^
+38 |         self._stop = threading.Event()
+39 |         self._t: Optional[threading.Thread] = None
+   |
+help: Replace with `dict`
+
+UP045 [*] Use `X | None` for type annotations
+  --> ops/evidence/evidence_capture.py:39:18
+   |
+37 |         self._evt_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+38 |         self._stop = threading.Event()
+39 |         self._t: Optional[threading.Thread] = None
+   |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+40 |
+41 |     def start(self):
+   |
+help: Convert to `X | None`
+
+SIM105 Use `contextlib.suppress(Exception)` instead of `try`-`except`-`pass`
+  --> ops/evidence/evidence_capture.py:75:17
+   |
+73 |           def chained(client, userdata, msg):
+74 |               if callable(old):
+75 | /                 try:
+76 | |                     old(client, userdata, msg)
+77 | |                 except Exception:
+78 | |                     pass
+   | |________________________^
+79 |               on_message(client, userdata, msg)
+   |
+help: Replace with `contextlib.suppress(Exception)`
+
+SIM115 Use a context manager for opening files
+  --> ops/evidence/evidence_capture.py:86:15
+   |
+84 |         lines = 0
+85 |         os.makedirs(os.path.dirname(self.report_path), exist_ok=True)
+86 |         out = open(self.report_path, "a", encoding="utf-8")
+   |               ^^^^
+87 |         try:
+88 |             while not self._stop.is_set() and lines < self.max_lines:
+   |
+
+F841 Local variable `m` is assigned to but never used
+  --> ops/qa_harvest.py:74:5
+   |
+72 |     }
+73 |     # naive tallies
+74 |     m = re.search(
+   |     ^
+75 |         r"=+ (\d+) (?:failed|failures)?,?\s*(\d+)? (?:passed)?,?.*?in .*s", txt
+76 |     )
+   |
+help: Remove assignment to unused variable `m`
+
+F841 Local variable `summary_md` is assigned to but never used
+   --> ops/qa_harvest.py:184:5
+    |
+182 |     out_path.write_text(header + template, encoding="utf-8")
+183 |     # Print deliverables
+184 |     summary_md = [
+    |     ^^^^^^^^^^
+185 |         "### Topline QA Summary",
+186 |         f"- Latest QA dir: `{result['latest_dir']}`",
+    |
+help: Remove assignment to unused variable `summary_md`
+
+E501 Line too long (96 > 88)
+  --> scan_bb8_gatt.py:35:89
+   |
+33 |     if not device:
+34 |         print(
+35 |             "BB-8 not found. Is it awake and advertising? Try tapping or removing from charger."
+   |                                                                                         ^^^^^^^^
+36 |         )
+37 |         return
+   |
+
+E501 Line too long (96 > 88)
+  --> scan_bb8_gatt.py:47:89
+   |
+45 |                 props = ",".join(char.properties)
+46 |                 print(
+47 |                     f"  [Characteristic] {char.uuid} | {char.description} | properties: {props}"
+   |                                                                                         ^^^^^^^^
+48 |                 )
+   |
+
+E501 Line too long (112 > 88)
+  --> tests/conftest.py:23:89
+   |
+22 | # Provide a stable event loop for tests that touch asyncio/BLE helpers.
+23 | # With asyncio_mode=auto this is usually not necessary, but it guards environments where plugin policies differ.
+   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^
+24 | @pytest.fixture(scope="session")
+25 | def event_loop():
+   |
+
+B010 [*] Do not call `setattr` with a constant attribute value. It is not any safer than normal property access.
+  --> tests/test_discovery_publisher.py:13:9
+   |
+11 |     try:
+12 |         # 1) Module-level hook so **any** thread can see it
+13 |         setattr(md, "SCANNER_PUBLISH_HOOK", stub)
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+14 |         # 2) Patch the seam function so lookup MUST return our stub
+15 |         with patch(
+   |
+help: Replace `setattr` with assignment
+
+B010 [*] Do not call `setattr` with a constant attribute value. It is not any safer than normal property access.
+  --> tests/test_discovery_publisher.py:26:9
+   |
+24 |         assert stub.called, "seam: hook/seam stub was not called"
+25 |     finally:
+26 |         setattr(md, "SCANNER_PUBLISH_HOOK", None)
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: Replace `setattr` with assignment
+
+B010 [*] Do not call `setattr` with a constant attribute value. It is not any safer than normal property access.
+  --> tests/test_discovery_publisher.py:35:9
+   |
+33 |     try:
+34 |         # 1) Set the module-level hook so *any* thread can see it
+35 |         setattr(md, "SCANNER_PUBLISH_HOOK", stub)
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+36 |         # 2) Patch the seam to return the stub (covers any aliasing/caching)
+37 |         with patch(
+   |
+help: Replace `setattr` with assignment
+
+B010 [*] Do not call `setattr` with a constant attribute value. It is not any safer than normal property access.
+  --> tests/test_discovery_publisher.py:50:9
+   |
+48 |         assert stub.called, "dispatcher: scanner publish_discovery was not called"
+49 |     finally:
+50 |         setattr(md, "SCANNER_PUBLISH_HOOK", None)
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: Replace `setattr` with assignment
+
+B007 Loop control variable `i` not used within loop body
+  --> tests/test_facade.py:48:9
+   |
+46 |     f = facade.BB8Facade(bridge=object())
+47 |     # Simulate fade by calling set_led_rgb multiple times
+48 |     for i in range(5):
+   |         ^
+49 |         f.set_led_rgb(10, 0, 0)
+50 |     # Diagnostic prints for recorder locations
+   |
+help: Rename unused `i` to `_i`
+
+UP038 Use `X | Y` in `isinstance` call instead of `(X, Y)`
+  --> tests/test_mqtt_smoke.py:73:20
+   |
+71 |             def __init__(self, topic, payload):
+72 |                 self.topic = topic
+73 |                 if isinstance(payload, (bytes, bytearray)):
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+74 |                     self.payload = bytes(payload)
+75 |                 elif payload is None:
+   |
+help: Convert to `X | Y`
+
+UP015 [*] Unnecessary mode argument
+  --> tools/trace_smoke_check.py:42:23
+   |
+42 | with open(trace_path, "r", encoding="utf-8") as f:
+   |                       ^^^
+43 |     if trace_path.endswith(".jsonl"):
+44 |         lines = [json.loads(line) for line in f if line.strip()]
+   |
+help: Remove mode argument
+
+UP038 Use `X | Y` in `isinstance` call instead of `(X, Y)`
+  --> tools/trace_smoke_check.py:62:13
+   |
+60 |         isinstance(entry, dict)
+61 |         and entry.get("source") == "device"
+62 |         and isinstance(entry.get("value"), (int, float, str))
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+63 |     ):
+64 |         found_device_scalar = True
+   |
+help: Convert to `X | Y`
+
+SIM102 Use a single `if` statement instead of nested `if` statements
+  --> tools/trace_smoke_check.py:72:5
+   |
+70 |   # 1c) LED entries match {"r":int,"g":int,"b":int}
+71 |   for entry in lines:
+72 | /     if isinstance(entry, dict) and all(k in entry for k in ("r", "g", "b")):
+73 | |         if not all(isinstance(entry[k], int) for k in ("r", "g", "b")):
+   | |_______________________________________________________________________^
+74 |               print(f"FAIL: LED entry not int: {entry}")
+75 |               sys.exit(1)
+   |
+help: Combine `if` statements using `and`
+
+Found 286 errors.
+[*] 131 fixable with the `--fix` option (35 hidden fixes can be enabled with the `--unsafe-fixes` option).
