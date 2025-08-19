@@ -1,7 +1,6 @@
 import json
 
 import pytest
-
 from bb8_core.mqtt_echo import echo_led, echo_scalar
 
 
