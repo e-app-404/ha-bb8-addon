@@ -46,7 +46,7 @@ def main() -> int:
     cfgs = fetch_configs(c, REQ_TOPICS + OPT_TOPICS)
     # validate device block alignment
     dev_ids = set()
-    for t, (ret, cfg) in cfgs.items():
+    for _t, (_ret, cfg) in cfgs.items():
         dev = get_any(cfg, "dev") or {}
         ids = tuple(first_identifiers(dev))
         if ids:

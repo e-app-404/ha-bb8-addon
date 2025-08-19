@@ -1,0 +1,8 @@
+Discovery Verification Results:
+Topic                      | Retained | stat_t              | avty_t      | sw_version      | identifiers
+---------------------------|----------|---------------------|-------------|----------------|-------------------
+homeassistant/binary_sensor/bb8_presence/config | False   |                     |             |                | []
+homeassistant/sensor/bb8_rssi/config | False   |                     |             |                | []
+homeassistant/light/bb8_led/config | False   |                     |             |                | []
+
+FAIL: One or more checks did not pass.

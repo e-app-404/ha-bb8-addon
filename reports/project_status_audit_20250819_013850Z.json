@@ -1,0 +1,71 @@
+{
+  "ts": "20250819_013850Z",
+  "root": "/Users/evertappels/Projects/HA-BB8",
+  "git_present": true,
+  "git": {
+    "branch": "main",
+    "remote": "origin\thttps://github.com/e-app-404/ha-bb8-addon.git (fetch)\norigin\thttps://github.com/e-app-404/ha-bb8-addon.git (push)",
+    "dirty": true,
+    "last_tag": "v2025.08.20",
+    "recent_commits": [
+      "4b29cda chore(verify): LED-optional tolerant verifier (short+long keys)",
+      "dc230eb Overwrite verify_discovery.py with LED-optional, idempotent verifier",
+      "e55ebc5 guard(force_discovery): require real MAC; refuse placeholder",
+      "fb67301 feat(discovery): robust retained publish helper; scanner uses helper; force_discovery tool",
+      "2c13418 fix(discovery): verifier accepts short+long keys; scanner publishes both; retained configs"
+    ]
+  },
+  "addon_version": "dev",
+  "bb8_core_path": "/Users/evertappels/Projects/HA-BB8/addon/bb8_core/__init__.py",
+  "files": {
+    "pytest.ini": true,
+    "ruff.toml": true,
+    "mypy.ini": true,
+    "bb8_core/__init__.py (root|addon)": true,
+    "tools/verify_discovery.py": true
+  },
+  "duplicate_dirs_present": {},
+  "addon_audit": {
+    "rc": 0,
+    "stderr": ""
+  },
+  "consolidation": {
+    "rc": 0,
+    "stderr": "",
+    "out": "CONSOLIDATION: PASS"
+  },
+  "imports_tests": {
+    "rc": 0,
+    "out": "..                                                                       [100%]",
+    "err": ""
+  },
+  "lint": {
+    "ruff_rc": 1,
+    "ruff_summary": [
+      "",
+      "Found 4 errors.",
+      "[*] 4 fixable with the `--fix` option."
+    ],
+    "mypy_rc": 2,
+    "mypy_summary": []
+  },
+  "bridge_client_stub_present": false,
+  "eager_imports_in_init": false,
+  "verify_discovery": {
+    "rc": 1,
+    "out_tail": [
+      "---------------------------|----------|---------------------|-------------|----------------|-------------------",
+      "homeassistant/binary_sensor/bb8_presence/config | False   |                     |             |                | []",
+      "homeassistant/sensor/bb8_rssi/config | False   |                     |             |                | []",
+      "homeassistant/light/bb8_led/config | False   |                     |             |                | []",
+      "",
+      "FAIL: One or more checks did not pass."
+    ],
+    "err_tail": [
+      "/Users/evertappels/Projects/HA-BB8/tools/verify_discovery.py:68: DeprecationWarning: Callback API version 1 is deprecated, update to latest version",
+      "  c = mqtt.Client()"
+    ]
+  },
+  "overall_verdict": "PASS",
+  "notes": []
+}
