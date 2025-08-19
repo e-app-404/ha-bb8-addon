@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 # --- PATCHED: Accept both short and long key styles ---
 import json
 import os
-import time
 from typing import Any
 
 import paho.mqtt.client as mqtt
@@ -15,29 +16,6 @@ KEY_SYNONYMS = {
     "unit_of_meas": ["unit_of_meas", "unit_of_measurement", "unit"],
 }
 
-
-def get_any(d: dict[str, Any], key: str) -> Any:
-    for k in KEY_SYNONYMS.get(key, [key]):
-        if k in d:
-            return d[k]
-    return None
-
-
-def first_identifiers(dev: dict[str, Any] | None) -> list[str]:
-    if not dev:
-        return []
-    for k in ("identifiers",):
-        if k in dev and isinstance(dev[k], list):
-            return dev[k]
-    return []
-
-
-
-from __future__ import annotations
-import os
-import json
-import time
-import paho.mqtt.client as mqtt
 
 KEY_SYNONYMS: dict[str, list[str]] = {
     "stat_t": ["stat_t", "state_topic"],
@@ -54,19 +32,25 @@ CFG_REQUIRED = [
 ]
 CFG_LED = ("homeassistant/light/bb8_led/config", "led")
 
+
 def _want_led() -> bool:
     return os.getenv("PUBLISH_LED_DISCOVERY", "0") == "1"
 
 
-def get_any(d: dict[str, object], key: str) -> object:
+def first_identifiers(dev: dict[str, Any] | None) -> list[str]:
+    if not dev:
+        return []
+    for k in ("identifiers",):
+        if k in dev and isinstance(dev[k], list):
+            return dev[k]
+    return []
+
+
+def get_any(d: dict[str, Any], key: str) -> Any:
     for k in KEY_SYNONYMS.get(key, [key]):
-        if isinstance(d, dict) and k in d:
+        if k in d:
             return d[k]
     return None
-
-
-
-
 
 
 def extract_cfg(raw: str) -> dict[str, object]:
@@ -74,6 +58,7 @@ def extract_cfg(raw: str) -> dict[str, object]:
         return json.loads(raw)
     except Exception:
         return {}
+
 
 def _connect() -> mqtt.Client:
     host = os.getenv("MQTT_HOST", "127.0.0.1")
@@ -97,18 +82,13 @@ def verify(timeout: float = 2.0) -> tuple[list[dict[str, object]], bool]:
     retained: dict[str, bool] = {}
     want = {t for t, _ in topics}
 
-    def on_message(_c, _u, msg):
+    def on_message(_client, _userdata, msg):
         if msg.topic in want:
             retained[msg.topic] = bool(msg.retain)
             results[msg.topic] = extract_cfg(msg.payload.decode("utf-8", "ignore"))
 
     c.on_message = on_message
-    for t, _ in topics:
-        c.subscribe(t, qos=0)
-
-    t0 = time.time()
-    while time.time() - t0 < timeout and len(results) < len(want):
-        c.loop(timeout=0.1)
+    c.loop(timeout=timeout)
 
     rows: list[dict[str, object]] = []
     all_ok = True
@@ -126,9 +106,7 @@ def verify(timeout: float = 2.0) -> tuple[list[dict[str, object]], bool]:
             "stat_t": get_any(cfg, "stat_t") or "",
             "avty_t": get_any(cfg, "avty_t") or "",
             "sw_version": (
-                (dev or {}).get("sw_version", "")
-                if isinstance(dev, dict)
-                else ""
+                (dev or {}).get("sw_version", "") if isinstance(dev, dict) else ""
             ),
             "identifiers": identifiers,
         }
@@ -144,6 +122,7 @@ def verify(timeout: float = 2.0) -> tuple[list[dict[str, object]], bool]:
         all_ok = all_ok and ok
         rows.append(row)
     return rows, all_ok
+
 
 def main() -> int:
     rows, ok = verify()
@@ -162,6 +141,7 @@ def main() -> int:
         )
     print("\nPASS" if ok else "\nFAIL: One or more checks did not pass.")
     return 0 if ok else 1
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
