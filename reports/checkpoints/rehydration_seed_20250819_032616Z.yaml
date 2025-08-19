@@ -1,0 +1,71 @@
+rehydration_seed:
+  personas:
+    strategos:
+      id: "strategos_v1.3_20250618"
+      role: "Executive Project Strategist & Integration Delivery Manager"
+      files:
+        system_instruction: "/mnt/data/system_instruction.yaml"
+        core_persona: "/mnt/data/2025-06-18_strategos_v1.3.yaml"
+        expansion_pack: "/mnt/data/20250803_xp_strategos_v1.6.yaml"
+        dual_mode: "/mnt/data/dual_mode_xp_v1_250615.yaml"
+      routing_rules:
+        allow: ["Pythagoras"]
+        deny: ["Copilot"]
+        handoff_mode: "contract_only"
+        artifacts_out: ["execution_mandate","delta_contract"]
+        artifacts_in: ["qa_report","patch_bundle_summary"]
+    pythagoras:
+      id: "pythagoras_v3_refactored"
+      role: "Code Implementer & QA Engineer (Copilot-facing)"
+      files:
+        core_persona: "/mnt/data/pythagoras_v3_refactored.yaml"
+        expansion_pack: "/mnt/data/pythagoras_expansion_v3.yaml"
+        dual_mode: "/mnt/data/dual_mode_xp_v1_250615.yaml"
+      integration_targets: ["Copilot"]
+      enforced_outputs: ["patch_bundle_contract_v1","qa_report_contract_v1"]
+      callback_to: "Strategos"
+  project:
+    label: "BB-8 Bridge • STP4 strict + discovery alignment"
+    namespace: "bb8/<behavior>/<action>"
+    repository_roots:
+      addon_config: "addon/config.yaml"
+      bridge: "addon/bb8_core/bridge_controller.py"
+      facade: "addon/bb8_core/facade.py"
+      ble_link: "addon/bb8_core/ble_link.py"
+      scanner: "addon/bb8_core/bb8_presence_scanner.py"
+      evidence_collector: "addon/ops/evidence/collect_stp4.py"
+      guidelines: "addon/ops/_guidelines.md"
+      handover_dir: "reports/checkpoints"
+  status_summary:
+    stp4_strict_device: "PASS @ ${ts}"
+    discovery_alignment: "PASS (presence, rssi, led optional)"
+    device_identity: "ED:ED:87:D7:27:50"
+  environment_toggles:
+    MQTT_BASE: "bb8"
+    ENABLE_BRIDGE_TELEMETRY: 1
+    REQUIRE_DEVICE_ECHO: 1
+    PUBLISH_LED_DISCOVERY: ${PUBLISH_LED_DISCOVERY:-0}
+    EVIDENCE_TIMEOUT_SEC: 3.0
+  governance:
+    empirical_validation: true
+    binary_acceptance: true
+    evidence_tolerance_level: 0
+    confidence_minimum: 0.85
+  acceptance_criteria_next_checkpoint:
+    id: "INT-HA-CONTROL"
+    must_meet:
+      - "HA entities (presence,rssi) remain available after broker restart"
+      - "Optional LED entity aligns to same device block when enabled"
+      - "No duplicate discovery owners"
+    notes:
+      - "LED/state remains strict {r,g,b}; no 'source' field"
+  artifacts_index:
+    receipts:
+      - "${STATUS_JSON}"
+      - "${STATUS_MD}"
+      - "${VDISC_NOLED}"
+      - "${VDISC_LED}"
+  runbook_next_actions:
+    - step: "Decide default for PUBLISH_LED_DISCOVERY (0 recommended)"
+    - step: "If keeping LED, add HA control template mapping to {r,g,b} (optional)"
+    - step: "Plan STP5 (command UX + HA card polish) if desired"
