@@ -1,0 +1,25 @@
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+[DEBUG] Loaded config for MQTT: {'MQTT_USERNAME': 'mqtt_bb8', 'MQTT_PASSWORD': 'mqtt_bb8', 'MQTT_HOST': '192.168.0.129', 'MQTT_PORT': 1883, 'MQTT_BASE': 'bb8'}
+{
+  "generated_at": "2025-08-20T23:28:42.571931+00:00",
+  "broker": {
+    "host": "192.168.0.129",
+    "port": 1883,
+    "user_present": true
+  },
+  "base_topic": "bb8",
+  "schema": "PASS",
+  "schema_details": {
+    "valid": true,
+    "count": 0,
+    "details": []
+  },
+  "roundtrip": "FAIL",
+  "STP4/roundtrip": "FAIL (explain if FAIL)",
+  "timeouts_sec": 3.0,
+  "files": [
+    "ha_discovery_dump.json",
+    "ha_mqtt_trace_snapshot.json"
+  ]
+}
