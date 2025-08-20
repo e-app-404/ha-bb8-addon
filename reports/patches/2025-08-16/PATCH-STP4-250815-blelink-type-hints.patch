@@ -1,0 +1,43 @@
+diff --git a/bb8_core/ble_link.py b/bb8_core/ble_link.py
+index a2f9f77..c4d1ff2 100644
+--- a/bb8_core/ble_link.py
++++ b/bb8_core/ble_link.py
+@@ -3,10 +3,11 @@ from __future__ import annotations
+
+ import asyncio
+ import logging
+ from concurrent.futures import Future
+-from typing import Optional, Awaitable, Any
++from typing import Optional, Any, Coroutine, TypeVar
+
+ log = logging.getLogger(__name__)
+
++T = TypeVar("T")
+ # Dedicated loop supplied by bridge_controller.
+ _loop: Optional[asyncio.AbstractEventLoop] = None
+ _runner_future: Optional[Future] = None
+ _started: bool = False
+@@ -73,10 +74,11 @@ def stop(timeout: float = 2.5) -> None:
+         except Exception as exc:  # noqa: BLE001
+             log.warning("BLE runner stop wait raised: %s", exc)
+
+-
+-def run_coro(coro: Awaitable) -> Future:
++def run_coro(coro: Coroutine[Any, Any, T]) -> Future[T]:
+     """Schedule an awaitable on the dedicated BLE loop."""
+     if _loop is None:
+         raise RuntimeError("BLE loop not set; call set_loop() first")
+     return asyncio.run_coroutine_threadsafe(coro, _loop)
+@@ -96,11 +98,12 @@ class BLELink:
+     def stop(self, timeout: float = 2.5) -> None:
+         """Stop the shared BLE runner cleanly."""
+         stop(timeout=timeout)
+
+-    def submit(self, coro: Awaitable[Any]) -> Future:
++    def submit(self, coro: Coroutine[Any, Any, T]) -> Future[T]:
+         """
+-        Schedule a coroutine onto the dedicated BLE loop.
++        Schedule a coroutine onto the dedicated BLE loop.
+         Example: link.submit(device.connect())
+         """
+         return run_coro(coro)

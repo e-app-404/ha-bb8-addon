@@ -1,0 +1,110 @@
+# Patch ID: PATCH-STP4-250815-dispatcher-singleton
+diff --git a/bb8_core/mqtt_dispatcher.py b/bb8_core/mqtt_dispatcher.py
+index 9abc123..5de4f67 100644
+--- a/bb8_core/mqtt_dispatcher.py
++++ b/bb8_core/mqtt_dispatcher.py
+@@ -1,9 +1,64 @@
+-from __future__ import annotations
++from __future__ import annotations
+
++import logging
++from typing import Any
++
++log = logging.getLogger(__name__)
++
++# -----------------------------------------------------------------------------
++# Dispatcher singleton guard
++# -----------------------------------------------------------------------------
++_DISPATCHER_STARTED: bool = False
++
++def is_dispatcher_started() -> bool:
++    """True if the MQTT dispatcher has been started in this process."""
++    return _DISPATCHER_STARTED
++
++def ensure_dispatcher_started(*args: Any, **kwargs: Any) -> bool:
++    """
++    Idempotently start the MQTT dispatcher. Returns True if running after call.
++    Accepts arbitrary args/kwargs to pass through to start_mqtt_dispatcher().
++    """
++    global _DISPATCHER_STARTED
++    if _DISPATCHER_STARTED:
++        return True
++    try:
++        # Defer name resolution until call-time; avoids import cycles.
++        start_mqtt_dispatcher(*args, **kwargs)  # type: ignore[name-defined]
++        _DISPATCHER_STARTED = True
++        log.info("MQTT dispatcher started.")
++        return True
++    except Exception as exc:  # noqa: BLE001 (broad except for boot guard)
++        log.error("Failed to start MQTT dispatcher: %s", exc)
++        return False
++
++# -----------------------------------------------------------------------------
+ # Existing public API
+ # -----------------------------------------------------------------------------
+-def start_mqtt_dispatcher(...):
++def start_mqtt_dispatcher(...):
+     ...
+
+ def turn_on_bb8(...):
+     ...
+
+ def turn_off_bb8(...):
+     ...
+
+ def main():
+     ...
++
++# Explicit export set (helps linters/import tools)
++__all__ = [
++    "is_dispatcher_started",
++    "ensure_dispatcher_started",
++    "start_mqtt_dispatcher",
++    "turn_on_bb8",
++    "turn_off_bb8",
++    "main",
++]
+diff --git a/bb8_core/bb8_presence_scanner.py b/bb8_core/bb8_presence_scanner.py
+index 5d3be7a..a8c0c2f 100644
+--- a/bb8_core/bb8_presence_scanner.py
++++ b/bb8_core/bb8_presence_scanner.py
+@@ -1,12 +1,40 @@
+-from some_dispatcher_lib import dispatcher
++from __future__ import annotations
++
++import logging
++from .mqtt_dispatcher import (
++    ensure_dispatcher_started,
++    is_dispatcher_started,
++)
+
+-# Ensure scanner is the single discovery source; guard dispatcher init.
+-_scanner_dispatcher_initialized = False
++log = logging.getLogger(__name__)
+
++_scanner_dispatcher_initialized = False
++
++def ensure_discovery_initialized() -> None:
++    """
++    Ensure discovery/dispatch is active exactly once from the scanner POV.
++    Uses the mqtt_dispatcher singleton rather than a third-party dispatcher.
++    """
++    global _scanner_dispatcher_initialized
++    if _scanner_dispatcher_initialized:
++        return
++    if is_dispatcher_started():
++        _scanner_dispatcher_initialized = True
++        return
++    started = ensure_dispatcher_started()
++    if not started:
++        # Non-fatal: scanner may still operate in degraded mode
++        log.warning("Dispatcher not started; discovery may be inactive.")
++        return
++    _scanner_dispatcher_initialized = True
++
+ # call early during module load or main()
+-ensure_dispatcher_initialized()
++ensure_discovery_initialized()
+
+-# end
++# rest of scanner implementation...

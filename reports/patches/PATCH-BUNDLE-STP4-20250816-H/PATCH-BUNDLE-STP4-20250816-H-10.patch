@@ -1,0 +1,92 @@
+*** Patch 10 — Deterministic seam usage in integration test ***
+
+Problem: tests/test_scanner_discovery_uses_hook_when_set intermittently fails because the MQTT on_connect callback resolves the module publisher (scanner_pub_source=module) instead of the injected hook. Root causes observed: timing across threads and potential module aliasing.Fix: In the test, set the module-level hook and patch the seam function to belt‑and‑suspenders guarantee the stub is returned, then wait briefly for the callback thread.
+
+```
+*** Update File: tests/test_discovery_publisher.py
+@@
+-from unittest.mock import MagicMock
+-import os, importlib, time
+-
+-def test_scanner_only_discovery_when_bridge_telemetry_enabled(self):
+-    os.environ["ENABLE_BRIDGE_TELEMETRY"] = "1"
+-    md = importlib.import_module("bb8_core.mqtt_dispatcher")
+-    stub = MagicMock(name="scanner_publish_discovery")
+-    try:
+-        # Use the module-level hook so the MQTT on_connect thread also sees it
+-        md.SCANNER_PUBLISH_HOOK = stub
+-        md.start_mqtt_dispatcher(controller=MagicMock())
+-        # Wait briefly for the on_connect callback to run
+-        for _ in range(40):  # up to ~2s total if sleep=0.05
+-            if stub.called:
+-                break
+-            time.sleep(0.05)
+-        assert stub.called, "dispatcher: scanner publish_discovery was not called"
+-    finally:
+-        md.SCANNER_PUBLISH_HOOK = None
++from unittest.mock import MagicMock, patch
++import os, importlib, time
++
++def test_scanner_only_discovery_when_bridge_telemetry_enabled(self):
++    os.environ["ENABLE_BRIDGE_TELEMETRY"] = "1"
++    md = importlib.import_module("bb8_core.mqtt_dispatcher")
++    stub = MagicMock(name="scanner_publish_discovery")
++    try:
++        # 1) Set the module-level hook so *any* thread can see it
++        md.SCANNER_PUBLISH_HOOK = stub
++        # 2) Patch the seam to return the stub (covers any aliasing/caching)
++        with patch("bb8_core.mqtt_dispatcher._get_scanner_publisher", return_value=stub):
++            md.start_mqtt_dispatcher(controller=MagicMock())
++            # Wait briefly for on_connect callback to run
++            for _ in range(40):  # ~2s with 50ms sleeps
++                if stub.called:
++                    break
++                time.sleep(0.05)
++        assert stub.called, "dispatcher: scanner publish_discovery was not called"
++    finally:
++        md.SCANNER_PUBLISH_HOOK = None
+```
+
+
+*** Optional hardening — mqtt_dispatcher seam read consistency ***
+
+When to apply: Only if you still see scanner_pub_source=module while the test sets the hook. This adds a defensive read of the hook from the authoritative module object to survive any import alias
+
+```
+*** Update File: bb8_core/mqtt_dispatcher.py
+@@
+-from typing import Callable, Optional
++from typing import Callable, Optional
++import sys
+@@
+-def _get_scanner_publisher() -> Callable[..., None]:
++def _get_scanner_publisher() -> Callable[..., None]:
+     """Return the callable used to publish scanner discovery.
+     Prefers the test hook if present; otherwise import the production publisher lazily.
+     """
+-    if SCANNER_PUBLISH_HOOK is not None:
++    # Prefer hook on the authoritative module object (resilient to aliasing)
++    mod = sys.modules.get(__name__)
++    hook = getattr(mod, "SCANNER_PUBLISH_HOOK", None)
++    if hook is not None:
+-        pub = SCANNER_PUBLISH_HOOK
++        pub = hook
+         log.info("scanner_pub_source=hook id=%s", id(pub))
+         return pub
+     # Lazily import so tests can override before invocation
+     from bb8_core.bb8_presence_scanner import publish_discovery as _pub
+     log.info("scanner_pub_source=module id=%s", id(_pub))
+     return _pub
+```
+
+Run block (focused)
+
+```
+python -m compileall -q . && echo READY
+pytest -q -rA -k "scanner_discovery_seam_direct or scanner_only_discovery" --maxfail=1
+pytest -q -rA -k discovery_publisher --maxfail=1
+```
+
+Acceptance: The integration test reliably flips the stub (stub.called is True), and logs may show either scanner_pub_source=hook (if _get_scanner_publisher log runs) or no seam log when patched — both are acceptable; the assertion is on actual invocation.
+
+

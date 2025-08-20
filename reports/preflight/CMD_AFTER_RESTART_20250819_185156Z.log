@@ -1,0 +1,4 @@
+# AFTER_RESTART
+publish bb8/led/cmd {"r":0,"g":64,"b":255}
+wait bb8/led/state -> {"match":false,"payload":null,"topic":"bb8/led/state"}
+VERDICT=FAIL

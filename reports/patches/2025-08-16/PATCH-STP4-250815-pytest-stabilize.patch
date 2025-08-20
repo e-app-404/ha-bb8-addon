@@ -1,0 +1,54 @@
+# Patch ID: PATCH-STP4-250815-pytest-stabilize
+# Adds pytest config + asyncio mode + narrows discovery to avoid INTERNALERROR
+diff --git a/beep_boop_bb8/tests/pytest.ini b/beep_boop_bb8/tests/pytest.ini
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/beep_boop_bb8/tests/pytest.ini
+@@ -0,0 +1,18 @@
++[pytest]
++addopts = -q --disable-warnings
++python_files = test_*.py
++testpaths = tests
++norecursedirs =
++    .git
++    .tox
++    .venv
++    __pycache__
++    .*
++    build
++    dist
++    services.d
++    reports
++# pytest-asyncio: avoid policy mismatches across Python versions
++asyncio_mode = auto
++
+diff --git a/beep_boop_bb8/tests/conftest.py b/beep_boop_bb8/tests/conftest.py
+new file mode 100644
+index 0000000..2222222
+--- /dev/null
++++ b/beep_boop_bb8/tests/conftest.py
+@@ -0,0 +1,22 @@
++from __future__ import annotations
++import asyncio
++import pytest
++
++# Provide a stable event loop for tests that touch asyncio/BLE helpers.
++# With asyncio_mode=auto this is usually not necessary, but it guards
++# environments where plugin policies differ.
++@pytest.fixture(scope="session")
++def event_loop():
++    loop = asyncio.new_event_loop()
++    try:
++        yield loop
++    finally:
++        loop.run_until_complete(asyncio.sleep(0))
++        loop.close()
++
+diff --git a/beep_boop_bb8/tests/__init__.py b/beep_boop_bb8/tests/__init__.py
+new file mode 100644
+index 0000000..3333333
+--- /dev/null
++++ b/beep_boop_bb8/tests/__init__.py
+@@ -0,0 +1 @@
++# Test package marker (helps some tooling avoid odd recursion)

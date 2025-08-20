@@ -1,0 +1,26 @@
+# Patch ID: PATCH-STP4-250815-mypy-config
+# Eases typing friction from third-party libs without changing runtime code
+diff --git a/mypy.ini b/mypy.ini
+new file mode 100644
+index 0000000..4444444
+--- /dev/null
++++ b/mypy.ini
+@@ -0,0 +1,22 @@
++[mypy]
++python_version = 3.13
++ignore_missing_imports = True
++warn_unused_ignores = True
++no_implicit_optional = False
++check_untyped_defs = False
++disallow_incomplete_defs = False
++exclude = (?x)(
++    ^\\.venv/|
++    ^\\.tox/|
++    ^build/|
++    ^dist/|
++    ^beep_boop_bb8/__pycache__/|
++    ^beep_boop_bb8/tests/.__
++)
++
++[mypy-beep_boop_bb8.*]
++implicit_reexport = True

@@ -1,0 +1,22 @@
+### \*\*\* Begin Patch 7 — Update File: `bb8_core/mqtt_dispatcher.py` (unified gate: applies to both routes) \*\*\*
+
+> **Goal:** `test_gate_off` expects **no** discovery when the discovery gate is disabled. Apply the gate early in `_trigger_discovery_connected()` before selecting a route.
+
+```diff
+*** Update File: bb8_core/mqtt_dispatcher.py
+@@
+ def _trigger_discovery_connected() -> None:
+-    if _telemetry_enabled():
++    # Unified gate: if discovery is disabled, skip for both routes
++    if not CONFIG.get("dispatcher_discovery_enabled", False):
++        log.info("discovery_skip reason=gate_disabled")
++        return
++    if _telemetry_enabled():
+         log.info("discovery_route=scanner reason=ENABLE_BRIDGE_TELEMETRY")
+         try:
+             # Dynamic seam lookup at call time to defeat any early aliasing/caching
+             seam_fn = globals().get("_get_scanner_publisher")
+             pub = seam_fn() if callable(seam_fn) else _get_scanner_publisher()
+```
+
+### \*\*\* End Patch 7 \*\*\*

@@ -1,0 +1,252 @@
+# Patch Bundle — STP5: Command UX + HA Card Polish
+
+**Bundle ID:** PATCH-BUNDLE-STP5-UX-CMD-250819
+**Scope:** LED command path (bb8/led/cmd → echo to bb8/led/state), non-regressive to STP4; add verify tool & HA card notes.
+**Targets (repo‑relative):**
+
+* `addon/bb8_core/common.py`
+* `addon/bb8_core/bridge_controller.py`
+* `tools/verify_commands.py` (new)
+* `reports/checkpoints/HA_CARD_NOTES.md` (new)
+
+---
+
+## 1) PATCH-STP5-250819-led-cmd-echo-v1
+
+**Intent:**
+
+* Accept LED commands on `bb8/led/cmd` (JSON `{"r","g","b"}`) in addition to existing `bb8/led/set`.
+* Echo **strict** state payload to `bb8/led/state` (no `source`).
+* Use dispatcher subscription registry; avoid publishing back to command topics from echo path.
+
+```diff
+*** Begin Patch
+*** Update File: addon/bb8_core/common.py
+@@
+-# Command topics (inbound). We support both /set and /press where applicable.
+-CMD_TOPICS: dict[str, list[str]] = {
+-    "power": [f"{_mqtt_base()}/power/set"],
+-    "stop": [f"{_mqtt_base()}/stop/press", f"{_mqtt_base()}/stop/set"],
+-    "sleep": [f"{_mqtt_base()}/sleep/press", f"{_mqtt_base()}/sleep/set"],
+-    "drive": [f"{_mqtt_base()}/drive/press", f"{_mqtt_base()}/drive/set"],
+-    "heading": [f"{_mqtt_base()}/heading/set"],
+-    "speed": [f"{_mqtt_base()}/speed/set"],
+-    "led": [f"{_mqtt_base()}/led/set"],
+-}
++# Command topics (inbound). Support both legacy `/set` and new `/cmd` for LED.
++CMD_TOPICS: dict[str, list[str]] = {
++    "power":   [f"{_mqtt_base()}/power/set"],
++    "stop":    [f"{_mqtt_base()}/stop/press",   f"{_mqtt_base()}/stop/set"],
++    "sleep":   [f"{_mqtt_base()}/sleep/press",  f"{_mqtt_base()}/sleep/set"],
++    "drive":   [f"{_mqtt_base()}/drive/press",  f"{_mqtt_base()}/drive/set"],
++    "heading": [f"{_mqtt_base()}/heading/set"],
++    "speed":   [f"{_mqtt_base()}/speed/set"],
++    "led":     [f"{_mqtt_base()}/led/set",      f"{_mqtt_base()}/led/cmd"],
++}
+@@
+-def on_led_set(client, r, g, b):
+-    payload = json.dumps({"r": r, "g": g, "b": b})
+-    client.publish(CMD_TOPICS["led"], payload=payload, qos=1, retain=False)
+-    client.publish(STATE_TOPICS["led"], payload=payload, qos=1, retain=False)
++def on_led_set(client, r, g, b):
++    """Helper for direct LED state publication. Does **not** publish to command topics."""
++    payload = json.dumps({"r": int(r), "g": int(g), "b": int(b)})
++    client.publish(STATE_TOPICS["led"], payload=payload, qos=1, retain=False)
+```
+
+```diff
+*** Update File: addon/bb8_core/bridge_controller.py
+@@
+-from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
++from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
++from .mqtt_dispatcher import register_subscription  # dynamic topic binding
+@@
+-def on_led_set(r, g, b):
+-    payload = json.dumps({"r": r, "g": g, "b": b})
+-    c = get_client()
+-    if not c:
+-        logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["led"])
+-        return
+-    c.publish(CMD_TOPICS["led"][0], payload=payload, qos=1, retain=False)
+-    c.publish(STATE_TOPICS["led"], payload=payload, qos=1, retain=False)
+-    logger.info(
+-        "echo_pub topic=%s retain=false qos=1 payload=%s", STATE_TOPICS["led"], payload
+-    )
++def on_led_set(r, g, b):
++    """Publish strict LED state JSON; never reflect to command topics."""
++    payload = json.dumps({"r": int(r), "g": int(g), "b": int(b)})
++    c = get_client()
++    if not c:
++        logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["led"])
++        return
++    c.publish(STATE_TOPICS["led"], payload=payload, qos=1, retain=False)
++    logger.info("echo_pub topic=%s retain=false qos=1 payload=%s", STATE_TOPICS["led"], payload)
++
++def _on_led_command(text: str) -> None:
++    """MQTT command handler for LED payloads coming via `/led/set` or `/led/cmd`.
++    Expects JSON: {"r":<int>,"g":<int>,"b":<int>}.
++    """
++    try:
++        data = json.loads(text or "{}")
++        r, g, b = int(data.get("r")), int(data.get("g")), int(data.get("b"))
++    except Exception as exc:
++        logger.warning("led_cmd parse error: %s; payload=%r", exc, text)
++        return
++    on_led_set(r, g, b)
++
++# Bind LED command topics idempotently at import-time (dispatcher applies pending subs on connect)
++for _topic in set(CMD_TOPICS.get("led", [])):
++    try:
++        register_subscription(_topic, _on_led_command)
++    except Exception as exc:
++        logger.debug("register_subscription deferred (%s): %s", _topic, exc)
+*** End Patch
+```
+
+---
+
+## 2) PATCH-STP5-250819-verify-commands-tool
+
+**Intent:** Minimal verifier for STP5 acceptance: exercise `bb8/led/cmd` → await `bb8/led/state` echo; can run before and after broker restart to demonstrate resilience.
+
+```diff
+*** Begin Patch
+*** Add File: tools/verify_commands.py
++from __future__ import annotations
++
++import argparse
++import json
++import os
++import sys
++import time
++from typing import Any
++
++import paho.mqtt.client as mqtt
++
++
++def env(name: str, default: str) -> str:
++    return os.environ.get(name, default)
++
++
++def now_ms() -> int:
++    return int(time.time() * 1000)
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser(description="Verify bb8/led/cmd → bb8/led/state echo path")
++    parser.add_argument("--host", default=env("MQTT_HOST", "127.0.0.1"))
++    parser.add_argument("--port", type=int, default=int(env("MQTT_PORT", "1883")))
++    parser.add_argument("--user", default=env("MQTT_USERNAME", ""))
++    parser.add_argument("--password", default=env("MQTT_PASSWORD", ""))
++    parser.add_argument("--base", default=env("MQTT_BASE", "bb8"))
++    parser.add_argument("--timeout", type=float, default=float(env("VERIFY_TIMEOUT_S", "3.0")))
++    parser.add_argument("--rgb", default="255,102,0", help="RGB triple to test, e.g. 255,102,0")
++    args = parser.parse_args()
++
++    cmd_topic = f"{args.base}/led/cmd"
++    state_topic = f"{args.base}/led/state"
++
++    want = tuple(int(x) for x in args.rgb.split(",", 2))
++    target = {"r": want[0], "g": want[1], "b": want[2]}
++
++    got: dict[str, Any] | None = None
++
++    def on_message(_c, _u, msg):
++        nonlocal got
++        try:
++            payload = json.loads(msg.payload.decode("utf-8"))
++        except Exception:
++            return
++        if not isinstance(payload, dict):
++            return
++        if set(payload.keys()) == {"r", "g", "b"}:
++            got = payload
++
++    client = mqtt.Client(client_id="bb8-cmd-verifier")
++    if args.user:
++        client.username_pw_set(args.user, args.password or None)
++    client.on_message = on_message
++    client.connect(args.host, args.port, keepalive=60)
++    client.loop_start()
++    try:
++        client.subscribe(state_topic, qos=1)
++        # Publish command
++        client.publish(cmd_topic, json.dumps(target), qos=1, retain=False)
++        t0 = now_ms()
++        while (now_ms() - t0) < int(args.timeout * 1000):
++            if got is not None:
++                break
++            time.sleep(0.02)
++    finally:
++        client.loop_stop()
++        client.disconnect()
++
++    ok = (got == target)
++    print(
++        json.dumps(
++            {
++                "cmd_topic": cmd_topic,
++                "state_topic": state_topic,
++                "sent": target,
++                "got": got,
++                "pass": ok,
++            },
++            separators=(",", ":"),
++        )
++    )
++    return 0 if ok else 2
++
++
++if __name__ == "__main__":
++    sys.exit(main())
++
+*** End Patch
+```
+
+---
+
+## 3) PATCH-STP5-250819-ha-card-notes
+
+**Intent:** Provide a small note with an example HA card layout; LED control remains **optional** and OFF by default.
+
+````diff
+*** Begin Patch
+*** Add File: reports/checkpoints/HA_CARD_NOTES.md
++## BB‑8 HA Card Notes (STP5)
++
++**Defaults:** LED discovery remains disabled. You will see Presence + RSSI grouped under the same device. To test LED command UX without enabling discovery, use an [MQTT Button/Light helper] or call `bb8/led/cmd` directly.
++
++### Example (Manual Card)
++
++```yaml
++type: vertical-stack
++cards:
++  - type: entities
++    title: BB‑8
++    entities:
++      - entity: binary_sensor.bb8_presence
++      - entity: sensor.bb8_rssi
++  # Optional: if you expose a manual light via MQTT helper
++  - type: light
++    entity: light.bb8_led_optional
++```
++
++### Notes
++- Command path: `bb8/led/cmd` with JSON `{r,g,b}`
++- State echo: `bb8/led/state` (strict keys `{r,g,b}`, no `source`)
++- Discovery owner: scanner only (bridge telemetry stays suppressed)
++
+*** End Patch
+````
+
+---
+
+## Post‑apply checklist
+
+* [ ] `ruff check .` → PASS
+* [ ] `black --check .` → PASS
+* [ ] `mypy` → PASS
+* [ ] `pytest -q` (or `make testcov`) → PASS
+* [ ] `python3 tools/verify_commands.py --host <broker> --user ...` prints `"pass":true`
+
+**End of bundle**

@@ -1,0 +1,15 @@
+Scope (must-have):
+
+- Deterministic scan → connect → service probe by MAC using Bleak.
+- Reconnect loop with back-off (e.g., 1s → 2s → 5s, capped).
+- Capability probe (read a benign char or version/battery) on connect to mark “verified”.
+- Emit/maintain:
+  - bb8/connected (online|offline) and bb8/rssi (number) topics.
+  - Heartbeat (e.g., bb8/telemetry/ping) at interval.
+- Gate command handlers: only execute device actions when connected==true (else publish bb8/event/rejected with reason offline).
+
+Evidence (binary acceptance for this PR):
+
+- Connect within ≤10s, reconnect within ≤5s after forced drop.
+- On led and drive commands: both a facade echo and at least one device echo (e.g., read-back or success event) recorded; latency_ms ≤ 2000.
+- ha_discovery_dump.json → PASS, includes binary_sensor.connected and sensor.rssi.

@@ -1,0 +1,47 @@
+Patch 2 — Add File: `tests/test_scanner_discovery_seam_direct.py` \*\*\*
+
+> **Change:** Use deterministic seam patching instead of direct hook to avoid any import/alias timing issues.
+
+```python
+from unittest.mock import MagicMock, patch
+import importlib
+import os
+
+def test_scanner_discovery_seam_direct():
+    os.environ["ENABLE_BRIDGE_TELEMETRY"] = "1"
+    md = importlib.import_module("bb8_core.mqtt_dispatcher")
+    stub = MagicMock(name="scanner_publish_discovery")
+    # Patch the seam function so invocation MUST use our stub
+    with patch("bb8_core.mqtt_dispatcher._get_scanner_publisher", return_value=stub):
+        md._trigger_discovery_connected()
+        assert stub.called, "seam: stub was not called via _get_scanner_publisher"
+```
+
+### \*\*\* End Patch 2 \*\*\*
+
+---
+
+### \*\*\* Optional Patch 2b — (If you still want a hook-based test) \*\*\*
+
+> Ensure the hook is set before any dispatcher logic/import runs and verify same-module context.
+
+```python
+# tests/test_scanner_discovery_seam_hook.py
+from unittest.mock import MagicMock
+import importlib, os, sys
+
+def test_scanner_discovery_seam_hook():
+    os.environ["ENABLE_BRIDGE_TELEMETRY"] = "1"
+    # Import dispatcher
+    md = importlib.import_module("bb8_core.mqtt_dispatcher")
+    stub = MagicMock(name="scanner_publish_discovery")
+    try:
+        # Set the hook on the actual module object used by the dispatcher
+        sys.modules["bb8_core.mqtt_dispatcher"].SCANNER_PUBLISH_HOOK = stub
+        md._trigger_discovery_connected()
+        assert stub.called, "seam-hook: stub was not called"
+    finally:
+        sys.modules["bb8_core.mqtt_dispatcher"].SCANNER_PUBLISH_HOOK = None
+```
+
+---

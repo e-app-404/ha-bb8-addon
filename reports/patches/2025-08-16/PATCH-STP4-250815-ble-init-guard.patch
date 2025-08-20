@@ -1,0 +1,42 @@
+# Patch ID: PATCH-STP4-250815-ble-init-guard
+diff --git a/bb8_core/bridge_controller.py b/bb8_core/bridge_controller.py
+index a7f9f21..b3d8aac 100644
+--- a/bb8_core/bridge_controller.py
++++ b/bb8_core/bridge_controller.py
+@@ -7,6 +7,7 @@ from typing import Any, Optional
+ from .common import TOPICS, publish_device_echo
+ from . import ble_link  # first-party
+
+ _ble_loop: Optional[asyncio.AbstractEventLoop] = None
++_ble_inited: bool = False
+
+
+ def _start_ble_loop_thread() -> asyncio.AbstractEventLoop:
+@@ -19,6 +20,19 @@ def _start_ble_loop_thread() -> asyncio.AbstractEventLoop:
+     return loop
+
+
+-# Lazily initialize when module imported
+-_ble_loop = _start_ble_loop_thread()
++def _init_ble_once() -> None:
++    """Idempotent BLE init: loop + link runner."""
++    global _ble_loop, _ble_inited
++    if _ble_inited:
++        return
++    _ble_loop = _start_ble_loop_thread()
++    ble_link.set_loop(_ble_loop)
++    ble_link.start()
++    _ble_inited = True
++
++# initialize on import
++_init_ble_once()
+
+@@
+ def submit_ble_coro(coro: asyncio.Future) -> None:
+     asyncio.run_coroutine_threadsafe(coro, _ble_loop)  # type: ignore[arg-type]
++
++def shutdown_ble() -> None:
++    """Called on process termination to avoid pending tasks."""
++    ble_link.stop()
++    # Note: the loop thread can remain running for process lifetime; if you
++    # explicitly stop it, ensure all tasks are cancelled first.

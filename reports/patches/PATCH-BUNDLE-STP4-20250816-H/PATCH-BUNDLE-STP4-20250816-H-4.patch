@@ -1,0 +1,49 @@
+### \*\*\* Begin Patch 4 — Update File: `bb8_core/mqtt_dispatcher.py` \*\*\*
+
+> **Goal:** Ensure `start_mqtt_dispatcher` never caches or aliases the publisher. The MQTT connect path must always invoke the dynamic seam via `_trigger_discovery_connected()` at **call time**.
+
+```diff
+*** Update File: bb8_core/mqtt_dispatcher.py
+@@
+-def start_mqtt_dispatcher(controller: object, *args, **kwargs) -> bool:
+-    # ... existing setup ...
+-    # (remove any early resolution/caching of the publisher)
+-    # publisher = _get_scanner_publisher()  # <- DELETE if present
+-    def _on_connect(client, userdata, flags, rc, properties=None):
+-        log.info("mqtt_on_connect rc=%s; re-binding subscriptions (%d topics)", rc, len(_BOUND_TOPICS) + len(_PENDING_SUBS))
+-        _apply_pending_subscriptions()
+-        # OLD: conditional route MAY have called a cached publisher here.
+-        # REPLACE with authoritative seam invocation at call time:
+-        _trigger_discovery_connected()
+-    CLIENT.on_connect = _on_connect
+-    # ... existing client.connect / loop_start ...
+-    # Optionally kick once after loop_start to avoid cold-start race (client already connected case):
+-    _trigger_discovery_connected()
+-    return True
++def start_mqtt_dispatcher(controller: object, *args, **kwargs) -> bool:
++    # ... existing setup ...
++    # DO NOT resolve or cache any publisher here. The seam must be used at invocation time only.
++    def _on_connect(client, userdata, flags, rc, properties=None):
++        log.info("mqtt_on_connect rc=%s; re-binding subscriptions (%d topics)", rc, len(_BOUND_TOPICS) + len(_PENDING_SUBS))
++        _apply_pending_subscriptions()
++        # Authoritative seam invocation at call time (thread-safe & testable)
++        _trigger_discovery_connected()
++    CLIENT.on_connect = _on_connect
++    # ... existing client.connect / loop_start ...
++    # Proactively trigger once post-start to cover immediate-connect brokers
++    _trigger_discovery_connected()
++    return True
+```
+
+**Mandatory cleanups (search & remove if found):**
+
+* Any line that assigns an alias to the seam or publisher at module or function scope, e.g.:
+
+  * `publisher = _get_scanner_publisher()`
+  * `_GET_SCANNER = _get_scanner_publisher`
+  * `_scanner = ...` or `_scanner_publish = ...`
+* Any conditional that directly calls `bb8_presence_scanner.publish_discovery(...)` instead of `_trigger_discovery_connected()`.
+
+> After this patch, **all** discovery entry points (startup, reconnect, manual ensure) must flow through `_trigger_discovery_connected()`.
+
+### \*\*\* End Patch 4 \*\*\*

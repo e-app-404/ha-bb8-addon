@@ -1,0 +1,126 @@
+addon/bb8_core/mqtt_helpers.py:22: error: Unused "type: ignore" comment 
+[unused-ignore]
+            await mqtt.publish(topic, data, qos, retain)  # type: ignore[m...
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+addon/bb8_core/mqtt_helpers.py:28: error: Unused "type: ignore" comment 
+[unused-ignore]
+            await mqtt.publish(topic, data, retain=retain, qos=qos)  # typ...
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+addon/bb8_core/mqtt_helpers.py:33: error: Unused "type: ignore" comment 
+[unused-ignore]
+        res = mqtt.publish(topic, data, qos, retain)  # type: ignore[call-...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+addon/bb8_core/logging_setup.py:15: error: Incompatible types in assignment
+(expression has type "dict[Never, Never]", variable has type "Path | None") 
+[assignment]
+        _cfg, _src = {}, {}
+                         ^~
+addon/bb8_core/logging_setup.py:48: error: Argument 1 to "setLevel" of
+"Handler" has incompatible type "Any | str | None"; expected "int | str" 
+[arg-type]
+    handler.setLevel(LOG_LEVEL)
+                     ^~~~~~~~~
+addon/bb8_core/logging_setup.py:50: error: Argument 1 to "setLevel" of "Logger"
+has incompatible type "Any | str | None"; expected "int | str"  [arg-type]
+        log.setLevel(LOG_LEVEL)
+                     ^~~~~~~~~
+addon/bb8_core/mqtt_dispatcher.py:36: error: Name "SCANNER_PUBLISH_HOOK"
+already defined on line 27  [no-redef]
+    SCANNER_PUBLISH_HOOK: Callable[..., None] | None = None
+    ^~~~~~~~~~~~~~~~~~~~
+addon/bb8_core/mqtt_dispatcher.py:112: error: Argument 1 to "append" of "list"
+has incompatible type "str"; expected "_StubClient"  [arg-type]
+                    args.append("AA:BB:CC:DD:EE:FF")
+                                ^~~~~~~~~~~~~~~~~~~
+addon/bb8_core/mqtt_dispatcher.py:114: error: Argument 1 to "append" of "list"
+has incompatible type "str"; expected "_StubClient"  [arg-type]
+                    args.append("/org/bluez/hci0/dev_TEST")
+                                ^~~~~~~~~~~~~~~~~~~~~~~~~~
+addon/bb8_core/mqtt_dispatcher.py:116: error: Argument 1 to "append" of "list"
+has incompatible type "str"; expected "_StubClient"  [arg-type]
+                    args.append("Sphero BB-8")
+                                ^~~~~~~~~~~~~
+addon/bb8_core/mqtt_dispatcher.py:118: error: Argument 1 to "append" of "list"
+has incompatible type "str"; expected "_StubClient"  [arg-type]
+                    args.append("bb8_test")
+                                ^~~~~~~~~~
+addon/bb8_core/mqtt_dispatcher.py:120: error: Argument 1 to "append" of "list"
+has incompatible type "str"; expected "_StubClient"  [arg-type]
+                    args.append(f"test_{n}")
+                                ^~~~~~~~~~~
+addon/bb8_core/mqtt_dispatcher.py:908: error: Unused "type: ignore" comment 
+[unused-ignore]
+                bb8.sleep(IntervalOptions(IntervalOptions.NONE), 0, 0, 0) ...
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+addon/bb8_core/ble_gateway.py:64: error: Unused "type: ignore" comment 
+[unused-ignore]
+            devices = await BleakScanner.discover(timeout=seconds)  # type...
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+addon/bb8_core/ble_bridge.py:575: error: Unused "type: ignore" comment 
+[unused-ignore]
+                    bb8.sleep(IntervalOptions(IntervalOptions.NONE), 0, 0,...
+                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+addon/bb8_core/facade.py:87: error: "int" has no attribute "publish" 
+[attr-defined]
+                self._mqtt["client"].publish(
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+addon/bb8_core/facade.py:111: error: "int" has no attribute "publish" 
+[attr-defined]
+                    self._mqtt["client"].publish(
+                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+addon/bb8_core/facade.py:120: error: "int" has no attribute "publish" 
+[attr-defined]
+                self._mqtt["client"].publish(
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+addon/bb8_core/facade.py:135: error: "int" has no attribute "publish" 
+[attr-defined]
+                self._mqtt["client"].publish(
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+addon/bb8_core/facade.py:162: error: "int" has no attribute "publish" 
+[attr-defined]
+                client.publish(topic, payload=payload, qos=1, retain=False...
+                ^~~~~~~~~~~~~~
+addon/bb8_core/facade.py:188: error: Dict entry 1 has incompatible type "str":
+"str"; expected "str": "int | None"  [dict-item]
+                "base": base_topic,
+                ^~~~~~~~~~~~~~~~~~
+addon/bb8_core/facade.py:293: error: Unexpected keyword argument "dbus_path"
+for "publish_discovery"  [call-arg]
+            publish_discovery(
+            ^
+addon/bb8_core/bb8_presence_scanner.py:46: note: "publish_discovery" defined here
+addon/bb8_core/facade.py:293: error: Unexpected keyword argument "model" for
+"publish_discovery"  [call-arg]
+            publish_discovery(
+            ^
+addon/bb8_core/facade.py:293: error: Unexpected keyword argument "name" for
+"publish_discovery"  [call-arg]
+            publish_discovery(
+            ^
+addon/bb8_core/facade.py:293: error: Value of type "Coroutine[Any, Any, None]"
+must be used  [unused-coroutine]
+            publish_discovery(
+            ^
+addon/bb8_core/facade.py:293: note: Are you missing an await?
+addon/bb8_core/auto_detect.py:24: error: Unused "type: ignore" comment 
+[unused-ignore]
+        from bleak import BleakClient, BleakScanner  # type: ignore
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+addon/bb8_core/auto_detect.py:95: error: Unused "type: ignore" comment 
+[unused-ignore]
+        devices = await BleakScanner.discover(timeout=scan_seconds)  # typ...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+addon/bb8_core/auto_detect.py:238: error: Unused "type: ignore" comment 
+[unused-ignore]
+            async with BleakClient(mac_addr) as client:  # type: ignore[na...
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+addon/bb8_core/bridge_controller.py:62: error: Unused "type: ignore" comment 
+[unused-ignore]
+        from .mqtt_dispatcher import get_client as _get_client  # type: ig...
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+addon/bb8_core/bridge_controller.py:247: error: Function
+"register_subscription" could always be true in boolean context 
+[truthy-function]
+        if register_subscription:
+           ^~~~~~~~~~~~~~~~~~~~~
+Found 30 errors in 8 files (checked 38 source files)

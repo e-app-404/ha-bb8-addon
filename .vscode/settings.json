@@ -45,5 +45,6 @@
   "terminal.integrated.defaultProfile.osx": "zsh",
   "terminal.integrated.env.osx": {
     "ZDOTDIR": "/Users/evertappels/Projects/BB8-Bridge/.vscode/shell-clean"
-  }
+  },
+  "terminal.integrated.tabs.defaultColor": "terminal.ansiMagenta"
 }

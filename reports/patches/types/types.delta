@@ -1,0 +1,45 @@
+planned_change: "Centralise all custom/shared types in bb8_core/types.py and update imports to remove circular dependencies."
+deliverable: "One PR: feat(bb8): shared types centralised; imports updated; cycles eliminated."
+action_needed:
+  - "Create/replace bb8_core/types.py with canonical type aliases + Protocol interfaces."
+  - "Sweep bb8_core/* to import custom types from .types (not from peers)."
+  - "Add TYPE_CHECKING guards where runtime imports would create cycles."
+  - "Add a lightweight test ensuring types.py has no side effects."
+rationale: "Reduce circular imports, improve interface clarity, and make strict STP4 edits safer across modules."
+status: "ready-to-apply"
+path: "beep_boop_bb8/bb8_core"
+RACI_matrix:
+  responsible: ["You (author)"]
+  accountable: ["Strategos"]
+  consulted: ["Copilot (assist)"]
+  informed: ["Evert"]
+acceptance_criteria:
+  - "Repo imports with no circular import errors (pytest -q passes import stage)."
+  - "mypy/pyright (if configured) report no new type errors."
+  - "grep shows no residual imports of controller/facade/bridge types from non-.types modules."
+  - "Unit test confirms importing bb8_core.types triggers no side-effect imports."
+risk_assessment:
+  risks:
+    - "Hidden runtime import path could still reference peers."
+    - "Over-narrow Protocols might reject valid concrete implementations."
+  mitigations:
+    - "Keep Protocols minimal; add runtime_checkable for isinstance checks in tests."
+    - "Use TYPE_CHECKING to keep cross-module hints strictly static."
+signoff_required: true
+
+---
+
+Review Summary for PR: refactor(bb8_core): centralise shared types; remove circular imports
+
+All acceptance criteria are met:
+
+All custom/shared types (Protocols, callback signatures, type aliases) are now exclusively imported from types.py.
+No runtime cross-imports remain between bridge_controller, ble_link, telemetry, or ble_bridge; all cross-module type hints use TYPE_CHECKING.
+Functional behaviour is unchanged—this is a refactor-only PR.
+Lightweight import test (tests/test_types_import.py) confirms no side-effect imports or cycles.
+Strict mypy config is present in pyproject.toml.
+Grep checks confirm no residual direct imports of controller/facade/bridge types from non-.types modules.
+The codebase is ready for strict STP4 patching and future protocol/interface changes.
+Recommendation:
+This PR is clean, safe, and fully prepares the codebase for further strict typing and architectural improvements. Ready for merge and signoff.
+

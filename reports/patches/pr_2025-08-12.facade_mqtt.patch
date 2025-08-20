@@ -1,0 +1,235 @@
+## A) `bb8_core/facade.py` — add the high-level facade (new or replace)
+
+```python
+# bb8_core/facade.py
+from __future__ import annotations
+from typing import Any, Optional, Callable
+import json
+import threading
+import time
+
+from .logging_setup import logger
+from .discovery_publish import publish_discovery  # uses retained config payloads
+
+
+class BB8Facade:
+    """
+    High-level, MQTT-facing API. Wraps a BLEBridge (device driver) and exposes
+    commands + telemetry with validation, state echo, and discovery publish.
+    """
+    def __init__(self, bridge: Any) -> None:
+        self.bridge = bridge
+        self._mqtt = {"client": None, "base": None, "qos": 1, "retain": True}
+        # telemetry publishers bound at attach_mqtt()
+        self.publish_presence: Optional[Callable[[bool], None]] = None
+        self.publish_rssi: Optional[Callable[[int], None]] = None
+
+    # --------- High-level actions (validate → delegate to bridge) ---------
+    def power(self, on: bool) -> None:
+        if on:
+            self.bridge.connect()
+        else:
+            # keep compatible with both (after_ms optional)
+            self.bridge.sleep(None)
+
+    def stop(self) -> None:
+        self.bridge.stop()
+
+    def set_led_off(self) -> None:
+        self.bridge.set_led_off()
+
+    def set_led_rgb(self, r: int, g: int, b: int) -> None:
+        r = max(0, min(255, int(r))); g = max(0, min(255, int(g))); b = max(0, min(255, int(b)))
+        self.bridge.set_led_rgb(r, g, b)
+
+    def is_connected(self) -> bool:
+        return bool(getattr(self.bridge, "is_connected", lambda: True)())
+
+    def get_rssi(self) -> int:
+        return int(getattr(self.bridge, "get_rssi", lambda: 0)())
+
+    # --------- MQTT wiring (subscribe/dispatch/state echo + discovery) ---------
+    def attach_mqtt(self, client, base_topic: str, qos: int = 1, retain: bool = True) -> None:
+        """
+        Subscribes to command topics and publishes retained discovery + state.
+        Topics:
+          - {base}/power/set       ("ON"|"OFF")  → {base}/power/state
+          - {base}/stop/press      (any payload) → {base}/stop/state ("pressed"→"idle")
+          - {base}/led/set         json {"r","g","b"} | {"hex":"#rrggbb"} | "OFF" → {base}/led/state
+        Telemetry helpers (bound here):
+          - presence: {base}/presence/state ("ON"/"OFF")
+          - rssi:     {base}/rssi/state (int dBm)
+        """
+        self._mqtt = {"client": client, "base": base_topic, "qos": qos, "retain": retain}
+
+        def _pub(suffix: str, payload, r: bool = retain):
+            topic = f"{base_topic}/{suffix}"
+            msg = json.dumps(payload, separators=(",", ":")) if isinstance(payload, (dict, list)) else payload
+            client.publish(topic, payload=msg, qos=qos, retain=r)
+
+        # discovery (idempotent; retained on broker)
+        publish_discovery(client, base_topic, availability_topic="bb8/status", qos=qos, retain=True)
+
+        # bind telemetry publishers for use by controller/telemetry loop
+        self.publish_presence = lambda online: _pub("presence/state", "ON" if online else "OFF")
+        self.publish_rssi = lambda dbm: _pub("rssi/state", str(int(dbm)))
+
+        # ---- Handlers ----
+        def _handle_power(_c, _u, msg):
+            try:
+                v = (msg.payload or b"").decode("utf-8").strip().upper()
+                if v == "ON":
+                    self.power(True);  _pub("power/state", "ON")
+                elif v == "OFF":
+                    self.power(False); _pub("power/state", "OFF")
+                else:
+                    logger.warning({"event": "power_invalid_payload", "payload": v})
+            except Exception as e:
+                logger.error({"event": "power_handler_error", "error": repr(e)})
+
+        def _parse_color(raw: str) -> Optional[dict]:
+            raw = raw.strip()
+            if raw.upper() == "OFF":
+                return None
+            try:
+                obj = json.loads(raw)
+                if isinstance(obj, dict):
+                    if "hex" in obj and isinstance(obj["hex"], str):
+                        h = obj["hex"].lstrip("#")
+                        return {"r": int(h[0:2], 16), "g": int(h[2:4], 16), "b": int(h[4:6], 16)}
+                    return {
+                        "r": max(0, min(255, int(obj.get("r", 0)))),
+                        "g": max(0, min(255, int(obj.get("g", 0)))),
+                        "b": max(0, min(255, int(obj.get("b", 0)))),
+                    }
+            except Exception:
+                pass
+            return None
+
+        def _handle_led(_c, _u, msg):
+            try:
+                raw = (msg.payload or b"").decode("utf-8")
+                rgb = _parse_color(raw)
+                if rgb is None:
+                    self.set_led_off()
+                    _pub("led/state", {"state": "OFF"})
+                else:
+                    self.set_led_rgb(rgb["r"], rgb["g"], rgb["b"])
+                    _pub("led/state", {"r": rgb["r"], "g": rgb["g"], "b": rgb["b"]})
+            except Exception as e:
+                logger.error({"event": "led_handler_error", "error": repr(e)})
+
+        def _handle_stop(_c, _u, _msg):
+            try:
+                self.stop()
+                _pub("stop/state", "pressed", r=False)
+                def _reset():
+                    time.sleep(0.5)
+                    _pub("stop/state", "idle", r=False)
+                threading.Thread(target=_reset, daemon=True).start()
+            except Exception as e:
+                logger.error({"event": "stop_handler_error", "error": repr(e)})
+
+        # ---- Subscriptions ----
+        client.message_callback_add(f"{base_topic}/power/set", _handle_power)
+        client.subscribe(f"{base_topic}/power/set", qos=qos)
+
+        client.message_callback_add(f"{base_topic}/led/set", _handle_led)
+        client.subscribe(f"{base_topic}/led/set", qos=qos)
+
+        client.message_callback_add(f"{base_topic}/stop/press", _handle_stop)
+        client.subscribe(f"{base_topic}/stop/press", qos=qos)
+
+        logger.info({"event": "facade_mqtt_attached", "base": base_topic})
+```
+
+---
+
+## B) `bb8_core/bridge_controller.py` — wire the facade (tiny diff)
+
+```diff
+-from bb8_core.ble_bridge import BLEBridge
+-# ... later ...
+-bridge = BLEBridge(gateway=gw, target_mac=target_mac, ble_adapter=ble_adapter)
+-controller_for_mqtt = bridge
++from bb8_core.ble_bridge import BLEBridge
++from bb8_core.facade import BB8Facade
++# ... later ...
++bridge = BLEBridge(gateway=gw, target_mac=target_mac, ble_adapter=ble_adapter)
++facade = BB8Facade(bridge)
++controller_for_mqtt = facade
+
+ # dispatcher call (your compat shim builds kwargs)
+ client = _start_dispatcher_compat(
+     start_mqtt_dispatcher,
+     {
+         "host": mqtt_host,
+         "port": mqtt_port,
+         "topic": mqtt_topic,
+         "user": mqtt_user,
+         "password": mqtt_password,
+         "status_topic": "bb8/status",
+-        "controller": controller_for_mqtt,  # was bridge
++        "controller": controller_for_mqtt,  # now facade
+         "client_id": cfg.get("client_id"),
+         "keepalive": cfg.get("keepalive", 60),
+         "qos": cfg.get("qos", 1),
+         "retain": cfg.get("retain", True),
+         "tls": cfg.get("tls", False),
+     },
+ )
+ # keep your existing wait/teardown
+ _wait_forever(client, bridge)
+```
+
+> note: keep `_wait_forever(client, bridge)` so shutdown still tears down BLE cleanly.
+
+---
+
+## C) `bb8_core/ble_bridge.py` — optional compatibility forwarder (no circulars)
+
+If `BLEBridge.attach_mqtt` exists today, forward it to the facade (lazy import prevents cycles). Otherwise skip this.
+
+```python
+# inside BLEBridge class
+def attach_mqtt(self, client, base_topic: str, qos: int = 1, retain: bool = True) -> None:
+    """Deprecated: forwarding to facade to avoid transport concerns in bridge."""
+    from .facade import BB8Facade  # lazy import to avoid circular import
+    BB8Facade(self).attach_mqtt(client, base_topic, qos=qos, retain=retain)
+```
+
+---
+
+## D) `bb8_core/mqtt_dispatcher.py` — avoid double discovery (choose ONE place)
+
+You have two equally valid patterns; pick one and stick to it:
+
+* **Preferred:** discovery is done in **facade.attach_mqtt** (as above).
+  → **Remove** any `publish_discovery(...)` call from the dispatcher’s `on_connect`.
+
+* **Alternative:** discovery in dispatcher `on_connect`.
+  → **Remove** the call from `facade.attach_mqtt` (delete the `publish_discovery(...)` line).
+
+*(Retained configs are idempotent, but keeping a single publisher is cleaner.)*
+
+---
+
+## E) Sanity checklist (fast)
+
+* No circular imports (`facade.py` does **not** import `ble_bridge` at module level).
+* Startup logs include `{"event":"facade_mqtt_attached"}` and `{"event":"discovery_published","count":5}` once.
+* HA shows: presence, RSSI, power, stop, LED entities.
+* Commands roundtrip with state echo ≤2s.
+
+---
+
+## F) Pylance satisfaction
+
+* Facade and Bridge both expose the methods used by handlers: `power`, `stop`, `set_led_off`, `set_led_rgb`, `sleep`, `is_connected`, `get_rssi`, `attach_mqtt`.
+* Add type hints as shown; Pylance warnings should disappear.
+
+---
+
+## F) Documentation
+
+* Document changes under 2025-08-12-facade

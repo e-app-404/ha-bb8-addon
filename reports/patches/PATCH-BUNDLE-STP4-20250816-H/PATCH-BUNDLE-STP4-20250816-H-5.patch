@@ -1,0 +1,64 @@
+### \*\*\* Begin Patch 5 — Update File: `tests/test_discovery_publisher.py` (integration test made deterministic) \*\*\*
+
+> **Goal:** Use the stable hook across the entire test duration and wait briefly for the MQTT on\_connect callback to fire while the hook is in place.
+
+```diff
+*** Update File: tests/test_discovery_publisher.py
+@@
+-from unittest.mock import patch, MagicMock
+-import os, importlib
+-
+-def test_scanner_only_discovery_when_bridge_telemetry_enabled(self):
+-    os.environ["ENABLE_BRIDGE_TELEMETRY"] = "1"
+-    md = importlib.import_module("bb8_core.mqtt_dispatcher")
+-    stub = MagicMock(name="scanner_publish_discovery")
+-    # Patch the seam function so dispatcher MUST use our stub
+-    with patch("bb8_core.mqtt_dispatcher._get_scanner_publisher", return_value=stub):
+-        md.start_mqtt_dispatcher(controller=MagicMock())
+-        assert stub.called, "dispatcher: scanner publish_discovery was not called"
++from unittest.mock import MagicMock
++import os, importlib, time
++
++def test_scanner_only_discovery_when_bridge_telemetry_enabled(self):
++    os.environ["ENABLE_BRIDGE_TELEMETRY"] = "1"
++    md = importlib.import_module("bb8_core.mqtt_dispatcher")
++    stub = MagicMock(name="scanner_publish_discovery")
++    try:
++        # Use the module-level hook so the MQTT on_connect thread also sees it
++        md.SCANNER_PUBLISH_HOOK = stub
++        md.start_mqtt_dispatcher(controller=MagicMock())
++        # Wait briefly for the on_connect callback to run
++        for _ in range(40):  # up to ~2s total if sleep=0.05
++            if stub.called:
++                break
++            time.sleep(0.05)
++        assert stub.called, "dispatcher: scanner publish_discovery was not called"
++    finally:
++        md.SCANNER_PUBLISH_HOOK = None
+```
+
+### \*\*\* End Patch 5 \*\*\*
+
+---
+
+## RUN
+
+*No change from earlier run block for seam patches.*
+
+```bash
+python -m compileall -q . && echo READY
+pytest -q -rA -k "scanner_discovery_seam_direct or discovery_publisher" --maxfail=1
+pytest -q -rA
+```
+
+## ACCEPTANCE
+
+* Seam + integration tests green (already confirmed).
+* The following previously failing tests now pass after patches below:
+
+  * `tests/test_mqtt_discovery.py::test_idempotency`
+  * `tests/test_mqtt_discovery.py::test_gate_off`
+  * `tests/test_mqtt_smoke.py::test_discovery_and_dispatcher_smoke` (log compatibility)
+* `tests/test_facade.py::test_sleep_mapping` and `tests/test_smoke_controller_facade.py::test_import_and_construct` may require targeted wiring (see Patch 9 task for Copilot).
+
+---

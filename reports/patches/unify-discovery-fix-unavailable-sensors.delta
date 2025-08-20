@@ -1,0 +1,125 @@
+---
+```bash
+bash -lc 'set -euo pipefail; set -a; [ -f .env ] && . .env; set +a; : "${MQTT_HOST:?set}"; : "${MQTT_PORT:=1883}"; ts=$(date -u +%Y%m%d_%H%M%SZ); mkdir -p reports; mosquitto_sub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USERNAME" -P "$MQTT_PASSWORD" -v -t "homeassistant/#" -C 2000 > reports/ha_discovery_dump_$ts.txt; echo reports/ha_discovery_dump_$ts.txt'
+```
+
+---
+
+The discovery dump contains no Home Assistant config topics for BB-8 (bb8) with device blocks—only sensor topics like `homeassistant/sensor/bb8_rssi/config` and `homeassistant/binary_sensor/bb8_presence/config`, but these use device blocks with identifiers like `ble:ED:ED:87:D7:27:50`, `uuid:...`, and `mqtt:bb8-eded87d72750`.
+
+No stale or duplicate config topics for BB-8 were found, so no prune commands are needed.
+
+Here are the first 10 lines of the (would-be) `ha_discovery_bb8_table.md`:
+```
+| topic | component | object_id | device.identifiers | device.connections | device.name | sw_version | state_topic | availability_topic |
+|-------|-----------|-----------|--------------------|--------------------|-------------|------------|-------------|--------------------|
+| homeassistant/sensor/bb8_rssi/config | sensor | bb8_rssi_eded87d72750 | ['ble:ED:ED:87:D7:27:50', 'uuid:0000fe07-0000-1000-8000-00805f9b34fb', 'mqtt:bb8-eded87d72750'] | [['mac', 'ED:ED:87:D7:27:50'], ['dbus', '/org/bluez/hci1/dev_ED_ED_87_D7_27_50']] | BB-8 | addon:2025.8.12 | bb8/sensor/rssi | bb8/status |
+| homeassistant/binary_sensor/bb8_presence/config | binary_sensor | bb8_presence_eded87d72750 | ['ble:ED:ED:87:D7:27:50', 'uuid:0000fe07-0000-1000-8000-00805f9b34fb', 'mqtt:bb8-eded87d72750'] | [['mac', 'ED:ED:87:D7:27:50'], ['dbus', '/org/bluez/hci1/dev_ED_ED_87_D7_27_50']] | BB-8 | addon:2025.8.12 | bb8/sensor/presence | bb8/status |
+```
+Prune command count: 0
+
+No patching is needed unless you want to unify device identifiers to `["bb8", "mac:ED:ED:87:D7:27:50"]` everywhere.
+
+---
+
+The discovery is pointing Presence/RSSI at `bb8/sensor/*`, while our canonical policy is **flat**: `bb8/presence/state` and `bb8/rssi/state`. That mismatch explains the “Unavailable” sensors and the second device entry (identifiers also vary).
+
+## Copilot prompt — unify discovery & fix unavailable sensors
+
+> **Goal:** Make HA show a single “BB-8” device with working **Presence** and **RSSI** by:
+>
+> 1. unifying the *device* block and `sw_version`,
+> 2. correcting discovery `state_topic`s to the **flat** namespace,
+> 3. pruning the old discovery topics that used `bb8/sensor/*`,
+> 4. republishing discovery.
+>
+> **Apply exactly these edits:**
+>
+> ### A) `bb8_core/bb8_presence_scanner.py` — discovery payloads
+>
+> * Use this **device** block everywhere you publish HA discovery (presence + rssi):
+>
+>   ```python
+>   dev = {
+>       "identifiers": [f"bb8", f"mac:{mac_upper}"],            # mac_upper like ED:ED:87:D7:27:50
+>       "connections": [["mac", mac_upper]],
+>       "manufacturer": "Sphero",
+>       "model": "S33 BB84 LE",
+>       "name": "BB-8",
+>       "sw_version": f"addon:{read_version_or_default()}",
+>   }
+>   ```
+>
+>   Implement `read_version_or_default()` to read `addon/VERSION` (fallback `"dev"`).
+>
+> * **Presence** (binary\_sensor):
+>
+>   ```python
+>   config = {
+>     "name": "BB-8 Presence",
+>     "uniq_id": f"bb8_presence_{mac_nodots}",     # e.g. eded87d72750
+>     "stat_t": "bb8/presence/state",              # ✅ flat
+>     "pl_on": "online",
+>     "pl_off": "offline",
+>     "avty_t": "bb8/status",
+>     "dev_cla": "connectivity",
+>     "dev": dev,
+>   }
+>   topic = f"homeassistant/binary_sensor/bb8_presence/config"
+>   ```
+>
+> * **RSSI** (sensor):
+>
+>   ```python
+>   config = {
+>     "name": "BB-8 RSSI",
+>     "uniq_id": f"bb8_rssi_{mac_nodots}",
+>     "stat_t": "bb8/rssi/state",                  # ✅ flat
+>     "unit_of_meas": "dBm",
+>     "dev_cla": "signal_strength",
+>     "avty_t": "bb8/status",
+>     "dev": dev,
+>   }
+>   topic = f"homeassistant/sensor/bb8_rssi/config"
+>   ```
+>
+> * Ensure the **publishers** for presence and rssi actually emit to:
+>
+>   * `bb8/presence/state` payload: `"online"` / `"offline"` (retain **true**)
+>   * `bb8/rssi/state` payload: integer dBm (retain **true**)
+>
+> ### B) Ensure **one place** publishes these two discovery configs (scanner), and that the dispatcher/bridge do **not** duplicate them.
+>
+> ### C) Prune old discovery (you run)
+>
+> Create `tools/prune_bb8_discovery.sh` with:
+>
+> ```bash
+> #!/usr/bin/env bash
+> set -euo pipefail
+> : "${MQTT_HOST:?set}"; : "${MQTT_PORT:=1883}"
+> for t in \
+>   'homeassistant/sensor/bb8_rssi/config' \
+>   'homeassistant/binary_sensor/bb8_presence/config'
+> do mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -t "$t" -r -n || true; done
+> ```
+>
+> Make it executable: `chmod +x tools/prune_bb8_discovery.sh`
+>
+> ### D) Republish discovery (scanner path)
+>
+> * Restart the add-on **or** trigger the scanner’s discovery publish hook.
+>
+> ### E) Verification (you run)
+>
+> 1. `mosquitto_sub -h $MQTT_HOST -v -t 'homeassistant/+/bb8_+/config' -C 2`
+>
+>    * Expect two fresh configs with `stat_t` exactly `bb8/presence/state` and `bb8/rssi/state`, and `dev.sw_version` `addon:2025.08.20`.
+> 2. In HA, refresh Entities→ search “BB-8”:
+>
+>    * Only **one** device remains.
+>    * **Presence** and **RSSI** show values (not “Unavailable”).
+>
+> **Return to me:** the two config lines printed by step (E1).
+
+---

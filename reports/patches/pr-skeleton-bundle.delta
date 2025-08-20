@@ -1,0 +1,355 @@
+# final release order (merge sequence)
+
+1. **pr-20250812-tight_evidence.delta (amended)** → fixes evidence pairing, gates power ACK.
+2. **pr_2025-08-12-a.delta (with nudges)** → discovery on connect + add `connected`/`rssi` + complete cmd set.
+3. **NEW pr-20250812-ble_link.delta** → stable verified BLE link (scan→connect→probe), reconnect, observability, command gating.
+4. cut release once STP4 evidence + schema both PASS.
+
+---
+
+# manifest of changes (files to touch)
+
+```
+beep_boop_bb8/
+  bb8_core/
+    bridge_controller.py        (ACK gating; BLE link integration points)
+    mqtt_dispatcher.py          (publish discovery on connect)
+    discovery_publish.py        (ensure entities for connected/rssi)
+    telemetry.py                (noop-safe callbacks; optional)
+    ble_link.py                 (NEW: stable BLE link loop)
+  ops/evidence/
+    collect_stp4.py             (ordering/prestate fix; source tagging)
+  reports/
+    (generated artifacts only)
+artifacts.yaml                  (handover path already pinned)
+```
+
+---
+
+# Δ1 — pr-20250812-tight_evidence (amended)
+
+## A) Evidence collector: enforce ordering + source tag
+
+```diff
+*** Begin Patch
+*** Update File: ops/evidence/collect_stp4.py
+@@ class RoundTripCollector:
+-        echo = self._wait_for_state(entity, expect, deadline)
+-        passed = echo is not None
+-        note = "" if passed else "timeout"
++        echo = self._wait_for_state(entity, expect, deadline)
++        passed, note = False, "timeout"
++        if echo:
++            if echo["state_ts"] >= cmd["command_ts"]:
++                passed, note = True, ""
++            else:
++                passed, note = False, "prestate"
++        cmd["source"] = "facade"  # command always originates at facade
++        if echo: echo.setdefault("source", "device")  # default; facade can override
+@@ def _wait_for_state(...):
+-        # existing matching by entity & expect
++        # Only accept state with ts >= command_ts (reject stale/prestate)
++        # TODO(copilot): implement strict topic/entity matching here
+*** End Patch
+```
+
+## B) Bridge: gate power ACK behind `connected==true`
+
+```diff
+*** Begin Patch
+*** Update File: bb8_core/bridge_controller.py
+@@
+-    def _on_power_set(_c, _u, msg):
++    _connected = False  # updated by BLELink callbacks (see Δ3)
++    def _on_power_set(_c, _u, msg):
+         try:
+             payload = msg.payload.decode("utf-8", "ignore").strip().upper()
+             if payload not in ("ON","OFF"): return
+-            client.publish(f"{mqtt_topic}/power/state", payload, qos=1, retain=False)
++            if _connected:
++                client.publish(f"{mqtt_topic}/power/state", payload, qos=1, retain=False)
++            else:
++                client.publish(f"{mqtt_topic}/event/rejected", '{"cmd":"power","reason":"offline"}', qos=1, retain=False)
+             logger.info({"event":"power_ack", "value":payload})
+         except Exception as e:
+             logger.warning({"event":"power_ack_error", "error":repr(e)})
+*** End Patch
+```
+
+---
+
+# Δ2 — pr_2025-08-12-a (nudges)
+
+## A) Discovery published on connect + add `connected` & `rssi`
+
+```diff
+*** Begin Patch
+*** Update File: bb8_core/mqtt_dispatcher.py
+@@ def _on_connect(c, userdata, flags, rc, properties=None):
+     c.publish(f"{base}/status", "online", qos=1, retain=True)
++    from bb8_core.discovery_publish import publish_discovery
++    dev_id = (getattr(controller, "target_mac", None) or "bb8").replace(":", "").lower()
++    name   = os.environ.get("BB8_NAME", "BB-8")
++    publish_discovery(c, dev_id, name, retain=False)  # discovery usually non-retained
+*** End Patch
+```
+
+## B) Discovery payloads — include `binary_sensor.connected` & `sensor.rssi`
+
+*Minimal function signature to extend; Copilot fills details.*
+
+```diff
+*** Begin Patch
+*** Update File: bb8_core/discovery_publish.py
+@@ def publish_discovery(client, dev_id, name, retain=False):
++    # Connected (binary_sensor)
++    client.publish(
++        f"homeassistant/binary_sensor/{dev_id}/connected/config",
++        json.dumps({
++            "name": f"{name} Connected",
++            "unique_id": f"{dev_id}_connected",
++            "state_topic": f"{base}/connected",
++            "device": {"identifiers":[dev_id], "manufacturer":"Sphero", "model":"BB-8", "name": name}
++        }), qos=1, retain=retain
++    )
++    # RSSI (sensor)
++    client.publish(
++        f"homeassistant/sensor/{dev_id}/rssi/config",
++        json.dumps({
++            "name": f"{name} RSSI",
++            "unique_id": f"{dev_id}_rssi",
++            "state_topic": f"{base}/rssi",
++            "unit_of_measurement": "dBm",
++            "device_class": "signal_strength",
++            "device": {"identifiers":[dev_id], "manufacturer":"Sphero", "model":"BB-8", "name": name}
++        }), qos=1, retain=retain
++    )
+*** End Patch
+```
+
+## C) Command subscriptions complete (stop/power/led/drive/sleep)
+
+*If not already in place from your previous delta.*
+
+```diff
+*** Begin Patch
+*** Update File: bb8_core/bridge_controller.py
+@@
+     client.message_callback_add(f"{mqtt_topic}/power/set", _on_power_set)
++    # TODO(copilot): add handlers for stop, led, drive, sleep similarly (facade-only publisher)
+     client.subscribe([
+         (f"{mqtt_topic}/power/set", 1),
++        (f"{mqtt_topic}/stop/press", 1),
++        (f"{mqtt_topic}/cmd/led/set", 1),
++        (f"{mqtt_topic}/cmd/drive", 1),
++        (f"{mqtt_topic}/cmd/sleep", 1),
+     ])
+*** End Patch
+```
+
+---
+
+# Δ3 — NEW pr-20250812-ble_link (stable verified device link)
+
+## A) New module: `bb8_core/ble_link.py`
+
+*Short, production-ready skeleton with TODOs for Copilot.*
+
+```diff
+*** Begin Patch
+*** Add File: bb8_core/ble_link.py
++from __future__ import annotations
++import asyncio, contextlib, time, json
++from typing import Callable, Optional
++from bleak import BleakClient, BleakScanner
++
++class BLELink:
++    """
++    Stable, verified BLE link to BB-8 by MAC.
++    Responsibilities:
++      - scan → connect → probe (verify) by MAC
++      - reconnect on drop with capped backoff
++      - expose callbacks: on_connected(bool), on_rssi(int)
++    """
++    def __init__(self, mac: str,
++                 on_connected: Callable[[bool], None],
++                 on_rssi: Callable[[Optional[int]], None],
++                 loop: Optional[asyncio.AbstractEventLoop] = None):
++        self.mac = mac
++        self.on_connected = on_connected
++        self.on_rssi = on_rssi
++        self._client: Optional[BleakClient] = None
++        self._task: Optional[asyncio.Task] = None
++        self._loop = loop or asyncio.get_event_loop()
++        self._stop = False
++
++    async def start(self):
++        self._stop = False
++        if self._task and not self._task.done(): return
++        self._task = self._loop.create_task(self._runner())
++
++    async def stop(self):
++        self._stop = True
++        if self._task: await asyncio.wait([self._task], timeout=2)
++        await self._disconnect()
++
++    async def _runner(self):
++        backoff = [1,2,5,5,5]
++        i = 0
++        while not self._stop:
++            try:
++                dev = await BleakScanner.find_device_by_address(self.mac, timeout=5.0)
++                if dev is None:
++                    self.on_rssi(None)
++                    await asyncio.sleep(backoff[min(i, len(backoff)-1)]); i += 1
++                    continue
++                self.on_rssi(getattr(dev, "rssi", None))
++                async with BleakClient(self.mac) as client:
++                    self._client = client
++                    self.on_connected(True)
++                    i = 0
++                    # Minimal verification probe (TODO: choose concrete char for BB-8)
++                    with contextlib.suppress(Exception):
++                        await asyncio.wait_for(client.is_connected(), timeout=2)
++                    # Periodic RSSI refresh via rescans (Bleak lacks get_rssi)
++                    while await client.is_connected() and not self._stop:
++                        dev2 = await BleakScanner.find_device_by_address(self.mac, timeout=3.0)
++                        self.on_rssi(getattr(dev2, "rssi", None) if dev2 else None)
++                        await asyncio.sleep(5)
++            except Exception:
++                pass
++            finally:
++                await self._disconnect()
++                self.on_connected(False)
++                await asyncio.sleep(backoff[min(i, len(backoff)-1)]); i += 1
++
++    async def _disconnect(self):
++        if self._client:
++            with contextlib.suppress(Exception):
++                await self._client.disconnect()
++            self._client = None
+*** End Patch
+```
+
+## B) Integrate link into `bridge_controller.py`
+
+* publish observability topics
+* gate device actions (set `_connected`)
+* wire heartbeat
+
+```diff
+*** Begin Patch
+*** Update File: bb8_core/bridge_controller.py
+@@
+-from .telemetry import TelemetryLoop
++from .telemetry import TelemetryLoop
++from .ble_link import BLELink
+@@
+-    _connected = False  # updated by BLELink callbacks (see Δ3)
++    _connected = False  # will be updated by BLELink
++    def _emit_connected(val: bool):
++        nonlocal _connected
++        _connected = val
++        client.publish(f"{mqtt_topic}/connected", "online" if val else "offline", qos=1, retain=True)
++    def _emit_rssi(rssi):
++        if rssi is not None:
++            client.publish(f"{mqtt_topic}/rssi", str(int(rssi)), qos=0, retain=False)
+@@
++    # Start BLE link (stable, verified)
++    bb8_mac = os.environ.get("BB8_MAC") or getattr(bridge, "target_mac", None)
++    if not bb8_mac:
++        logger.warning({"event":"ble_link_mac_missing"})
++    else:
++        try:
++            loop = asyncio.get_event_loop()
++            ble = BLELink(bb8_mac, on_connected=_emit_connected, on_rssi=_emit_rssi, loop=loop)
++            loop.create_task(ble.start())
++            logger.info({"event":"ble_link_started", "mac": bb8_mac})
++        except Exception as e:
++            logger.warning({"event":"ble_link_error", "error":repr(e)})
+@@
+     # Start telemetry (presence + RSSI)
+     try:
+-        TelemetryLoop(bridge, interval_s=telemetry_interval).start()
++        TelemetryLoop(bridge, interval_s=telemetry_interval).start()  # safe to keep; complements BLE RSSI
+         logger.info({"event":"telemetry_loop_started", "interval_s": telemetry_interval})
+     except Exception as e:
+         logger.warning({"event":"telemetry_loop_error", "error":repr(e)})
+*** End Patch
+```
+
+## C) Command gating (device actions only when connected)
+
+*Add a simple guard where actual device calls happen (examples).*
+
+```diff
+*** Begin Patch
+*** Update File: bb8_core/bridge_controller.py
+@@ def _on_drive(...):
+-    self.core.roll(speed, heading, dur_ms/1000.0)
++    if not _connected:
++        client.publish(f"{mqtt_topic}/event/rejected", '{"cmd":"drive","reason":"offline"}', qos=1, retain=False)
++        return
++    self.core.roll(speed, heading, dur_ms/1000.0)
+*** End Patch
+```
+
+---
+
+# evidence & schema acceptance (what Copilot must ensure)
+
+* **Collector:** no PASS when `state_ts < command_ts`; mark `prestate`.
+* **State tagging:** allow `"source":"facade"` vs `"device"` when publishing state (device-level echoes preferred for `led`/`drive`).
+* **Schema:** discovery includes `binary_sensor.connected` and `sensor.rssi`; `unique_id`, `device.identifiers`, topics correct; discovery messages non-retained.
+* **Observability topics:**
+
+  * `bb8/<dev_id>/connected` → `online|offline` (retain=true)
+  * `bb8/<dev_id>/rssi` → integer dBm (retain=false)
+  * `bb8/<dev_id>/telemetry/heartbeat` (optional)
+* **Timing:** connect ≤10s; reconnect ≤5s (validate by forced disconnect); STP4 latency ≤2000ms.
+
+---
+
+# minimal discovery examples (json payload skeletons)
+
+```json
+// binary_sensor.connected
+{"name":"BB-8 Connected","unique_id":"<dev>_connected","state_topic":"bb8/<dev>/connected",
+ "payload_on":"online","payload_off":"offline",
+ "device":{"identifiers":["<dev>"],"manufacturer":"Sphero","model":"BB-8","name":"BB-8"}}
+```
+
+```json
+// sensor.rssi
+{"name":"BB-8 RSSI","unique_id":"<dev>_rssi","state_topic":"bb8/<dev>/rssi",
+ "unit_of_measurement":"dBm","device_class":"signal_strength",
+ "device":{"identifiers":["<dev>"],"manufacturer":"Sphero","model":"BB-8","name":"BB-8"}}
+```
+
+---
+
+# ops & commands (for your runbook)
+
+```bash
+# re-run evidence after merge
+MQTT_HOST=<ip-or-host> MQTT_PORT=1883 MQTT_USER=mqtt_bb8 MQTT_PASSWORD=mqtt_bb8 MQTT_BASE=bb8
+  make evidence-stp4
+
+# quick broker reachability
+nc -vz <host> 1883
+```
+
+**Governance gate:** post back `evidence_manifest.json` and first 20 lines of `ha_mqtt_trace_snapshot.jsonl` (redacted). I’ll stamp PASS/FAIL.
+
+---
+
+# copilot handoff note (paste as-is)
+
+* Apply Δ1, Δ2, Δ3 diffs in order, filling TODOs with concrete code.
+* Keep logs ≤150 lines and redact secrets.
+* Discovery messages non-retained; status/LWT retained.
+* Tag state echoes with `"source"` when feasible.
+* Ensure unit/smoke tests for: discovery schema; collector ordering; BLE reconnect.
+* Produce a single **final delta bundle** with a concise RELEASE_NOTES.md and updated `artifacts.yaml` (handover path already present).
+
+---

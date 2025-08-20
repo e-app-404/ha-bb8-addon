@@ -164,10 +164,12 @@ def main() -> int:
     rows, ok = verify()
     print("Discovery Verification Results:")
     print(
-        "Topic                      | Retained | stat_t              | avty_t      | sw_version      | identifiers"
+        "Topic                      | Retained | stat_t              | avty_t      | "
+        "sw_version      | identifiers"
     )
     print(
-        "---------------------------|----------|---------------------|-------------|----------------|-------------------"
+        "---------------------------|----------|---------------------|-------------|-"
+        "---------------|-------------------"
     )
     for r in rows:
         print(

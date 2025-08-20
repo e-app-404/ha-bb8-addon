@@ -1,0 +1,382 @@
+done
+
+# 1) MQTT handlers (attach_mqtt) — paste into `bb8_core/ble_bridge.py` (or `controller.py`)
+
+> If your dispatcher calls `controller.attach_mqtt(...)` and you pass the **BLEBridge** as `controller`, add this method to the `BLEBridge` class.
+
+```python
+# ---- paste inside BLEBridge class (public API) ----
+def attach_mqtt(self, client, base_topic: str, qos: int = 1, retain: bool = True) -> None:
+    """
+    Wire MQTT subscriptions for commands and set up state publishers.
+    Expected topics (under base_topic):
+      - power:    {base}/power/set   (payload: "ON"|"OFF")    -> {base}/power/state
+      - stop:     {base}/stop/press  (payload: any)           -> {base}/stop/state ("pressed" then "idle")
+      - led:      {base}/led/set     (json: {"r":..,"g":..,"b":..} or {"hex":"#rrggbb"} or "OFF")
+                  -> {base}/led/state (json {"r":..,"g":..,"b":..} or {"state":"OFF"})
+    Telemetry publishers (you can call these from your periodic loop):
+      - presence: {base}/presence/state  ("ON"|"OFF")
+      - rssi:     {base}/rssi/state      (int dBm)
+    """
+    from .logging_setup import logger
+    import json
+    import threading
+    import time
+
+    self._mqtt = {"client": client, "base": base_topic, "qos": qos, "retain": retain}
+
+    def _pub(topic_suffix: str, payload, r: bool = retain):
+        t = f"{base_topic}/{topic_suffix}"
+        if isinstance(payload, (dict, list)):
+            payload = json.dumps(payload, separators=(",", ":"))
+        client.publish(t, payload=payload, qos=qos, retain=r)
+
+    # --- Command handlers ---
+    def _handle_power(_client, _userdata, msg):
+        try:
+            val = (msg.payload or b"").decode("utf-8").strip().upper()
+            if val == "ON":
+                # Wake/connect
+                if hasattr(self, "connect") and callable(self.connect):
+                    self.connect()
+                _pub("power/state", "ON")
+            elif val == "OFF":
+                # Sleep/disconnect
+                if hasattr(self, "sleep") and callable(self.sleep):
+                    self.sleep()
+                _pub("power/state", "OFF")
+            else:
+                logger.warning({"event": "power_invalid_payload", "payload": val})
+        except Exception as e:
+            logger.error({"event": "power_handler_error", "error": repr(e)})
+
+    def _parse_color(raw: str):
+        raw = raw.strip()
+        if raw.upper() == "OFF":
+            return None
+        try:
+            obj = json.loads(raw)
+            if isinstance(obj, dict):
+                if "hex" in obj and isinstance(obj["hex"], str):
+                    h = obj["hex"].lstrip("#")
+                    return {"r": int(h[0:2], 16), "g": int(h[2:4], 16), "b": int(h[4:6], 16)}
+                r = int(obj.get("r", 0)); g = int(obj.get("g", 0)); b = int(obj.get("b", 0))
+                return {"r": max(0, min(255, r)), "g": max(0, min(255, g)), "b": max(0, min(255, b))}
+        except Exception:
+            pass
+        return None
+
+    def _handle_led(_client, _userdata, msg):
+        try:
+            raw = (msg.payload or b"").decode("utf-8")
+            rgb = _parse_color(raw)
+            if rgb is None:
+                # OFF
+                if hasattr(self, "set_led_off"):
+                    self.set_led_off()
+                _pub("led/state", {"state": "OFF"})
+            else:
+                if hasattr(self, "set_led_rgb"):
+                    self.set_led_rgb(rgb["r"], rgb["g"], rgb["b"])
+                _pub("led/state", {"r": rgb["r"], "g": rgb["g"], "b": rgb["b"]})
+        except Exception as e:
+            logger.error({"event": "led_handler_error", "error": repr(e)})
+
+    def _handle_stop(_client, _userdata, _msg):
+        try:
+            if hasattr(self, "stop"):
+                self.stop()
+            _pub("stop/state", "pressed", r=False)
+            # auto-reset the momentary state to "idle" after a beat
+            def _reset():
+                time.sleep(0.5)
+                _pub("stop/state", "idle", r=False)
+            threading.Thread(target=_reset, daemon=True).start()
+        except Exception as e:
+            logger.error({"event": "stop_handler_error", "error": repr(e)})
+
+    # --- Subscriptions ---
+    client.message_callback_add(f"{base_topic}/power/set", _handle_power)
+    client.subscribe(f"{base_topic}/power/set", qos=qos)
+
+    client.message_callback_add(f"{base_topic}/led/set", _handle_led)
+    client.subscribe(f"{base_topic}/led/set", qos=qos)
+
+    client.message_callback_add(f"{base_topic}/stop/press", _handle_stop)
+    client.subscribe(f"{base_topic}/stop/press", qos=qos)
+
+    # --- Telemetry helpers (call from your polling loop) ---
+    def publish_presence(online: bool):
+        _pub("presence/state", "ON" if online else "OFF")
+
+    def publish_rssi(dbm: int):
+        _pub("rssi/state", str(int(dbm)))
+
+    # expose helpers
+    self.publish_presence = publish_presence  # type: ignore[attr-defined]
+    self.publish_rssi = publish_rssi          # type: ignore[attr-defined]
+```
+
+> minimal BLEBridge API expected by these handlers:
+>
+> * `connect()`, `sleep()`, `stop()`, `set_led_rgb(r,g,b)`, `set_led_off()`.
+>   If your names differ, just adapt the calls.
+
+---
+
+# 2) Discovery publisher — ready-to-paste (create `bb8_core/discovery_publish.py`)
+
+```python
+from __future__ import annotations
+from typing import Dict, Any
+import json
+
+from .logging_setup import logger
+
+def publish_discovery(
+    client,
+    base_topic: str,
+    availability_topic: str = "bb8/status",
+    device: Dict[str, Any] | None = None,
+    qos: int = 1,
+    retain: bool = True,
+) -> Dict[str, Any]:
+    """
+    Publishes Home Assistant MQTT Discovery configs for:
+      - binary_sensor.bb8_presence
+      - sensor.bb8_rssi
+      - switch.bb8_power
+      - button.bb8_stop
+      - light.bb8_led (JSON schema, RGB)
+    Returns dict {config_topic: payload_dict} and publishes each with retain=True.
+    """
+    device = device or {
+        "identifiers": [f"{base_topic}-device"],
+        "manufacturer": "Sphero",
+        "model": "BB-8",
+        "name": "BB-8",
+    }
+
+    # Helper to publish retained config
+    def _cfg(topic: str, payload: Dict[str, Any]):
+        s = json.dumps(payload, separators=(",", ":"))
+        client.publish(topic, payload=s, qos=qos, retain=retain)
+
+    root = "homeassistant"
+    ent: Dict[str, Any] = {}
+
+    # Presence (binary_sensor)
+    t = f"{root}/binary_sensor/{base_topic}_presence/config"
+    p = {
+        "name": "BB-8 Presence",
+        "unique_id": f"{base_topic}_presence",
+        "state_topic": f"{base_topic}/presence/state",
+        "payload_on": "ON",
+        "payload_off": "OFF",
+        "availability_topic": availability_topic,
+        "device_class": "presence",
+        "device": device,
+    }
+    ent[t] = p
+    _cfg(t, p)
+
+    # RSSI (sensor)
+    t = f"{root}/sensor/{base_topic}_rssi/config"
+    p = {
+        "name": "BB-8 RSSI",
+        "unique_id": f"{base_topic}_rssi",
+        "state_topic": f"{base_topic}/rssi/state",
+        "unit_of_measurement": "dBm",
+        "device_class": "signal_strength",
+        "state_class": "measurement",
+        "availability_topic": availability_topic,
+        "device": device,
+    }
+    ent[t] = p
+    _cfg(t, p)
+
+    # Power (switch)
+    t = f"{root}/switch/{base_topic}_power/config"
+    p = {
+        "name": "BB-8 Power",
+        "unique_id": f"{base_topic}_power",
+        "command_topic": f"{base_topic}/power/set",
+        "state_topic": f"{base_topic}/power/state",
+        "payload_on": "ON",
+        "payload_off": "OFF",
+        "availability_topic": availability_topic,
+        "device": device,
+    }
+    ent[t] = p
+    _cfg(t, p)
+
+    # Stop (button)
+    t = f"{root}/button/{base_topic}_stop/config"
+    p = {
+        "name": "BB-8 Stop",
+        "unique_id": f"{base_topic}_stop",
+        "command_topic": f"{base_topic}/stop/press",
+        "payload_press": "PRESS",
+        "availability_topic": availability_topic,
+        "device": device,
+        "entity_category": "config",
+        "icon": "mdi:stop-circle",
+    }
+    ent[t] = p
+    _cfg(t, p)
+
+    # LED (light) — JSON schema with RGB
+    t = f"{root}/light/{base_topic}_led/config"
+    p = {
+        "name": "BB-8 LED",
+        "unique_id": f"{base_topic}_led",
+        "schema": "json",
+        "command_topic": f"{base_topic}/led/set",
+        "state_topic": f"{base_topic}/led/state",
+        "supported_color_modes": ["rgb"],
+        "optimistic": False,
+        "availability_topic": availability_topic,
+        "device": device,
+    }
+    ent[t] = p
+    _cfg(t, p)
+
+    logger.info({"event": "discovery_published", "count": len(ent)})
+    return ent
+```
+
+> call it after MQTT connect (in your `start_mqtt_dispatcher` on_connect or immediately after `controller.attach_mqtt`). it’s safe to re-publish on reconnect; configs are retained.
+
+---
+
+# 3) Hook discovery after connect — tiny addition (in `bb8_core/mqtt_dispatcher.py`)
+
+Inside your `on_connect`, after `controller.attach_mqtt(...)`:
+
+```python
+from .discovery_publish import publish_discovery
+publish_discovery(c, mqtt_topic, status_topic)
+```
+
+*(Already imported? then just call. Otherwise add the import at top.)*
+
+---
+
+# 4) Telemetry loop (optional scaffold) — create `bb8_core/telemetry.py`
+
+```python
+from __future__ import annotations
+import threading
+import time
+from .logging_setup import logger
+
+class TelemetryLoop:
+    def __init__(self, bridge, interval_s: int = 20):
+        self.bridge = bridge
+        self.interval_s = interval_s
+        self._stop = threading.Event()
+        self._t = None
+
+    def start(self):
+        if self._t and self._t.is_alive():
+            return
+        self._stop.clear()
+        self._t = threading.Thread(target=self._run, daemon=True)
+        self._t.start()
+        logger.info({"event": "telemetry_start", "interval_s": self.interval_s})
+
+    def stop(self):
+        self._stop.set()
+        if self._t:
+            self._t.join(timeout=2)
+        logger.info({"event": "telemetry_stop"})
+
+    def _run(self):
+        while not self._stop.is_set():
+            try:
+                # presence: consider “connected” as online; adapt if you have a richer signal
+                online = True if getattr(self.bridge, "is_connected", lambda: True)() else False
+                if hasattr(self.bridge, "publish_presence"):
+                    self.bridge.publish_presence(online)
+
+                # rssi: adapt to your gateway/bridge API
+                get_rssi = getattr(self.bridge, "get_rssi", None)
+                if callable(get_rssi):
+                    dbm = get_rssi()
+                    if hasattr(self.bridge, "publish_rssi"):
+                        self.bridge.publish_rssi(int(dbm))
+            except Exception as e:
+                logger.warning({"event": "telemetry_error", "error": repr(e)})
+            finally:
+                time.sleep(self.interval_s)
+```
+
+> Start/stop this loop in your controller after BLE connect / on shutdown.
+
+---
+
+# 5) Scaffold: `reports/entity_set.json`
+
+```json
+{
+  "version": "2025.08.11-hotfix.1",
+  "base_topic": "bb8",
+  "availability_topic": "bb8/status",
+  "entities": [
+    {
+      "component": "binary_sensor",
+      "object_id": "bb8_presence",
+      "name": "BB-8 Presence",
+      "state_topic": "bb8/presence/state",
+      "payload_on": "ON",
+      "payload_off": "OFF"
+    },
+    {
+      "component": "sensor",
+      "object_id": "bb8_rssi",
+      "name": "BB-8 RSSI",
+      "state_topic": "bb8/rssi/state",
+      "unit_of_measurement": "dBm",
+      "device_class": "signal_strength",
+      "state_class": "measurement"
+    },
+    {
+      "component": "switch",
+      "object_id": "bb8_power",
+      "name": "BB-8 Power",
+      "command_topic": "bb8/power/set",
+      "state_topic": "bb8/power/state",
+      "payload_on": "ON",
+      "payload_off": "OFF"
+    },
+    {
+      "component": "button",
+      "object_id": "bb8_stop",
+      "name": "BB-8 Stop",
+      "command_topic": "bb8/stop/press",
+      "payload_press": "PRESS"
+    },
+    {
+      "component": "light",
+      "object_id": "bb8_led",
+      "name": "BB-8 LED",
+      "schema": "json",
+      "command_topic": "bb8/led/set",
+      "state_topic": "bb8/led/state",
+      "supported_color_modes": ["rgb"],
+      "optimistic": false
+    }
+  ]
+}
+```
+
+---
+
+## quick usage notes
+
+* After adding `attach_mqtt`, you should see state topics appear as you interact:
+
+  * `bb8/power/state` → `ON`/`OFF`
+  * `bb8/stop/state` → `pressed` then `idle`
+  * `bb8/led/state` → `{"r":..,"g":..,"b":..}` or `{"state":"OFF"}`
+* Discovery will create HA entities automatically when the add-on starts. If they’re not appearing, verify broker, retained configs, and that `homeassistant:` is enabled in HA.

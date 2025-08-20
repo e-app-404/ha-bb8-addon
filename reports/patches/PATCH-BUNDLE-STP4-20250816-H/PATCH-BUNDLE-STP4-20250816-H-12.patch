@@ -1,0 +1,128 @@
+PATCH 12 — Discovery Idempotency + Gate-Off + Log Compatibility
+
+Scope: bb8_core/mqtt_dispatcher.py
+
+Goals:
+
+- Prevent duplicate publishes across repeated calls to publish_bb8_discovery(publish_fn) (idempotency per-entity UID).
+- Respect gate in direct publisher path (when tests call publish_bb8_discovery without the dispatcher).
+- Emit a backward-compatible log line discovery: published for smoke tests.
+
+Notes for Copilot: keep public signatures unchanged; touch only the inner helper and per-entity call sites.
+
+
+```
+*** Update File: bb8_core/mqtt_dispatcher.py
+@@
+-from typing import Callable, Optional
++from typing import Callable, Optional, Set
+@@
+ log = logging.getLogger(__name__)
+@@
+ SCANNER_PUBLISH_HOOK: Optional[Callable[..., None]] = None
++
++# Idempotency set for direct discovery publisher (per-entity unique_id)
++_DISCOVERY_PUBLISHED_UIDS: Set[str] = set()
+@@
+-def publish_bb8_discovery(publish_fn) -> None:
+-    ha_prefix = CONFIG.get("ha_discovery_topic", "homeassistant")
++def publish_bb8_discovery(publish_fn) -> None:
++    # Respect gate even when publisher is called directly from tests
++    if not CONFIG.get("dispatcher_discovery_enabled", False):
++        # Match existing test expectations
++        log.info("discovery_enabled=False source=default")
++        log.info("discovery_skip reason=gate_disabled entity=ALL")
++        return
++
++    ha_prefix = CONFIG.get("ha_discovery_topic", "homeassistant")
+@@
+-    def cfg(topic, payload):
+-        publish_fn(topic, json.dumps(payload), True)
+-        log.info("Published discovery: %s", topic)
++    def cfg(uid_key: str, topic: str, payload: dict) -> None:
++        # skip if already published (idempotent per unique_id)
++        if uid_key in _DISCOVERY_PUBLISHED_UIDS:
++            log.info("discovery_skip reason=already_published uid=%s", uid_key)
++            return
++        publish_fn(topic, json.dumps(payload), True)
++        _DISCOVERY_PUBLISHED_UIDS.add(uid_key)
++        # maintain legacy message + add smoke-compatible line
++        log.info("Published discovery: %s", topic)
++        log.info("discovery: published topic=%s", topic)
+@@
+-    cfg(
+-        f"{ha_prefix}/binary_sensor/{uid['presence']}/config",
++    cfg(
++        uid["presence"],
++        f"{ha_prefix}/binary_sensor/{uid['presence']}/config",
+         {
+@@
+-    cfg(
+-        f"{ha_prefix}/sensor/{uid['rssi']}/config",
++    cfg(
++        uid["rssi"],
++        f"{ha_prefix}/sensor/{uid['rssi']}/config",
+         {
+@@
+-    cfg(
+-        f"{ha_prefix}/switch/{uid['power']}/config",
++    cfg(
++        uid["power"],
++        f"{ha_prefix}/switch/{uid['power']}/config",
+         {
+@@
+-    cfg(
+-        f"{ha_prefix}/number/{uid['heading']}/config",
++    cfg(
++        uid["heading"],
++        f"{ha_prefix}/number/{uid['heading']}/config",
+         {
+@@
+-    cfg(
+-        f"{ha_prefix}/number/{uid['speed']}/config",
++    cfg(
++        uid["speed"],
++        f"{ha_prefix}/number/{uid['speed']}/config",
+         {
+@@
+-    cfg(
+-        f"{ha_prefix}/button/{uid['drive']}/config",
++    cfg(
++        uid["drive"],
++        f"{ha_prefix}/button/{uid['drive']}/config",
+         {
+@@
+-    cfg(
+-        f"{ha_prefix}/button/{uid['sleep']}/config",
++    cfg(
++        uid["sleep"],
++        f"{ha_prefix}/button/{uid['sleep']}/config",
+         {
+@@
+-    cfg(
+-        f"{ha_prefix}/light/{uid['led']}/config",
++    cfg(
++        uid["led"],
++        f"{ha_prefix}/light/{uid['led']}/config",
+         {
+```
+
+
+Run block (focused for this patch):
+
+```
+python -m compileall -q . && echo READY
+pytest -q -rA -k "idempotency or gate_off or discovery_and_dispatcher_smoke" --maxfail=1
+```
+
+Acceptance:
+
+- tests/test_mqtt_discovery.py::test_idempotency — PASS (second call produces 0 new publishes).
+- tests/test_mqtt_discovery.py::test_gate_off — PASS (0 publishes when disabled).
+- tests/test_mqtt_smoke.py::test_discovery_and_dispatcher_smoke — PASS (finds discovery: published).
+
+Style note:
+
+After confirming test pass, run black -q . to resolve the formatter warnings reported in QA.
+
+

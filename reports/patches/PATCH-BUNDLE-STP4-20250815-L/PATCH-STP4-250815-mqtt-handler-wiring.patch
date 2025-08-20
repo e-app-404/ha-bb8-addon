@@ -1,0 +1,108 @@
+# Patch ID: PATCH-STP4-250815-mqtt-handler-wiring
+diff --git a/bb8_core/bridge_controller.py b/bb8_core/bridge_controller.py
+index 0b77a22..67f1d3f 100644
+--- a/bb8_core/bridge_controller.py
++++ b/bb8_core/bridge_controller.py
+@@ -1,16 +1,20 @@
+ from __future__ import annotations
+
+ import asyncio
+ import json
+ import threading
+-from typing import Any, Optional
++from typing import Any, Optional, Callable
+ import logging
+-from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
++from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+ from . import ble_link  # first-party
+
+ log = logging.getLogger(__name__)
+
++# NOTE: An MQTT client named `client` must be set (injected) by the app bootstrap.
++# If your integration uses a different symbol, adjust the references below.
++client = None  # type: ignore[var-annotated]
++
+ _ble_loop: Optional[asyncio.AbstractEventLoop] = None
+ _ble_inited: bool = False
+
+@@
+ def on_power_set(payload: Any) -> None:
+     publish_device_echo(client, STATE_TOPICS["power"], payload)
+     log.info("echo_pub topic=%s retain=false qos=1 source=device",
+              STATE_TOPICS["power"])
+@@
+ def on_led_set(r: int, g: int, b: int) -> None:
+     payload = json.dumps({"r": r, "g": g, "b": b})
+-    # Command is on /led/set; state is on /led/state
+-    client.publish(CMD_TOPICS["led"], payload=payload, qos=1, retain=False)
++    # Command is on /led/set; state is on /led/state
++    client.publish(CMD_TOPICS["led"][0], payload=payload, qos=1, retain=False)
+     client.publish(STATE_TOPICS["led"], payload=payload, qos=1, retain=False)
+     log.info("echo_pub topic=%s retain=false qos=1 payload=%s",
+              STATE_TOPICS["led"], payload)
+@@
+ def shutdown_ble() -> None:
+     """Called on process termination to avoid pending tasks."""
+     ble_link.stop()
+
++# ---- MQTT command wiring -----------------------------------------------------
++def _decode_utf8(payload: bytes) -> str:
++    try:
++        return payload.decode("utf-8")
++    except Exception:
++        return ""
++
++
++def attach_mqtt_handlers(mqtt_client) -> None:
++    """
++    Subscribe to command topics and dispatch to echo handlers.
++    Supports both /set and /press variants where applicable.
++    """
++    global client
++    client = mqtt_client
++
++    # (topic, callback) pairs
++    topic_map: list[tuple[str, Callable[[str], None]]] = []
++
++    for t in CMD_TOPICS["power"]:
++        topic_map.append((t, lambda s: on_power_set(s)))
++    for t in CMD_TOPICS["stop"]:
++        topic_map.append((t, lambda s: on_stop()))
++    for t in CMD_TOPICS["sleep"]:
++        topic_map.append((t, lambda s: on_sleep()))
++    for t in CMD_TOPICS["drive"]:
++        topic_map.append((t, lambda s: on_drive()))
++    for t in CMD_TOPICS["heading"]:
++        topic_map.append((t, lambda s: on_heading(float(s) if s else 0.0)))
++    for t in CMD_TOPICS["speed"]:
++        topic_map.append((t, lambda s: on_speed(float(s) if s else 0.0)))
++
++    # LED expects JSON {"r","g","b"}
++    for t in CMD_TOPICS["led"]:
++        topic_map.append(
++            (
++                t,
++                lambda s: (
++                    (lambda d: on_led_set(int(d.get("r", 0)), int(d.get("g", 0)), int(d.get("b", 0))))
++                    (json.loads(s) if s else {})
++                ),
++            )
++        )
++
++    # Register per-topic callbacks and subscribe
++    def make_cb(fn: Callable[[str], None]):
++        def _cb(client, userdata, message):
++            s = _decode_utf8(message.payload or b"")
++            try:
++                fn(s)
++            except Exception as exc:  # noqa: BLE001
++                log.warning("command dispatch failed for %s: %s", message.topic, exc)
++        return _cb
++
++    for topic, fn in topic_map:
++        try:
++            mqtt_client.message_callback_add(topic, make_cb(fn))
++            mqtt_client.subscribe(topic, qos=1)
++            log.info("mqtt_sub topic=%s qos=1", topic)
++        except Exception as exc:  # noqa: BLE001
++            log.warning("failed to subscribe %s: %s", topic, exc)

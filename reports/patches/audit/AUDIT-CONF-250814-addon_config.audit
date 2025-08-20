@@ -1,0 +1,168 @@
+Here is a deep technical audit of `addon_config.py` for your Home Assistant add-on, focusing on config file discovery, error handling, security, reliability, and maintainability:
+
+---
+
+### 1. Config File Search & Loading Logic
+
+**Paths Searched:**
+
+- `"config.yaml"` (relative, likely cwd)
+- `"/addons/local/beep_boop_bb8/config.yaml"`
+- `"/Volumes/addons/local/beep_boop_bb8/config.yaml"`
+- `"/app/config.yaml"`
+
+**Logic:**
+
+- Iterates through the above paths, attempting to open each.
+- On success, loads YAML, extracts `options` block if present, and optionally validates against a schema.
+- Returns the first successfully loaded config.
+
+**Potential Issues:**
+
+- **Hardcoded paths:** Not dynamic; may not match actual deployment (especially in containers).
+- **No environment variable override:** Cannot customize config path via env.
+- **No fallback to Home Assistant add-on config API:** Does not use `/data/options.json` for YAML config, only for JSON options.
+
+---
+
+### 2. Path Handling, Environment Detection, Container Compatibility
+
+**Strengths:**
+
+- Multiple paths increase chance of finding config in dev or prod.
+- Uses `/data/options.json` for Home Assistant add-on options (good practice).
+
+**Weaknesses:**
+
+- **No use of `os.path.exists` before open:** Relies on exception handling for missing files.
+- **No detection of running inside Home Assistant container:** Should prefer `/data/config.yaml` or `/data/options.json` in add-on containers.
+- **Relative path `"config.yaml"`** may fail if cwd is not set correctly (e.g., in Docker).
+- **No support for environment variable override** (e.g., `CONFIG_PATH`).
+
+---
+
+### 3. Error Handling & Logging
+
+**Strengths:**
+
+- Logs attempts to load each path.
+- Logs warnings for missing files and exceptions.
+- Logs final config keys and sources.
+
+**Weaknesses:**
+
+- **Error messages may be too verbose for production.**
+- **No escalation for critical config missing:** Only logs errors, does not raise or exit.
+- **No clear separation between dev and prod logging levels.**
+- **Does not log which config file was finally used (only first found).**
+
+---
+
+### 4. Security, Reliability, Maintainability
+
+**Security:**
+
+- **Sensitive values (MQTT_PASSWORD) are masked in logs.**
+- **No validation of file permissions or ownership.**
+- **No support for secrets management (e.g., Home Assistant secrets.yaml).**
+
+**Reliability:**
+
+- **Config loading may silently fall back to defaults if all files are missing.**
+- **No retry or fallback logic if config is partially loaded.**
+- **No schema enforcement beyond basic type checks.**
+
+**Maintainability:**
+
+- **Config keys and YAML keys are mapped manually; could be DRYed.**
+- **No support for dynamic config reloads.**
+- **No clear separation between config loading and validation.**
+
+---
+
+### 5. Code That Could Cause Add-on to Fail to Find Config
+
+- If the config file exists in a path not listed, it will not be found.
+- If the working directory is not set to the add-on root, `"config.yaml"` will fail.
+- If running in a container, `/app/config.yaml` may not exist.
+- No support for `/data/config.yaml` (common in Home Assistant add-ons).
+- No environment variable override for config path.
+
+---
+
+### 6. Recommendations & Code-Level Insights
+
+#### **Config Discovery**
+
+- Add support for environment variable override:
+
+  ```python
+  config_path = os.environ.get("CONFIG_PATH")
+  if config_path and os.path.exists(config_path):
+      paths.insert(0, config_path)
+  ```
+
+- Prefer `/data/config.yaml` and `/data/options.json` for Home Assistant add-ons.
+- Use `os.path.exists` before attempting to open files.
+
+#### **Error Reporting**
+
+- Escalate to error/critical log if no config is found.
+- Log which config file was used.
+- Consider raising an exception or exiting if critical config is missing.
+
+#### **Integration with Home Assistant Best Practices**
+
+- Use `/data/options.json` as the primary config source for add-ons.
+- Support secrets via Home Assistant's secrets.yaml if possible.
+- Document config precedence and override logic.
+
+#### **Code Improvements**
+
+- Refactor config key mapping to use a schema-driven approach.
+- Separate config loading, validation, and application.
+- Add unit tests for config loading in different environments.
+
+---
+
+### **Summary Table**
+
+| Area                | Current State                                      | Recommendation                                      |
+|---------------------|----------------------------------------------------|-----------------------------------------------------|
+| Path Handling       | Hardcoded, no env override, no `/data/config.yaml` | Add env override, prefer `/data/config.yaml`         |
+| Error Handling      | Logs, but does not escalate or exit                | Escalate critical errors, log used config file       |
+| Security            | Masks password, no secrets.yaml support            | Integrate secrets.yaml, validate file permissions    |
+| Reliability         | Silent fallback to defaults                        | Fail fast if critical config missing                 |
+| Maintainability     | Manual mapping, no schema enforcement              | Schema-driven, DRY mapping, unit tests               |
+
+---
+
+### **Actionable Code Example**
+
+Add environment variable and `/data/config.yaml` support:
+
+```python
+def _load_yaml_cfg() -> Dict:
+    paths = []
+    env_path = os.environ.get("CONFIG_PATH")
+    if env_path:
+        paths.append(env_path)
+    paths += [
+        "/data/config.yaml",  # Home Assistant add-on standard
+        "config.yaml",
+        "/addons/local/beep_boop_bb8/config.yaml",
+        "/Volumes/addons/local/beep_boop_bb8/config.yaml",
+        "/app/config.yaml"
+    ]
+    for p in paths:
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    # ...existing code...
+            except Exception as e:
+                # ...existing code...
+```
+
+---
+
+If you want, I can refactor the code to implement these recommendations. Let me know!

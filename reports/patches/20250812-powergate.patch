@@ -1,0 +1,21 @@
+2) Power quick-echo is tagged as façade
+File: bb8_core/bridge_controller.py
+
+```diff
+@@
+-    client.publish(f"{mqtt_topic}/power/state", payload, qos=1, retain=False)
++    client.publish(
++        f"{mqtt_topic}/power/state",
++        json.dumps({"value": payload, "source": "facade"}),
++        qos=1, retain=False
++    )
+
+
+file: facade.py
+                    self.power(True)
+                    _pub("power/state", {"value": "ON", "source": "facade"})
+                elif v == "OFF":
+                    self.power(False)
+                    _pub("power/state", {"value": "OFF", "source": "facade"})
+
+The power quick-echo in the MQTT publish for `power/state` is now tagged as `"source": "facade"` in facade.py. This ensures the evidence collector can distinguish façade-originated echoes. Let me know if you need further changes or want to proceed with additional device-echo logic.

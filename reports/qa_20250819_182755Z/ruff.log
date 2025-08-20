@@ -1,0 +1,56 @@
+E501 Line too long (97 > 88)
+  --> reports/patches/addon_config/cl_addon_config.py:87:89
+   |
+85 |             except Exception:
+86 |                 LOG.warning(
+87 |                     f"[CONFIG] Key '{key}' expected int, got {type(val).__name__} value '{val}'."
+   |                                                                                         ^^^^^^^^^
+88 |                 )
+89 |         elif typ in ("str", "str?") or typ is str:
+   |
+
+SIM102 Use a single `if` statement instead of nested `if` statements
+  --> reports/patches/addon_config/cl_addon_config.py:89:9
+   |
+87 |                       f"[CONFIG] Key '{key}' expected int, got {type(val).__name__} value '{val}'."
+88 |                   )
+89 | /         elif typ in ("str", "str?") or typ is str:
+90 | |             if not isinstance(val, str):
+   | |________________________________________^
+91 |                   LOG.warning(
+92 |                       f"[CONFIG] Key '{key}' expected str, got {type(val).__name__}."
+   |
+help: Combine `if` statements using `and`
+
+E501 Line too long (113 > 88)
+   --> reports/patches/addon_config/cl_addon_config.py:127:89
+    |
+125 |     # Use default
+126 |     LOG.debug(
+127 |         f"[CONFIG] Key '{key}' (yaml_key='{yaml_key}') not found in env/options/yaml, using default '{default}'."
+    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^
+128 |     )
+129 |     return default, "default"
+    |
+
+E501 Line too long (100 > 88)
+   --> reports/patches/addon_config/cl_addon_config.py:141:89
+    |
+140 |     def setk(k, default, yaml_key=None, cast=None):
+141 |         """Set config key with precedence: env > options > yaml > default. Optionally cast value."""
+    |                                                                                         ^^^^^^^^^^^^
+142 |         v, s = _pick(k, env, opt, yml, default, yaml_key)
+    |
+
+E501 Line too long (94 > 88)
+   --> reports/patches/addon_config/cl_addon_config.py:231:89
+    |
+229 |         f"  MQTT_PORT={cfg['MQTT_PORT']} ⟂ {src['MQTT_PORT']}",
+230 |         f"  MQTT_USER='{cfg['MQTT_USERNAME']}' ⟂ {src['MQTT_USERNAME']}",
+231 |         f"  MQTT_PASSWORD={'***' if cfg['MQTT_PASSWORD'] else None} ⟂ {src['MQTT_PASSWORD']}",
+    |                                                                                         ^^^^^^
+232 |         f"  MQTT_BASE='{cfg['MQTT_BASE']}' ⟂ {src['MQTT_BASE']}",
+233 |         (
+    |
+
+Found 5 errors.

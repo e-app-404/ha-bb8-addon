@@ -1,0 +1,285 @@
+done
+
+Release-grade hardening delta
+version 2025.08.11-hotfix
+
+# 0) Context (hotfix baseline)
+
+* ✅ Startup loop resolved (service stays up after `mqtt_connected rc:0`).
+* Goal: finish release-grade hardening + cleanup for **2025.08.11-hotfix.1**.
+
+---
+
+# 1) config.yaml — DBus/BLE access (must-fix)
+
+**Why:** BlueZ over system D-Bus; without this, scans can fail on some hosts.
+
+```diff
+# config.yaml (add these if missing)
++host_dbus: true
++udev: true
++# Keep AppArmor off until a tested profile ships
++apparmor: false
++
++# Keep privileges minimal; NET_ADMIN is typically sufficient for BLE/HCI
++privileged:
++  - NET_ADMIN
+```
+
+> If you already had broader privileges, keep them only if you truly need them.
+
+---
+
+# 2) Dockerfile — multi-arch & venv (must-fix)
+
+**Why:** Home Assistant add-on builder expects `BUILD_FROM`; this enables multi-arch images.
+
+```diff
+- FROM ghcr.io/home-assistant/aarch64-base:latest
++ ARG BUILD_FROM
++ FROM $BUILD_FROM
+
+ # existing bits…
+ WORKDIR /app
+ ENV VIRTUAL_ENV=/opt/venv
+ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ ENV PYTHONPATH=/app
+ RUN python3 -m venv "$VIRTUAL_ENV"
+   && python3 -m pip install --upgrade pip setuptools wheel
+   && python3 -m pip install -r /app/requirements.txt
+
+ # (optional) CLI tools to debug MQTT from the container
+ # RUN apk add --no-cache mosquitto-clients
+```
+
+---
+
+# 3) run.sh — remove jq & gate dev pip-compile (must-fix)
+
+**Why:** We parse options in Python now; drop `jq`. Keep prod boots deterministic.
+
+```diff
+ #!/usr/bin/with-contenv bash
+ set -euo pipefail
+ export PYTHONUNBUFFERED=1
+ export PYTHONPATH=/app:${PYTHONPATH:-}
+ cd /app
+
+-# (deprecated) jq parsing of /data/options.json
+-# …remove any jq calls here…
+
+-# (dev-only) runtime pip-compile
+-if command -v pip-compile >/dev/null 2>&1; then
+-  echo "[BB-8] Recompiling requirements.txt from requirements.in..."
+-  (cd /app && pip-compile requirements.in) || true
+-fi
++# Dev-only: allow runtime pinning when explicitly enabled
++if [[ "${BB8_DEV_DEPS:-0}" = "1" ]] && command -v pip-compile >/dev/null 2>&1; then
++  echo "[BB-8] Dev mode: pip-compile requirements.in → requirements.txt ..."
++  (cd /app && pip-compile requirements.in) || echo "[BB-8] pip-compile failed; continuing"
++fi
+
+-# Optional version probe here (now done inside controller)
+-# python3 - <<'PY' … PY
+ echo "$(date -Is) [BB-8] Starting bridge controller…"
+ exec python3 -m bb8_core.bridge_controller
+```
+
+---
+
+# 4) bb8_core/bridge_controller.py — foreground lifecycle (verify, no change if present)
+
+**Why:** Prevent s6 restarts by keeping process alive; clean teardown on SIGTERM/SIGINT.
+
+```diff
++# Verify you already have this pattern:
++# client = start_mqtt_dispatcher(...); client.loop_start(); _wait_forever(client, bridge)
++# And in _wait_forever(): handle SIGTERM/SIGINT, then client.loop_stop(); client.disconnect(); bridge.shutdown()
+```
+
+> Since your hotfix is live and stable, this is **verify-only**.
+
+---
+
+# 5) bb8_core/mqtt_dispatcher.py — explicit args, LWT, return client (verify + tidy)
+
+**Why:** Clearer reason logging, HA-friendly availability, and controller can block on returned client.
+
+```diff
+-from typing import Optional
++from typing import Optional, Any
+ import socket
+ import paho.mqtt.client as mqtt
+ from .logging_setup import logger
+
+ REASONS = {0:"success",1:"unacceptable_protocol_version",2:"identifier_rejected",3:"server_unavailable",4:"bad_username_or_password",5:"not_authorized"}
+
+-def start_mqtt_dispatcher(mqtt_host: str, mqtt_port: int, mqtt_topic: str, username: Optional[str] = None, password: Optional[str] = None, controller=None, client_id: str = "bb8-addon", keepalive: int = 60, qos: int = 1, retain: bool = True, status_topic: str = "bb8/status", tls: bool = False):
++def start_mqtt_dispatcher(
++    mqtt_host: str, mqtt_port: int, mqtt_topic: str,
++    username: Optional[str] = None, password: Optional[str] = None,
++    controller: Any = None, client_id: str = "bb8-addon",
++    keepalive: int = 60, qos: int = 1, retain: bool = True,
++    status_topic: str = "bb8/status", tls: bool = False,
++) -> mqtt.Client:
+
+     # attempt logs…
+
+     client = mqtt.Client(client_id=client_id, protocol=mqtt.MQTTv311, clean_session=True)
+     if username is not None:
+         client.username_pw_set(username=username, password=(password or ""))
+     if tls:
+         client.tls_set()
+     client.will_set(status_topic, payload="offline", qos=qos, retain=True)
+     client.reconnect_delay_set(min_delay=1, max_delay=30)
+
+     # on_connect publishes "online" and attaches controller…
+
+-    client.connect_async(mqtt_host, mqtt_port, keepalive)
+-    client.loop_start()
+-    # (no return)
++    client.connect_async(mqtt_host, mqtt_port, keepalive)
++    client.loop_start()
++    return client
+```
+
+Also **tidy imports** (remove duplicates/unused) to this minimal set:
+
+```python
+from __future__ import annotations
+from typing import Optional, Any
+import socket
+import paho.mqtt.client as mqtt
+from .logging_setup import logger
+```
+
+---
+
+# 6) Discovery parity & docs (high → medium)
+
+**Why:** Avoid UX drift between README promises and what discovery actually publishes.
+
+* **Code:** If the controller publishes discovery, make sure it includes the entities you list in README (`presence`, `RSSI`, `heartbeat`, `stop`, `power`, etc.).
+* **Docs:** If not implemented, trim README to match current discovery.
+
+```diff
+- README claims entities A, B, C…
++ Update README: list only entities shipped today (or implement missing ones).
+```
+
+*(Recommended) Add a small helper to dump discovery payloads at boot for QA: `logger.info({"event":"discovery_preview", "entities":[...]})`.*
+
+---
+
+# 7) Options defaults & schema alignment (medium)
+
+**Why:** First-run success and clear UI defaults.
+
+```diff
+# config.yaml (snippet)
+ options:
++  mqtt_broker: core-mosquitto
++  mqtt_port: 1883
++  mqtt_username: null
++  mqtt_password: null
++  mqtt_topic_prefix: bb8
++  mqtt_tls: false
++  scan_seconds: 5
++  rescan_on_fail: true
++  cache_ttl_hours: 24
++  ble_adapter: hci0
+
+ schema:
+   mqtt_broker: str?
+   mqtt_port: int?
+   mqtt_username: str?
+   mqtt_password: password?
+   mqtt_topic_prefix: str?
++  mqtt_tls: bool?
+   scan_seconds: int?
+   rescan_on_fail: bool?
+   cache_ttl_hours: int?
+   ble_adapter: str?
+```
+
+Ensure defaults mirror `load_runtime_config()`.
+
+---
+
+# 8) Manifest tidy (low)
+
+**Why:** Supervisor lint/clarity.
+
+```diff
+- privileges:
++ # remove invalid key; keep 'privileged:' (already added above)
+```
+
+Add icon/description polish as desired.
+
+---
+
+# 9) Tests import path (low)
+
+**Why:** Keep tests aligned with file names.
+
+```diff
+- from bb8_core import dispatcher
++ from bb8_core import mqtt_dispatcher
+```
+
+Add a minimal smoke test that asserts:
+
+* connects (mock broker),
+* publishes LWT online/offline,
+* calls `controller.attach_mqtt`.
+
+---
+
+# 10) Docs: HA 2024.8+ action syntax (polish)
+
+**Why:** Newer syntax avoids confusion.
+
+```diff
+- service: mqtt.publish
+- data:
+-   topic: bb8/...
+-   payload: ...
++action:
++  - action: mqtt.publish
++    data:
++      topic: bb8/...
++      payload: ...
+```
+
+---
+
+# 11) Options.json explainer (docs)
+
+Add a short section to README:
+
+```md
+### Where do options come from?
+- **Origin:** Home Assistant Supervisor generates `/data/options.json` from the add-on’s `config.yaml` schema and the values you set in the Add-on Options UI.
+- **Author:** You (the HA admin) via the UI; Supervisor materializes the file inside the container.
+- **Purpose:** Single source of truth for runtime config (MQTT host/port/creds, topic prefix, BLE adapter, timeouts, TLS).
+- **Do not edit manually** in the container; change options in the UI and restart the add-on.
+```
+
+---
+
+# 12) CHANGELOG.md update (docs)
+
+Once applied, document these changes under 2025.08.11.
+
+---
+
+## Smoke checklist (post-merge)
+
+* [x] Single startup banner; controller remains in foreground.
+* [ ] `mqtt_connected rc:0` followed by retained `bb8/status=online`.
+* [ ] BLE connects to `C9:5A:63:6B:B5:4A`; commands round-trip in HA.
+* [ ] First-run works with defaults (no manual edits).
+* [ ] (If enabled) AppArmor remains `false` until profile is added.
+
+---

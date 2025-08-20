@@ -1,0 +1,347 @@
+done
+
+=== BB-8/HA BLE & DBus Audit Fri Aug  8 03:59:18 BST 2025 ===
+
+## 1. BLE Device Presence
+crw-------    1 root     root       10, 137 Oct  8  2024 vhci
+
+## 2. USB Device List
+Bus 003 Device 001: ID 1d6b:0002 Linux 6.12.25-haos-raspi xhci-hcd xHCI Host Controller
+Bus 001 Device 001: ID 1d6b:0002 Linux 6.12.25-haos-raspi xhci-hcd xHCI Host Controller
+Bus 003 Device 003: ID 10c4:ea60 ITead Sonoff Zigbee 3.0 USB Dongle Plus
+Bus 001 Device 002: ID 046d:c534 Logitech USB Receiver
+Bus 004 Device 001: ID 1d6b:0003 Linux 6.12.25-haos-raspi xhci-hcd xHCI Host Controller
+Bus 002 Device 001: ID 1d6b:0003 Linux 6.12.25-haos-raspi xhci-hcd xHCI Host Controller
+Bus 003 Device 002: ID 2357:0604 TP-Link Bluetooth USB Adapter
+
+## 3. lsof (Processes using /dev/hci0/hci1)
+1	/package/admin/s6-2.13.2.0/command/s6-svscan	0	/dev/null
+1	/package/admin/s6-2.13.2.0/command/s6-svscan	1	pipe:[14071]
+1	/package/admin/s6-2.13.2.0/command/s6-svscan	2	pipe:[14072]
+1	/package/admin/s6-2.13.2.0/command/s6-svscan	3	/run/service/.s6-svscan/lock
+1	/package/admin/s6-2.13.2.0/command/s6-svscan	5	/run/service/.s6-svscan/control
+1	/package/admin/s6-2.13.2.0/command/s6-svscan	6	/run/service/.s6-svscan/control
+1	/package/admin/s6-2.13.2.0/command/s6-svscan	7	anon_inode:[signalfd]
+17	/package/admin/s6-2.13.2.0/command/s6-supervise	0	/dev/null
+17	/package/admin/s6-2.13.2.0/command/s6-supervise	1	pipe:[14071]
+17	/package/admin/s6-2.13.2.0/command/s6-supervise	2	pipe:[14072]
+17	/package/admin/s6-2.13.2.0/command/s6-supervise	3	/run/service/s6-linux-init-shutdownd/supervise/lock
+17	/package/admin/s6-2.13.2.0/command/s6-supervise	4	/run/service/s6-linux-init-shutdownd/supervise/control
+17	/package/admin/s6-2.13.2.0/command/s6-supervise	5	/run/service/s6-linux-init-shutdownd/supervise/control
+17	/package/admin/s6-2.13.2.0/command/s6-supervise	6	anon_inode:[signalfd]
+18	/package/admin/s6-linux-init-1.1.3.0/command/s6-linux-init-shutdownd	0	/dev/null
+18	/package/admin/s6-linux-init-1.1.3.0/command/s6-linux-init-shutdownd	1	pipe:[14071]
+18	/package/admin/s6-linux-init-1.1.3.0/command/s6-linux-init-shutdownd	2	pipe:[14072]
+18	/package/admin/s6-linux-init-1.1.3.0/command/s6-linux-init-shutdownd	4	/run/service/s6-linux-init-shutdownd/fifo
+18	/package/admin/s6-linux-init-1.1.3.0/command/s6-linux-init-shutdownd	5	/run/service/s6-linux-init-shutdownd/fifo
+29	/package/admin/s6-2.13.2.0/command/s6-supervise	0	/dev/null
+29	/package/admin/s6-2.13.2.0/command/s6-supervise	1	pipe:[14071]
+29	/package/admin/s6-2.13.2.0/command/s6-supervise	2	pipe:[14072]
+29	/package/admin/s6-2.13.2.0/command/s6-supervise	3	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/s6rc-oneshot-runner/supervise/lock
+29	/package/admin/s6-2.13.2.0/command/s6-supervise	4	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/s6rc-oneshot-runner/supervise/control
+29	/package/admin/s6-2.13.2.0/command/s6-supervise	5	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/s6rc-oneshot-runner/supervise/control
+29	/package/admin/s6-2.13.2.0/command/s6-supervise	6	anon_inode:[signalfd]
+30	/package/admin/s6-2.13.2.0/command/s6-supervise	0	/dev/null
+30	/package/admin/s6-2.13.2.0/command/s6-supervise	1	pipe:[14071]
+30	/package/admin/s6-2.13.2.0/command/s6-supervise	2	pipe:[14072]
+30	/package/admin/s6-2.13.2.0/command/s6-supervise	3	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/sshd/supervise/lock
+30	/package/admin/s6-2.13.2.0/command/s6-supervise	4	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/sshd/supervise/control
+30	/package/admin/s6-2.13.2.0/command/s6-supervise	5	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/sshd/supervise/control
+30	/package/admin/s6-2.13.2.0/command/s6-supervise	6	anon_inode:[signalfd]
+31	/package/admin/s6-2.13.2.0/command/s6-supervise	0	/dev/null
+31	/package/admin/s6-2.13.2.0/command/s6-supervise	1	pipe:[14071]
+31	/package/admin/s6-2.13.2.0/command/s6-supervise	2	pipe:[14072]
+31	/package/admin/s6-2.13.2.0/command/s6-supervise	3	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/ttyd/supervise/lock
+31	/package/admin/s6-2.13.2.0/command/s6-supervise	4	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/ttyd/supervise/control
+31	/package/admin/s6-2.13.2.0/command/s6-supervise	5	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/ttyd/supervise/control
+31	/package/admin/s6-2.13.2.0/command/s6-supervise	6	anon_inode:[signalfd]
+32	/package/admin/s6-2.13.2.0/command/s6-supervise	0	/dev/null
+32	/package/admin/s6-2.13.2.0/command/s6-supervise	1	pipe:[14071]
+32	/package/admin/s6-2.13.2.0/command/s6-supervise	2	pipe:[14072]
+32	/package/admin/s6-2.13.2.0/command/s6-supervise	3	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/s6rc-fdholder/supervise/lock
+32	/package/admin/s6-2.13.2.0/command/s6-supervise	4	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/s6rc-fdholder/supervise/control
+32	/package/admin/s6-2.13.2.0/command/s6-supervise	5	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/s6rc-fdholder/supervise/control
+32	/package/admin/s6-2.13.2.0/command/s6-supervise	6	anon_inode:[signalfd]
+40	/package/admin/s6-2.13.2.0/command/s6-ipcserverd	0	socket:[15539]
+40	/package/admin/s6-2.13.2.0/command/s6-ipcserverd	2	pipe:[14071]
+40	/package/admin/s6-2.13.2.0/command/s6-ipcserverd	3	anon_inode:[signalfd]
+361	/usr/bin/ttyd	0	/dev/null
+361	/usr/bin/ttyd	1	pipe:[14071]
+361	/usr/bin/ttyd	2	pipe:[14072]
+361	/usr/bin/ttyd	3	anon_inode:[eventpoll]
+361	/usr/bin/ttyd	4	anon_inode:[io_uring]
+361	/usr/bin/ttyd	5	pipe:[16706]
+361	/usr/bin/ttyd	6	pipe:[16706]
+361	/usr/bin/ttyd	7	pipe:[16707]
+361	/usr/bin/ttyd	8	pipe:[16707]
+361	/usr/bin/ttyd	9	anon_inode:[eventfd]
+361	/usr/bin/ttyd	10	/dev/urandom
+361	/usr/bin/ttyd	11	anon_inode:[eventfd]
+361	/usr/bin/ttyd	12	socket:[16708]
+361	/usr/bin/ttyd	13	socket:[16710]
+361	/usr/bin/ttyd	14	socket:[52251]
+361	/usr/bin/ttyd	15	/dev/ptmx
+361	/usr/bin/ttyd	16	/dev/null
+361	/usr/bin/ttyd	17	/dev/ptmx
+361	/usr/bin/ttyd	18	/dev/ptmx
+362	/usr/sbin/sshd	0	/dev/null
+362	/usr/sbin/sshd	1	pipe:[14071]
+362	/usr/sbin/sshd	2	pipe:[14072]
+362	/usr/sbin/sshd	3	/dev/null
+362	/usr/sbin/sshd	4	/dev/null
+362	/usr/sbin/sshd	5	/dev/null
+362	/usr/sbin/sshd	6	socket:[18522]
+362	/usr/sbin/sshd	7	socket:[18523]
+573	/usr/bin/tmux	0	/dev/pts/0
+573	/usr/bin/tmux	1	/dev/pts/0
+573	/usr/bin/tmux	2	/dev/pts/0
+573	/usr/bin/tmux	3	pipe:[51042]
+573	/usr/bin/tmux	4	pipe:[51042]
+573	/usr/bin/tmux	6	socket:[51045]
+577	/usr/bin/tmux	0	/dev/null
+577	/usr/bin/tmux	1	/dev/null
+577	/usr/bin/tmux	2	/dev/null
+577	/usr/bin/tmux	3	pipe:[48959]
+577	/usr/bin/tmux	4	pipe:[48959]
+577	/usr/bin/tmux	5	/dev/pts/0
+577	/usr/bin/tmux	6	socket:[48960]
+577	/usr/bin/tmux	7	socket:[51046]
+577	/usr/bin/tmux	8	/dev/ptmx
+580	/bin/zsh	0	/dev/pts/1
+580	/bin/zsh	1	/dev/pts/1
+580	/bin/zsh	2	/dev/pts/1
+580	/bin/zsh	10	/dev/pts/1
+1	/package/admin/s6-2.13.2.0/command/s6-svscan	0	/dev/null
+1	/package/admin/s6-2.13.2.0/command/s6-svscan	1	pipe:[14071]
+1	/package/admin/s6-2.13.2.0/command/s6-svscan	2	pipe:[14072]
+1	/package/admin/s6-2.13.2.0/command/s6-svscan	3	/run/service/.s6-svscan/lock
+1	/package/admin/s6-2.13.2.0/command/s6-svscan	5	/run/service/.s6-svscan/control
+1	/package/admin/s6-2.13.2.0/command/s6-svscan	6	/run/service/.s6-svscan/control
+1	/package/admin/s6-2.13.2.0/command/s6-svscan	7	anon_inode:[signalfd]
+17	/package/admin/s6-2.13.2.0/command/s6-supervise	0	/dev/null
+17	/package/admin/s6-2.13.2.0/command/s6-supervise	1	pipe:[14071]
+17	/package/admin/s6-2.13.2.0/command/s6-supervise	2	pipe:[14072]
+17	/package/admin/s6-2.13.2.0/command/s6-supervise	3	/run/service/s6-linux-init-shutdownd/supervise/lock
+17	/package/admin/s6-2.13.2.0/command/s6-supervise	4	/run/service/s6-linux-init-shutdownd/supervise/control
+17	/package/admin/s6-2.13.2.0/command/s6-supervise	5	/run/service/s6-linux-init-shutdownd/supervise/control
+17	/package/admin/s6-2.13.2.0/command/s6-supervise	6	anon_inode:[signalfd]
+18	/package/admin/s6-linux-init-1.1.3.0/command/s6-linux-init-shutdownd	0	/dev/null
+18	/package/admin/s6-linux-init-1.1.3.0/command/s6-linux-init-shutdownd	1	pipe:[14071]
+18	/package/admin/s6-linux-init-1.1.3.0/command/s6-linux-init-shutdownd	2	pipe:[14072]
+18	/package/admin/s6-linux-init-1.1.3.0/command/s6-linux-init-shutdownd	4	/run/service/s6-linux-init-shutdownd/fifo
+18	/package/admin/s6-linux-init-1.1.3.0/command/s6-linux-init-shutdownd	5	/run/service/s6-linux-init-shutdownd/fifo
+29	/package/admin/s6-2.13.2.0/command/s6-supervise	0	/dev/null
+29	/package/admin/s6-2.13.2.0/command/s6-supervise	1	pipe:[14071]
+29	/package/admin/s6-2.13.2.0/command/s6-supervise	2	pipe:[14072]
+29	/package/admin/s6-2.13.2.0/command/s6-supervise	3	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/s6rc-oneshot-runner/supervise/lock
+29	/package/admin/s6-2.13.2.0/command/s6-supervise	4	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/s6rc-oneshot-runner/supervise/control
+29	/package/admin/s6-2.13.2.0/command/s6-supervise	5	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/s6rc-oneshot-runner/supervise/control
+29	/package/admin/s6-2.13.2.0/command/s6-supervise	6	anon_inode:[signalfd]
+30	/package/admin/s6-2.13.2.0/command/s6-supervise	0	/dev/null
+30	/package/admin/s6-2.13.2.0/command/s6-supervise	1	pipe:[14071]
+30	/package/admin/s6-2.13.2.0/command/s6-supervise	2	pipe:[14072]
+30	/package/admin/s6-2.13.2.0/command/s6-supervise	3	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/sshd/supervise/lock
+30	/package/admin/s6-2.13.2.0/command/s6-supervise	4	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/sshd/supervise/control
+30	/package/admin/s6-2.13.2.0/command/s6-supervise	5	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/sshd/supervise/control
+30	/package/admin/s6-2.13.2.0/command/s6-supervise	6	anon_inode:[signalfd]
+31	/package/admin/s6-2.13.2.0/command/s6-supervise	0	/dev/null
+31	/package/admin/s6-2.13.2.0/command/s6-supervise	1	pipe:[14071]
+31	/package/admin/s6-2.13.2.0/command/s6-supervise	2	pipe:[14072]
+31	/package/admin/s6-2.13.2.0/command/s6-supervise	3	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/ttyd/supervise/lock
+31	/package/admin/s6-2.13.2.0/command/s6-supervise	4	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/ttyd/supervise/control
+31	/package/admin/s6-2.13.2.0/command/s6-supervise	5	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/ttyd/supervise/control
+31	/package/admin/s6-2.13.2.0/command/s6-supervise	6	anon_inode:[signalfd]
+32	/package/admin/s6-2.13.2.0/command/s6-supervise	0	/dev/null
+32	/package/admin/s6-2.13.2.0/command/s6-supervise	1	pipe:[14071]
+32	/package/admin/s6-2.13.2.0/command/s6-supervise	2	pipe:[14072]
+32	/package/admin/s6-2.13.2.0/command/s6-supervise	3	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/s6rc-fdholder/supervise/lock
+32	/package/admin/s6-2.13.2.0/command/s6-supervise	4	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/s6rc-fdholder/supervise/control
+32	/package/admin/s6-2.13.2.0/command/s6-supervise	5	/run/s6-rc:s6-rc-init:GGBhjn/servicedirs/s6rc-fdholder/supervise/control
+32	/package/admin/s6-2.13.2.0/command/s6-supervise	6	anon_inode:[signalfd]
+40	/package/admin/s6-2.13.2.0/command/s6-ipcserverd	0	socket:[15539]
+40	/package/admin/s6-2.13.2.0/command/s6-ipcserverd	2	pipe:[14071]
+40	/package/admin/s6-2.13.2.0/command/s6-ipcserverd	3	anon_inode:[signalfd]
+361	/usr/bin/ttyd	0	/dev/null
+361	/usr/bin/ttyd	1	pipe:[14071]
+361	/usr/bin/ttyd	2	pipe:[14072]
+361	/usr/bin/ttyd	3	anon_inode:[eventpoll]
+361	/usr/bin/ttyd	4	anon_inode:[io_uring]
+361	/usr/bin/ttyd	5	pipe:[16706]
+361	/usr/bin/ttyd	6	pipe:[16706]
+361	/usr/bin/ttyd	7	pipe:[16707]
+361	/usr/bin/ttyd	8	pipe:[16707]
+361	/usr/bin/ttyd	9	anon_inode:[eventfd]
+361	/usr/bin/ttyd	10	/dev/urandom
+361	/usr/bin/ttyd	11	anon_inode:[eventfd]
+361	/usr/bin/ttyd	12	socket:[16708]
+361	/usr/bin/ttyd	13	socket:[16710]
+361	/usr/bin/ttyd	14	socket:[52251]
+361	/usr/bin/ttyd	15	/dev/ptmx
+361	/usr/bin/ttyd	16	/dev/null
+361	/usr/bin/ttyd	17	/dev/ptmx
+361	/usr/bin/ttyd	18	/dev/ptmx
+362	/usr/sbin/sshd	0	/dev/null
+362	/usr/sbin/sshd	1	pipe:[14071]
+362	/usr/sbin/sshd	2	pipe:[14072]
+362	/usr/sbin/sshd	3	/dev/null
+362	/usr/sbin/sshd	4	/dev/null
+362	/usr/sbin/sshd	5	/dev/null
+362	/usr/sbin/sshd	6	socket:[18522]
+362	/usr/sbin/sshd	7	socket:[18523]
+573	/usr/bin/tmux	0	/dev/pts/0
+573	/usr/bin/tmux	1	/dev/pts/0
+573	/usr/bin/tmux	2	/dev/pts/0
+573	/usr/bin/tmux	3	pipe:[51042]
+573	/usr/bin/tmux	4	pipe:[51042]
+573	/usr/bin/tmux	6	socket:[51045]
+577	/usr/bin/tmux	0	/dev/null
+577	/usr/bin/tmux	1	/dev/null
+577	/usr/bin/tmux	2	/dev/null
+577	/usr/bin/tmux	3	pipe:[48959]
+577	/usr/bin/tmux	4	pipe:[48959]
+577	/usr/bin/tmux	5	/dev/pts/0
+577	/usr/bin/tmux	6	socket:[48960]
+577	/usr/bin/tmux	7	socket:[51046]
+577	/usr/bin/tmux	8	/dev/ptmx
+580	/bin/zsh	0	/dev/pts/1
+580	/bin/zsh	1	/dev/pts/1
+580	/bin/zsh	2	/dev/pts/1
+580	/bin/zsh	10	/dev/pts/1
+
+## 4. Bluetooth/DBus Service Status
+sudo: systemctl: command not found
+sudo: systemctl: command not found
+
+## 5. DBus Socket Info
+srw-rw-rw-    1 root     root             0 Oct  8  2024 /run/dbus/system_bus_socket
+
+## 6. bluetoothctl Adapters/List
+Controller BC:07:1D:48:04:5A homeassistant #1 [default]
+Controller 2C:CF:67:65:F9:00 homeassistant
+[[0;93mCHG[0m] Device ED:ED:4A:DF:95:95 RSSI: 0xffffffb8 (-72)
+[[0;93mCHG[0m] Device ED:ED:4A:DF:95:95 ManufacturerData.Key: 0x05a7 (1447)
+[[0;93mCHG[0m] Device ED:ED:4A:DF:95:95 ManufacturerData.Value:
+  f4 8f 92 4b 4d de 30 96 eb                       ...KM.0..
+Controller BC:07:1D:48:04:5A (public)
+	Manufacturer: 0x005d (93)
+	Version: 0x0a (10)
+	Name: homeassistant #1
+	Alias: homeassistant #1
+	Class: 0x006c0000 (7077888)
+	Powered: yes
+	PowerState: on
+	Discoverable: no
+	DiscoverableTimeout: 0x000000b4 (180)
+	Pairable: no
+	UUID: A/V Remote Control        (0000110e-0000-1000-8000-00805f9b34fb)
+	UUID: PnP Information           (00001200-0000-1000-8000-00805f9b34fb)
+	UUID: Handsfree Audio Gateway   (0000111f-0000-1000-8000-00805f9b34fb)
+	UUID: Audio Sink                (0000110b-0000-1000-8000-00805f9b34fb)
+	UUID: Headset                   (00001108-0000-1000-8000-00805f9b34fb)
+	UUID: A/V Remote Control Target (0000110c-0000-1000-8000-00805f9b34fb)
+	UUID: Generic Access Profile    (00001800-0000-1000-8000-00805f9b34fb)
+	UUID: Broadcast Audio Scan      (0000184f-0000-1000-8000-00805f9b34fb)
+	UUID: Generic Attribute Profile (00001801-0000-1000-8000-00805f9b34fb)
+	UUID: Volume Control            (00001844-0000-1000-8000-00805f9b34fb)
+	UUID: Device Information        (0000180a-0000-1000-8000-00805f9b34fb)
+	UUID: Volume Offset Control     (00001845-0000-1000-8000-00805f9b34fb)
+	UUID: Microphone Control        (0000184d-0000-1000-8000-00805f9b34fb)
+	UUID: Audio Input Control       (00001843-0000-1000-8000-00805f9b34fb)
+	UUID: Audio Source              (0000110a-0000-1000-8000-00805f9b34fb)
+	Modalias: usb:v1D6Bp0246d054F
+	Discovering: yes
+	Roles: central
+	Roles: peripheral
+Advertising Features:
+	ActiveInstances: 0x00 (0)
+	SupportedInstances: 0x04 (4)
+	SupportedIncludes: tx-power
+	SupportedIncludes: appearance
+	SupportedIncludes: local-name
+	SupportedSecondaryChannels: 1M
+	SupportedSecondaryChannels: 2M
+	SupportedSecondaryChannels: Coded
+	SupportedCapabilities.MinTxPower: 0xffffffed (-19)
+	SupportedCapabilities.MaxTxPower: 0x0017 (23)
+	SupportedCapabilities.MaxAdvLen: 0xfb (251)
+	SupportedCapabilities.MaxScnRspLen: 0xfb (251)
+	SupportedFeatures: CanSetTxPower
+	SupportedFeatures: HardwareOffload
+Advertisement Monitor Features:
+	SupportedMonitorTypes: or_patterns
+
+## 7. BLE Scan Test
+Starting bluetoothctl scan for 10 seconds...
+[[0;93mCHG[0m] Device FA:BA:37:53:38:64 RSSI: 0xffffffa8 (-88)
+[[0;93mCHG[0m] Device 3C:C5:E0:2C:D1:F6 RSSI: 0xffffff9a (-102)
+SetDiscoveryFilter success
+zsh:kill:1: kill 728 failed: no such process
+Device 71:E9:9B:5F:B2:9F 71-E9-9B-5F-B2-9F
+Device C7:6C:FE:59:7C:19 C7-6C-FE-59-7C-19
+[1;30mDevice D7:CD:D6:BF:72:89 D7-CD-D6-BF-72-89[0m
+[1;30mDevice F2:3C:A0:9A:01:F0 F2-3C-A0-9A-01-F0[0m
+Device FC:60:3E:5A:82:11 FC-60-3E-5A-82-11
+[1;30mDevice F7:ED:E6:3E:90:2E F7-ED-E6-3E-90-2E[0m
+Device 5F:52:A9:E8:05:DF 5F-52-A9-E8-05-DF
+Device D5:26:7D:E2:5B:51 D5-26-7D-E2-5B-51
+[1;30mDevice 3F:F1:A6:A7:F7:C7 3F-F1-A6-A7-F7-C7[0m
+[1;30mDevice D2:FF:6F:F9:4B:B7 D2-FF-6F-F9-4B-B7[0m
+Device 6B:2E:73:28:D9:13 6B-2E-73-28-D9-13
+Device 57:5D:CE:68:00:43 S54 9508 LE
+[1;30mDevice 7A:88:71:0F:FD:60 7A-88-71-0F-FD-60[0m
+Device 6A:43:F2:70:D2:01 6A-43-F2-70-D2-01
+[1;30mDevice 3C:C5:E0:2C:D1:F6 3C-C5-E0-2C-D1-F6[0m
+[1;30mDevice 16:7F:CA:64:ED:8E 16-7F-CA-64-ED-8E[0m
+Device F3:34:33:F1:F1:E7 F3-34-33-F1-F1-E7
+Device 70:B4:81:F0:FB:95 70-B4-81-F0-FB-95
+[1;30mDevice 47:01:A2:66:7B:5A 47-01-A2-66-7B-5A[0m
+Device 44:EF:E0:47:DA:A4 S39 BAD6 LE
+Device 45:47:0D:86:CC:50 S39 BA6C LE
+[1;30mDevice 12:19:78:BC:A3:9C 12-19-78-BC-A3-9C[0m
+[1;30mDevice 79:D4:02:C8:B1:BF 79-D4-02-C8-B1-BF[0m
+[1;30mDevice 34:4E:83:DB:79:45 34-4E-83-DB-79-45[0m
+Device 4F:21:B0:04:12:13 4F-21-B0-04-12-13
+Device 76:00:0D:AC:54:B5 76-00-0D-AC-54-B5
+Device 76:58:C6:6B:0B:42 76-58-C6-6B-0B-42
+Device 70:5C:D1:CA:1D:75 70-5C-D1-CA-1D-75
+[1;30mDevice DC:0E:8B:88:A8:AD DC-0E-8B-88-A8-AD[0m
+[1;30mDevice E0:C0:CC:85:8C:9A E0-C0-CC-85-8C-9A[0m
+[1;30mDevice CB:28:46:3C:1F:CC CB-28-46-3C-1F-CC[0m
+[1;30mDevice D3:AB:70:90:A8:19 D3-AB-70-90-A8-19[0m
+[1;30mDevice E5:7A:74:9A:E8:60 E5-7A-74-9A-E8-60[0m
+[1;30mDevice FB:7D:31:9D:00:19 FB-7D-31-9D-00-19[0m
+[1;30mDevice C2:8A:B8:1E:39:07 C2-8A-B8-1E-39-07[0m
+Device 56:F9:B4:CD:6A:F7 56-F9-B4-CD-6A-F7
+Device 61:87:FF:BB:FE:36 61-87-FF-BB-FE-36
+Device 42:E0:53:A8:C2:E3 42-E0-53-A8-C2-E3
+[1;30mDevice 00:E0:4C:F9:6B:97 00-E0-4C-F9-6B-97[0m
+Device 30:BF:C4:37:4D:65 30-BF-C4-37-4D-65
+Device DA:4C:DF:F2:2D:FB DA-4C-DF-F2-2D-FB
+[1;30mDevice C8:12:0B:E0:8E:4D Bedroom TV[0m
+Device D4:AD:FC:B9:7E:7E GBK_H6182_7E7E
+Device EC:81:93:79:B2:35 EC-81-93-79-B2-35
+[1;30mDevice E1:A1:04:D3:24:D7 S36 269F LE[0m
+[1;30mDevice ED:ED:87:D7:27:50 S33 BB84 LE[0m
+[1;30mDevice ED:ED:4A:DF:95:95 S33 CE50 LE[0m
+Device CC:8D:A2:56:65:BA LAP-V102S-WEU
+[1;30mDevice FA:BA:37:53:38:64 S31 25E4 LE[0m
+Device C8:69:CD:3E:41:BA C8-69-CD-3E-41-BA
+Device C9:5A:63:6B:B5:4A BB-B54A
+
+## 8. Log File Check
+total 520
+-rw-r--r--    1 root     root             0 Aug  8 03:57 ble_audit_20250808_035503.log
+-rw-r--r--    1 root     root         17795 Aug  8 03:59 ble_audit_20250808_035918.log
+-rw-r--r--    1 root     root         57611 Aug  4 13:10 git_sync_push_events.json
+-rw-r--r--    1 root     root             0 Jul 29 08:55 git_sync_push_events.json.tmp
+-rw-rw-rw-    1 root     root             0 Aug  7 23:32 ha_bb8_addon.log
+-rw-r--r--    1 root     root         49662 Jun 12 18:37 home-assistant_2025-06-12T17-37-10.305Z.log
+-rw-r--r--    1 root     root         20526 Jun 12 19:54 home-assistant_2025-06-12T18-54-31.530Z.log
+-rw-r--r--    1 root     root        297828 Jun 13 00:00 home-assistant_2025-06-12T22-59-56.848Z.log
+-rw-r--r--    1 root     root         40930 Jun 13 03:05 home-assistant_2025-06-13T02-05-15.103Z.log
+
+## 9. Add-on Docker BLE Mapping
+permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.51/containers/json": dial unix /var/run/docker.sock: connect: permission denied
+No running beep_boop_bb8 container found.
+
+=== AUDIT COMPLETE: Log written to hestia/diagnostics/logs/ble_audit_20250808_035918.log ===

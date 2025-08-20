@@ -1,0 +1,40 @@
+# Patch ID: PATCH-STP4-250815-mypy-root-config
+diff --git a/mypy.ini b/mypy.ini
+new file mode 100644
+index 0000000..bbb2222
+--- /dev/null
++++ b/mypy.ini
+@@ -0,0 +1,26 @@
++[mypy]
++python_version = 3.13
++ignore_missing_imports = True
++warn_unused_ignores = True
++no_implicit_optional = False
++check_untyped_defs = False
++disallow_incomplete_defs = False
++implicit_optional = True
++pretty = True
++show_error_codes = True
++
++exclude = (?x)(
++    ^\\.venv/|
++    ^\\.tox/|
++    ^build/|
++    ^dist/|
++    ^__pycache__/|
++    ^reports/|
++    ^services\\.d/|
++    ^tests/\\..*
++)
++
++[mypy-bb8_core.*]
++implicit_reexport = True
++follow_imports = silent
++```
+
+---
+
+## Run QA again (Makefile style with timestamp)
+
+```bash
+STAMP=$(date +"%Y%m%d_%H%M%S") MQTT_BASE=bb8 REQUIRE_DEVICE_ECHO=1 ENABLE_BRIDGE_TELEMETRY=1 EVIDENCE_TIMEOUT_SEC=3.0 make -e qa

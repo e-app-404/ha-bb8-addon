@@ -1,0 +1,127 @@
+# Patch ID: PATCH-STP4-250815-addon-config-lint-fixes
+diff --git a/bb8_core/addon_config.py b/bb8_core/addon_config.py
+index 3aa3b12..4cb8e77 100644
+--- a/bb8_core/addon_config.py
++++ b/bb8_core/addon_config.py
+@@ -1,45 +1,68 @@
+-# (previous top-of-file code and logging...)  # imports were not at top
+-from pathlib import Path
+-import os
+-import yaml
+-import logging
++from __future__ import annotations
++
++from pathlib import Path
++import logging
++import os
++from typing import Any, Dict, Optional
++
++import yaml
++
+ log = logging.getLogger(__name__)
+
+-# Define candidate search paths with HA-first priority
+-CANDIDATE_PATHS = [
+-    Path("/config/config.yaml"),
+-    Path("/addons/local/beep_boop_bb8/config.yaml"),
+-    Path(__file__).parent / "config.yaml",
+-    Path("/app/config.yaml"),
+-    Path("/Volumes/addons/local/beep_boop_bb8/config.yaml"),  # dev-only
+-]
+-
+-loaded_config = None
+-source_path = None
+-
+-for path in CANDIDATE_PATHS:
+-    if path.exists():
+-        try:
+-            with path.open("r") as f:
+-                loaded_config = yaml.safe_load(f)
+-            source_path = path
+-            log.info(f"[CONFIG] Loaded config from: {path}")
+-            break
+-        except Exception as e:
+-            log.warning(f"[CONFIG] Failed to load from {path}: {e}")
+-    else:
+-        if "Volumes" in str(path):
+-            log.debug(f"[CONFIG] Dev-only path skipped (not applicable in HA): {path}")
+-        else:
+-            log.debug(f"[CONFIG] Path not found: {path}")
+-
+-if loaded_config is None:
+-    log.error("[CONFIG] No valid YAML config found in expected locations.")
++# Public module-level handles (used by callers; also prevents F841)
++CONFIG: Dict[str, Any] = {}
++CONFIG_SOURCE: Optional[Path] = None
++
++
++def _candidate_paths() -> list[Path]:
++    """
++    Ordered config locations (HA first, then add-on, then local/dev).
++    The 'Volumes' path is dev-only and logged at DEBUG.
++    """
++    env_path = os.environ.get("CONFIG_PATH")
++    paths: list[Path] = []
++    if env_path:
++        paths.append(Path(env_path))
++    paths.extend(
++        [
++            Path("/data/config.yaml"),  # HA add-on standard
++            Path("/config/config.yaml"),
++            Path("/addons/local/beep_boop_bb8/config.yaml"),
++            Path(__file__).parent / "config.yaml",
++            Path("/app/config.yaml"),
++            Path("/Volumes/addons/local/beep_boop_bb8/config.yaml"),
++        ]
++    )
++    return paths
++
++
++def load_config() -> tuple[Dict[str, Any], Optional[Path]]:
++    """
++    Load YAML config from first available candidate path.
++    Returns (config, source_path).
++    """
++    candidate_paths = _candidate_paths()  # N806 fixed: lower-case variable
++    loaded: Dict[str, Any] | None = None
++    source: Optional[Path] = None
++
++    for path in candidate_paths:
++        if path.exists():
++            try:
++                with path.open("r", encoding="utf-8") as fh:
++                    data = yaml.safe_load(fh)
++                # E721 → isinstance checks
++                if not isinstance(data, dict):
++                    log.warning("[CONFIG] YAML root is not a mapping: %s", path)
++                    continue
++                loaded = data
++                source = path
++                log.info("[CONFIG] Loaded config from: %s", path)
++                break
++            except Exception as exc:  # noqa: BLE001 (broad-exception)
++                log.warning("[CONFIG] Failed to load from %s: %s", path, exc)
++        else:
++            if "Volumes" in str(path):
++                log.debug("[CONFIG] Dev-only path skipped: %s", path)
++            else:
++                log.debug("[CONFIG] Path not found: %s", path)
++
++    if loaded is None:
++        log.error("[CONFIG] No valid YAML config found in expected locations.")
++        return {}, None
++
++    return loaded, source
++
+
+-# end of file
++def init_config() -> None:
++    """Populate module-level CONFIG & CONFIG_SOURCE for callers."""
++    global CONFIG, CONFIG_SOURCE
++    CONFIG, CONFIG_SOURCE = load_config()
++    # keep a concise log line; avoid >88 col E501
++    log.debug("[CONFIG] Active source: %s; keys: %s", CONFIG_SOURCE, list(CONFIG))
++
++
++# initialize on import; safe for runtime and tests
++init_config()

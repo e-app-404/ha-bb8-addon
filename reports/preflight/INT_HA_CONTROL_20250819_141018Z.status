@@ -1,0 +1,8 @@
+INT_HA_CONTROL: Preflight
+TIME: 20250819_141018Z
+REAL_MAC: ED:ED:87:D7:27:50
+HOST: 192.168.0.129
+BASELINE: PASS
+AFTER_RESTART: PASS
+AFTER_LED: PASS
+RECEIPTS: reports/preflight/verify_before_20250819_141018Z.log reports/preflight/verify_after_20250819_141018Z.log reports/preflight/verify_after_led_20250819_141018Z.log

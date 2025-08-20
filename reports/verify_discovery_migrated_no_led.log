@@ -1,0 +1,7 @@
+Discovery Verification Results:
+Topic                      | Retained | stat_t              | avty_t      | sw_version      | identifiers
+---------------------------|----------|---------------------|-------------|----------------|-------------------
+homeassistant/binary_sensor/bb8_presence/config | True    | bb8/presence/state  | bb8/status  | 2025.08.20     | ['bb8', 'mac:ED:ED:87:D7:27:50']
+homeassistant/sensor/bb8_rssi/config | True    | bb8/rssi/state      | bb8/status  | 2025.08.20     | ['bb8', 'mac:ED:ED:87:D7:27:50']
+
+PASS

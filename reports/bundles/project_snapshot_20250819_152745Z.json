@@ -1,0 +1,452 @@
+{
+  "meta": {
+    "snapshot_ts": "2025-08-19T15:27:46Z",
+    "repo_root": "/Users/evertappels/Projects/HA-BB8",
+    "counts": {
+      "files": 88
+    },
+    "includes_note": "lean snapshot; excludes caches/venv/build; tar follows symlinks (-h); archives excluded to avoid recursion"
+  },
+  "files": [
+    {
+      "path": ".editorconfig",
+      "size": 232,
+      "mtime_utc": "2025-08-18T19:55:55Z"
+    },
+    {
+      "path": ".github/PR_TEMPLATE.md",
+      "size": 478,
+      "mtime_utc": "2025-08-18T19:47:19Z"
+    },
+    {
+      "path": ".github/workflows/addon-audit.yml",
+      "size": 623,
+      "mtime_utc": "2025-08-18T19:47:19Z"
+    },
+    {
+      "path": ".gitignore",
+      "size": 94,
+      "mtime_utc": "2025-08-18T19:55:55Z"
+    },
+    {
+      "path": ".vscode/launch.json",
+      "size": 521,
+      "mtime_utc": "2025-08-18T19:47:19Z"
+    },
+    {
+      "path": ".vscode/settings.json",
+      "size": 1330,
+      "mtime_utc": "2025-08-18T19:47:19Z"
+    },
+    {
+      "path": ".vscode/tasks.json",
+      "size": 1328,
+      "mtime_utc": "2025-08-18T19:55:55Z"
+    },
+    {
+      "path": "addon/bb8_core/__init__.py",
+      "size": 1614,
+      "mtime_utc": "2025-08-18T15:40:56Z"
+    },
+    {
+      "path": "addon/bb8_core/addon_config.py",
+      "size": 7328,
+      "mtime_utc": "2025-08-18T02:17:14Z"
+    },
+    {
+      "path": "addon/bb8_core/auto_detect.py",
+      "size": 8198,
+      "mtime_utc": "2025-08-18T15:42:05Z"
+    },
+    {
+      "path": "addon/bb8_core/bb8_presence_scanner.py",
+      "size": 34895,
+      "mtime_utc": "2025-08-19T01:05:17Z"
+    },
+    {
+      "path": "addon/bb8_core/ble_bridge.py",
+      "size": 28812,
+      "mtime_utc": "2025-08-18T04:02:54Z"
+    },
+    {
+      "path": "addon/bb8_core/ble_gateway.py",
+      "size": 3567,
+      "mtime_utc": "2025-08-17T22:26:52Z"
+    },
+    {
+      "path": "addon/bb8_core/ble_link.py",
+      "size": 4698,
+      "mtime_utc": "2025-08-17T22:37:58Z"
+    },
+    {
+      "path": "addon/bb8_core/ble_utils.py",
+      "size": 834,
+      "mtime_utc": "2025-08-17T22:32:47Z"
+    },
+    {
+      "path": "addon/bb8_core/bridge_controller.py",
+      "size": 18294,
+      "mtime_utc": "2025-08-18T15:42:56Z"
+    },
+    {
+      "path": "addon/bb8_core/common.py",
+      "size": 2783,
+      "mtime_utc": "2025-08-18T14:07:10Z"
+    },
+    {
+      "path": "addon/bb8_core/controller.py",
+      "size": 15768,
+      "mtime_utc": "2025-08-17T23:54:55Z"
+    },
+    {
+      "path": "addon/bb8_core/core.py",
+      "size": 2988,
+      "mtime_utc": "2025-08-18T14:06:06Z"
+    },
+    {
+      "path": "addon/bb8_core/evidence_capture.py",
+      "size": 3720,
+      "mtime_utc": "2025-08-18T15:44:03Z"
+    },
+    {
+      "path": "addon/bb8_core/facade.py",
+      "size": 13243,
+      "mtime_utc": "2025-08-18T15:43:41Z"
+    },
+    {
+      "path": "addon/bb8_core/logging_setup.py",
+      "size": 4863,
+      "mtime_utc": "2025-08-18T14:08:58Z"
+    },
+    {
+      "path": "addon/bb8_core/mqtt_dispatcher.py",
+      "size": 31591,
+      "mtime_utc": "2025-08-18T22:33:14Z"
+    },
+    {
+      "path": "addon/bb8_core/mqtt_echo.py",
+      "size": 366,
+      "mtime_utc": "2025-08-15T03:33:26Z"
+    },
+    {
+      "path": "addon/bb8_core/mqtt_helpers.py",
+      "size": 1068,
+      "mtime_utc": "2025-08-18T23:29:13Z"
+    },
+    {
+      "path": "addon/bb8_core/ports.py",
+      "size": 917,
+      "mtime_utc": "2025-08-18T14:11:41Z"
+    },
+    {
+      "path": "addon/bb8_core/telemetry.py",
+      "size": 3239,
+      "mtime_utc": "2025-08-18T15:49:02Z"
+    },
+    {
+      "path": "addon/bb8_core/types.py",
+      "size": 2524,
+      "mtime_utc": "2025-08-18T02:01:30Z"
+    },
+    {
+      "path": "addon/bb8_core/util.py",
+      "size": 229,
+      "mtime_utc": "2025-08-15T03:33:26Z"
+    },
+    {
+      "path": "addon/bb8_core/version_probe.py",
+      "size": 443,
+      "mtime_utc": "2025-08-18T15:49:07Z"
+    },
+    {
+      "path": "addon/config.yaml",
+      "size": 1808,
+      "mtime_utc": "2025-08-18T04:05:07Z"
+    },
+    {
+      "path": "addon/Dockerfile",
+      "size": 1405,
+      "mtime_utc": "2025-08-18T03:51:50Z"
+    },
+    {
+      "path": "addon/run.sh",
+      "size": 1647,
+      "mtime_utc": "2025-08-18T03:53:48Z"
+    },
+    {
+      "path": "addon/services.d/ble_bridge/run",
+      "size": 189,
+      "mtime_utc": "2025-08-10T16:53:08Z"
+    },
+    {
+      "path": "addon/VERSION",
+      "size": 4,
+      "mtime_utc": "2025-08-18T03:16:08Z"
+    },
+    {
+      "path": "mypy.ini",
+      "size": 407,
+      "mtime_utc": "2025-08-18T19:55:55Z"
+    },
+    {
+      "path": "pyproject.toml",
+      "size": 291,
+      "mtime_utc": "2025-08-18T19:55:55Z"
+    },
+    {
+      "path": "pytest.ini",
+      "size": 386,
+      "mtime_utc": "2025-08-18T19:55:55Z"
+    },
+    {
+      "path": "reports/checkpoints/checkpoint_20250819_032616Z.status",
+      "size": 359,
+      "mtime_utc": "2025-08-19T03:30:09Z"
+    },
+    {
+      "path": "reports/checkpoints/delta_contract_INT_HA_CONTROL.yaml",
+      "size": 5795,
+      "mtime_utc": "2025-08-19T11:51:16Z"
+    },
+    {
+      "path": "reports/checkpoints/rehydration_seed_20250819_032616Z.yaml",
+      "size": 2838,
+      "mtime_utc": "2025-08-19T03:26:16Z"
+    },
+    {
+      "path": "reports/preflight/INT_HA_CONTROL_20250819_115242Z.status",
+      "size": 280,
+      "mtime_utc": "2025-08-19T14:04:36Z"
+    },
+    {
+      "path": "reports/preflight/INT_HA_CONTROL_20250819_141018Z.status",
+      "size": 319,
+      "mtime_utc": "2025-08-19T14:10:50Z"
+    },
+    {
+      "path": "reports/preflight/verify_after_20250819_115242Z.log",
+      "size": 537,
+      "mtime_utc": "2025-08-19T11:55:37Z"
+    },
+    {
+      "path": "reports/preflight/verify_after_20250819_141018Z.log",
+      "size": 537,
+      "mtime_utc": "2025-08-19T14:10:48Z"
+    },
+    {
+      "path": "reports/preflight/verify_after_led_20250819_141018Z.log",
+      "size": 670,
+      "mtime_utc": "2025-08-19T14:10:50Z"
+    },
+    {
+      "path": "reports/preflight/verify_before_20250819_115242Z.log",
+      "size": 537,
+      "mtime_utc": "2025-08-19T11:52:43Z"
+    },
+    {
+      "path": "reports/preflight/verify_before_20250819_141018Z.log",
+      "size": 670,
+      "mtime_utc": "2025-08-19T14:10:19Z"
+    },
+    {
+      "path": "reports/project_status_audit_20250819_013850Z.json",
+      "size": 2534,
+      "mtime_utc": "2025-08-19T01:38:51Z"
+    },
+    {
+      "path": "reports/project_status_audit_20250819_013850Z.md",
+      "size": 1391,
+      "mtime_utc": "2025-08-19T01:38:51Z"
+    },
+    {
+      "path": "reports/verify_discovery_migrated_no_led.log",
+      "size": 537,
+      "mtime_utc": "2025-08-19T03:14:40Z"
+    },
+    {
+      "path": "reports/verify_discovery_migrated_with_led.log",
+      "size": 670,
+      "mtime_utc": "2025-08-19T03:14:42Z"
+    },
+    {
+      "path": "ruff.toml",
+      "size": 422,
+      "mtime_utc": "2025-08-18T19:47:19Z"
+    },
+    {
+      "path": "tests/__init__.py",
+      "size": 63,
+      "mtime_utc": "2025-08-15T02:59:53Z"
+    },
+    {
+      "path": "tests/conftest.py",
+      "size": 877,
+      "mtime_utc": "2025-08-19T02:42:55Z"
+    },
+    {
+      "path": "tests/test_ble_link.py",
+      "size": 284,
+      "mtime_utc": "2025-08-16T04:37:07Z"
+    },
+    {
+      "path": "tests/test_discovery_publisher.py",
+      "size": 1947,
+      "mtime_utc": "2025-08-18T19:55:55Z"
+    },
+    {
+      "path": "tests/test_facade.py",
+      "size": 2128,
+      "mtime_utc": "2025-08-18T19:55:55Z"
+    },
+    {
+      "path": "tests/test_import_order_warning.py",
+      "size": 867,
+      "mtime_utc": "2025-08-18T19:47:19Z"
+    },
+    {
+      "path": "tests/test_imports_no_cycles.py",
+      "size": 188,
+      "mtime_utc": "2025-08-18T19:47:19Z"
+    },
+    {
+      "path": "tests/test_mqtt_discovery.py",
+      "size": 3286,
+      "mtime_utc": "2025-08-16T14:16:24Z"
+    },
+    {
+      "path": "tests/test_mqtt_dispatcher.py",
+      "size": 2230,
+      "mtime_utc": "2025-08-19T01:26:43Z"
+    },
+    {
+      "path": "tests/test_mqtt_echo.py",
+      "size": 864,
+      "mtime_utc": "2025-08-19T01:26:43Z"
+    },
+    {
+      "path": "tests/test_mqtt_smoke.py",
+      "size": 5884,
+      "mtime_utc": "2025-08-19T01:26:43Z"
+    },
+    {
+      "path": "tests/test_scanner_discovery_seam_direct.py",
+      "size": 850,
+      "mtime_utc": "2025-08-17T03:39:55Z"
+    },
+    {
+      "path": "tests/test_scanner_discovery_seam_hook.py",
+      "size": 655,
+      "mtime_utc": "2025-08-17T03:39:59Z"
+    },
+    {
+      "path": "tests/test_smoke_controller_facade.py",
+      "size": 716,
+      "mtime_utc": "2025-08-16T02:17:50Z"
+    },
+    {
+      "path": "tests/test_types_import.py",
+      "size": 382,
+      "mtime_utc": "2025-08-18T19:55:55Z"
+    },
+    {
+      "path": "tools/audit_addon_tree.py",
+      "size": 3479,
+      "mtime_utc": "2025-08-18T20:21:37Z"
+    },
+    {
+      "path": "tools/blebridge_handler_surface_check.py",
+      "size": 370,
+      "mtime_utc": "2025-08-18T19:47:19Z"
+    },
+    {
+      "path": "tools/check_configs.py",
+      "size": 2465,
+      "mtime_utc": "2025-08-18T19:47:19Z"
+    },
+    {
+      "path": "tools/consolidate_workspace.py",
+      "size": 6381,
+      "mtime_utc": "2025-08-18T22:36:16Z"
+    },
+    {
+      "path": "tools/dir_tarball.sh",
+      "size": 4950,
+      "mtime_utc": "2025-08-19T15:24:36Z"
+    },
+    {
+      "path": "tools/discovery_align_audit.py",
+      "size": 1690,
+      "mtime_utc": "2025-08-19T02:42:33Z"
+    },
+    {
+      "path": "tools/discovery_migrate.py",
+      "size": 3156,
+      "mtime_utc": "2025-08-19T03:12:21Z"
+    },
+    {
+      "path": "tools/env_sanity.py",
+      "size": 949,
+      "mtime_utc": "2025-08-18T19:47:19Z"
+    },
+    {
+      "path": "tools/force_discovery_emit.py",
+      "size": 3299,
+      "mtime_utc": "2025-08-19T03:12:20Z"
+    },
+    {
+      "path": "tools/grep_facade.sh",
+      "size": 63,
+      "mtime_utc": "2025-08-14T11:09:04Z"
+    },
+    {
+      "path": "tools/preflight_int_ha_control.sh",
+      "size": 1758,
+      "mtime_utc": "2025-08-19T14:01:41Z"
+    },
+    {
+      "path": "tools/project_status_audit.py",
+      "size": 9421,
+      "mtime_utc": "2025-08-18T20:21:35Z"
+    },
+    {
+      "path": "tools/prune_bb8_discovery.sh",
+      "size": 492,
+      "mtime_utc": "2025-08-18T19:47:19Z"
+    },
+    {
+      "path": "tools/prune_bb8_legacy_led.sh",
+      "size": 544,
+      "mtime_utc": "2025-08-19T00:59:46Z"
+    },
+    {
+      "path": "tools/qa_suite.sh",
+      "size": 1027,
+      "mtime_utc": "2025-08-15T03:36:31Z"
+    },
+    {
+      "path": "tools/scan_bb8_gatt.py",
+      "size": 2680,
+      "mtime_utc": "2025-08-18T19:55:55Z"
+    },
+    {
+      "path": "tools/stp4_diagnose.py",
+      "size": 5234,
+      "mtime_utc": "2025-08-18T19:47:19Z"
+    },
+    {
+      "path": "tools/strict_trace_check.py",
+      "size": 647,
+      "mtime_utc": "2025-08-15T03:33:39Z"
+    },
+    {
+      "path": "tools/trace_smoke_check.py",
+      "size": 2443,
+      "mtime_utc": "2025-08-18T19:55:55Z"
+    },
+    {
+      "path": "tools/verify_discovery.py",
+      "size": 5209,
+      "mtime_utc": "2025-08-19T02:42:47Z"
+    }
+  ]
+}

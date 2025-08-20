@@ -1,0 +1,124 @@
+# 2025-08-11-hotfix audit
+
+## 2025-08-11-hotfix add-on logs
+
+* Clean restart followed by a solid connect to MQTT: `rc: 0 (success)` and status marked **online** ✅
+* BLE adapter picked up: `mode: bleak, adapter: hci0` ✅
+* BB-8 MAC resolved from options/env: `C9:5A:63:6B:B5:4A` ✅
+* The doubled `ble_gateway_init` line is just duplicate logging (see below). Not harmful.
+
+## What the repo shows (spot checks)
+
+* **config.yaml**: `host_dbus: true`, `udev: true`, **defaults under `options:` present**, `devices: [/dev/hci0]` 👍
+
+  * Still `apparmor: false` and the profile has placeholders (fine to keep off until you finish it).
+* **Dockerfile**: now using `ARG BUILD_FROM` → `FROM $BUILD_FROM` 👍
+
+  * Still carries `LABEL io.hass.arch="aarch64"` (misleading for multi-arch builds).
+* **run.sh**: launches the Python module immediately (works), but there’s dead code left **after** the `exec` (even stray Python tokens). Won’t execute, but confusing.
+* **MQTT dispatcher**: has LWT (“offline”) and publishes “online” on connect 👍
+
+  * **No command subscriptions are wired** (no `attach_mqtt` anywhere).
+  * **Discovery isn’t actually published** on connect (a helper exists, but nothing calls it with a device\_id/name).
+* **Discovery payloads**: `light`, `button`, `number` implemented; no `sensor/binary_sensor/switch` yet (docs mention more than code publishes).
+* **Tests**: `test_mqtt_smoke.py` now targets `mqtt_dispatcher` 👍
+
+---
+
+@COPILOT PATCH INSTRUCTIONS
+
+## Priority fixes (highest → lowest)
+
+1. **Wire up MQTT command handling** — *Critical (functionality blocker)*
+   Right now you connect and go “online”, but nothing subscribes to `bb8/<id>/cmd/...`, so HA can’t control the bot. You’ve got two easy paths—pick one:
+
+   * **Add `attach_mqtt`** on your controller/bridge (preferred API; dispatcher already checks for it):
+
+     ```python
+     # bb8_core/ble_bridge.py (or controller.py)
+     class BLEBridge:
+         ...
+         def attach_mqtt(self, client, base_topic, qos=1, retain=True):
+             import json
+             from bb8_core.facade import Rgb
+             dev = self.target_mac.replace(":", "").lower()
+             base = f"bb8/{dev}"
+
+             def on_led(client, userdata, msg):
+                 data = json.loads(msg.payload or b"{}")
+                 r,g,b = int(data.get("r",0)), int(data.get("g",0)), int(data.get("b",0))
+                 self.core.set_main_led(r,g,b, None)
+                 client.publish(f"{base}/state/led", json.dumps({"r": r,"g": g,"b": b}), qos=qos, retain=retain)
+
+             def on_drive(client, userdata, msg):
+                 d = json.loads(msg.payload or b"{}")
+                 heading = int(d.get("heading_deg", 0)) % 360
+                 speed   = max(0, min(255, int(d.get("speed", 0))))
+                 dur_ms  = int(d.get("duration_ms", 0))
+                 self.core.roll(speed, heading, dur_ms/1000.0)
+                 client.publish(f"{base}/state/motion", json.dumps({"heading_deg": heading,"speed": speed}), qos=qos, retain=False)
+
+             def on_sleep(client, userdata, msg):
+                 d = json.loads(msg.payload or b"{}")
+                 self.core.sleep()
+                 client.publish(f"{base}/event/slept", "1", qos=qos, retain=False)
+
+             client.message_callback_add(f"{base}/cmd/led/set", on_led)
+             client.message_callback_add(f"{base}/cmd/drive",   on_drive)
+             client.message_callback_add(f"{base}/cmd/sleep",   on_sleep)
+             client.subscribe([
+                 (f"{base}/cmd/led/set", qos),
+                 (f"{base}/cmd/drive",   qos),
+                 (f"{base}/cmd/sleep",   qos),
+             ])
+     ```
+   * **OR fall back inside `mqtt_dispatcher`** when `attach_mqtt` is missing (inline handlers tied to `controller`).
+
+2. **Publish MQTT Discovery on connect** — *High (UX blocker)*
+   You already have `discovery_publish.publish_discovery`. Call it after you mark `online`:
+
+   ```python
+   # in mqtt_dispatcher.py, inside _on_connect after publish(... "online" ...)
+   from bb8_core.discovery_publish import publish_discovery
+   dev_id = (getattr(controller, "target_mac", None) or "bb8").replace(":", "").lower()
+   name   = os.environ.get("BB8_NAME", "BB-8")
+   publish_discovery(c, dev_id, name, retain=retain)
+   ```
+
+   Also consider adding the missing discovery entities you mention in docs (`presence`, `rssi`, `heartbeat`, `stop`, `power`) or trim the docs for now.
+
+3. **Clean up duplicate “gateway init” logging** — *Medium*
+   You log `ble_gateway_init` in **both** `BleGateway.__init__` and `bridge_controller`. Drop the second to avoid noise.
+
+4. **Tidy `run.sh`** — *Medium (maintenance)*
+   Keep it minimal to avoid confusion (you already parse options in Python):
+
+   ```bash
+   #!/usr/bin/with-contenv bash
+   set -euo pipefail
+   cd /app
+   echo "$(date -Is) [BB-8] Starting bridge controller…"
+   exec /opt/venv/bin/python3 -m bb8_core.bridge_controller
+   ```
+
+   (Remove the unused URL parsing + stray Python fragments.)
+
+5. **Dockerfile label** — *Low*
+   Drop `LABEL io.hass.arch="aarch64"` so the builder can tag per-arch correctly.
+
+6. **AppArmor** — *Low (when you’re ready)*
+   Keep `apparmor: false` until the profile is real. When enabling, include:
+
+   * `/run/dbus/system_bus_socket` (r), `/dev/hci0` (rw), `/sys/class/bluetooth/**` (r),
+   * the Python and bash paths you actually exec.
+
+---
+
+## What success looks like
+
+* The first block is a normal, **graceful shutdown**: `signal: 15` + `mqtt_disconnected rc: success`.
+* Fresh start immediately after; versions probed; **MQTT connected**; **LWT set**; **status → online**.
+* After implementing ① + ②, we should next see:
+
+  * `discovery: published ...` lines, and
+  * state echoes when you publish to `bb8/<id>/cmd/...`.

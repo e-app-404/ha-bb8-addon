@@ -1,0 +1,132 @@
+diff --git a/bb8_core/bridge_controller.py b/bb8_core/bridge_controller.py
+index f9a5baf..8f0fb1e 100644
+--- a/bb8_core/bridge_controller.py
++++ b/bb8_core/bridge_controller.py
+@@ -6,12 +6,13 @@ import json
+ import threading
+ from typing import Any, Optional, Callable
+ import logging
+ from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+ from . import ble_link  # first-party
+-from .mqtt_dispatcher import ensure_dispatcher_started
++from .mqtt_dispatcher import ensure_dispatcher_started, get_client, register_subscription
+
+ log = logging.getLogger(__name__)
+
+-# NOTE: An MQTT client named `client` must be set (injected) by the app bootstrap.
+-# If your integration uses a different symbol, adjust the references below.
+-client = None  # type: ignore[var-annotated]
++# Client lookup when publishing; avoids import-order issues.
++def _client_or_none():
++    c = get_client()
++    return c
+
+ _ble_loop: Optional[asyncio.AbstractEventLoop] = None
+ _ble_inited: bool = False
+@@ -54,37 +55,72 @@ def on_power_set(payload: Any) -> None:
+-    publish_device_echo(client, STATE_TOPICS["power"], payload)
++    c = _client_or_none()
++    if not c:
++        log.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["power"])
++        return
++    publish_device_echo(c, STATE_TOPICS["power"], payload)
+     log.info("echo_pub topic=%s retain=false qos=1 source=device",
+              STATE_TOPICS["power"])
+
+ def on_stop() -> None:
+-    publish_device_echo(client, STATE_TOPICS["stop"], "pressed")
++    c = _client_or_none()
++    if not c:
++        log.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["stop"])
++        return
++    publish_device_echo(c, STATE_TOPICS["stop"], "pressed")
+     log.info("echo_pub topic=%s retain=false qos=1 source=device",
+              STATE_TOPICS["stop"])
+
+ def on_sleep() -> None:
+-    publish_device_echo(client, STATE_TOPICS["sleep"], "idle")
++    c = _client_or_none()
++    if not c:
++        log.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["sleep"])
++        return
++    publish_device_echo(c, STATE_TOPICS["sleep"], "idle")
+     log.info("echo_pub topic=%s retain=false qos=1 source=device",
+              STATE_TOPICS["sleep"])
+
+ def on_drive() -> None:
+     # Drive button semantics (pressed)
+-    publish_device_echo(client, STATE_TOPICS["drive"], "pressed")
++    c = _client_or_none()
++    if not c:
++        log.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["drive"])
++        return
++    publish_device_echo(c, STATE_TOPICS["drive"], "pressed")
+     log.info("echo_pub topic=%s retain=false qos=1 source=device",
+              STATE_TOPICS["drive"])
+
+ def on_heading(value: float) -> None:
+     global _last_heading
+     _last_heading = value
+-    publish_device_echo(client, STATE_TOPICS["heading"], value)
++    c = _client_or_none()
++    if not c:
++        log.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["heading"])
++        return
++    publish_device_echo(c, STATE_TOPICS["heading"], value)
+     log.info("echo_pub topic=%s retain=false qos=1 source=device",
+              STATE_TOPICS["heading"])
+
+ def on_speed(value: float) -> None:
+     global _last_speed
+     _last_speed = value
+-    publish_device_echo(client, STATE_TOPICS["speed"], value)
++    c = _client_or_none()
++    if not c:
++        log.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["speed"])
++        return
++    publish_device_echo(c, STATE_TOPICS["speed"], value)
+     log.info("echo_pub topic=%s retain=false qos=1 source=device",
+              STATE_TOPICS["speed"])
+
+ def on_led_set(r: int, g: int, b: int) -> None:
+     payload = json.dumps({"r": r, "g": g, "b": b})
+-    # Command is on /led/set; state is on /led/state
+-    client.publish(CMD_TOPICS["led"][0], payload=payload, qos=1, retain=False)
+-    client.publish(STATE_TOPICS["led"], payload=payload, qos=1, retain=False)
++    # Command is on /led/set; state is on /led/state
++    c = _client_or_none()
++    if not c:
++        log.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["led"])
++        return
++    c.publish(CMD_TOPICS["led"][0], payload=payload, qos=1, retain=False)
++    c.publish(STATE_TOPICS["led"], payload=payload, qos=1, retain=False)
+     log.info("echo_pub topic=%s retain=false qos=1 payload=%s",
+              STATE_TOPICS["led"], payload)
+@@
+ def shutdown_ble() -> None:
+     """Called on process termination to avoid pending tasks."""
+     ble_link.stop()
+
++# ---- Register MQTT command handlers (idempotent via dispatcher) -------------
++def wire_mqtt_handlers() -> None:
++    for t in CMD_TOPICS["power"]:
++        register_subscription(t, lambda s: on_power_set(s))
++    for t in CMD_TOPICS["stop"]:
++        register_subscription(t, lambda s: on_stop())
++    for t in CMD_TOPICS["sleep"]:
++        register_subscription(t, lambda s: on_sleep())
++    for t in CMD_TOPICS["drive"]:
++        register_subscription(t, lambda s: on_drive())
++    for t in CMD_TOPICS["heading"]:
++        register_subscription(t, lambda s: on_heading(float(s) if s else 0.0))
++    for t in CMD_TOPICS["speed"]:
++        register_subscription(t, lambda s: on_speed(float(s) if s else 0.0))
++    for t in CMD_TOPICS["led"]:
++        register_subscription(
++            t,
++            lambda s: (lambda d: on_led_set(int(d.get("r", 0)), int(d.get("g", 0)), int(d.get("b", 0))))(json.loads(s) if s else {}),
++        )
++
++# Eagerly start dispatcher and wire handlers on import
++ensure_dispatcher_started()
++wire_mqtt_handlers()

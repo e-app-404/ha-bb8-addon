@@ -1,0 +1,43 @@
+{
+  "id": "EM-STP5-UX-CMD",
+  "objective": "Introduce basic command UX (LED command path) and Home Assistant card polish without regressing STP4 strict or INT-HA-CONTROL.",
+  "target_paths": [
+    "addon/config.yaml",
+    "addon/bb8_core/bridge_controller.py",
+    "addon/bb8_core/facade.py",
+    "addon/bb8_core/bb8_presence_scanner.py",
+    "tools/verify_commands.py",
+    "reports/checkpoints",
+    "reports/preflight"
+  ],
+  "acceptance": {
+    "must_meet": [
+      "Command topic(s) exist and are handled (e.g., bb8/led/cmd → echo to bb8/led/state).",
+      "Post-broker-restart, command handling resumes and state stays consistent.",
+      "HA card shows presence, RSSI, and (if LED enabled) command control grouped under same device block.",
+      "No duplicate discovery owners; telemetry unchanged.",
+      "LED/state remains strict {\"r\",\"g\",\"b\"}; no \"source\" field."
+    ],
+    "evidence_expected": [
+      "CMD_BEFORE.log",
+      "CMD_AFTER_RESTART.log",
+      "CMD_LED_OPTIONAL.log"
+    ],
+    "governance": {
+      "empirical_validation": true,
+      "binary_acceptance": true,
+      "evidence_tolerance_level": 0,
+      "confidence_minimum": 0.85
+    }
+  },
+  "risk": [
+    "Command echo introduces race with availability topics.",
+    "HA card templating diverges from strict schema.",
+    "Broker restart loses in-flight command or leaves stale state."
+  ],
+  "rollback": [
+    "Disable LED command path; keep discovery default OFF.",
+    "Revert HA card template changes.",
+    "Restore baseline from INT-HA-CONTROL checkpoint."
+  ]
+}

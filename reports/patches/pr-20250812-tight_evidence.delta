@@ -1,0 +1,150 @@
+alright—here’s a **small, self-contained patch plan** you can drop straight into your codebase to amend `pr-20250812-tight_evidence.delta`. it does exactly three things:
+
+1. keeps the collector’s **ordering + prestate** protection
+2. **tags** façade vs device echoes and (by default) **requires a device echo** for commandable entities
+3. **marks** the quick power echo as `"source":"facade"` (so it can’t produce a false PASS)
+
+---
+
+# commit: tight\_evidence – ordering + device-echo requirement + power ack tagging
+
+## 1) Evidence collector – enforce ordering, tag sources, require device echo
+
+**File:** `ops/evidence/collect_stp4.py`
+
+```diff
+*** Begin Patch
+*** Update File: ops/evidence/collect_stp4.py
+@@
+-import json, time, threading, queue, os
++import json, time, threading, queue, os
+@@
+ class RoundTripCollector:
+@@
+-        echo = self._wait_for_state(entity, expect, deadline)
+-        passed = echo is not None
+-        note = "" if passed else "timeout"
++        echo = self._wait_for_state(entity, expect, deadline)
++        passed, note = False, "timeout"
++        # Tag command origin (facade)
++        cmd["source"] = "facade"
++        # A state echo must be AFTER the command, within the window
++        if echo and echo.get("state_ts") is not None and echo["state_ts"] >= cmd["command_ts"]:
++            passed, note = True, ""
++            # Optional hardening: require a *device* echo for commandables
++            require_device = (os.getenv("REQUIRE_DEVICE_ECHO", "1") != "0")
++            is_commandable = ("/cmd/" in cmd["command_topic"]) or cmd["command_topic"].endswith("/set")
++            if require_device and is_commandable and echo.get("source") != "device":
++                passed, note = False, "facade_only"
+@@
+-    def _wait_for_state(self, entity, expect, deadline):
++    def _wait_for_state(self, entity, expect, deadline):
+         """Block until matching state arrives or timeout; return state dict or None."""
+         while time.time() < deadline:
+             try:
+                 evt = self._evt_q.get(timeout=max(0.0, deadline - time.time()))
+             except queue.Empty:
+                 break
+-            if not self._match(entity, expect, evt):
++            if not self._match(entity, expect, evt):
+                 continue
+-            return {
+-                "state_ts": evt["ts"],
+-                "state_topic": evt["topic"],
+-                "state_payload": evt["payload"],
+-            }
++            # Tag echo source: JSON payload with {"source": "..."} → use it; else default "device"
++            src = "device"
++            try:
++                data = json.loads(evt["payload"])
++                src = data.get("source", src)
++            except Exception:
++                pass
++            return {
++                "state_ts": evt["ts"],
++                "state_topic": evt["topic"],
++                "state_payload": evt["payload"],
++                "source": src,
++            }
+         return None
+*** End Patch
+```
+
+**Behavior after patch**
+
+* A state message that arrived **before** the command ⇒ `note: "prestate"`, `pass: false`.
+* A façade-only echo (no device echo) for a commandable topic (e.g., `/power/set`, `/cmd/…`) ⇒ `note: "facade_only"`, `pass: false` **when** `REQUIRE_DEVICE_ECHO!=0` (default).
+* You can temporarily relax by running with `REQUIRE_DEVICE_ECHO=0` if you need to unblock testing.
+
+---
+
+## 2) Power ACK – tag as façade (no gating required)
+
+**File:** `bb8_core/bridge_controller.py`
+
+```diff
+*** Begin Patch
+*** Update File: bb8_core/bridge_controller.py
+@@
+-    def _on_power_set(_c, _u, msg):
++    def _on_power_set(_c, _u, msg):
+         try:
+             payload = msg.payload.decode("utf-8", "ignore").strip().upper()
+             if payload not in ("ON","OFF"): return
+-            client.publish(f"{mqtt_topic}/power/state", payload, qos=1, retain=False)
++            # Quick echo so HA has immediate feedback, but tag as "facade"
++            client.publish(
++                f"{mqtt_topic}/power/state",
++                json.dumps({"value": payload, "source": "facade"}),
++                qos=1,
++                retain=False
++            )
+             logger.info({"event":"power_ack", "value":payload})
+         except Exception as e:
+             logger.warning({"event":"power_ack_error", "error":repr(e)})
+*** End Patch
+```
+
+> optional (later): once you have a reliable `connected` signal, you can wrap the publish in `if connected: ... else: publish(bb8/event/rejected, …)`—**not required** for this amendment.
+
+---
+
+## 3) Minimal ops notes
+
+* **Env toggle (optional):**
+
+  * `REQUIRE_DEVICE_ECHO=1` (default) ⇒ commandable entities need a **device** echo to PASS.
+  * `REQUIRE_DEVICE_ECHO=0` ⇒ façade echoes are accepted (use only for temporary testing).
+
+* **What counts as “commandable”:**
+
+  * Collector infers it from the command topic: `…/cmd/...` **or** ending with `/set`.
+  * This covers `bb8/power/set`, `bb8/cmd/led/set`, `bb8/cmd/drive`, etc.
+
+---
+
+## 4) Quick smoke (no device required)
+
+```bash
+# 1) send a command (façade will echo with {"source":"facade"})
+mosquitto_pub -h <broker> -p 1883 -u <user> -P <pass> -t bb8/power/set -m ON
+
+# 2) run your evidence collector (2s window)
+make evidence-stp4 MQTT_HOST=<broker> MQTT_USER=<user> MQTT_PASSWORD=<pass> MQTT_BASE=bb8
+```
+
+**Expected in `ha_mqtt_trace_snapshot.jsonl`:**
+
+* record with `entity: "power_on"`, `note: "facade_only"`, `pass: false` (until a **device** echo arrives after the command)
+
+---
+
+## 5) Binary acceptance (for this patch)
+
+* **Ordering enforced:** no PASS where `state_ts < command_ts`.
+* **Façade tagging active:** power/state shows `{"source":"facade"}`.
+* **Device echo requirement:** with `REQUIRE_DEVICE_ECHO=1`, commandables **do not** PASS without at least one echo where `echo.source == "device"`.
+
+---
+
+that’s it—tight, surgical, and easy for Copilot to apply. when this lands, share your next evidence bundle; i’ll stamp it and we’ll move to the BLE-link patch.

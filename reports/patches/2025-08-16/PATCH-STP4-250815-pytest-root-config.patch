@@ -1,0 +1,27 @@
+# Patch ID: PATCH-STP4-250815-pytest-root-config
+diff --git a/pytest.ini b/pytest.ini
+new file mode 100644
+index 0000000..aaa1111
+--- /dev/null
++++ b/pytest.ini
+@@ -0,0 +1,20 @@
++[pytest]
++addopts = -q --disable-warnings
++python_files = test_*.py
++testpaths = tests
++norecursedirs =
++    .git
++    .tox
++    .venv
++    __pycache__
++    .*
++    build
++    dist
++    services.d
++    reports
++asyncio_mode = auto
++log_cli = true
++log_cli_level = INFO
++log_auto_indent = True
++filterwarnings =
++    ignore::DeprecationWarning

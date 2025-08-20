@@ -1,0 +1,40 @@
+# Patch ID: PATCH-STP4-250816-loopback-coercion
+diff --git a/bb8_core/mqtt_dispatcher.py b/bb8_core/mqtt_dispatcher.py
+index 8d9f2c3..b6b87ad 100644
+--- a/bb8_core/mqtt_dispatcher.py
++++ b/bb8_core/mqtt_dispatcher.py
+@@ -10,6 +10,7 @@ from .addon_config import CONFIG, CONFIG_SOURCE, init_config
+ import json
+ from .common import CMD_TOPICS, STATE_TOPICS
+
+ log = logging.getLogger(__name__)
++_LOOPBACKS = {"localhost", "127.0.0.1"}
+
+ _DISPATCHER_STARTED: bool = False
+ _START_KEY: Optional[Tuple[str, int, str, str, bool]] = None  # (host,port,topic,client_id,user_present)
+@@ -93,6 +94,21 @@ def _guarded_start_mqtt_dispatcher(
+     cid = client_id or CONFIG.get("mqtt_client_id") or "bb8-addon"
+     user = username or CONFIG.get("MQTT_USERNAME") or CONFIG.get("mqtt_username")
+     pwd = password or CONFIG.get("MQTT_PASSWORD") or CONFIG.get("mqtt_password")
+
++    # If host is loopback but CONFIG specifies a non-loopback host, coerce it.
++    cfg_host = CONFIG.get("MQTT_HOST") or CONFIG.get("mqtt_broker")
++    if host in _LOOPBACKS and cfg_host and str(cfg_host) not in _LOOPBACKS:
++        log.warning(
++            "Coercing loopback MQTT host '%s' to configured host '%s' "
++            "(source=%s).", host, cfg_host, CONFIG_SOURCE
++        )
++        host = str(cfg_host)
++
++    # Normalize port if someone passed a str
++    try:
++        port = int(port)
++    except Exception:  # noqa: BLE001
++        log.warning("Invalid mqtt_port=%r; falling back to 1883", port)
++        port = 1883
++
+     key = _compute_key(host, port, topic, cid, user)
+
+     if _DISPATCHER_STARTED:
+         if _START_KEY == key:
+             log.info(

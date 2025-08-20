@@ -1,0 +1,103 @@
+diff --git a/bb8_core/addon_config.py b/bb8_core/addon_config.py
+index 9c0d7ef..f1a7b33 100644
+--- a/bb8_core/addon_config.py
++++ b/bb8_core/addon_config.py
+@@ -1,6 +1,7 @@
+ from __future__ import annotations
+
+ import json
++import math
+ import logging
+ import os
+ from pathlib import Path
+@@ -118,28 +119,77 @@ def load_config() -> Tuple[Dict[str, Any], Optional[Path]]:
+     if opts:
+         merged.update(opts)
+
+-    # ---- Environment overlay (authoritative if provided) ----
+-    env_over = {
+-        "MQTT_HOST": os.environ.get("MQTT_HOST"),
+-        "MQTT_PORT": os.environ.get("MQTT_PORT"),
+-        "MQTT_USERNAME": os.environ.get("MQTT_USERNAME"),
+-        "MQTT_PASSWORD": os.environ.get("MQTT_PASSWORD"),
+-        "MQTT_BASE": os.environ.get("MQTT_BASE"),
+-    }
+-    for k, v in env_over.items():
+-        if v not in (None, ""):
+-            if k == "MQTT_PORT":
+-                try:
+-                    v = int(v)  # type: ignore[assignment]
+-                except Exception:  # noqa: BLE001
+-                    LOG.warning("[CONFIG] Invalid MQTT_PORT in env: %s", v)
+-                    continue
+-            merged[k] = v  # type: ignore[index]
+-
+-    # ---- Sane defaults if still absent ----
+-    merged.setdefault("MQTT_HOST", "127.0.0.1")
+-    merged.setdefault("MQTT_PORT", 1883)
+-    merged.setdefault("MQTT_BASE", "bb8")
++    # ---- Helper: first non-empty value ----
++    def _first(*vals):
++        for v in vals:
++            if v is not None and v != "":
++                return v
++        return None
++
++    # ---- Resolve MQTT host with precedence: ENV -> options.json -> YAML -> fallback ----
++    env_host = os.environ.get("MQTT_HOST")
++    host_from_opts = merged.get("mqtt_broker") or merged.get("MQTT_HOST")
++    host_from_yaml = (yml or {}).get("mqtt_broker") if yml else None
++    final_host = _first(env_host, host_from_opts, host_from_yaml, "127.0.0.1")
++
++    # ---- Resolve MQTT port with precedence: ENV -> options.json -> YAML -> fallback ----
++    def _as_int(x, default):
++        if x in (None, ""):
++            return default
++        try:
++            return int(x)
++        except Exception:  # noqa: BLE001
++            LOG.warning("[CONFIG] Invalid MQTT port value: %s", x)
++            return default
++
++    env_port = os.environ.get("MQTT_PORT")
++    port_from_opts = merged.get("mqtt_port") or merged.get("MQTT_PORT")
++    port_from_yaml = (yml or {}).get("mqtt_port") if yml else None
++    final_port = _as_int(_first(env_port, port_from_opts, port_from_yaml), 1883)
++
++    # ---- Resolve MQTT base/topic prefix with precedence: ENV -> options.json -> YAML -> fallback ----
++    env_base = os.environ.get("MQTT_BASE")
++    base_from_opts = merged.get("mqtt_topic_prefix") or merged.get("MQTT_BASE")
++    base_from_yaml = (yml or {}).get("mqtt_topic_prefix") if yml else None
++    final_base = _first(env_base, base_from_opts, base_from_yaml, "bb8")
++
++    # ---- Credentials (env overrides if provided) ----
++    final_user = _first(os.environ.get("MQTT_USERNAME"), merged.get("mqtt_username"), (yml or {}).get("mqtt_username") if yml else None)
++    final_pass = _first(os.environ.get("MQTT_PASSWORD"), merged.get("mqtt_password"), (yml or {}).get("mqtt_password") if yml else None)
++
++    # ---- Backfill synonyms so all callers see the same values ----
++    merged["MQTT_HOST"] = final_host
++    merged["mqtt_broker"] = final_host
++    merged["MQTT_PORT"] = final_port
++    merged["mqtt_port"] = final_port
++    merged["MQTT_BASE"] = final_base
++    merged["mqtt_topic_prefix"] = final_base
++    if final_user is not None:
++        merged["MQTT_USERNAME"] = final_user
++        merged["mqtt_username"] = final_user
++    if final_pass is not None:
++        merged["MQTT_PASSWORD"] = final_pass
++        merged["mqtt_password"] = final_pass
++
++    # (Optional) compact debug of resolved endpoints
++    log.debug(
++        "[CONFIG] MQTT resolved host=%s port=%s base=%s user=%s (precedence: ENV > options.json > YAML > fallback)",
++        merged["MQTT_HOST"],
++        merged["MQTT_PORT"],
++        merged["MQTT_BASE"],
++        bool(final_user),
++    )
+
+     source = opts_src or yml_src
+     if not merged:
+         log.error("[CONFIG] No configuration found in options.json or YAML.")
+         return {}, None

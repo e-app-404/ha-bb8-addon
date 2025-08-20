@@ -1,0 +1,40 @@
+PR PATCH 20250812-TELEMETRY
+
+---
+
+## Patch Plan: Fix Telemetry and BLE Handler Errors for STP4 Evidence
+
+### 1. Telemetry Loop: `TypeError("'NoneType' object is not callable")`
+- **Root Cause:** The telemetry loop is being started, but a required callback or function is `None`.
+- **Actions:**
+  - Review `TelemetryLoop` initialization in bridge_controller.py and `telemetry.py`.
+  - Ensure all required arguments (such as callback functions for presence/RSSI publishing) are provided and not `None`.
+  - Add defensive checks or default no-op callbacks if needed.
+
+### 2. BLE Handler: `AttributeError("'BleGateway' object has no attribute 'scan_for_device'")`
+- **Root Cause:** The code is calling `scan_for_device` on a `BleGateway` instance, but this method does not exist.
+- **Actions:**
+  - Check where `scan_for_device` is called (likely in power handler or device detection logic).
+  - Implement a stub or real `scan_for_device` method in `BleGateway` (even if it just logs and returns `None` for now).
+  - Alternatively, refactor the code to not call this method if not needed.
+
+### 3. General Robustness
+- **Actions:**
+  - Add logging for all handler and telemetry errors to aid future debugging.
+  - Ensure all MQTT command handlers and state publishers are initialized and not `None`.
+  - Add unit tests or smoke tests for MQTT roundtrip and BLE handler surface.
+
+### 4. Validation
+- **Actions:**
+  - After patching, restart the add-on and verify in logs:
+    - No more `TypeError` or `AttributeError`.
+    - Telemetry and BLE events are being published.
+  - Re-run the evidence collector and confirm `"PASS"` in the manifest.
+
+---
+
+**Summary of Code Changes:**
+- [ ] Update `TelemetryLoop` usage to ensure all callbacks are valid.
+- [ ] Implement or stub `scan_for_device` in `BleGateway`.
+- [ ] Add error handling/logging for handler and telemetry failures.
+- [ ] Test and validate with evidence collector.

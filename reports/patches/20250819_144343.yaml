@@ -1,0 +1,13 @@
+delta_contract_addendum:
+  id: "DC-INT-HA-CONTROL-2025-08-19-R1"
+  change_type: "documentation"
+  scope: "Document LED discovery default in addon/config.yaml"
+  action_needed:
+    - file: "addon/config.yaml"
+      operation: "insert_under_key"
+      key_path: ["options"]
+      snippet: "publish_led_discovery: false  # (runtime default: PUBLISH_LED_DISCOVERY=0)"
+  acceptance_criteria:
+    - "Line present under options: with value false"
+    - "No other toggles modified"
+  status: "pending"

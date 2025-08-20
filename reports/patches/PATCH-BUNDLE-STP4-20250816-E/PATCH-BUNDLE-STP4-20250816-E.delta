@@ -1,0 +1,188 @@
+
+
+diff --git a/bb8_core/addon_config.py b/bb8_core/addon_config.py
+index f1a7b33..a3c92d1 100644
+--- a/bb8_core/addon_config.py
++++ b/bb8_core/addon_config.py
+@@ -169,6 +169,13 @@ def load_config() -> Tuple[Dict[str, Any], Optional[Path]]:
+     if final_pass is not None:
+         merged["MQTT_PASSWORD"] = final_pass
+         merged["mqtt_password"] = final_pass
++
++    # ---- Availability topic (scanner is the single owner) ----
++    # Bridge must NOT advertise availability when scanner_owns_telemetry is true.
++    avail = f"{merged['MQTT_BASE']}/availability/scanner"
++    merged["availability_topic_scanner"] = avail
++    merged["availability_payload_online"] = "online"
++    merged["availability_payload_offline"] = "offline"
+
+     # (Optional) compact debug of resolved endpoints
+     log.debug(
+         "[CONFIG] MQTT resolved host=%s port=%s base=%s user=%s (precedence: ENV > options.json > YAML > fallback)",
+         merged["MQTT_HOST"],
+diff --git a/bb8_core/mqtt_dispatcher.py b/bb8_core/mqtt_dispatcher.py
+index 2c4b7ef..c9b1f82 100644
+--- a/bb8_core/mqtt_dispatcher.py
++++ b/bb8_core/mqtt_dispatcher.py
+@@ -7,6 +7,7 @@ from typing import Any, Optional, Tuple, Callable, List
+ from .addon_config import CONFIG, CONFIG_SOURCE, init_config
+ import json
+ from .common import CMD_TOPICS, STATE_TOPICS
++from uuid import uuid5, NAMESPACE_DNS
+
+ log = logging.getLogger(__name__)
+ _LOOPBACKS = {"localhost", "127.0.0.1"}
+@@ -148,6 +149,7 @@ def _guarded_start_mqtt_dispatcher(
+     _DISPATCHER_STARTED = True
+     _START_KEY = key
+     # Try to capture the paho client instance from the original starter's return value.
++    # (Existing logic retained)
+     global CLIENT
+     CLIENT = None
+     try:
+@@ -162,6 +164,9 @@ def _guarded_start_mqtt_dispatcher(
+
+     # Apply any pending subscriptions now that we (likely) have a client.
+     _apply_pending_subscriptions()
++
++    # Publish discovery once, if enabled
++    _maybe_publish_bb8_discovery()
+     return res
+@@
+ def register_subscription(topic: str, handler: Callable[[str], None]) -> None:
+@@
+     if not _bind_subscription(topic, handler):
+         _PENDING_SUBS.append((topic, handler))
++
++# -----------------------------------------------------------------------------
++# Stable discovery for HA (gated)
++# -----------------------------------------------------------------------------
++def _norm_mac(s: Optional[str]) -> str:
++    if not s:
++        return "unknown"
++    return s.replace(":", "").lower()
++
++
++def _device_block() -> dict[str, Any]:
++    did = f"bb8-{_norm_mac(CONFIG.get('bb8_mac'))}"
++    return {
++        "ids": [did],
++        "name": "BB-8",
++        "mf": "Sphero",
++    }
++
++
++def publish_bb8_discovery(publish_fn) -> None:
++    ha_prefix = CONFIG.get("ha_discovery_topic", "homeassistant")
++    avail_t = CONFIG.get("availability_topic_scanner", f"{CONFIG.get('MQTT_BASE','bb8')}/availability/scanner")
++    pa = CONFIG.get("availability_payload_online", "online")
++    po = CONFIG.get("availability_payload_offline", "offline")
++    qos = int(CONFIG.get("qos", 1))
++    dev = _device_block()
++
++    def cfg(topic, payload):
++        publish_fn(topic, json.dumps(payload), True)
++        log.info("Published discovery: %s", topic)
++
++    # Unique IDs (stable, not name-derived)
++    uid = {
++        "presence": "bb8_presence",
++        "rssi": "bb8_rssi",
++        "power": "bb8_power",
++        "heading": "bb8_heading",
++        "speed": "bb8_speed",
++        "drive": "bb8_drive",
++        "sleep": "bb8_sleep",
++        "led": "bb8_led",
++    }
++
++    # Presence (binary_sensor)
++    cfg(f"{ha_prefix}/binary_sensor/{uid['presence']}/config", {
++        "name": "BB-8 Presence",
++        "uniq_id": uid["presence"],
++        "stat_t": f"{CONFIG['MQTT_BASE']}/presence/state",
++        "avty_t": avail_t, "pl_avail": pa, "pl_not_avail": po,
++        "qos": qos, "dev": dev,
++    })
++
++    # RSSI (sensor)
++    cfg(f"{ha_prefix}/sensor/{uid['rssi']}/config", {
++        "name": "BB-8 RSSI",
++        "uniq_id": uid["rssi"],
++        "stat_t": f"{CONFIG['MQTT_BASE']}/rssi/state",
++        "unit_of_meas": "dBm",
++        "avty_t": avail_t, "pl_avail": pa, "pl_not_avail": po,
++        "qos": qos, "dev": dev,
++    })
++
++    # Power (switch)
++    cfg(f"{ha_prefix}/switch/{uid['power']}/config", {
++        "name": "BB-8 Power",
++        "uniq_id": uid["power"],
++        "cmd_t": CMD_TOPICS["power"][0],
++        "stat_t": STATE_TOPICS["power"],
++        "avty_t": avail_t, "pl_avail": pa, "pl_not_avail": po,
++        "qos": qos, "dev": dev,
++    })
++
++    # Heading (number)
++    cfg(f"{ha_prefix}/number/{uid['heading']}/config", {
++        "name": "BB-8 Heading",
++        "uniq_id": uid["heading"],
++        "cmd_t": CMD_TOPICS["heading"][0],
++        "stat_t": STATE_TOPICS["heading"],
++        "min": 0, "max": 359, "step": 1,
++        "avty_t": avail_t, "pl_avail": pa, "pl_not_avail": po,
++        "qos": qos, "dev": dev,
++    })
++
++    # Speed (number)
++    cfg(f"{ha_prefix}/number/{uid['speed']}/config", {
++        "name": "BB-8 Speed",
++        "uniq_id": uid["speed"],
++        "cmd_t": CMD_TOPICS["speed"][0],
++        "stat_t": STATE_TOPICS["speed"],
++        "min": 0, "max": 255, "step": 1,
++        "avty_t": avail_t, "pl_avail": pa, "pl_not_avail": po,
++        "qos": qos, "dev": dev,
++    })
++
++    # Drive (button)
++    cfg(f"{ha_prefix}/button/{uid['drive']}/config", {
++        "name": "Drive",
++        "uniq_id": uid["drive"],
++        "cmd_t": CMD_TOPICS["drive"][0],
++        "avty_t": avail_t, "pl_avail": pa, "pl_not_avail": po,
++        "qos": qos, "dev": dev,
++    })
++
++    # Sleep (button)
++    cfg(f"{ha_prefix}/button/{uid['sleep']}/config", {
++        "name": "Sleep",
++        "uniq_id": uid["sleep"],
++        "cmd_t": CMD_TOPICS["sleep"][0],
++        "avty_t": avail_t, "pl_avail": pa, "pl_not_avail": po,
++        "qos": qos, "dev": dev,
++    })
++
++    # LED (light, json schema)
++    cfg(f"{ha_prefix}/light/{uid['led']}/config", {
++        "name": "LED",
++        "uniq_id": uid["led"],
++        "schema": "json",
++        "cmd_t": CMD_TOPICS["led"][0],
++        "stat_t": STATE_TOPICS["led"],
++        "rgb": True,
++        "avty_t": avail_t, "pl_avail": pa, "pl_not_avail": po,
++        "qos": qos, "dev": dev,
++    })
++
++
++def _maybe_publish_bb8_discovery() -> None:
++    if not CONFIG.get("dispatcher_discovery_enabled", False):
++        return
++    if CLIENT is None:
++        return
++    def _pub(topic: str, payload: str, retain: bool) -> None:
++        CLIENT.publish(topic, payload=payload, qos=int(CONFIG.get("qos",1)), retain=retain)
++    publish_bb8_discovery(_pub)

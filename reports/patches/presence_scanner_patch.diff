@@ -1,0 +1,252 @@
+diff --git a/addons/local/beep_boop_bb8/bb8_presence_scanner.py b/addons/local/beep_boop_bb8/bb8_presence_scanner.py
+index 2b3a1a1..9e42b9b 100755
+--- a/addons/local/beep_boop_bb8/bb8_presence_scanner.py
++++ b/addons/local/beep_boop_bb8/bb8_presence_scanner.py
+@@ -1,56 +1,140 @@
+ # bb8_presence_scanner.py
+ # Daemon: Periodically scans for BB-8, publishes presence and RSSI to MQTT
+
+
+ import argparse
+ import asyncio
+ from bleak import BleakScanner
+ import paho.mqtt.publish as publish
+ import os
+ import logging
++import json
++import time
++from pathlib import Path
++
++MAPPING_PATH = Path("/config/addons/local/beep_boop_bb8/ops/facade_mapping_table.json")
++AVAIL_TOPIC = "bb8/status"
+
+ parser = argparse.ArgumentParser(description="BB-8 BLE presence scanner and MQTT publisher")
+ parser.add_argument("--bb8_name", default=os.getenv("BB8_NAME", "BB-8"), help="BB-8 BLE name")
+ parser.add_argument("--scan_interval", type=int, default=int(os.getenv("BB8_SCAN_INTERVAL", "10")), help="Scan interval in seconds")
+ parser.add_argument("--mqtt_host", default=os.getenv("MQTT_HOST", "localhost"), help="MQTT broker host")
+ parser.add_argument("--mqtt_user", default=os.getenv("MQTT_USER"), help="MQTT username")
+ parser.add_argument("--mqtt_password", default=os.getenv("MQTT_PASSWORD"), help="MQTT password")
++parser.add_argument("--print", action="store_true", help="Print MQTT discovery payloads and exit")
++parser.add_argument("--once", action="store_true", help="Run one scan cycle and exit (no loop)")
++parser.add_argument("--json", action="store_true", help="Print scan results as JSON")
++parser.add_argument("--verbose", "-v", action="store_true", help="Verbose tick output")
++parser.add_argument("--quiet", "-q", action="store_true", help="Suppress periodic tick output")
+ args = parser.parse_args()
+
+ BB8_NAME = args.bb8_name
+ SCAN_INTERVAL = args.scan_interval
+ MQTT_HOST = args.mqtt_host
+ MQTT_USER = args.mqtt_user
+ MQTT_PASSWORD = args.mqtt_password
+
+ logging.basicConfig(level=logging.INFO)
+ logger = logging.getLogger("bb8_presence_scanner")
+
+-def publish_discovery():
+-    # MQTT Discovery for presence
+-    presence_payload = {
+-        "name": "BB-8 Presence",
+-        "unique_id": "bb8_presence_001",
+-        "state_topic": "bb8/sensor/presence",
+-        "payload_on": "on",
+-        "payload_off": "off",
+-        "device_class": "connectivity"
+-    }
+-    publish.single(
+-        "homeassistant/binary_sensor/bb8_presence/config",
+-        payload=str(presence_payload).replace("'", '"'),
+-        hostname=MQTT_HOST,
+-        auth={"username": MQTT_USER, "password": MQTT_PASSWORD} if MQTT_USER and MQTT_PASSWORD else None
+-    )
+-    # MQTT Discovery for RSSI
+-    rssi_payload = {
+-        "name": "BB-8 RSSI",
+-        "unique_id": "bb8_rssi_001",
+-        "state_topic": "bb8/sensor/rssi",
+-        "unit_of_measurement": "dBm"
+-    }
+-    publish.single(
+-        "homeassistant/sensor/bb8_rssi/config",
+-        payload=str(rssi_payload).replace("'", '"'),
+-        hostname=MQTT_HOST,
+-        auth={"username": MQTT_USER, "password": MQTT_PASSWORD} if MQTT_USER and MQTT_PASSWORD else None
+-    )
++def _load_mapping():
++    try:
++        if MAPPING_PATH.exists():
++            return json.loads(MAPPING_PATH.read_text())
++    except Exception as e:
++        logger.warning("Failed to read mapping %s: %s", MAPPING_PATH, e)
++    return {}
++
++def _slug(s: str) -> str:
++    return "".join(ch.lower() if ch.isalnum() else "_" for ch in (s or "")).strip("_")
++
++def _device_block(name: str, mac: str, mapping: dict) -> dict:
++    """
++    Build a HA 'device' block. Only return it when it contains identifiers and/or connections.
++    Avoids HA error when device == {}.
++    """
++    dev = {}
++    if mapping.get("bb8", {}).get("mqtt_device"):
++        dev = mapping["bb8"]["mqtt_device"]
++    # Prefer explicit mapping identifiers/connections; else derive from MAC
++    identifiers = dev.get("identifiers") if isinstance(dev, dict) else None
++    connections = dev.get("connections") if isinstance(dev, dict) else None
++    if not identifiers and mac:
++        identifiers = [f"sphero:bb8:{mac.upper()}"]
++    if not connections and mac:
++        connections = [["mac", mac.upper()]]
++    if identifiers or connections:
++        base = {
++            "manufacturer": dev.get("manufacturer", "Sphero"),
++            "model": dev.get("model", "BB-8"),
++            "name": dev.get("name", name or "BB-8"),
++        }
++        # Only include keys with values
++        out = {"identifiers": identifiers, "connections": connections, **{k:v for k,v in base.items() if v}}
++        return out
++    return {}  # caller will omit this key entirely when empty
++
++def build_discovery_payloads(name: str, mac: str | None, mapping: dict) -> dict:
++    """
++    Build MQTT discovery payloads. Only include 'device' when it’s valid.
++    unique_id is stable when MAC is known; otherwise falls back to name slug.
++    """
++    mac_up = (mac or "").upper()
++    suffix = mac_up.replace(":", "") if mac_up else _slug(name or "bb8")
++    obj_prefix = f"bb8_{suffix}"
++
++    device = _device_block(name, mac_up, mapping)
++    auth = {"username": MQTT_USER, "password": MQTT_PASSWORD} if MQTT_USER and MQTT_PASSWORD else None
++
++    presence = {
++        "name": f"{name} Presence" if name else "BB-8 Presence",
++        "unique_id": f"{obj_prefix}_presence",
++        "state_topic": "bb8/sensor/presence",
++        "payload_on": "on",
++        "payload_off": "off",
++        "device_class": "connectivity",
++        "availability_topic": AVAIL_TOPIC,
++    }
++    rssi = {
++        "name": f"{name} RSSI" if name else "BB-8 RSSI",
++        "unique_id": f"{obj_prefix}_rssi",
++        "state_topic": "bb8/sensor/rssi",
++        "unit_of_measurement": "dBm",
++        "device_class": "signal_strength",
++        "state_class": "measurement",
++        "availability_topic": AVAIL_TOPIC,
++    }
++    if device:
++        presence["device"] = device
++        rssi["device"] = device
++    return {"presence": presence, "rssi": rssi, "auth": auth}
++
++def publish_discovery(name: str, mac: str | None, mapping: dict):
++    disc = build_discovery_payloads(name, mac, mapping)
++    publish.single(
++        f"homeassistant/binary_sensor/{disc['presence']['unique_id']}/config",
++        payload=json.dumps(disc["presence"]),
++        hostname=MQTT_HOST,
++        auth=disc["auth"]
++    )
++    publish.single(
++        f"homeassistant/sensor/{disc['rssi']['unique_id']}/config",
++        payload=json.dumps(disc["rssi"]),
++        hostname=MQTT_HOST,
++        auth=disc["auth"]
++    )
++
++def tick_log(found: bool, name: str, addr: str | None, rssi):
++    ts = time.strftime("%Y-%m-%dT%H:%M:%S%z")
++    if args.quiet:
++        return
++    if args.json:
++        print(json.dumps({"ts": int(time.time()), "found": found, "name": name, "address": addr, "rssi": rssi}))
++    else:
++        if found:
++            print(f"[{ts}] found name={name} addr={addr} rssi={rssi}")
++        elif args.verbose:
++            print(f"[{ts}] not_found name={name}")
+
+
+ async def scan_and_publish():
+-    publish_discovery()
++    mapping = _load_mapping()
++    # Initial discovery: publish without device block until we know MAC (safe),
++    # then republish once a MAC is seen so HA can attach a device.
++    publish_discovery(BB8_NAME, mac=None, mapping=mapping)
+     while True:
+         try:
+             devices = await BleakScanner.discover()
+             found = False
+             rssi = None
++            mac = None
+             for d in devices:
+                 if BB8_NAME.lower() in (d.name or "").lower():
+                     found = True
+                     # Try all known ways to get RSSI for Bleak BLEDevice
+                     rssi = getattr(d, 'rssi', None)
+                     if rssi is None:
+                         rssi = getattr(d, 'details', {}).get('rssi')
+-                    logger.info(f"Found BB-8: {d.name} [{d.address}] RSSI: {rssi}")
++                    mac = d.address
++                    logger.info(f"Found BB-8: {d.name} [{d.address}] RSSI: {rssi}")
+                     break
++            # Emit a tick for observability
++            tick_log(found, BB8_NAME, mac, rssi)
+             publish.single(
+                 "bb8/sensor/presence",
+                 "on" if found else "off",
+                 hostname=MQTT_HOST,
+                 auth={"username": MQTT_USER, "password": MQTT_PASSWORD} if MQTT_USER and MQTT_PASSWORD else None
+             )
+             if rssi is not None:
+                 publish.single(
+                     "bb8/sensor/rssi",
+                     str(rssi),
+                     hostname=MQTT_HOST,
+                     auth={"username": MQTT_USER, "password": MQTT_PASSWORD} if MQTT_USER and MQTT_PASSWORD else None
+                 )
+             else:
+                 publish.single(
+                     "bb8/sensor/rssi",
+                     "",
+                     hostname=MQTT_HOST,
+                     auth={"username": MQTT_USER, "password": MQTT_PASSWORD} if MQTT_USER and MQTT_PASSWORD else None
+                 )
++            # If we learned a MAC now, republish discovery once with a proper device block
++            if found and mac:
++                publish_discovery(BB8_NAME, mac=mac, mapping=mapping)
+         except Exception as e:
+             logger.error(f"Presence scan error: {e}")
+         await asyncio.sleep(SCAN_INTERVAL)
+
+
+ if __name__ == "__main__":
+-    asyncio.run(scan_and_publish())
++    # Optional quick tools
++    if args.print:
++        mapping = _load_mapping()
++        demo = build_discovery_payloads(BB8_NAME, mac=None, mapping=mapping)
++        print("# discovery: presence")
++        print(json.dumps(demo["presence"], indent=2))
++        print("# discovery: rssi")
++        print(json.dumps(demo["rssi"], indent=2))
++        raise SystemExit(0)
++    if args.once:
++        async def _once():
++            devices = await BleakScanner.discover()
++            res = {"found": False, "name": BB8_NAME, "address": None, "rssi": None}
++            for d in devices:
++                if BB8_NAME.lower() in (d.name or "").lower():
++                    res = {"found": True, "name": d.name or BB8_NAME, "address": d.address, "rssi": getattr(d, "rssi", None)}
++                    break
++            if args.json:
++                print(json.dumps(res))
++            else:
++                tick_log(res["found"], res["name"], res["address"], res["rssi"])
++        asyncio.run(_once())
++    else:
++        asyncio.run(scan_and_publish())

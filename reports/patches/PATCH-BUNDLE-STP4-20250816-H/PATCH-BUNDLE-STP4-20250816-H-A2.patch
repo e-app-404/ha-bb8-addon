@@ -1,0 +1,18 @@
+### A2) Update `bb8_core/core.py` — add LED seam (non-breaking)
+
+> **Goal:** Provide a canonical `emit_led` the facade can call. This will be a thin wrapper over any existing LED publisher.
+
+```diff
+*** Update File: bb8_core/core.py
+@@
+ class Core:
+@@
++    # Optional seam used by facade/tests
++    def emit_led(self, r: int, g: int, b: int) -> None:
++        """Emit LED RGB; tests may spy on this seam. Production forwards to publisher."""
++        if hasattr(self, "publish_led_rgb") and callable(self.publish_led_rgb):
++            self.publish_led_rgb(r, g, b)
++        else:
++            # keep silent if LED publisher not wired; facade will fallback
++            return
+```

@@ -1,0 +1,2 @@
+/Users/evertappels/Projects/HA-BB8/tools/verify_commands.py:113: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  client = mqtt.Client(

@@ -1,0 +1,67 @@
+# Patch ID: PATCH-STP4-250815-echo-logging
+diff --git a/bb8_core/bridge_controller.py b/bb8_core/bridge_controller.py
+index f4a6c13..0b77a22 100644
+--- a/bb8_core/bridge_controller.py
++++ b/bb8_core/bridge_controller.py
+@@ -1,12 +1,16 @@
+ from __future__ import annotations
+
+ import asyncio
+ import json
+ import threading
+ from typing import Any, Optional
++import logging
+ from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+ from . import ble_link  # first-party
+
++log = logging.getLogger(__name__)
++
+@@ -56,24 +60,34 @@ def on_power_set(payload: Any) -> None:
+-    publish_device_echo(client, STATE_TOPICS["power"], payload)
++    publish_device_echo(client, STATE_TOPICS["power"], payload)
++    log.info("echo_pub topic=%s retain=false qos=1 source=device",
++             STATE_TOPICS["power"])
+
+ def on_stop() -> None:
+-    publish_device_echo(client, STATE_TOPICS["stop"], "pressed")
++    publish_device_echo(client, STATE_TOPICS["stop"], "pressed")
++    log.info("echo_pub topic=%s retain=false qos=1 source=device",
++             STATE_TOPICS["stop"])
+
+ def on_sleep() -> None:
+-    publish_device_echo(client, STATE_TOPICS["sleep"], "idle")
++    publish_device_echo(client, STATE_TOPICS["sleep"], "idle")
++    log.info("echo_pub topic=%s retain=false qos=1 source=device",
++             STATE_TOPICS["sleep"])
+
+ def on_drive() -> None:
+     # Drive button semantics (pressed)
+-    publish_device_echo(client, STATE_TOPICS["drive"], "pressed")
++    publish_device_echo(client, STATE_TOPICS["drive"], "pressed")
++    log.info("echo_pub topic=%s retain=false qos=1 source=device",
++             STATE_TOPICS["drive"])
+
+ def on_heading(value: float) -> None:
+     global _last_heading
+     _last_heading = value
+-    publish_device_echo(client, STATE_TOPICS["heading"], value)
++    publish_device_echo(client, STATE_TOPICS["heading"], value)
++    log.info("echo_pub topic=%s retain=false qos=1 source=device",
++             STATE_TOPICS["heading"])
+
+ def on_speed(value: float) -> None:
+     global _last_speed
+     _last_speed = value
+-    publish_device_echo(client, STATE_TOPICS["speed"], value)
++    publish_device_echo(client, STATE_TOPICS["speed"], value)
++    log.info("echo_pub topic=%s retain=false qos=1 source=device",
++             STATE_TOPICS["speed"])
+
+ def on_led_set(r: int, g: int, b: int) -> None:
+     payload = json.dumps({"r": r, "g": g, "b": b})
+-    # Command is on /led/set; state is on /led/state
++    # Command is on /led/set; state is on /led/state
+     client.publish(CMD_TOPICS["led"], payload=payload, qos=1, retain=False)
+     client.publish(STATE_TOPICS["led"], payload=payload, qos=1, retain=False)
++    log.info("echo_pub topic=%s retain=false qos=1 payload=%s",
++             STATE_TOPICS["led"], payload)

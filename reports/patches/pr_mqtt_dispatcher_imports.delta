@@ -1,0 +1,146 @@
+done
+
+# 1) `bb8_core/mqtt_dispatcher.py` — imports & API (back-compat + cleanup)
+
+## A) Header imports (restore *only* what’s used here)
+
+* Keep the minimal core imports.
+* Add back `json` if you serialize payloads in this module.
+* Add back `paho.mqtt.publish as publish` **only if** you actually call `publish.single(...)`/`publish.multiple(...)` from this file (prefer `client.publish`, though).
+* Do **not** import BLE/Sphero symbols here; those belong in bridge/controller. If some code in this file still touches them, move it out (see step 3), or lazy-import inside the tiny function that still needs it.
+
+```diff
+-from typing import Optional, Any
+-import socket
+-import os
+-import paho.mqtt.client as mqtt
+-from .logging_setup import logger
++from typing import Optional, Any
++import socket
++import os
++import json           # ← add back only if used in this module
++import paho.mqtt.client as mqtt
++# import paho.mqtt.publish as publish  # ← uncomment only if used
++from .logging_setup import logger
+```
+
+> If you still see NameErrors after this, it means non-dispatcher logic is living in this module (see step 3 to relocate it).
+
+## B) Function signature — support both new and legacy names (deprecated)
+
+```diff
+-def start_mqtt_dispatcher(
+-    mqtt_host: str,
+-    mqtt_port: int,
+-    mqtt_topic: str,
+-    username: Optional[str] = None,
+-    password: Optional[str] = None,
+-    controller: Any = None,
+-    client_id: str = "bb8-addon",
+-    keepalive: int = 60,
+-    qos: int = 1,
+-    retain: bool = True,
+-    status_topic: str = "bb8/status",
+-    tls: bool = False,
+-) -> mqtt.Client:
++def start_mqtt_dispatcher(
++    mqtt_host: str,
++    mqtt_port: int,
++    mqtt_topic: str,
++    username: Optional[str] = None,
++    password: Optional[str] = None,
++    controller: Any = None,
++    client_id: str = "bb8-addon",
++    keepalive: int = 60,
++    qos: int = 1,
++    retain: bool = True,
++    status_topic: str = "bb8/status",
++    tls: bool = False,
++    # ↓ back-compat aliases (deprecated; prefer username/password)
++    mqtt_user: Optional[str] = None,
++    mqtt_password: Optional[str] = None,
++) -> mqtt.Client:
+```
+
+Unify the aliases at the top of the function:
+
+```python
+# Back-compat aliasing
+if (username is None or username == "") and mqtt_user:
+    username = mqtt_user
+if (password is None or password == "") and mqtt_password is not None:
+    password = mqtt_password
+
+# Optional one-time deprecation log
+try:
+    if mqtt_user is not None or mqtt_password is not None:
+        logger.warning({"event": "dispatcher_param_deprecated",
+                        "hint": "Use username/password instead of mqtt_user/mqtt_password"})
+except Exception:
+    pass
+```
+
+> This keeps legacy callers working today while we migrate call sites.
+
+---
+
+# 2) Call sites — prefer `username`/`password` (fix now or soon)
+
+* **In `bridge_controller.py`** you’re already passing `"user"`/`"password"` to the compat shim; the shim maps to `username`/`password`. ✅
+* **Elsewhere** (if any code calls `start_mqtt_dispatcher` directly with `mqtt_user`/`mqtt_password`), update to:
+
+```diff
+-start_mqtt_dispatcher(..., mqtt_user=user, mqtt_password=pwd, ...)
++start_mqtt_dispatcher(..., username=user, password=pwd, ...)
+```
+
+> Thanks to step 1B, this isn’t urgent, but please fix these callers so we can remove the deprecated params in a future release.
+
+---
+
+# 3) Keep dispatcher focused — relocate non-MQTT logic (recommended refactor)
+
+If `bb8_core/mqtt_dispatcher.py` still references any of these **device** imports:
+
+* `from bb8_core.ble_gateway import BleGateway`
+* `from spherov2.scanner import find_toys`
+* `from spherov2.toy.bb8 import BB8`
+* `from spherov2.adapter.bleak_adapter import BleakAdapter`
+* `from spherov2.sphero_edu import SpheroEduAPI`
+* `from spherov2.types import Color`
+* `from spherov2.commands.core import IntervalOptions`
+
+…then that code belongs in **bridge/controller**, not the dispatcher. Do one of:
+
+* **Move** those functions to `ble_bridge.py`/`controller.py` and call them from there, **or**
+* **Lazy import** *inside the very small function* that needs it, as a stopgap:
+
+```python
+def _some_device_action(...):
+    from spherov2.toy.bb8 import BB8  # lazy import to localize dependency
+    ...
+```
+
+This prevents the dispatcher module from pulling heavy BLE/Sphero deps at import time and keeps concerns clean.
+
+---
+
+# 4) Quick verification checklist
+
+* `pytest -q` or a quick import test:
+
+```bash
+python - <<'PY'
+from bb8_core.mqtt_dispatcher import start_mqtt_dispatcher
+print(start_mqtt_dispatcher)
+PY
+```
+
+* Grep for legacy calls:
+
+```bash
+grep -R "mqtt_user\s*=" -n bb8_core || true
+grep -R "mqtt_password\s*=" -n bb8_core || true
+```
+
+* If you re-enabled `paho.mqtt.publish`, ensure you actually call `publish.single`/`multiple`. Otherwise keep it **removed** and use `client.publish`.

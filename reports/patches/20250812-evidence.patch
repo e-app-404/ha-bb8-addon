@@ -1,0 +1,51 @@
+done
+
+Patch Plan: Evidence Collector (Ordering + Prestate + Source + Device-Echo)
+
+```diff
+@@
+-        echo = self._wait_for_state(entity, expect, deadline)
+-        passed = echo is not None
+-        note = "" if passed else "timeout"
++        echo = self._wait_for_state(entity, expect, deadline)
++        passed, note = False, "timeout"
++        cmd["source"] = "facade"
++        if echo and echo.get("state_ts") and echo["state_ts"] >= cmd["command_ts"]:
++            passed, note = True, ""
++            require_device = (os.getenv("REQUIRE_DEVICE_ECHO","1") != "0")
++            is_commandable = ("/cmd/" in cmd["command_topic"]) or cmd["command_topic"].endswith("/set")
++            if require_device and is_commandable and echo.get("source") != "device":
++                passed, note = False, "facade_only"
+@@
+-            return {
+-                "state_ts": evt["ts"], "state_topic": evt["topic"], "state_payload": evt["payload"],
+-            }
++            src = "device"
++            try:
++                data = json.loads(evt["payload"]); src = data.get("source", src)
++            except Exception: pass
++            return {"state_ts": evt["ts"], "state_topic": evt["topic"], "state_payload": evt["payload"], "source": src}
+
+
+Command/State Matching Logic
+
+When recording a roundtrip, always annotate the command with "source": "facade".
+When a state echo is received, check if its "state_ts" is after the command's "command_ts".
+If so, mark as pass, otherwise as timeout.
+If REQUIRE_DEVICE_ECHO is set (default "1"), and the command is "commandable" (topic contains /cmd/ or ends with /set), require that the echo's "source" is "device"; otherwise, mark as "facade_only".
+State Echo Source Extraction
+
+When extracting a state echo, try to parse the payload as JSON and extract a "source" field, defaulting to "device" if not present.
+Patch Details
+
+Update the roundtrip test logic to implement the above.
+Update the _wait_for_state or equivalent function to extract "source" from the state echo payload.
+Summary of code changes:
+
+ Annotate commands with "source": "facade".
+ When a state echo is found, check "state_ts" ordering and "source" field.
+ If REQUIRE_DEVICE_ECHO is set and the command is commandable, require "source": "device" in the echo.
+ Extract "source" from state echo payload JSON if present.
+Ready to apply this patch to ops/evidence/collect_stp4.py?
+
+

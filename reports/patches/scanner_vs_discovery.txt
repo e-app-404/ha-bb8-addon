@@ -1,0 +1,87 @@
+Here’s a comparison of the **functions and functionalities** between bb8_presence_scanner.py, `discovery.py`, and `discovery_publish.py`:
+
+---
+
+## bb8_presence_scanner.py
+
+**Main Functions:**
+- **BLE Scanning Loop:** Periodically scans for BB-8 BLE devices, extracts MAC, RSSI, and presence.
+- **MQTT Telemetry:** Publishes presence (`bb8/sensor/presence`) and RSSI (`bb8/sensor/rssi`) as retained MQTT messages.
+- **MQTT Discovery:** Publishes Home Assistant MQTT discovery payloads for presence and RSSI sensors, including a full device block.
+- **MQTT Availability:** Publishes LWT/birth messages (`bb8/status`).
+- **Config Loading:** Loads config from YAML and environment.
+- **Command-line Interface:** Supports arguments for scan interval, MQTT config, one-shot scan, print discovery, etc.
+- **Logging:** Logs scan results and MQTT events.
+
+**Functionality:**
+- **Real BLE scanning and telemetry.**
+- **Publishes only presence and RSSI (plus availability) to MQTT.**
+- **Publishes Home Assistant discovery for those sensors.**
+- **No command/actuator support.**
+- **No extended Home Assistant entities (e.g., LED, drive, sleep, heading, speed).**
+
+---
+
+## `discovery.py`
+
+**Main Function:**
+- **discovery_payloads:** Generates a list of (topic, payload) tuples for Home Assistant MQTT discovery for a BB-8 device.
+
+**Functionality:**
+- **No BLE scanning or telemetry.**
+- **No MQTT publishing (just returns payloads).**
+- **Generates discovery configs for:**
+  - Light (LED)
+  - Sleep button
+  - Heading number
+  - Speed number
+  - Drive button
+- **Legacy/utility function for generating extended discovery payloads.**
+- **Not used in the main scanner or publishing loop.**
+
+---
+
+## `discovery_publish.py`
+
+**Main Functions:**
+- **publish_discovery:** Publishes Home Assistant discovery payloads for a BB-8 device, supporting both minimal and extended profiles.
+- **_publish_presence_sensor, _publish_rssi_sensor:** Publish discovery for presence and RSSI sensors.
+- **_publish_sleep_button, _publish_drive_button, _publish_heading_number, _publish_speed_number:** Publish discovery for extended entities (sleep, drive, heading, speed).
+
+**Functionality:**
+- **No BLE scanning or telemetry.**
+- **Publishes Home Assistant discovery for:**
+  - Presence sensor
+  - RSSI sensor
+  - Sleep button
+  - Drive button
+  - Heading number
+  - Speed number
+- **Supports both minimal and extended discovery profiles.**
+- **Can be used to publish a richer set of entities than bb8_presence_scanner.py.**
+- **No direct telemetry or actuator logic—just discovery publishing.**
+
+---
+
+## **Summary Table**
+
+| Feature/Functionality         | bb8_presence_scanner.py | discovery.py | discovery_publish.py |
+|------------------------------|:----------------------:|:------------:|:-------------------:|
+| BLE scanning                 | ✔️                     | ❌           | ❌                  |
+| MQTT telemetry (presence/RSSI)| ✔️                     | ❌           | ❌                  |
+| MQTT availability (LWT/birth) | ✔️                     | ❌           | ❌                  |
+| Home Assistant discovery     | ✔️ (presence/RSSI only)| ✔️ (returns tuples, not publish) | ✔️ (presence, RSSI, sleep, drive, heading, speed) |
+| Extended HA entities (LED, drive, etc.) | ❌           | ✔️           | ✔️                  |
+| Command/actuator support     | ❌                     | ❌           | ❌                  |
+| CLI/daemon                   | ✔️                     | ❌           | ❌                  |
+| Config loading               | ✔️                     | ❌           | ❌                  |
+| Logging                      | ✔️                     | ❌           | ✔️                  |
+
+---
+
+**In summary:**
+- bb8_presence_scanner.py is a BLE scanner and telemetry publisher with basic HA discovery.
+- `discovery.py` is a legacy/utility generator for extended HA discovery payloads (not publishing).
+- `discovery_publish.py` is a discovery publisher for both minimal and extended HA entities, but does not scan or publish telemetry.
+
+If you want the scanner to support extended entities (LED, drive, etc.), you would need to integrate logic from `discovery_publish.py` and/or `discovery.py` into the scanner.

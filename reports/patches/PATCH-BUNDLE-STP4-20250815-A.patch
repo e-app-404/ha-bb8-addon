@@ -1,0 +1,127 @@
+# Patch ID: PATCH-STP4-250815-pytest-stabilize
+# Adds pytest config + asyncio mode + narrows discovery to avoid INTERNALERROR
+diff --git a/beep_boop_bb8/tests/pytest.ini b/beep_boop_bb8/tests/pytest.ini
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/beep_boop_bb8/tests/pytest.ini
+@@ -0,0 +1,18 @@
++[pytest]
++addopts = -q --disable-warnings
++python_files = test_*.py
++testpaths = tests
++norecursedirs =
++    .git
++    .tox
++    .venv
++    __pycache__
++    .*
++    build
++    dist
++    services.d
++    reports
++# pytest-asyncio: avoid policy mismatches across Python versions
++asyncio_mode = auto
++
+diff --git a/beep_boop_bb8/tests/conftest.py b/beep_boop_bb8/tests/conftest.py
+new file mode 100644
+index 0000000..2222222
+--- /dev/null
++++ b/beep_boop_bb8/tests/conftest.py
+@@ -0,0 +1,22 @@
++from __future__ import annotations
++import asyncio
++import pytest
++
++# Provide a stable event loop for tests that touch asyncio/BLE helpers.
++# With asyncio_mode=auto this is usually not necessary, but it guards
++# environments where plugin policies differ.
++@pytest.fixture(scope="session")
++def event_loop():
++    loop = asyncio.new_event_loop()
++    try:
++        yield loop
++    finally:
++        loop.run_until_complete(asyncio.sleep(0))
++        loop.close()
++
+diff --git a/beep_boop_bb8/tests/__init__.py b/beep_boop_bb8/tests/__init__.py
+new file mode 100644
+index 0000000..3333333
+--- /dev/null
++++ b/beep_boop_bb8/tests/__init__.py
+@@ -0,0 +1 @@
++# Test package marker (helps some tooling avoid odd recursion)
+
+# Patch ID: PATCH-STP4-250815-mypy-config
+# Eases typing friction from third-party libs without changing runtime code
+diff --git a/mypy.ini b/mypy.ini
+new file mode 100644
+index 0000000..4444444
+--- /dev/null
++++ b/mypy.ini
+@@ -0,0 +1,22 @@
++[mypy]
++python_version = 3.13
++ignore_missing_imports = True
++warn_unused_ignores = True
++no_implicit_optional = False
++check_untyped_defs = False
++disallow_incomplete_defs = False
++exclude = (?x)(
++    ^\\.venv/|
++    ^\\.tox/|
++    ^build/|
++    ^dist/|
++    ^beep_boop_bb8/__pycache__/|
++    ^beep_boop_bb8/tests/.__
++)
++
++[mypy-beep_boop_bb8.*]
++implicit_reexport = True
+
+# Patch ID: PATCH-STP4-250815-ruff-config
+# Aligns import sorting and keeps lint scope reasonable; Black remains the formatter
+diff --git a/ruff.toml b/ruff.toml
+new file mode 100644
+index 0000000..5555555
+--- /dev/null
++++ b/ruff.toml
+@@ -0,0 +1,28 @@
++line-length = 88
++target-version = "py313"
++
++[lint]
++select = ["E","F","I","B","UP","SIM"]
++ignore = ["E203"]  # Black compatibility on slicing whitespace
++
++extend-exclude = [
++  ".git", ".tox", ".venv", "__pycache__", ".*", "build", "dist", "reports", "services.d"
++]
++
++[lint.isort]
++known-first-party = ["beep_boop_bb8"]
++combine-as-imports = true
++force-single-line = false
++```
+
+---
+
+## Next QA run (exact commands)
+
+> Run from repo root after applying the above patch bundle.
+
+```bash
+# 1) One-time style sweep (fixes the 39 files)
+black .
+
+# 2) Autofix easy Ruff items (imports/lengths where possible)
+ruff check . --fix
+
+# 3) Re-run the suite used in QA
+black --check .
+ruff check .
+mypy --install-types --non-interactive .
+pytest -q --maxfail=1 --disable-warnings --cov=bb8_core --cov-report=term-missing
+bandit -q -r bb8_core || true
+safety check --full-report || true

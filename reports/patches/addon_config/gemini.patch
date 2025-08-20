@@ -1,0 +1,103 @@
+Here are the instructions to fix the identified issues in `addon_config.py`.
+
+The most effective way to resolve the logical flaws is to replace the `load_config` function entirely with a corrected version. This new function eliminates the confusing `setk` and `_pick` helpers and implements a clear, standard order of precedence for configuration.
+
+-----
+
+### 1\. Replace the `_pick` and `load_config` functions
+
+Delete the existing `_pick` and `load_config` functions from your `addon_config.py` file. Replace them with this single, corrected `load_config` function.
+
+This new version fixes the following:
+
+  * **Corrects Precedence**: Establishes the standard order of **Environment \> `options.json` \> `config.yaml` \> Default**.
+  * **Fixes Buggy Fallback**: Eliminates the flawed logic where lookups were guaranteed to fail.
+  * **Resolves Case-Sensitivity**: All YAML lookups are now case-insensitive.
+
+<!-- end list -->
+
+```python
+#
+# >>> REPLACE the existing `_pick` and `load_config` functions with this code <<<
+#
+def load_config() -> Tuple[Dict, Dict]:
+    """
+    Return (cfg, src) where src maps key -> 'env'|'options'|'yaml'|'default'.
+    Correctly loads configuration with precedence: env > options.json > config.yaml > default.
+    """
+    env = dict(os.environ)
+    opt = _load_options_json()
+    yml = _load_yaml_cfg()
+    yml_keys_lc = {str(k).lower(): k for k in yml.keys()}
+
+    cfg, src = {}, {}
+
+    # This list defines all configuration keys, their YAML alias, default value, and type casting.
+    key_map = [
+        ("DISPATCHER_DISCOVERY_ENABLED", "dispatcher_discovery_enabled", False, lambda x: str(x).lower() in ("1", "true", "yes")),
+        ("CACHE_PATH", "cache_path", "/data/bb8_mac_cache.json", None),
+        ("CACHE_DEFAULT_TTL_HOURS", "cache_default_ttl_hours", 24, int),
+        ("BB8_NAME", "bb8_name", "BB-8", None),
+        ("BB8_MAC", "bb8_mac", "", None),
+        ("MQTT_HOST", "mqtt_broker", "localhost", None),
+        ("MQTT_PORT", "mqtt_port", 1883, int),
+        ("MQTT_USERNAME", "mqtt_username", "mqtt_bb8", None),
+        ("MQTT_PASSWORD", "mqtt_password", None, None),
+        ("MQTT_BASE", "mqtt_topic_prefix", "bb8", None),
+        ("MQTT_CLIENT_ID", "mqtt_client_id", "bb8_presence_scanner", None),
+        ("KEEPALIVE", "keepalive", 60, int),
+        ("QOS", "qos", 1, int),
+        ("ENABLE_BRIDGE_TELEMETRY", "enable_bridge_telemetry", False, lambda x: str(x).lower() in ("1", "true", "yes")),
+        ("TELEMETRY_INTERVAL_S", "telemetry_interval_s", 20, int),
+        ("ADDON_VERSION", "version", "unknown", None),
+        ("DISCOVERY_RETAIN", "discovery_retain", False, lambda x: str(x).lower() in ("1", "true", "yes")),
+        ("LOG_PATH", "log_path", "", None),
+        ("SCAN_SECONDS", "scan_seconds", 5, int),
+        ("RESCAN_ON_FAIL", "rescan_on_fail", True, lambda x: str(x).lower() in ("1", "true", "yes")),
+        ("CACHE_TTL_HOURS", "cache_ttl_hours", 24, int),
+        ("MQTT_TLS", "mqtt_tls", False, lambda x: str(x).lower() in ("1", "true", "yes")),
+        ("BLE_ADAPTER", "ble_adapter", "hci0", None),
+        ("HA_DISCOVERY_TOPIC", "ha_discovery_topic", "homeassistant", None),
+        ("AVAIL_ON", "avail_on", "online", None),
+        ("AVAIL_OFF", "avail_off", "offline", None),
+        ("BB8_SCAN_INTERVAL", "bb8_scan_interval", 10, int),
+    ]
+
+    for internal_key, yaml_key, default_val, cast_fn in key_map:
+        val, source = default_val, "default"
+
+        # Precedence 1: Environment Variable
+        if internal_key in env and env[internal_key] not in ("", None):
+            val, source = env[internal_key], "env"
+        # Precedence 2: options.json
+        elif internal_key in opt and opt[internal_key] not in ("", None):
+            val, source = opt[internal_key], "options"
+        # Precedence 3: config.yaml (case-insensitive)
+        elif yaml_key.lower() in yml_keys_lc:
+            original_yml_key = yml_keys_lc[yaml_key.lower()]
+            if yml[original_yml_key] not in (None, ""):
+                val, source = yml[original_yml_key], "yaml"
+
+        # Apply casting function if one is defined
+        if cast_fn and val not in (None, ""):
+            try:
+                val = cast_fn(val)
+            except Exception as e:
+                LOG.warning(f"[CONFIG] Failed to cast key '{internal_key}' value '{val}' with {cast_fn}: {e}")
+
+        cfg[internal_key] = val
+        src[internal_key] = source
+
+    # Construct topics using resolved config
+    cfg["COMMAND_TOPIC"] = f"{cfg['MQTT_BASE']}/command/#"
+    cfg["STATUS_TOPIC"] = f"{cfg['MQTT_BASE']}/status"
+    cfg["AVAILABILITY_TOPIC"] = f"{cfg['MQTT_BASE']}/status/#"
+
+    return cfg, src
+```
+
+-----
+
+### 2\. Remove the Conflicting Configuration Key
+
+The original file mapped two different settings (`RETAIN` and `DISCOVERY_RETAIN`) to the same YAML key (`discovery_retain`). The code above removes this ambiguity by only keeping the more descriptive `DISCOVERY_RETAIN` key. You no longer need to make any manual changes for this, as the replacement function has already corrected it.

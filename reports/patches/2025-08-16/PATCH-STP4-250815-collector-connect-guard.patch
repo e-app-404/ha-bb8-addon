@@ -1,0 +1,27 @@
+# Patch ID: PATCH-STP4-250815-collector-connect-guard
+diff --git a/ops/evidence/collect_stp4.py b/ops/evidence/collect_stp4.py
+index 6b7a2aa..7de5a40 100644
+--- a/ops/evidence/collect_stp4.py
++++ b/ops/evidence/collect_stp4.py
+@@ -300,11 +300,27 @@ class EvidenceCollector:
+     def connect(self) -> None:
+-        self.client.connect(self.host, self.port, keepalive=60)
++        # Env fallback to cover dev shells without YAML/options.json
++        host = os.environ.get("MQTT_HOST", self.host or "127.0.0.1")
++        port = int(os.environ.get("MQTT_PORT", str(self.port or 1883)))
++        self.host, self.port = host, port
++        self.log.info(
++            "MQTT connect attempt: host=%s port=%s keepalive=60", host, port
++        )
++        try:
++            self.client.connect(host, port, keepalive=60)
++        except ConnectionRefusedError as exc:
++            self.log.error(
++                "MQTT connection refused (host=%s port=%s). "
++                "Start a broker (brew services start mosquitto | "
++                "docker run -p 1883:1883 eclipse-mosquitto:2) "
++                "or set MQTT_HOST/MQTT_PORT.",
++                host,
++                port,
++            )
++            raise

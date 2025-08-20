@@ -1,0 +1,24 @@
+### \*\*\* Begin Patch 8 — Update File: `bb8_core/mqtt_dispatcher.py` (log compatibility for smoke test) \*\*\*
+
+> **Goal:** Restore legacy log text expected by `tests/test_mqtt_smoke.py` without changing behavior.
+
+```diff
+*** Update File: bb8_core/mqtt_dispatcher.py
+@@
+ def start_mqtt_dispatcher(controller: object, *args, **kwargs) -> bool:
+     # ... existing setup ...
+     def _on_connect(client, userdata, flags, rc, properties=None):
+         log.info("mqtt_on_connect rc=%s; re-binding subscriptions (%d topics)", rc, len(_BOUND_TOPICS) + len(_PENDING_SUBS))
+         _apply_pending_subscriptions()
+         # Authoritative seam invocation at call time (thread-safe & testable)
+         _trigger_discovery_connected()
+@@
+-    return True
++    # Back-compat smoke log (expected by legacy test)
++    log.info("MQTT dispatcher started.")
++    return True
+```
+
+> **Note:** If the smoke test expects the exact phrase `Published discovery: all canonical entities (retained)` after dispatcher route, ensure `_maybe_publish_bb8_discovery()` still logs that line after successful publish.
+
+### \*\*\* End Patch 8 \*\*\*

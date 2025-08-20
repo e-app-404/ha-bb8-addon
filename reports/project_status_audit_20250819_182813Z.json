@@ -1,0 +1,59 @@
+{
+  "ts": "20250819_182813Z",
+  "root": "/Users/evertappels/Projects/HA-BB8",
+  "git_present": true,
+  "git": {
+    "branch": "main",
+    "remote": "origin\thttps://github.com/e-app-404/ha-bb8-addon.git (fetch)\norigin\thttps://github.com/e-app-404/ha-bb8-addon.git (push)",
+    "dirty": true,
+    "last_tag": "v2025.08.20",
+    "recent_commits": [
+      "3f032a9 checkpoint: 20250819_032616Z (STP4 strict + discovery aligned)",
+      "2cd32cd ops(discovery): guard placeholder; add migration tool",
+      "fcffc15 chore(verify): robust connect/subscribe; LED optional",
+      "4b29cda chore(verify): LED-optional tolerant verifier (short+long keys)",
+      "dc230eb Overwrite verify_discovery.py with LED-optional, idempotent verifier"
+    ]
+  },
+  "addon_version": "dev",
+  "bb8_core_path": "/Users/evertappels/Projects/HA-BB8/addon/bb8_core/__init__.py",
+  "files": {
+    "pytest.ini": true,
+    "ruff.toml": true,
+    "mypy.ini": true,
+    "bb8_core/__init__.py (root|addon)": true,
+    "tools/verify_discovery.py": true
+  },
+  "duplicate_dirs_present": {},
+  "addon_audit": {
+    "rc": 0,
+    "stderr": ""
+  },
+  "consolidation": {
+    "rc": 0,
+    "stderr": "",
+    "out": "CONSOLIDATION: PASS"
+  },
+  "imports_tests": {
+    "rc": 0,
+    "out": "..                                                                       [100%]",
+    "err": ""
+  },
+  "lint": {
+    "ruff_rc": 0,
+    "ruff_summary": [
+      "All checks passed!"
+    ],
+    "mypy_rc": 2,
+    "mypy_summary": []
+  },
+  "bridge_client_stub_present": false,
+  "eager_imports_in_init": false,
+  "verify_discovery": {
+    "rc": 0,
+    "skipped": true,
+    "reason": "no broker env or script missing"
+  },
+  "overall_verdict": "PASS",
+  "notes": []
+}

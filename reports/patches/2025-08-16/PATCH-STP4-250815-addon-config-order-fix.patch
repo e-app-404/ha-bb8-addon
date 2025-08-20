@@ -1,0 +1,148 @@
+# Patch ID: PATCH-STP4-250815-addon-config-order-fix
+diff --git a/bb8_core/addon_config.py b/bb8_core/addon_config.py
+index 1e2f3a4..9c0d7ef 100644
+--- a/bb8_core/addon_config.py
++++ b/bb8_core/addon_config.py
+@@ -1,200 +1,230 @@
+-from pathlib import Path
+-import os
+-import yaml
+-import logging
++from __future__ import annotations
++
++import json
++import logging
++import os
++from pathlib import Path
++from typing import Any, Dict, List, Optional, Tuple
++
++import yaml
++
++log = logging.getLogger(__name__)
++# Back-compat alias expected by some callers/tests
++LOG = log
++
++# Public module-level handles; populated by init_config()
++CONFIG: Dict[str, Any] = {}
++CONFIG_SOURCE: Optional[Path] = None
++
++
++def _candidate_paths() -> List[Path]:
++    """
++    Ordered config locations (HA first, then add-on, then local/dev).
++    The '/Volumes/...' path is dev-only and logged at DEBUG.
++    """
++    env_path = os.environ.get("CONFIG_PATH")
++    paths: List[Path] = []
++    if env_path:
++        paths.append(Path(env_path))
++    paths.extend(
++        [
++            Path("/data/config.yaml"),        # HA add-on standard
++            Path("/config/config.yaml"),
++            Path("/addons/local/beep_boop_bb8/config.yaml"),
++            Path(__file__).parent / "config.yaml",
++            Path("/app/config.yaml"),
++            Path("/Volumes/addons/local/beep_boop_bb8/config.yaml"),
++        ]
++    )
++    return paths
++
++
++def _load_options_json(
++    path: Path = Path("/data/options.json"),
++) -> Tuple[Dict[str, Any], Optional[Path]]:
++    """
++    Load Home Assistant add-on options (JSON). Returns (data, source_path).
++    """
++    if path.exists():
++        try:
++            with path.open("r", encoding="utf-8") as fh:
++                data = json.load(fh)
++            if not isinstance(data, dict):
++                log.warning("[CONFIG] options.json root not a mapping: %s", path)
++                return {}, None
++            log.info("[CONFIG] Loaded options from: %s", path)
++            return data, path
++        except Exception as exc:  # noqa: BLE001
++            log.warning("[CONFIG] Failed reading options.json %s: %s", path, exc)
++            return {}, None
++    log.debug("[CONFIG] options.json not found: %s", path)
++    return {}, None
++
++
++def _load_yaml_cfg(
++    paths: Optional[List[Path]] = None,
++) -> Tuple[Dict[str, Any], Optional[Path]]:
++    """
++    Load YAML config from the first available candidate path.
++    Returns (data, source_path). Empty dict if none valid.
++    """
++    candidates = paths or _candidate_paths()
++    for pth in candidates:
++        if pth.exists():
++            try:
++                with pth.open("r", encoding="utf-8") as fh:
++                    data = yaml.safe_load(fh)
++                if not isinstance(data, dict):
++                    log.warning("[CONFIG] YAML root not a mapping: %s", pth)
++                    continue
++                log.info("[CONFIG] Loaded YAML config from: %s", pth)
++                return data, pth
++            except Exception as exc:  # noqa: BLE001
++                log.warning("[CONFIG] Failed to load YAML %s: %s", pth, exc)
++        else:
++            if "Volumes" in str(pth):
++                log.debug("[CONFIG] Dev-only path skipped: %s", pth)
++            else:
++                log.debug("[CONFIG] Path not found: %s", pth)
++    return {}, None
++
++
++def load_config() -> Tuple[Dict[str, Any], Optional[Path]]:
++    """
++    Produce the effective configuration.
++    Precedence: /data/options.json (HA) overrides YAML values.
++    Returns (config_dict, primary_source_path).
++    """
++    opts, opts_src = _load_options_json()
++    yml, yml_src = _load_yaml_cfg()
++
++    merged: Dict[str, Any] = {}
++    if yml:
++        merged.update(yml)
++    if opts:
++        merged.update(opts)
++
++    source = opts_src or yml_src
++    if not merged:
++        log.error("[CONFIG] No configuration found in options.json or YAML.")
++        return {}, None
++
++    log.debug(
++        "[CONFIG] Effective keys=%s (source=%s)",
++        sorted(list(merged.keys())),
++        source,
++    )
++    return merged, source
++
++
++def init_config() -> None:
++    """Populate module-level CONFIG & CONFIG_SOURCE for callers."""
++    global CONFIG, CONFIG_SOURCE
++    CONFIG, CONFIG_SOURCE = load_config()
++    log.debug("[CONFIG] Active source: %s", CONFIG_SOURCE)
++
++
++__all__ = [
++    "CONFIG",
++    "CONFIG_SOURCE",
++    "load_config",
++    "init_config",
++    "_load_options_json",
++    "_load_yaml_cfg",
++    "LOG",
++]
++
++# Initialize on import; safe for runtime and tests
++init_config()

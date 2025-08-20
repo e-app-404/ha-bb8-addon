@@ -1,0 +1,213 @@
+# PR: Facade-first MQTT wiring, robust logging fallback, and discovery de-dup
+
+## Why
+
+* Keep **MQTT/HA** concerns in the **facade** (domain API), keep **BLEBridge** device-only.
+* Prevent crashes on **read-only `/config`** by adding a safe **logging fallback** with env override.
+* Ensure **discovery is published exactly once** (no duplicate retained configs).
+
+## What’s in this PR
+
+* `logging_setup.py`: add `BB8_LOG_PATH` env support + writable fallback (`/tmp/bb8_addon.log`) with a one-time warning.
+* `bridge_controller.py`: pass **BB8Facade** to the dispatcher (single “face” to MQTT).
+* `mqtt_dispatcher.py`: remove duplicate `publish_discovery(...)` (facade handles it).
+* `facade.py`: ensure discovery call uses `qos=qos` named arg (clarity).
+* `config.yaml` + `run.sh`: optional env plumbing for `BB8_LOG_PATH`.
+
+---
+
+## Patches
+
+### 1) `bb8_core/logging_setup.py` — env + fallback
+
+```diff
+diff --git a/bb8_core/logging_setup.py b/bb8_core/logging_setup.py
+@@
+-import logging
+-import os
++import logging
++import os
++import pathlib
++import tempfile
+
+ logger = logging.getLogger("bb8_addon")
+
+-def init_file_handler(path="/config/hestia/diagnostics/reports/bb8_addon_logs.log") -> logging.Handler:
+-    return logging.FileHandler(path)
++def _writable(path: str) -> bool:
++    try:
++        p = pathlib.Path(path)
++        p.parent.mkdir(parents=True, exist_ok=True)
++        with open(p, "a"):
++            pass
++        return True
++    except Exception:
++        return False
++
++def init_file_handler(default_path="/config/hestia/diagnostics/reports/bb8_addon_logs.log") -> logging.Handler:
++    """
++    Prefer BB8_LOG_PATH env, fall back to default_path, then /tmp, then stderr.
++    Emits one warning on fallback.
++    """
++    candidate = os.environ.get("BB8_LOG_PATH", default_path)
++    if not _writable(candidate):
++        tmp = os.path.join(tempfile.gettempdir(), "bb8_addon.log")
++        candidate = tmp if _writable(tmp) else None
++        logger.warning({"event": "log_path_fallback", "target": candidate or "stderr"})
++    if candidate:
++        return logging.FileHandler(candidate)
++    return logging.StreamHandler()
+```
+
+---
+
+### 2) `bb8_core/facade.py` — explicit `qos` in discovery call (idempotent)
+
+```diff
+diff --git a/bb8_core/facade.py b/bb8_core/facade.py
+@@ def attach_mqtt(self, client, base_topic: str, qos: int = 1, retain: bool = True) -> None:
+-        publish_discovery(client, base_topic, availability_topic="bb8/status", qos, retain=True)
++        publish_discovery(client, base_topic, availability_topic="bb8/status", qos=qos, retain=True)
+```
+
+---
+
+### 3) `bb8_core/bridge_controller.py` — wire facade to dispatcher
+
+```diff
+diff --git a/bb8_core/bridge_controller.py b/bb8_core/bridge_controller.py
+@@
+-from bb8_core.ble_bridge import BLEBridge
++from bb8_core.ble_bridge import BLEBridge
++from bb8_core.facade import BB8Facade
+@@
+-bridge = BLEBridge(gateway=gw, target_mac=target_mac, ble_adapter=ble_adapter)
+-controller_for_mqtt = bridge
++bridge = BLEBridge(gateway=gw, target_mac=target_mac, ble_adapter=ble_adapter)
++facade = BB8Facade(bridge)
++controller_for_mqtt = facade
+@@
+-    "controller": controller_for_mqtt,  # was bridge
++    "controller": controller_for_mqtt,  # facade (single MQTT-facing API)
+```
+
+*(keep your existing teardown using `bridge.shutdown()` / `_wait_forever(client, bridge)` so BLE closes cleanly.)*
+
+---
+
+### 4) `bb8_core/mqtt_dispatcher.py` — de-dup discovery (facade is the one publisher)
+
+```diff
+diff --git a/bb8_core/mqtt_dispatcher.py b/bb8_core/mqtt_dispatcher.py
+@@
+-# from .discovery_publish import publish_discovery
+@@ def on_connect(c, u, flags, rc, properties=None):
+-        # publish_discovery(c, mqtt_topic, availability_topic=status_topic, qos=qos, retain=True)
++        # Discovery is published by facade.attach_mqtt(). Avoid duplicates here.
+```
+
+> If you currently still call `publish_discovery` in dispatcher, **remove** it entirely.
+
+---
+
+### 5) (Optional) `config.yaml` — expose an override for log path
+
+```diff
+diff --git a/config.yaml b/config.yaml
+@@
+ options:
++  log_path: ""
+ schema:
++  log_path: "str?"
+```
+
+---
+
+### 6) (Optional) `run.sh` — export `BB8_LOG_PATH` from options if provided
+
+```diff
+diff --git a/run.sh b/run.sh
+@@
+ # existing: CONFIG_JSON=/data/options.json
++# optional log path override (if jq exists and value set)
++if command -v jq >/dev/null 2>&1; then
++  LP="$(jq -r '.log_path // empty' /data/options.json 2>/dev/null || true)"
++  if [ -n "$LP" ] ; then export BB8_LOG_PATH="$LP"; fi
++fi
+```
+
+---
+
+## Developer checklist (Copilot can follow)
+
+* [x] Add logging fallback + env override (`logging_setup.py`)
+* [x] Ensure facade publishes discovery with explicit `qos=qos`
+* [x] Pass **facade** (not bridge) as `controller` to dispatcher
+* [x] Remove duplicate discovery publishing from dispatcher
+* [x] (Opt) Add `log_path` option + env export in `run.sh`
+
+---
+
+## How to test (fast)
+
+**Local import/attach (no hardware required):**
+
+```bash
+python - <<'PY'
+from types import SimpleNamespace
+from bb8_core.facade import BB8Facade
+class FakeClient:
+    def __init__(self): self.calls=[]
+    def publish(self,t,payload,qos=0,retain=False): self.calls.append(("pub",t,retain))
+    def subscribe(self,t,qos=0): self.calls.append(("sub",t,qos))
+    def message_callback_add(self,t,cb): self.calls.append(("cb",t))
+bridge = SimpleNamespace(
+    connect=lambda: None, sleep=lambda _ : None, stop=lambda: None,
+    set_led_off=lambda: None, set_led_rgb=lambda r,g,b: None,
+    is_connected=lambda: False, get_rssi=lambda: 0,
+)
+BB8Facade(bridge).attach_mqtt(FakeClient(), "bb8", qos=1, retain=True)
+print("OK: facade.attach_mqtt bound without exceptions")
+PY
+```
+
+**Logging fallback:**
+
+* Set an unwritable path and see fallback warning once:
+
+```bash
+BB8_LOG_PATH="/this/is/readonly/bb8.log" python - <<'PY'
+from bb8_core.logging_setup import init_file_handler, logger
+h=init_file_handler(); logger.addHandler(h); logger.warning({"event":"probe"})
+print("OK: handler constructed")
+PY
+```
+
+* In add-on, set `options.log_path` to an accessible mount (or leave empty to use default + fallback).
+
+**Discovery de-dup:**
+
+* Start add-on and ensure only **one** `{"event":"discovery_published","count":5}` appears after connect.
+
+---
+
+## Acceptance criteria
+
+* Single startup banner; **no** restart loops.
+* On first connect: logs include:
+
+  * `{"event":"facade_mqtt_attached","base":"bb8"}`
+  * `{"event":"discovery_published","count":5}`
+  * `{"event":"mqtt_connected","rc":0,"reason":"success"}`
+* If `/config/...` is read-only, logs include **once**:
+
+  * `{"event":"log_path_fallback","target":"/tmp/bb8_addon.log"}`
+* HA shows entities: **presence, rssi, power, stop, led**; sending commands yields state echo ≤ 2s.
+* No `publish_discovery` calls in dispatcher after this PR.
+
+---
+
+## Rollback notes
+
+* Dispatcher can still accept `mqtt_user`/`mqtt_password` (deprecated) but unified to `username/password`.
+* Bridge retains optional `attach_mqtt` forwarder for compatibility; façade is preferred.

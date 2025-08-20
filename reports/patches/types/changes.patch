@@ -1,0 +1,221 @@
+## 1) Canonical `types.py` (DONE)
+
+> TASK: create/replace `beep_boop_bb8/bb8_core/types.py` with this content.
+
+```python
+# beep_boop_bb8/bb8_core/types.py
+from __future__ import annotations
+
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Optional,
+    Tuple,
+    Protocol,
+    runtime_checkable,
+    TYPE_CHECKING,
+)
+
+# ---------------------------
+# Simple aliases (stable)
+# ---------------------------
+RGB = Tuple[int, int, int]
+Scalar = "Scalar"  # alias for readable callbacks below (string-based to avoid 3.8 | syntax)
+
+# NB: Avoid importing any local modules at runtime to prevent cycles.
+# If you must reference concrete classes for typing only, do:
+# if TYPE_CHECKING:
+#     from .bridge_controller import BridgeController  # noqa: F401
+
+
+# ---------------------------
+# Callback signatures
+# ---------------------------
+BoolCallback = Callable[[bool], None]
+IntCallback = Callable[[int], None]
+OptIntCallback = Callable[[Optional[int]], None]
+RGBCallback = Callable[[int, int, int], None]
+ScalarCallback = Callable[[Any], None]  # Scalar echo: bool|int|float|str
+
+
+# ---------------------------
+# Minimal external client surfaces
+# ---------------------------
+class MqttClient(Protocol):
+    def publish(self, topic: str, payload: str, qos: int = ..., retain: bool = ...) -> Any: ...
+
+
+# ---------------------------
+# Device/link abstractions
+# ---------------------------
+@runtime_checkable
+class BLELink(Protocol):
+    def start(self) -> None: ...
+    def stop(self) -> None: ...
+
+
+# ---------------------------
+# Controller/facade/bridge interfaces (minimal, non-circular)
+# ---------------------------
+@runtime_checkable
+class BridgeController(Protocol):
+    base_topic: str
+    mqtt: MqttClient
+
+    # Command handlers (examples; keep surface minimal and stable)
+    def on_power(self, value: bool) -> None: ...
+    def on_stop(self) -> None: ...
+    def on_sleep(self) -> None: ...
+    def on_drive(self, speed: int) -> None: ...
+    def on_heading(self, degrees: int) -> None: ...
+    def on_led(self, r: int, g: int, b: int) -> None: ...
+
+    # Optional lifecycle hooks
+    def start(self) -> None: ...
+    def shutdown(self) -> None: ...
+
+
+@runtime_checkable
+class Facade(Protocol):
+    """Shim/facade interface (kept tiny to avoid import churn)."""
+    base_topic: str
+
+    def publish_scalar_echo(self, topic: str, value: Any, *, source: str = "facade") -> None: ...
+    def publish_led_echo(self, r: int, g: int, b: int) -> None: ...
+
+
+__all__ = [
+    "RGB",
+    "Scalar",
+    "BoolCallback",
+    "IntCallback",
+    "OptIntCallback",
+    "RGBCallback",
+    "ScalarCallback",
+    "MqttClient",
+    "BLELink",
+    "BridgeController",
+    "Facade",
+]
+```
+
+**Notes:**
+
+* `__all__` keeps imports explicit and greppable.
+* Protocols are intentionally **minimal** to avoid locking you into implementation details.
+* Do **not** import project modules at runtime from `types.py`. Use `TYPE_CHECKING` blocks if you must reference them.
+
+---
+
+## 2) Import sweep (Copilot change set)
+
+TASK: Update these modules to import custom types from `.types` and wrap cross-module type references in `if TYPE_CHECKING:` blocks.
+
+**Target files:**
+
+* `bb8_core/bridge_controller.py`
+* `bb8_core/ble_bridge.py`
+* `bb8_core/ble_link.py`
+* `bb8_core/telemetry.py`
+* `bb8_core/addon_config.py`
+* `bb8_core/ble_utils.py`
+
+**Generic replacement pattern:**
+
+* **Before** (example):
+
+  ```python
+  from typing import Optional, Callable, Dict, Tuple
+  from .bridge_controller import BridgeController  # <-- problematic
+  ```
+* **After**:
+
+  ```python
+  from __future__ import annotations
+  from typing import Optional, Callable, Dict, Tuple, TYPE_CHECKING
+  from .types import (
+      BridgeController,
+      BLELink,
+      MqttClient,
+      BoolCallback,
+      IntCallback,
+      OptIntCallback,
+      RGBCallback,
+  )
+  if TYPE_CHECKING:
+      # Only for static tools; prevents runtime cycles
+      from .bridge_controller import BridgeController as _BridgeControllerHint
+  ```
+
+**Prompts to Copilot (per file):**
+
+> Replace any direct imports of controller/facade/bridge types with imports from `.types`. Keep raw typing imports (`Optional`, `Dict`, etc.) if used for generics, but prefer the shared aliases/Protocols for callbacks and interfaces.
+
+---
+
+## 3) Runtime-safety guards
+
+TASK: Add these lines where appropriate (top of the refactored files):
+
+```python
+from __future__ import annotations
+from typing import TYPE_CHECKING
+```
+
+* Use `TYPE_CHECKING` for **any** local module references that are *only* needed for hinting.
+
+---
+
+## 4) Lightweight safety test (no side effects)
+
+TASK: add `tests/test_types_import.py`:
+
+```python
+def test_import_types_has_no_side_effects():
+    # Import should not indirectly import peers that can cause cycles
+    # (We assert that 'types' defines symbols but doesn't pull in heavy modules)
+    import importlib
+    mod = importlib.import_module("beep_boop_bb8.bb8_core.types")
+    for name in ("BridgeController", "BLELink", "MqttClient", "RGBCallback"):
+        assert hasattr(mod, name)
+```
+
+*(If you don’t have pytest configured, keep the file; it’s harmless. The acceptance gate is that project imports run without errors.)*
+
+---
+
+## 5) Grep checks (post-change)
+
+> After Copilot applies edits, run (user run, Copilot can write scripts):
+
+```bash
+# No direct cross-imports of peers for types
+git grep -n "from .bridge_controller import" -- beep_boop_bb8/bb8_core || true
+git grep -n "from .ble_link import" -- beep_boop_bb8/bb8_core || true
+git grep -n "from .telemetry import" -- beep_boop_bb8/bb8_core || true
+
+# All custom interfaces now come from types.py
+git grep -n "from .types import" -- beep_boop_bb8/bb8_core
+```
+
+Acceptance: first three greps return **no results**; the last one returns **some results**.
+
+---
+
+## 6) Optional (nice-to-have) typing config
+
+If you already run static typing:
+
+* add to `pyproject.toml` or `mypy.ini`:
+
+```ini
+[mypy]
+strict_optional = True
+warn_unused_ignores = True
+no_implicit_optional = True
+```
+
+*(Skip if you don’t use mypy; not required for acceptance.)*
+
+---

@@ -1,0 +1,43 @@
+### A3) Update `bb8_core/__init__.py` — export facade + start controller symbols
+
+> **Goal:** Unify public exports so imports in tests succeed.
+
+```diff
+*** Update File: bb8_core/__init__.py
+@@
+-from .ble_bridge import BLEBridge
+-from .ble_gateway import BleGateway
+-from .core import Core
+-
+-# from .facade import Bb8Facade  # Uncomment if present
+-
+-__all__ = ["Core", "BleGateway", "BLEBridge"]  # Add "Bb8Facade" if present
++from .ble_bridge import BLEBridge
++from .ble_gateway import BleGateway
++from .core import Core
++
++# Facade export (handle both spellings if present)
++try:
++    from .facade import BB8Facade as Bb8Facade
++except Exception:  # pragma: no cover
++    try:
++        from .facade import Bb8Facade  # type: ignore
++    except Exception:
++        Bb8Facade = None  # type: ignore
++
++# start_bridge_controller passthrough if defined elsewhere
++try:
++    from .bridge_controller import start_bridge_controller  # type: ignore
++except Exception:  # pragma: no cover
++    start_bridge_controller = None  # type: ignore
++
++__all__ = [
++    "Core",
++    "BleGateway",
++    "BLEBridge",
++]
++if Bb8Facade:
++    __all__.append("Bb8Facade")
++if start_bridge_controller:
++    __all__.append("start_bridge_controller")
+```

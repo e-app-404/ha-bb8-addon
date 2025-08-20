@@ -1,0 +1,51 @@
+Patch 13: use caplog
+
+```diff
+*** Begin Patch
+*** Update File: tests/test_mqtt_smoke.py
+@@
+-import io
+-import logging
+-
+-def test_discovery_and_dispatcher_smoke():
+-    stream = io.StringIO()
+-    handler = logging.StreamHandler(stream)
+-    handler.setLevel(logging.INFO)
+-    root_logger = logging.getLogger()
+-    root_logger.setLevel(logging.INFO)
+-    root_logger.addHandler(handler)
+-    device_id = "testbb8"
+-    name = "Test BB8"
+-    try:
+-        # Publish discovery
+-        publish_discovery(mqtt, device_id, name)
+-        handler.flush()
+-        logs = stream.getvalue()
+-        assert (
+-            "discovery: published" in logs
+-            or "Published HA discovery" in logs
+-        ), f"Log not found in: {logs}"
+-    finally:
+-        root_logger.removeHandler(handler)
++import logging
++import pytest
++
++def test_discovery_and_dispatcher_smoke(caplog):
++    caplog.set_level(logging.INFO)
++    device_id = "testbb8"
++    name = "Test BB8"
++    # Publish discovery
++    publish_discovery(mqtt, device_id, name)
++    # Aggregate captured messages from all loggers
++    logs = "\n".join(rec.getMessage() for rec in caplog.records)
++    assert (
++        "discovery: published" in logs
++        or "Published HA discovery" in logs
++    ), f"Log not found in: {logs}"
+*** End Patch
+```
+
+Run:
+
+python -m compileall -q . && echo READY
+pytest -q -rA -k discovery_and_dispatcher_smoke --maxfail=1

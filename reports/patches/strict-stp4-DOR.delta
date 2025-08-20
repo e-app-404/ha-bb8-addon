@@ -1,0 +1,147 @@
+# Status & Context Update
+
+**Ingested report (authoritative):**
+
+* ✅ Shim hard-disabled when `REQUIRE_DEVICE_ECHO=1` (no façade echoes/subscriptions).
+* ✅ BLE loop moved to a dedicated thread with structured logs; `run_coroutine_threadsafe` bound to that loop.
+* ✅ Scalar device echoes now originate from handlers via centralized helper with `{"source":"device"}`, `qos=0`, `retain=false` (drive split into heading/speed echoes).
+* ✅ Types refactor guard passed (`tests/test_types_import.py`), greps clean, mypy config tightened.
+
+**Gate posture:** All preconditions for strict are met **on paper**. We need a strict run’s evidence to close the loop.
+
+---
+
+# Do-Now: Strict STP4 Run (DOR ✅)
+
+Run this exact sequence (shim already gated—keep it off):
+
+```bash
+# 1) Clean environment
+pkill -f shim.sh || true
+
+# 2) Strict env
+export MQTT_BASE=bb8
+export REQUIRE_DEVICE_ECHO=1
+export ENABLE_BRIDGE_TELEMETRY=1
+
+# 3) Evidence run (you execute; Copilot does not)
+make evidence-stp4
+```
+
+## Quick local validations (fast-fail before submitting evidence)
+
+**A. Trace integrity checks**
+
+* Expect **zero** matches: `"source":"facade"`
+* Expect **≥1** matches: `"source":"device"` on scalar state topics
+* LED state entries must be **exact** `{"r":int,"g":int,"b":int}` (no `source`)
+
+```bash
+# paths as emitted by your run
+jq -c . ha_mqtt_trace_snapshot.jsonl 2>/dev/null | wc -l
+grep -F '"source":"facade"' ha_mqtt_trace_snapshot.json* || echo "OK: no facade"
+grep -F '"source":"device"' ha_mqtt_trace_snapshot.json* | head
+grep -E '"r":[0-9]+,"g":[0-9]+,"b":[0-9]+' ha_mqtt_trace_snapshot.json* | head
+```
+
+**B. BLE loop sanity**
+
+* Logs should include `ble_link_started`
+* No `get_event_loop` warnings anywhere
+
+```bash
+grep -i 'ble_link_started' run.log || echo "MISSING ble_link_started"
+grep -i 'get_event_loop' run.log && echo "ERROR: get_event_loop usage remains"
+```
+
+**C. Retain policy**
+
+* Commandable echoes published with `retain=false` (spot-check MQTT client call sites if needed)
+
+---
+
+# Evidence Submission (strict)
+
+Upload these three (unchanged format), then I’ll issue the **binary acceptance**:
+
+1. `evidence_manifest.json` — expect `"roundtrip":"PASS"`, `"schema":"PASS"`, `"timeouts_sec": 3.0–4.0`
+2. `ha_mqtt_trace_snapshot.json` or `.jsonl`
+3. First ~150 lines of your run log (`run.log` or equivalent) showing:
+
+   * `ble_link_started`
+   * command handler invoked
+   * device echo publish events
+
+---
+
+# Publisher Gating Audit (quick)
+
+You asked if anything else should be gated—do these to keep strict runs uncontaminated:
+
+* [x] **Façade/shim**: already hard-disabled on `REQUIRE_DEVICE_ECHO=1`.
+* [x] **Tests/sim tools**: ensure any local simulators don’t publish to `bb8/*/state` during strict.
+* [x] **Discovery**: scanner **only**; dispatcher discovery path stays off by default.
+* [x] **Sensors**: `ENABLE_BRIDGE_TELEMETRY` controls only `bb8/sensor/*`; they won’t affect commandable echoes.
+* [x] **Retained prestate**: confirm commandable topics are `retain=false`; if in doubt, flush retained once.
+
+---
+
+# PR Checklist (updated)
+
+Paste this into your PR body (replacing the checklist section):
+
+* [ ] **Shim hard-disable** on `REQUIRE_DEVICE_ECHO=1` (no façade echoes/subscriptions)
+* [ ] **BLE loop**: dedicated thread; `ble_link_started` present; no `get_event_loop` warnings
+* [ ] **Scalars**: device echoes publish `{"value":X,"source":"device"}`, `qos=0`, `retain=false`
+* [ ] **Drive split**: heading & speed emit separate echoes
+* [ ] **LED**: RGB JSON only (`{"r":...,"g":...,"b":...}`), no `source`, `retain=false`
+* [ ] **Discovery**: scanner is single source; dispatcher gated
+* [ ] **Telemetry gating**: `ENABLE_BRIDGE_TELEMETRY` controls only `bb8/sensor/*`
+* [ ] **Types centralised**: all custom interfaces from `bb8_core.types`; import cycle test passes
+* [ ] **Strict evidence**: `roundtrip=PASS`, `schema=PASS`, trace shows device-originated scalars; no façade
+
+---
+
+# Optional Helper: tiny smoke check (drop-in)
+
+If you want a one-shot local validator before uploading:
+
+```python
+# tools/strict_trace_check.py
+import json, sys, re, pathlib
+p = pathlib.Path(sys.argv[1])
+data = []
+if p.suffix == ".jsonl":
+    data = [json.loads(l) for l in p.read_text().splitlines() if l.strip()]
+else:
+    raw = json.loads(p.read_text())
+    data = raw if isinstance(raw, list) else raw.get("events", [])
+
+facade = [e for e in data if '"source":"facade"' in json.dumps(e)]
+device = [e for e in data if '"source":"device"' in json.dumps(e)]
+led_ok = any(re.search(r'"r":d+,"g":d+,"b":d+', json.dumps(e)) for e in data)
+
+assert not facade, "Found facade echoes in strict run"
+assert device, "No device-originated scalar echoes found"
+assert led_ok, "No LED RGB JSON entries found"
+print("Strict trace looks good.")
+```
+
+Usage:
+
+```bash
+python tools/strict_trace_check.py ha_mqtt_trace_snapshot.jsonl
+```
+
+---
+
+## Next Step (single action)
+
+Run the strict evidence collection and drop the three artifacts here. I’ll do the **binary acceptance** immediately on receipt.
+
+---
+
+**confidence_score:** 0.94
+**hallucination_risk:** low (using your status as ground truth; no new code claimed)
+**drift_score:** very low (preconditions satisfied; strict run is the final gate)
+**roadmap_status:** ready to certify strict STP4 upon evidence upload

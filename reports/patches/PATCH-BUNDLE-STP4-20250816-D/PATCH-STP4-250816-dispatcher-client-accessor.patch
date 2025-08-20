@@ -1,0 +1,148 @@
+diff --git a/bb8_core/mqtt_dispatcher.py b/bb8_core/mqtt_dispatcher.py
+index b6b87ad..2c4b7ef 100644
+--- a/bb8_core/mqtt_dispatcher.py
++++ b/bb8_core/mqtt_dispatcher.py
+@@ -1,10 +1,11 @@
+ from __future__ import annotations
+
+ import logging
+-from typing import Any, Optional, Tuple
++from typing import Any, Optional, Tuple, Callable, List
+ from .addon_config import CONFIG, CONFIG_SOURCE, init_config
+ import json
+ from .common import CMD_TOPICS, STATE_TOPICS
++from functools import partial
+
+ log = logging.getLogger(__name__)
+ _LOOPBACKS = {"localhost", "127.0.0.1"}
+
+ _DISPATCHER_STARTED: bool = False
+ _START_KEY: Optional[Tuple[str, int, str, str, bool]] = None  # (host,port,topic,client_id,user_present)
++CLIENT: Optional[Any] = None
++_PENDING_SUBS: List[Tuple[str, Callable[[str], None]]] = []
++_BOUND_TOPICS: set[str] = set()
+
+@@
+ def ensure_dispatcher_started(*args: Any, **kwargs: Any) -> bool:
+@@
+         return False
+
+@@
+ def main():
+     ...
+
+@@
+ def _compute_key(
+     host: Any, port: Any, topic: Any, client_id: Any, username: Any
+ ) -> Tuple[str, int, str, str, bool]:
+     return (str(host), int(port), str(topic), str(client_id), bool(username))
+@@
+ _orig_start_mqtt_dispatcher = None
+ try:
+     _orig_start_mqtt_dispatcher = start_mqtt_dispatcher  # type: ignore[name-defined]
+ except Exception:
+     _orig_start_mqtt_dispatcher = None
+@@
+ def _guarded_start_mqtt_dispatcher(
+@@
+     res = _orig_start_mqtt_dispatcher(  # type: ignore[misc]
+         mqtt_host=host,
+         mqtt_port=port,
+         mqtt_topic=topic,
+         client_id=cid,
+         username=user,
+         password=pwd,
+         **kwargs,
+     )
+     _DISPATCHER_STARTED = True
+     _START_KEY = key
++    # Try to capture the paho client instance from the original starter's return value.
++    global CLIENT
++    CLIENT = None
++    try:
++        if hasattr(res, "publish"):
++            CLIENT = res
++        elif isinstance(res, tuple) and res and hasattr(res[0], "publish"):
++            CLIENT = res[0]
++    except Exception:  # noqa: BLE001
++        CLIENT = None
++
++    # Apply any pending subscriptions now that we (likely) have a client.
++    _apply_pending_subscriptions()
+     return res
+
+
+ # Replace the public symbol so *all* callers go through the guard.
+ start_mqtt_dispatcher = _guarded_start_mqtt_dispatcher  # type: ignore[assignment]
+
++# -----------------------------------------------------------------------------
++# Client access + subscription registry
++# -----------------------------------------------------------------------------
++def get_client() -> Optional[Any]:
++    """Return the active MQTT client if available."""
++    return CLIENT
++
++
++def _make_cb(handler: Callable[[str], None]):
++    def _cb(client, userdata, message):
++        payload = message.payload or b""
++        try:
++            text = payload.decode("utf-8")
++        except Exception:  # noqa: BLE001
++            text = ""
++        try:
++            handler(text)
++        except Exception as exc:  # noqa: BLE001
++            log.warning("command dispatch failed for %s: %s", message.topic, exc)
++    return _cb
++
++
++def _bind_subscription(topic: str, handler: Callable[[str], None]) -> bool:
++    """Bind a topic subscription to the live client if available."""
++    if CLIENT is None:
++        return False
++    if topic in _BOUND_TOPICS:
++        return True
++    try:
++        CLIENT.message_callback_add(topic, _make_cb(handler))
++        CLIENT.subscribe(topic, qos=1)
++        _BOUND_TOPICS.add(topic)
++        log.info("mqtt_sub topic=%s qos=1", topic)
++        return True
++    except Exception as exc:  # noqa: BLE001
++        log.warning("failed to subscribe %s: %s", topic, exc)
++        return False
++
++
++def _apply_pending_subscriptions() -> None:
++    """Attempt to bind all queued subscriptions if a client exists."""
++    if CLIENT is None:
++        return
++    # Work on a snapshot so we don't mutate while iterating
++    for topic, handler in list(_PENDING_SUBS):
++        if _bind_subscription(topic, handler):
++            try:
++                _PENDING_SUBS.remove((topic, handler))
++            except ValueError:
++                pass
++
++
++def register_subscription(topic: str, handler: Callable[[str], None]) -> None:
++    """
++    Register a handler for a topic. If the client exists, bind immediately;
++    otherwise enqueue and bind after dispatcher startup.
++    """
++    if not _bind_subscription(topic, handler):
++        _PENDING_SUBS.append((topic, handler))
++
+ # Explicit export set (helps linters/import tools)
+ __all__ = [
+     "is_dispatcher_started",
+     "ensure_dispatcher_started",
+     "start_mqtt_dispatcher",
++    "get_client",
++    "register_subscription",
+     "turn_on_bb8",
+     "turn_off_bb8",
+     "main",
+ ]

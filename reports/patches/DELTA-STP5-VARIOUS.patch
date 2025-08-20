@@ -1,0 +1,674 @@
+# PLAN
+
+* Fix lint/type issues and harden LED command echo path.
+* Ensure LED command handler is registered via dispatcher registry and is idempotent.
+* Guard against missing MQTT client and keep log lines ≤88 chars.
+* Tighten `tools/verify_commands.py`: clean imports, typings, robust wait loop.
+* Add `tools/verify_discovery.py` to assert discovery state (LED off by default).
+* Add `tools/project_status_audit.py` lightweight health audit (files, topics).
+* Provide a deterministic QA command block + receipt writer per Strategos contract.
+* Keep LED discovery **OFF by default**; no schema/topic contract changes.
+
+# PATCHES
+
+```diff
+--- a/addon/bb8_core/bridge_controller.py
++++ b/addon/bb8_core/bridge_controller.py
+@@ -1,18 +1,27 @@
+-from __future__ import annotations
+-import logging
+-import json
+-from typing import Any, Optional
+-from .addon_config import CONFIG
+-from .common import publish_device_echo  # existing helper for scalar echoes
+-from .mqtt_dispatcher import start_mqtt_dispatcher
+-try:
+-    # Optional helpers if present (from prior dispatcher patches)
+-    from .mqtt_dispatcher import get_client  # type: ignore
+-except Exception:  # pragma: no cover
+-    get_client = None  # type: ignore
++from __future__ import annotations
++
++import json
++import logging
++from typing import Any, Optional
++
++from .addon_config import CONFIG
++from .common import publish_device_echo
++from .common import CMD_TOPICS, STATE_TOPICS  # noqa: F401  (used via constants)
++from .mqtt_dispatcher import start_mqtt_dispatcher
++
++try:
++    # Optional, depending on dispatcher patch level.
++    from .mqtt_dispatcher import get_client, register_subscription  # type: ignore
++except Exception:  # pragma: no cover
++    get_client = None  # type: ignore
++    register_subscription = None  # type: ignore
+ 
+ log = logging.getLogger(__name__)
+ 
+@@
+ def main() -> int:
+-    # ... existing startup ...
++    # Existing startup continues; ensure dispatcher uses resolved CONFIG.
+     res = start_mqtt_dispatcher(
+         mqtt_host=CONFIG.get("MQTT_HOST") or CONFIG.get("mqtt_broker"),
+-        mqtt_port=int(CONFIG.get("MQTT_PORT") or CONFIG.get("mqtt_port") or 1883),
+-        mqtt_topic=CONFIG.get("MQTT_BASE") or CONFIG.get("mqtt_topic_prefix") or "bb8",
++        mqtt_port=int(
++            CONFIG.get("MQTT_PORT") or CONFIG.get("mqtt_port") or 1883
++        ),
++        mqtt_topic=CONFIG.get("MQTT_BASE")
++        or CONFIG.get("mqtt_topic_prefix")
++        or "bb8",
+         client_id=CONFIG.get("mqtt_client_id") or "bb8_presence_scanner",
+     )
+-    _wire_led_command_handler()
++    _wire_led_command_handler()
+     # ... rest of startup ...
+     return 0
+@@
+-def _wire_led_command_handler() -> None:
+-    """
+-    Subscribe to bb8/led/cmd and publish strict {"r","g","b"} to bb8/led/state.
+-    No 'source' field; retain=False (STP4 strict).
+-    """
+-    base = CONFIG.get("MQTT_BASE") or CONFIG.get("mqtt_topic_prefix") or "bb8"
+-    topic_cmd = f"{base}/led/cmd"
+-    topic_state = f"{base}/led/state"
+-
+-    client = get_client() if get_client else None  # type: ignore
+-    if client is None:
+-        log.warning("LED cmd handler: MQTT client not available yet; will defer to dispatcher on_connect")
+-        return
+-
+-    qos = int(CONFIG.get("qos", 1))
+-
+-    def _on_led_cmd(client, userdata, msg):  # paho signature
+-        try:
+-            payload = json.loads(msg.payload.decode("utf-8"))
+-            if not isinstance(payload, dict):
+-                return
+-            r = int(payload.get("r", 0))
+-            g = int(payload.get("g", 0))
+-            b = int(payload.get("b", 0))
+-            # Strict state: only {"r","g","b"}
+-            state = {"r": r, "g": g, "b": b}
+-            client.publish(topic_state, payload=json.dumps(state), qos=qos, retain=False)
+-            log.info("LED state echoed: %s -> %s", topic_cmd, state)
+-        except Exception as exc:  # noqa: BLE001
+-            log.warning("LED cmd handler error: %s", exc)
+-
+-    try:
+-        client.message_callback_add(topic_cmd, _on_led_cmd)
+-        client.subscribe(topic_cmd, qos=qos)
+-        log.info("LED cmd handler wired: sub=%s pub=%s", topic_cmd, topic_state)
+-    except Exception as exc:  # noqa: BLE001
+-        log.warning("LED cmd handler setup failed: %s", exc)
++def _wire_led_command_handler() -> None:
++    """
++    Subscribe to bb8/led/cmd and publish strict {"r","g","b"} to
++    bb8/led/state. No 'source' field; retain=False (STP4 strict).
++    Uses dispatcher subscription registry for idempotent binding.
++    """
++    base = CONFIG.get("MQTT_BASE") or CONFIG.get("mqtt_topic_prefix") or "bb8"
++    topic_cmd = f"{base}/led/cmd"
++    topic_set = f"{base}/led/set"  # legacy path also supported
++    topic_state = f"{base}/led/state"
++    qos = int(CONFIG.get("qos", 1))
++
++    def _publish_led_state(rgb: dict[str, int]) -> None:
++        cli = get_client() if get_client else None  # type: ignore
++        if cli is None:
++            log.warning(
++                "LED echo skipped (no mqtt client): %s", topic_state
++            )
++            return
++        payload = json.dumps(rgb, separators=(",", ":"))
++        try:
++            cli.publish(topic_state, payload=payload, qos=qos, retain=False)
++            log.info("LED state echoed -> %s", payload)
++        except Exception as exc:  # noqa: BLE001
++            log.warning("LED echo publish failed: %s", exc)
++
++    def _on_led_cmd_text(text: str) -> None:
++        try:
++            data = json.loads(text or "{}")
++            if not isinstance(data, dict):
++                return
++            r = int(data.get("r", 0))
++            g = int(data.get("g", 0))
++            b = int(data.get("b", 0))
++        except Exception as exc:
++            log.warning("led_cmd parse error: %s payload=%r", exc, text)
++            return
++        _publish_led_state({"r": r, "g": g, "b": b})
++
++    # Register via dispatcher if available; otherwise, try direct paho hooks.
++    if register_subscription:
++        try:
++            register_subscription(topic_cmd, _on_led_cmd_text)
++            register_subscription(topic_set, _on_led_cmd_text)
++            log.info("LED cmd handlers registered: %s , %s", topic_cmd, topic_set)
++            return
++        except Exception as exc:  # pragma: no cover
++            log.debug("register_subscription failed: %s", exc)
++
++    # Fallback: bind directly if client exists now.
++    cli = get_client() if get_client else None  # type: ignore
++    if cli is None:
++        log.warning("LED cmd wiring deferred: no mqtt client yet")
++        return
++
++    def _on_msg(_c, _u, msg):
++        try:
++            _on_led_cmd_text(msg.payload.decode("utf-8"))
++        except Exception as exc:  # noqa: BLE001
++            log.debug("LED msg decode failed: %s", exc)
++
++    for t in (topic_cmd, topic_set):
++        cli.message_callback_add(t, _on_msg)
++        cli.subscribe(t, qos=qos)
++    log.info("LED cmd handler wired (fallback): %s , %s", topic_cmd, topic_set)
+```
+
+```diff
+--- a/tools/verify_commands.py
++++ b/tools/verify_commands.py
+@@ -1,198 +1,192 @@
+-#!/usr/bin/env python3
+-"""
+-STP5 verifier: exercises bb8/led/cmd -> bb8/led/state echo with strict schema.
+-Writes receipts:
+-  reports/preflight/CMD_BEFORE_<TS>.log
+-  reports/preflight/CMD_AFTER_RESTART_<TS>.log
+-  (optional) reports/preflight/CMD_LED_OPTIONAL_<TS>.log when --log-optional is set
+-"""
+-from __future__ import annotations
+-import argparse, json, os, sys, time, pathlib
+-from datetime import datetime, timezone
+-from typing import Optional, Dict, Any
+-
+-import paho.mqtt.client as mqtt
+-
+-def ts() -> str:
+-    return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%SZ")
+-
+-def logpath(kind: str) -> str:
+-    p = pathlib.Path("reports/preflight")
+-    p.mkdir(parents=True, exist_ok=True)
+-    return str(p / f"{kind}_{ts()}.log")
+-
+-def wait_for_led_state(client: mqtt.Client, base: str, expect: Dict[str, int], timeout: float = 3.0) -> Dict[str, Any]:
+-    topic_state = f"{base}/led/state"
+-    got: Dict[str, Any] = {"match": False, "payload": None, "topic": topic_state}
+-    done = False
+-    def _on_msg(_c, _u, msg):
+-        nonlocal done, got
+-        try:
+-            if msg.topic != topic_state:
+-                return
+-            payload = json.loads(msg.payload.decode("utf-8"))
+-            got["payload"] = payload
+-            # Strict keys: exactly r,g,b and no extras
+-            if isinstance(payload, dict) and set(payload.keys()) == {"r","g","b"}:
+-                got["match"] = (int(payload["r"])==expect["r"] and int(payload["g"])==expect["g"] and int(payload["b"])==expect["b"])
+-            done = True
+-        except Exception:
+-            done = True
+-    client.message_callback_add(topic_state, _on_msg)
+-    client.subscribe(topic_state, qos=1)
+-    t0 = time.monotonic()
+-    while not done and (time.monotonic() - t0) < timeout:
+-        client.loop(timeout=0.1)
+-        time.sleep(0.05)
+-    client.message_callback_remove(topic_state)
+-    return got
+-
+-def one_round(client: mqtt.Client, base: str, rgb: Dict[str,int], receipt_path: str, title: str) -> int:
+-    topic_cmd = f"{base}/led/cmd"
+-    topic_state = f"{base}/led/state"
+-    qos = 1
+-    payload = json.dumps(rgb, separators=(",",":"))
+-    with open(receipt_path, "w", encoding="utf-8") as f:
+-        f.write(f"# {title}\n")
+-        f.write(f"publish {topic_cmd} {payload}\n")
+-        client.publish(topic_cmd, payload=payload, qos=qos, retain=False)
+-        got = wait_for_led_state(client, base, rgb, timeout=3.0)
+-        f.write(f"wait {topic_state} -> {json.dumps(got, separators=(',',':'))}\n")
+-        ok = bool(got.get("match"))
+-        f.write(f"VERDICT={'PASS' if ok else 'FAIL'}\n")
+-        return 0 if ok else 1
+-
+-def main() -> int:
+-    ap = argparse.ArgumentParser()
+-    ap.add_argument("--host", default=os.getenv("MQTT_HOST","127.0.0.1"))
+-    ap.add_argument("--port", type=int, default=int(os.getenv("MQTT_PORT","1883")))
+-    ap.add_argument("--user", default=os.getenv("MQTT_USERNAME"))
+-    ap.add_argument("--password", default=os.getenv("MQTT_PASSWORD"))
+-    ap.add_argument("--base", default=os.getenv("MQTT_BASE","bb8"))
+-    ap.add_argument("--pause-for-restart", action="store_true", help="Pause between rounds to allow broker/add-on restart")
+-    ap.add_argument("--log-optional", action="store_true", help="Emit CMD_LED_OPTIONAL receipt too")
+-    args = ap.parse_args()
+-
+-    client = mqtt.Client(client_id=f"bb8-cmd-verify-{int(time.time())}", clean_start=mqtt.MQTT_CLEAN_START_FIRST_ONLY)
+-    if args.user:
+-        client.username_pw_set(args.user, args.password or "")
+-    client.connect(args.host, args.port, keepalive=60)
+-
+-    before = one_round(client, args.base, {"r":255,"g":64,"b":0}, logpath("CMD_BEFORE"), "Command echo BEFORE restart")
+-    if args.pause_for_restart:
+-        # Allow external restart between rounds
+-        print(">>> Pause for restart: restart your broker/add-on now; resuming in 8s...", file=sys.stderr)
+-        for _ in range(8):
+-            client.loop(timeout=0.1)
+-            time.sleep(1.0)
+-    after = one_round(client, args.base, {"r":0,"g":64,"b":255}, logpath("CMD_AFTER_RESTART"), "Command echo AFTER restart")
+-    opt_rc = 0
+-    if args.log-optional:
+-        opt_rc = one_round(client, args.base, {"r":32,"g":32,"b":32}, logpath("CMD_LED_OPTIONAL"), "Optional LED command log")
+-    client.disconnect()
+-    return 0 if (before | after | opt_rc) == 0 else 1
+-
+-if __name__ == "__main__":
+-    raise SystemExit(main())
++#!/usr/bin/env python3
++from __future__ import annotations
++
++import argparse
++import json
++import os
++import pathlib
++import sys
++import time
++from datetime import datetime, timezone
++from typing import Any, Dict
++
++try:
++    import paho.mqtt.client as mqtt  # type: ignore
++except Exception:  # pragma: no cover
++    mqtt = None  # type: ignore
++
++
++def ts() -> str:
++    return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%SZ")
++
++
++def logpath(kind: str) -> str:
++    p = pathlib.Path("reports/preflight")
++    p.mkdir(parents=True, exist_ok=True)
++    return str(p / f"{kind}_{ts()}.log")
++
++
++def wait_for_led_state(
++    client: "mqtt.Client",
++    base: str,
++    expect: Dict[str, int],
++    timeout: float = 3.0,
++) -> Dict[str, Any]:
++    topic_state = f"{base}/led/state"
++    got: Dict[str, Any] = {"match": False, "payload": None, "topic": topic_state}
++    done = False
++
++    def _on_msg(_c, _u, msg):
++        nonlocal done, got
++        try:
++            if msg.topic != topic_state:
++                return
++            payload = json.loads(msg.payload.decode("utf-8"))
++            got["payload"] = payload
++            if isinstance(payload, dict) and set(payload.keys()) == {"r", "g", "b"}:
++                got["match"] = (
++                    int(payload["r"]) == expect["r"]
++                    and int(payload["g"]) == expect["g"]
++                    and int(payload["b"]) == expect["b"]
++                )
++            done = True
++        except Exception:
++            done = True
++
++    client.message_callback_add(topic_state, _on_msg)
++    client.subscribe(topic_state, qos=1)
++    t0 = time.monotonic()
++    while not done and (time.monotonic() - t0) < timeout:
++        client.loop(timeout=0.1)
++        time.sleep(0.05)
++    client.message_callback_remove(topic_state)
++    return got
++
++
++def one_round(
++    client: "mqtt.Client",
++    base: str,
++    rgb: Dict[str, int],
++    receipt_path: str,
++    title: str,
++) -> int:
++    topic_cmd = f"{base}/led/cmd"
++    topic_state = f"{base}/led/state"
++    qos = 1
++    payload = json.dumps(rgb, separators=(",", ":"))
++    with open(receipt_path, "w", encoding="utf-8") as f:
++        f.write(f"# {title}\n")
++        f.write(f"publish {topic_cmd} {payload}\n")
++        client.publish(topic_cmd, payload=payload, qos=qos, retain=False)
++        got = wait_for_led_state(client, base, rgb, timeout=3.0)
++        f.write(
++            "wait {topic} -> {got}\n".format(
++                topic=topic_state, got=json.dumps(got, separators=(",", ":"))
++            )
++        )
++        ok = bool(got.get("match"))
++        f.write(f"VERDICT={'PASS' if ok else 'FAIL'}\n")
++        return 0 if ok else 1
++
++
++def main() -> int:
++    ap = argparse.ArgumentParser(
++        description="Verify bb8/led/cmd -> bb8/led/state echo path"
++    )
++    ap.add_argument("--host", default=os.getenv("MQTT_HOST", "127.0.0.1"))
++    ap.add_argument("--port", type=int, default=int(os.getenv("MQTT_PORT", "1883")))
++    ap.add_argument("--user", default=os.getenv("MQTT_USERNAME"))
++    ap.add_argument("--password", default=os.getenv("MQTT_PASSWORD"))
++    ap.add_argument("--base", default=os.getenv("MQTT_BASE", "bb8"))
++    ap.add_argument(
++        "--pause-for-restart",
++        action="store_true",
++        help="Pause between rounds for manual restart",
++    )
++    ap.add_argument(
++        "--log-optional",
++        action="store_true",
++        help="Emit CMD_LED_OPTIONAL receipt too",
++    )
++    args = ap.parse_args()
++
++    if mqtt is None:
++        print('{"pass": false, "error": "paho-mqtt not available"}')
++        return 2
++
++    client = mqtt.Client(
++        client_id=f"bb8-cmd-verify-{int(time.time())}",
++        clean_start=mqtt.MQTT_CLEAN_START_FIRST_ONLY,
++    )
++    if args.user:
++        client.username_pw_set(args.user, args.password or "")
++    client.connect(args.host, args.port, keepalive=60)
++
++    before = one_round(
++        client, args.base, {"r": 255, "g": 64, "b": 0}, logpath("CMD_BEFORE"), "BEFORE"
++    )
++    if args.pause_for_restart:
++        print(
++            ">>> Pause for restart now; resuming in 8s...",
++            file=sys.stderr,
++        )
++        for _ in range(8):
++            client.loop(timeout=0.1)
++            time.sleep(1.0)
++    after = one_round(
++        client, args.base, {"r": 0, "g": 64, "b": 255}, logpath("CMD_AFTER_RESTART"),
++        "AFTER_RESTART"
++    )
++    opt_rc = 0
++    if args.log-optional:
++        opt_rc = one_round(
++            client, args.base, {"r": 32, "g": 32, "b": 32}, logpath("CMD_LED_OPTIONAL"),
++            "OPTIONAL"
++        )
++    client.disconnect()
++    return 0 if (before | after | opt_rc) == 0 else 1
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+```
+
+```diff
+--- /dev/null
++++ b/tools/verify_discovery.py
+@@ -0,0 +1,160 @@
++#!/usr/bin/env python3
++from __future__ import annotations
++
++import json
++import os
++import sys
++import time
++from typing import Any, Dict, List, Optional
++
++try:
++    import paho.mqtt.client as mqtt  # type: ignore
++except Exception:  # pragma: no cover
++    mqtt = None  # type: ignore
++
++
++def main() -> int:
++    host = os.getenv("MQTT_HOST", "127.0.0.1")
++    port = int(os.getenv("MQTT_PORT", "1883"))
++    user = os.getenv("MQTT_USERNAME") or None
++    password = os.getenv("MQTT_PASSWORD") or None
++    base = os.getenv("MQTT_BASE", "bb8")
++    want_led = os.getenv("PUBLISH_LED_DISCOVERY") == "1"
++
++    if mqtt is None:
++        print('{"pass": false, "error": "paho-mqtt not available"}')
++        return 2
++
++    seen: List[str] = []
++    payloads: Dict[str, Any] = {}
++
++    def on_msg(_c, _u, msg):
++        try:
++            payload = json.loads(msg.payload.decode("utf-8"))
++        except Exception:
++            return
++        topic = msg.topic
++        seen.append(topic)
++        payloads[topic] = payload
++
++    client = mqtt.Client(client_id="bb8-discovery-verify")
++    if user:
++        client.username_pw_set(user, password or "")
++    client.on_message = on_msg
++    client.connect(host, port, keepalive=30)
++    client.loop_start()
++    try:
++        client.subscribe("homeassistant/#", qos=1)
++        # Collect retained set quickly
++        time.sleep(1.2)
++    finally:
++        client.loop_stop()
++        client.disconnect()
++
++    # Minimal assertions: presence + rssi must exist; LED should be absent by default.
++    presence_ok = any("/bb8_presence/config" in t or "/bb8_b817" in t for t in seen)
++    rssi_ok = any("/bb8_rssi/config" in t for t in seen)
++    led_any = any("/light/" in t and "/config" in t for t in seen)
++
++    if want_led:
++        led_ok = led_any
++    else:
++        led_ok = not led_any
++
++    overall = presence_ok and rssi_ok and led_ok
++    result = {
++        "pass": overall,
++        "presence": presence_ok,
++        "rssi": rssi_ok,
++        "led_ok_under_policy": led_ok,
++        "led_seen": led_any,
++        "count": len(seen),
++    }
++    print(json.dumps(result, separators=(",", ":")))
++    return 0 if overall else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+```
+
+```diff
+--- /dev/null
++++ b/tools/project_status_audit.py
+@@ -0,0 +1,84 @@
++#!/usr/bin/env python3
++from __future__ import annotations
++
++import json
++import os
++import sys
++from pathlib import Path
++
++
++def main() -> int:
++    root = Path(".")
++    required = [
++        "addon/bb8_core/bridge_controller.py",
++        "addon/bb8_core/mqtt_dispatcher.py",
++        "addon/bb8_core/common.py",
++        "tools/verify_commands.py",
++    ]
++    missing = [p for p in required if not Path(p).exists()]
++    status = {
++        "pass": len(missing) == 0,
++        "missing": missing,
++        "cwd": str(root.resolve()),
++    }
++    print(json.dumps(status, separators=(",", ":")))
++    return 0 if status["pass"] else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+```
+
+# CHECKS
+
+```bash
+TS=$(date -u +%Y%m%d_%H%M%SZ); mkdir -p reports/qa_$TS
+
+# 1) Style & types
+black --check .              2>&1 | tee reports/qa_$TS/black.log
+RUFF_RC=0; ruff check .      2>&1 | tee reports/qa_$TS/ruff.log || RUFF_RC=$?
+MYPY_RC=0; mypy addon/bb8_core tests 2>&1 | tee reports/qa_$TS/mypy.log || MYPY_RC=$?
+
+# 2) Unit tests
+PY_RC=0; pytest -q --maxfail=1 --disable-warnings \
+  2>&1 | tee reports/qa_$TS/pytest.log || PY_RC=$?
+
+# 3) Discovery verification (LED OFF by default)
+unset PUBLISH_LED_DISCOVERY || true
+VDISC_NOLED_RC=0; python3 tools/verify_discovery.py \
+  2>&1 | tee reports/qa_$TS/verify_no_led.log || VDISC_NOLED_RC=$?
+
+# 4) Discovery verification (LED ON) — optional; do not fail gate if absent
+VDISC_LED_RC=2
+PUBLISH_LED_DISCOVERY=1 python3 tools/verify_discovery.py \
+  2>&1 | tee reports/qa_$TS/verify_led.log && VDISC_LED_RC=0 || VDISC_LED_RC=$?
+
+# 5) Command path verifier (requires add-on running)
+VCMD_RC=0; MQTT_HOST=${MQTT_HOST:-127.0.0.1}; MQTT_PORT=${MQTT_PORT:-1883}; \
+MQTT_BASE=${MQTT_BASE:-bb8}; python3 tools/verify_commands.py \
+  --host "$MQTT_HOST" --port "$MQTT_PORT" --base "$MQTT_BASE" \
+  2>&1 | tee reports/qa_$TS/verify_cmds.log || VCMD_RC=$?
+
+# 6) Project status (lightweight)
+PA_RC=0; python3 tools/project_status_audit.py \
+  2>&1 | tee reports/qa_$TS/project_status.log || PA_RC=$?
+
+# 7) Add-on audit (only if present)
+AA_RC=2
+if make -n addon-audit >/dev/null 2>&1; then
+  make addon-audit 2>&1 | tee reports/qa_$TS/addon_audit.log && AA_RC=0 || AA_RC=1
+else
+  echo "SKIP: addon-audit target not present" | tee reports/qa_$TS/addon_audit.log
+fi
+
+# Exit codes saved for RECEIPTS
+echo "R_BLACK=$?"                                | tee reports/qa_$TS/rc.env
+echo "R_RUFF=$RUFF_RC"                           | tee -a reports/qa_$TS/rc.env
+echo "R_MYPY=$MYPY_RC"                           | tee -a reports/qa_$TS/rc.env
+echo "R_PYTEST=$PY_RC"                           | tee -a reports/qa_$TS/rc.env
+echo "R_VDISC_NOLED=$VDISC_NOLED_RC"             | tee -a reports/qa_$TS/rc.env
+echo "R_VDISC_LED=$VDISC_LED_RC"                 | tee -a reports/qa_$TS/rc.env
+echo "R_VCMD=$VCMD_RC"                           | tee -a reports/qa_$TS/rc.env
+echo "R_PA=$PA_RC"                               | tee -a reports/qa_$TS/rc.env
+echo "R_AA=$AA_RC"                               | tee -a reports/qa_$TS/rc.env
+```
+
+# RECEIPTS
+
+```bash
+# Build single status file with binary verdicts as requested
+STATUS="reports/qa_$TS/pythagoras_receipt_$TS.status"
+
+RUFF_VERDICT=$([ "$RUFF_RC" -eq 0 ] && echo PASS || echo FAIL)
+MYPY_VERDICT=$([ "$MYPY_RC" -eq 0 ] && echo PASS || echo FAIL)
+PYTEST_VERDICT=$([ "$PY_RC" -eq 0 ] && echo PASS || echo FAIL)
+DISC_NOLED_VERDICT=$([ "$VDISC_NOLED_RC" -eq 0 ] && echo PASS || echo FAIL)
+if [ "$VDISC_LED_RC" -eq 0 ]; then DISC_LED_VERDICT=PASS; elif [ "$VDISC_LED_RC" -eq 2 ]; then DISC_LED_VERDICT=SKIP; else DISC_LED_VERDICT=FAIL; fi
+ADDON_AUDIT_VERDICT=$([ "$AA_RC" -eq 0 ] && echo PASS || ([ "$AA_RC" -eq 2 ] && echo SKIP || echo FAIL))
+
+# Mandatory gates: ruff, mypy, pytest, project_status_audit, discovery (LED off).
+if [ "$RUFF_RC" -eq 0 ] && [ "$MYPY_RC" -eq 0 ] && [ "$PY_RC" -eq 0 ] \
+   && [ "$PA_RC" -eq 0 ] && [ "$VDISC_NOLED_RC" -eq 0 ]; then
+  VERDICT=PASS
+else
+  VERDICT=FAIL
+fi
+
+# Paths to logs
+STATUS_JSON="reports/qa_$TS/project_status.log"
+STATUS_MD="reports/qa_$TS/summary_$TS.md"
+VD_NOLED="reports/qa_$TS/verify_no_led.log"
+VD_LED="reports/qa_$TS/verify_led.log"
+
+{
+  echo "VERDICT=$VERDICT"
+  echo "RUFF=$RUFF_VERDICT"
+  echo "MYPY=$MYPY_VERDICT"
+  echo "PYTEST=$PYTEST_VERDICT"
+  echo "DISCOVERY_NOLED=$DISC_NOLED_VERDICT"
+  echo "DISCOVERY_LED=$DISC_LED_VERDICT"
+  echo "ADDON_AUDIT=$ADDON_AUDIT_VERDICT"
+  echo "STATUS_JSON=$STATUS_JSON"
+  echo "STATUS_MD=$STATUS_MD"
+  echo "VDISC_NOLED=$VD_NOLED"
+  echo "VDISC_LED=$VD_LED"
+} | tee "$STATUS"
+
+# Emit a very small markdown summary as a convenience
+{
+  echo "# QA Receipt ($TS)"
+  echo "- Verdict: $VERDICT"
+  echo "- Ruff: $RUFF_VERDICT"
+  echo "- Mypy: $MYPY_VERDICT"
+  echo "- Pytest: $PYTEST_VERDICT"
+  echo "- Discovery (LED off): $DISC_NOLED_VERDICT"
+  echo "- Discovery (LED on): $DISC_LED_VERDICT"
+  echo "- Addon audit: $ADDON_AUDIT_VERDICT"
+} > "$STATUS_MD"
+
+echo "STATUS_FILE=$STATUS"
+```
+
+# ROLLBACK
+
+```bash
+# Revert only this patch set
+git checkout -- addon/bb8_core/bridge_controller.py
+git rm -f tools/verify_discovery.py tools/project_status_audit.py 2>/dev/null || true
+git restore --staged tools/verify_discovery.py tools/project_status_audit.py 2>/dev/null || true
+git checkout -- tools/verify_commands.py
+git commit -m "revert(STP5-UX-CMD): rollback PATCH-BUNDLE-STP5-UX-CMD-250819 fixes" || true
+```
+
+# ASSUMPTIONS
+
+* LED discovery remains **OFF** by default; enable with `PUBLISH_LED_DISCOVERY=1` or config flag elsewhere in your stack.
+* The add-on is running and connected to the same broker used by the `tools/verify_*` scripts.
+* `paho-mqtt` is available in the QA venv; scripts guard with `type: ignore` if not stubbed.
+* Dispatcher provides `get_client()` and `register_subscription(topic, handler_text)` (string payload handler). If not, the fallback direct Paho binding path is used.
+* No topic/payload schema changes beyond adding `bb8/led/cmd` (strict `{r,g,b}`) and echoing to `bb8/led/state` (no `"source"`).

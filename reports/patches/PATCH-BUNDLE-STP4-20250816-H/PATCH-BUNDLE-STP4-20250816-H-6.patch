@@ -1,0 +1,20 @@
+
+### \*\*\* Begin Patch 6 — Update File: `bb8_core/mqtt_dispatcher.py` (idempotency: remove duplicate eager trigger) \*\*\*
+
+> **Goal:** Some tests report duplicate discovery publishes. Only publish on `on_connect`; remove the eager `_trigger_discovery_connected()` call immediately after `loop_start`.
+
+```diff
+*** Update File: bb8_core/mqtt_dispatcher.py
+@@
+-    CLIENT.on_connect = _on_connect
+-    # ... existing client.connect / loop_start ...
+-    # Proactively trigger once post-start to cover immediate-connect brokers
+-    _trigger_discovery_connected()
+-    return True
++    CLIENT.on_connect = _on_connect
++    # ... existing client.connect / loop_start ...
++    # Do not proactively trigger here; on_connect will handle publication deterministically.
++    return True
+```
+
+### \*\*\* End Patch 6 \*\*\*

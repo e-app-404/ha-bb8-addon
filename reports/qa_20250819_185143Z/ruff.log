@@ -1,0 +1,14 @@
+SIM102 Use a single `if` statement instead of nested `if` statements
+  --> reports/patches/addon_config/cl_addon_config.py:93:9
+   |
+91 |                   )
+92 |                   LOG.warning(msg)
+93 | /         elif typ in ("str", "str?") or typ is str:
+94 | |             if not (isinstance(val, str) or (typ in ("str?",) and val is None)):
+   | |________________________________________________________________________________^
+95 |                   msg = f"[CONFIG] Key '{key}' expected str, got {type(val).__name__}."
+96 |                   LOG.warning(msg)
+   |
+help: Combine `if` statements using `and`
+
+Found 1 error.

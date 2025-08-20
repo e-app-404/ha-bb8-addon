@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+TS=$(date -u +%Y%m%d_%H%M%SZ)
+OUTDIR="reports/bundles"
+mkdir -p "$OUTDIR"
+
+# Helper: latest matching file (best-effort)
+latest() { ls -1t $1 2>/dev/null | head -1 || true; }
+
+# Collect latest receipts (optional each)
+STATUS_JSON=$(latest "reports/project_status_audit_*Z.json")
+STATUS_MD="${STATUS_JSON%.json}.md"
+VDISC_NOLED=$(latest "reports/verify_discovery_*no_led*.log")
+VDISC_LED=$(latest "reports/verify_discovery_*with_led*.log")
+PREFLIGHT_STATUS=$(latest "reports/preflight/INT_HA_CONTROL_*Z.status")
+CHECKPOINT_SEED=$(latest "reports/checkpoints/rehydration_seed_*Z.yaml")
+CHECKPOINT_STATUS=$(latest "reports/checkpoints/checkpoint_*Z.status")
+DELTA_CONTRACT=$(latest "reports/checkpoints/DC-INT-HA-CONTROL_*Z.yaml")
+EXEC_MANDATE=$(latest "reports/checkpoints/EM-INT-HA-CONTROL_*Z.json")
+
+# Build explicit file list to avoid recursion
+FILELIST="$OUTDIR/_snapshot_filelist_${TS}.txt"; : > "$FILELIST"
+addfile() { [ -n "${1:-}" ] && [ -e "$1" ] && echo "$1" >> "$FILELIST" || true; }
+
+# Core docs & settings
+for f in README.md CHANGELOG.md .gitignore .editorconfig pyproject.toml ruff.toml mypy.ini pytest.ini tox.ini; do [ -e "$f" ] && echo "$f" >> "$FILELIST"; done
+# VS Code
+for f in .vscode/settings.json .vscode/launch.json .vscode/tasks.json; do [ -e "$f" ] && echo "$f" >> "$FILELIST"; done
+# CI bits
+for f in .github/workflows/addon-audit.yml .github/PR_TEMPLATE.md; do [ -e "$f" ] && echo "$f" >> "$FILELIST"; done
+# Add-on manifest & runtime descriptors
+for f in addon/Dockerfile addon/config.yaml addon/run.sh addon/services.d/ble_bridge/run addon/VERSION; do [ -e "$f" ] && echo "$f" >> "$FILELIST"; done
+# Core code & ops (python/sh/md/txt)
+find addon/bb8_core -type f \( -name "*.py" -o -name "*.md" -o -name "*.txt" \) -print >> "$FILELIST"
+find addon/ops -type f \( -name "*.py" -o -name "*.sh" -o -name "*.md" \) -print 2>/dev/null || true
+# Tools & Tests
+find tools -type f \( -name "*.py" -o -name "*.sh" \) -print >> "$FILELIST"
+find tests -type f -name "*.py" -print >> "$FILELIST"
+# Receipts & checkpoints (no tarballs!)
+addfile "$STATUS_JSON"; addfile "$STATUS_MD"
+addfile "$VDISC_NOLED"; addfile "$VDISC_LED"
+addfile "$PREFLIGHT_STATUS"
+addfile "$CHECKPOINT_SEED"; addfile "$CHECKPOINT_STATUS"
+addfile "$DELTA_CONTRACT"; addfile "$EXEC_MANDATE"
+# Include plain files from reports/preflight and reports/checkpoints (no archives)
+[ -d reports/preflight ] && find reports/preflight -type f ! -name "*.tar.gz" ! -name "*.zip" -print >> "$FILELIST" || true
+[ -d reports/checkpoints ] && find reports/checkpoints -type f \( -name "*.yaml" -o -name "*.status" -o -name "*.json" -o -name "*.md" \) -print >> "$FILELIST" || true
+
+# De-dup & validate
+sort -u "$FILELIST" -o "$FILELIST"
+grep -vE "^[[:space:]]*$" "$FILELIST" > "$FILELIST.tmp" && mv "$FILELIST.tmp" "$FILELIST"
+awk '{ if (system("[ -e \""$0"\" ]") == 0) print $0 }' "$FILELIST" > "$FILELIST.ok" || true
+mv "$FILELIST.ok" "$FILELIST"
+
+# Manifest JSON
+MANIFEST="$OUTDIR/project_snapshot_${TS}.json"
+python - "$FILELIST" "$MANIFEST" <<'PY'
+import sys, json, os, time
+fl, out = sys.argv[1], sys.argv[2]
+files = []
+with open(fl) as fh:
+    for p in fh:
+        p=p.strip()
+        if not p: continue
+        try:
+            st=os.stat(p)
+            files.append({"path":p,"size":st.st_size,"mtime_utc":time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(st.st_mtime))})
+        except FileNotFoundError:
+            pass
+meta = {
+  "snapshot_ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+  "repo_root": os.getcwd(),
+  "counts": {"files": len(files)},
+  "includes_note": "lean snapshot; excludes caches/venv/build; tar follows symlinks (-h); archives excluded to avoid recursion"
+}
+json.dump({"meta":meta,"files":files}, open(out,"w"), indent=2)
+PY
+
+# Checksums
+CHKS="$OUTDIR/project_snapshot_${TS}_SHA256.txt"; : > "$CHKS"
+while IFS= read -r p; do
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$p" >> "$CHKS"; else shasum -a 256 "$p" >> "$CHKS"; fi
+done < "$FILELIST"
+
+# Tarball (follow symlinks; exclude archives/caches; exclude output dir)
+TAR=tar; command -v gtar >/dev/null 2>&1 && TAR=gtar
+TARBALL="$OUTDIR/project_snapshot_${TS}.tar.gz"
+EXCLUDES=(
+  --exclude-vcs
+  --exclude=".git" --exclude=".venv" --exclude="**/__pycache__" --exclude=".pytest_cache" --exclude=".ruff_cache"
+  --exclude="build" --exclude="dist" --exclude="*.egg-info" --exclude="node_modules"
+  --exclude="**/*.tar.gz" --exclude="**/*.zip"
+  --exclude="reports/bundles/**"
+  --exclude="**/.env" --exclude="**/options.json"
+)
+# Use file list; --no-recursion prevents directory walks; -h dereferences symlinks (e.g., addon/)
+"$TAR" -czhf "$TARBALL" -h --no-recursion "${EXCLUDES[@]}" -T "$FILELIST"
+
+# Also embed manifest + checksums into the tar
+
+echo "SNAPSHOT_TARBALL=$TARBALL"
+echo "SNAPSHOT_MANIFEST=$MANIFEST"
+echo "SNAPSHOT_CHECKSUMS=$CHKS"
+echo "SNAPSHOT_FILELIST=$FILELIST"
+
+# EOF

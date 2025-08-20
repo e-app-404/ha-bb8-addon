@@ -1,0 +1,145 @@
+diff --git a/bb8_core/mqtt_dispatcher.py b/bb8_core/mqtt_dispatcher.py
+index a9b63f4..e4c7f12 100644
+--- a/bb8_core/mqtt_dispatcher.py
++++ b/bb8_core/mqtt_dispatcher.py
+@@ -1,19 +1,27 @@
+ from __future__ import annotations
+
+ import logging
+-from typing import Any, Optional, Tuple, Callable, List
++from typing import Any, Optional, Tuple, Callable, List
+ from .addon_config import CONFIG, CONFIG_SOURCE, init_config
+ import json
+ from .common import CMD_TOPICS, STATE_TOPICS
+ from ipaddress import ip_address
+
+ log = logging.getLogger(__name__)
+ _LOOPBACKS = {"localhost", "127.0.0.1"}
+
+-_RESUB_ON_CONNECT_ATTACHED = False
+-_DISCOVERY_PUBLISHED = False
++# Dispatcher runtime state
++_RESUB_ON_CONNECT_ATTACHED: bool = False
++_DISCOVERY_PUBLISHED: bool = False
++_DISPATCHER_STARTED: bool = False
++# (host, port, topic, client_id, user_present)
++_START_KEY: Optional[Tuple[str, int, str, str, bool]] = None
++CLIENT: Optional[Any] = None
+
+
+ def _compute_key(
+     host: Any, port: Any, topic: Any, client_id: Any, username: Any
+ ) -> Tuple[str, int, str, str, bool]:
+     return (str(host), int(port), str(topic), str(client_id), bool(username))
+@@
+ def _is_loopback(h: str) -> bool:
+     try:
+         if h in _LOOPBACKS:
+             return True
+         return ip_address(h).is_loopback  # handles ::1 etc.
+     except Exception:
+         return False
+@@
+ def _canonicalize_params(host: Optional[str], port: Optional[int],
+                          topic: Optional[str], client_id: Optional[str],
+                          username: Optional[str], password: Optional[str]
+                          ) -> Tuple[str,int,str,str,Optional[str],Optional[str],str]:
+@@
+     return use_host, use_port, use_topic, use_cid, use_user, use_pass, src
+
+@@
+ _orig_start_mqtt_dispatcher = None
+ try:
+     _orig_start_mqtt_dispatcher = start_mqtt_dispatcher  # type: ignore[name-defined]
+ except Exception:
+     _orig_start_mqtt_dispatcher = None
+@@
+ def _guarded_start_mqtt_dispatcher(
+     *, mqtt_host: Optional[str] = None, mqtt_port: Optional[int] = None,
+     mqtt_topic: Optional[str] = None, client_id: Optional[str] = None,
+     username: Optional[str] = None, password: Optional[str] = None, **kwargs: Any
+ ):
+@@
+-    key = _compute_key(host, port, topic, cid, user)
++    key = _compute_key(host, port, topic, cid, user)
+     if is_dispatcher_started():
+         if key != _START_KEY:
+             log.warning("dispatcher already started with %s, ignoring new start %s", _START_KEY, key)
+             return False
+         return True
+@@
+     res = _orig_start_mqtt_dispatcher(  # type: ignore[misc]
+         mqtt_host=host,
+         mqtt_port=port,
+         mqtt_topic=topic,
+         client_id=cid,
+         username=user,
+         password=pwd,
+         **kwargs,
+     )
+
+-    _DISPATCHER_STARTED = True
+-    _START_KEY = key
+-    # Try to capture the paho client instance from the original starter's return value.
+-    # (Existing logic retained)
+-    global CLIENT
+-    CLIENT = None
++    # Mark started and capture the client if returned by starter.
++    global _DISPATCHER_STARTED, _START_KEY, CLIENT
++    _DISPATCHER_STARTED = True
++    _START_KEY = key
++    # reset; starter may set it or we may pick it from kwargs later
++    CLIENT = None
+     try:
+         if isinstance(res, tuple) and res and res[0] is not None:
+             CLIENT = res[0]
+         elif hasattr(res, "client"):
+             CLIENT = getattr(res, "client")
+         elif hasattr(res, "publish"):  # paho client directly
+             CLIENT = res
+     except Exception as exc:  # noqa: BLE001
+         log.debug("could not extract client from starter return: %s", exc)
+@@
+     _apply_pending_subscriptions()
+     _attach_on_connect_resubscribe()
+     # Publish discovery once, if enabled
+     _maybe_publish_bb8_discovery()
+     return res
+@@
+ def _attach_on_connect_resubscribe() -> None:
+@@
+     def _on_connect(client, userdata, flags, rc, properties=None):  # paho v5 sig compatible
+         log.info("mqtt_on_connect rc=%s; re-binding subscriptions (%d topics)", rc, len(_BOUND_TOPICS) + len(_PENDING_SUBS))
+         _apply_pending_subscriptions()
+         # Publish discovery at-connect to avoid races where client wasn't ready earlier
+         _maybe_publish_bb8_discovery()
+@@
+ def _maybe_publish_bb8_discovery() -> None:
+     global _DISCOVERY_PUBLISHED
+     if _DISCOVERY_PUBLISHED:
+         return
+     if not CONFIG.get("dispatcher_discovery_enabled", False):
+         return
+-    if CLIENT is None:
++    if CLIENT is None:
+         return
+-    def _pub(topic: str, payload: str, retain: bool) -> None:
+-        CLIENT.publish(topic, payload=payload, qos=int(CONFIG.get("qos",1)), retain=retain)
++    def _pub(topic: str, payload: str, retain: bool) -> None:
++        # Race-safe: re-check client at call time
++        cli = CLIENT
++        if cli is None:
++            log.warning("discovery publish skipped (no MQTT client) topic=%s", topic)
++            return
++        try:
++            cli.publish(
++                topic,
++                payload=payload,
++                qos=int(CONFIG.get("qos", 1)),
++                retain=retain,
++            )
++        except Exception as exc:  # noqa: BLE001
++            log.warning("discovery publish failed topic=%s err=%s", topic, exc)
+     publish_bb8_discovery(_pub)
+     _DISCOVERY_PUBLISHED = True
+     log.info("Published discovery: all canonical entities (retained)")

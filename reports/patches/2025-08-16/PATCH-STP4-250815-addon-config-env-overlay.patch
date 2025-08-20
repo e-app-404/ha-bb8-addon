@@ -1,0 +1,34 @@
+# Patch ID: PATCH-STP4-250815-addon-config-env-overlay
+diff --git a/bb8_core/addon_config.py b/bb8_core/addon_config.py
+index 9c0d7ef..3f11aa2 100644
+--- a/bb8_core/addon_config.py
++++ b/bb8_core/addon_config.py
+@@ -122,6 +122,28 @@ def load_config() -> Tuple[Dict[str, Any], Optional[Path]]:
+     if opts:
+         merged.update(opts)
+
++    # ---- Environment overlay (authoritative if provided) ----
++    env_over = {
++        "MQTT_HOST": os.environ.get("MQTT_HOST"),
++        "MQTT_PORT": os.environ.get("MQTT_PORT"),
++        "MQTT_USERNAME": os.environ.get("MQTT_USERNAME"),
++        "MQTT_PASSWORD": os.environ.get("MQTT_PASSWORD"),
++        "MQTT_BASE": os.environ.get("MQTT_BASE"),
++    }
++    for k, v in env_over.items():
++        if v not in (None, ""):
++            if k == "MQTT_PORT":
++                try:
++                    v = int(v)  # type: ignore[assignment]
++                except Exception:  # noqa: BLE001
++                    LOG.warning("[CONFIG] Invalid MQTT_PORT in env: %s", v)
++                    continue
++            merged[k] = v  # type: ignore[index]
++
++    # ---- Sane defaults if still absent ----
++    merged.setdefault("MQTT_HOST", "127.0.0.1")
++    merged.setdefault("MQTT_PORT", 1883)
++    merged.setdefault("MQTT_BASE", "bb8")
+     source = opts_src or yml_src
+     if not merged:
+         log.error("[CONFIG] No configuration found in options.json or YAML.")

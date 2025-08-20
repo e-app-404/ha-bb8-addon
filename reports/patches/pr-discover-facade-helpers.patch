@@ -1,0 +1,266 @@
+## 1) `bb8_core/discovery_publish.py` — add the extended entities
+
+**Add helpers** and **include them** when `PROFILE != "minimal"` (default now: `"extended"`).
+
+```diff
+diff --git a/bb8_core/discovery_publish.py b/bb8_core/discovery_publish.py
+@@
++import os
++PROFILE = os.environ.get("BB8_DISCOVERY_PROFILE", "extended")  # "minimal" | "extended"
+@@
+ def publish_discovery(client, base_topic, availability_topic="bb8/status", qos=1, retain=True, device=None):
+     published = 0
+@@
+     published += _publish_presence_sensor(client, base_topic, availability_topic, qos, retain, device)
+     published += _publish_rssi_sensor(client, base_topic, availability_topic, qos, retain, device)
+-    # (optional extras live in the facade or separate profile)
++    # Extended profile adds: sleep button, drive button, heading number, speed number
++    if PROFILE != "minimal":
++        published += _publish_sleep_button(client, base_topic, availability_topic, qos, retain, device)
++        published += _publish_drive_button(client, base_topic, availability_topic, qos, retain, device)
++        published += _publish_heading_number(client, base_topic, availability_topic, qos, retain, device)
++        published += _publish_speed_number(client, base_topic, availability_topic, qos, retain, device)
+@@
+     logger.info({"event": "discovery_published", "count": published, "profile": PROFILE})
+     return published
++
++# ---------- extended entities ----------
++def _publish_sleep_button(client, base, avail, qos, retain, device):
++    obj = {
++        "name": "BB-8 Sleep",
++        "unique_id": f"{base}_sleep",
++        "command_topic": f"{base}/sleep/press",
++        "state_topic": f"{base}/sleep/state",
++        "availability_topic": avail,
++        "entity_category": "config",
++        "device": device or {},
++    }
++    topic = f"homeassistant/button/{base.replace('/','_')}_sleep/config"
++    client.publish(topic, payload=_json(obj), qos=qos, retain=True)
++    logger.info("discovery: published %s", topic)
++    return 1
++
++def _publish_drive_button(client, base, avail, qos, retain, device):
++    obj = {
++        "name": "BB-8 Drive",
++        "unique_id": f"{base}_drive",
++        "command_topic": f"{base}/drive/press",
++        "state_topic": f"{base}/drive/state",
++        "availability_topic": avail,
++        "device": device or {},
++    }
++    topic = f"homeassistant/button/{base.replace('/','_')}_drive/config"
++    client.publish(topic, payload=_json(obj), qos=qos, retain=True)
++    logger.info("discovery: published %s", topic)
++    return 1
++
++def _publish_heading_number(client, base, avail, qos, retain, device):
++    obj = {
++        "name": "BB-8 Heading",
++        "unique_id": f"{base}_heading",
++        "command_topic": f"{base}/heading/set",
++        "state_topic": f"{base}/heading/state",
++        "availability_topic": avail,
++        "min": 0, "max": 359, "step": 1,
++        "mode": "slider",
++        "device": device or {},
++    }
++    topic = f"homeassistant/number/{base.replace('/','_')}_heading/config"
++    client.publish(topic, payload=_json(obj), qos=qos, retain=True)
++    logger.info("discovery: published %s", topic)
++    return 1
++
++def _publish_speed_number(client, base, avail, qos, retain, device):
++    obj = {
++        "name": "BB-8 Speed",
++        "unique_id": f"{base}_speed",
++        "command_topic": f"{base}/speed/set",
++        "state_topic": f"{base}/speed/state",
++        "availability_topic": avail,
++        "min": 0, "max": 255, "step": 1,
++        "mode": "slider",
++        "device": device or {},
++    }
++    topic = f"homeassistant/number/{base.replace('/','_')}_speed/config"
++    client.publish(topic, payload=_json(obj), qos=qos, retain=True)
++    logger.info("discovery: published %s", topic)
++    return 1
+```
+
+> `_json` is your existing helper; if not, use `json.dumps(obj, separators=(",",":"))`.
+
+---
+
+## 2) `bb8_core/facade.py` — add extended handlers + MQTT bindings
+
+```diff
+diff --git a/bb8_core/facade.py b/bb8_core/facade.py
+@@
+ class BB8Facade:
+     def __init__(self, bridge: Any) -> None:
+         self.bridge = bridge
+         self._mqtt = {"client": None, "base": None, "qos": 1, "retain": True}
++        self._heading: int = 0
++        self._speed: int = 0
+@@
+     def set_led_rgb(self, r: int, g: int, b: int) -> None:
+         r = max(0, min(255, int(r))); g = max(0, min(255, int(g))); b = max(0, min(255, int(b)))
+         self.bridge.set_led_rgb(r, g, b)
++
++    # --------- Extended controls ---------
++    def sleep(self) -> None:
++        """Expose sleep for the Sleep button; delegates to bridge.sleep(None)."""
++        self.bridge.sleep(None)
++
++    def drive(self) -> None:
++        """Placeholder drive action; delegates to bridge.drive() if present, else no-op."""
++        fn = getattr(self.bridge, "drive", None)
++        if callable(fn):
++            fn(self._heading, self._speed)
++
++    def set_heading(self, degrees: int) -> int:
++        v = max(0, min(359, int(degrees)))
++        self._heading = v
++        fn = getattr(self.bridge, "set_heading", None)
++        if callable(fn): fn(v)
++        return v
++
++    def set_speed(self, speed: int) -> int:
++        v = max(0, min(255, int(speed)))
++        self._speed = v
++        fn = getattr(self.bridge, "set_speed", None)
++        if callable(fn): fn(v)
++        return v
+@@
+     def attach_mqtt(self, client, base_topic: str, qos: int = 1, retain: bool = True) -> None:
+@@
+         # ---- Subscriptions ----
+         client.message_callback_add(f"{base_topic}/power/set", _handle_power)
+         client.subscribe(f"{base_topic}/power/set", qos=qos)
+@@
+         client.message_callback_add(f"{base_topic}/led/set", _handle_led)
+         client.subscribe(f"{base_topic}/led/set", qos=qos)
+@@
+         client.message_callback_add(f"{base_topic}/stop/press", _handle_stop)
+         client.subscribe(f"{base_topic}/stop/press", qos=qos)
++
++        # ----- Extended: sleep / drive buttons -----
++        def _handle_sleep(_c, _u, _msg):
++            try:
++                self.sleep()
++                _pub("sleep/state", "pressed", r=False)
++                threading.Thread(target=lambda: (time.sleep(0.5), _pub("sleep/state", "idle", r=False)), daemon=True).start()
++            except Exception as e:
++                logger.error({"event": "sleep_handler_error", "error": repr(e)})
++
++        def _handle_drive(_c, _u, _msg):
++            try:
++                self.drive()
++                _pub("drive/state", "pressed", r=False)
++                threading.Thread(target=lambda: (time.sleep(0.5), _pub("drive/state", "idle", r=False)), daemon=True).start()
++            except Exception as e:
++                logger.error({"event": "drive_handler_error", "error": repr(e)})
++
++        client.message_callback_add(f"{base_topic}/sleep/press", _handle_sleep)
++        client.subscribe(f"{base_topic}/sleep/press", qos=qos)
++        client.message_callback_add(f"{base_topic}/drive/press", _handle_drive)
++        client.subscribe(f"{base_topic}/drive/press", qos=qos)
++
++        # ----- Extended: heading / speed numbers -----
++        def _handle_heading(_c, _u, msg):
++            try:
++                v = self.set_heading(int(float((msg.payload or b"0").decode("utf-8"))))
++                _pub("heading/state", str(v))
++            except Exception as e:
++                logger.error({"event": "heading_handler_error", "error": repr(e)})
++
++        def _handle_speed(_c, _u, msg):
++            try:
++                v = self.set_speed(int(float((msg.payload or b"0").decode("utf-8"))))
++                _pub("speed/state", str(v))
++            except Exception as e:
++                logger.error({"event": "speed_handler_error", "error": repr(e)})
++
++        client.message_callback_add(f"{base_topic}/heading/set", _handle_heading)
++        client.subscribe(f"{base_topic}/heading/set", qos=qos)
++        client.message_callback_add(f"{base_topic}/speed/set", _handle_speed)
++        client.subscribe(f"{base_topic}/speed/set", qos=qos)
++
++        # publish initial retained states for numbers
++        _pub("heading/state", str(self._heading))
++        _pub("speed/state", str(self._speed))
+```
+
+---
+
+## 3) `bb8_core/ble_bridge.py` — (optional) thin delegates for extended controls
+
+These keep types happy and make it easy to fill in real spherov2 actions later.
+
+```diff
+diff --git a/bb8_core/ble_bridge.py b/bb8_core/ble_bridge.py
+@@ class BLEBridge:
+     def get_rssi(self) -> int:
+         ...
++    # --------- Extended shims (safe no-ops until wired) ---------
++    def set_heading(self, degrees: int) -> None:
++        try:
++            v = max(0, min(359, int(degrees)))
++            # TODO: implement via spherov2 API (orientation)
++            logger.info({"event": "ble_heading_set", "degrees": v})
++        except Exception as e:
++            logger.error({"event": "ble_heading_error", "error": repr(e)})
++
++    def set_speed(self, speed: int) -> None:
++        try:
++            v = max(0, min(255, int(speed)))
++            # TODO: store/apply speed to drive profiles
++            logger.info({"event": "ble_speed_set", "speed": v})
++        except Exception as e:
++            logger.error({"event": "ble_speed_error", "error": repr(e)})
++
++    def drive(self, heading: int, speed: int) -> None:
++        """Placeholder drive action; replace with timed roll when wired."""
++        try:
++            logger.info({"event": "ble_drive", "heading": int(heading), "speed": int(speed)})
++            # TODO: spherov2 roll for a short burst
++        except Exception as e:
++            logger.error({"event": "ble_drive_error", "error": repr(e)})
+```
+
+---
+
+## 4) `entity_set.json` — scaffold for extended profile (paste into repo)
+
+```json
+{
+  "profile": "extended",
+  "entities": [
+    { "domain": "sensor", "name": "Presence", "topic": "{base}/presence/state", "retain": true },
+    { "domain": "sensor", "name": "RSSI", "topic": "{base}/rssi/state", "retain": true },
+    { "domain": "switch", "name": "Power", "cmd": "{base}/power/set", "state": "{base}/power/state", "retain_state": true },
+    { "domain": "button", "name": "Stop", "cmd": "{base}/stop/press", "state": "{base}/stop/state", "retain_state": false },
+    { "domain": "light", "name": "LED", "cmd": "{base}/led/set", "state": "{base}/led/state", "retain_state": true },
+    { "domain": "button", "name": "Sleep", "cmd": "{base}/sleep/press", "state": "{base}/sleep/state", "retain_state": false },
+    { "domain": "button", "name": "Drive", "cmd": "{base}/drive/press", "state": "{base}/drive/state", "retain_state": false },
+    { "domain": "number", "name": "Heading", "cmd": "{base}/heading/set", "state": "{base}/heading/state", "min": 0, "max": 359, "step": 1, "retain_state": true },
+    { "domain": "number", "name": "Speed", "cmd": "{base}/speed/set", "state": "{base}/speed/state", "min": 0, "max": 255, "step": 1, "retain_state": true }
+  ]
+}
+```
+
+---
+
+## 5) Quick acceptance checklist
+
+* Logs after connect include:
+
+  * `{"event":"discovery_published","count":9,"profile":"extended"}` (5 core + 4 new)
+  * `{"event":"facade_mqtt_attached","base":"bb8"}`
+* MQTT roundtrip (examples):
+
+  * `mosquitto_pub -t bb8/sleep/press -n` → `bb8/sleep/state` emits `pressed` then `idle` (non-retained).
+  * `mosquitto_pub -t bb8/heading/set -m 270` → `bb8/heading/state` retained `"270"`.
+  * `mosquitto_pub -t bb8/speed/set -m 128` → `bb8/speed/state` retained `"128"`.
+  * `mosquitto_pub -t bb8/drive/press -n` → `bb8/drive/state` transient `pressed`→`idle`.
+* No duplicate discovery publishes; only one block per boot.

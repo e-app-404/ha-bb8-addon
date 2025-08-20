@@ -1,0 +1,148 @@
+# Patch ID: PATCH-STP4-250815-topic-split-and-echo-fix
+diff --git a/bb8_core/common.py b/bb8_core/common.py
+index c1a2b1c..d7e45aa 100644
+--- a/bb8_core/common.py
++++ b/bb8_core/common.py
+@@ -1,28 +1,75 @@
+ from __future__ import annotations
+
+ import json
+ import os
+-from typing import Any, Dict
++from typing import Any, Dict, Tuple
+
+ # Public constants & helpers shared across bridge/facade/ble
+
+ def _mqtt_base() -> str:
+     return os.environ.get("MQTT_BASE", "bb8")
+
+-
+-TOPICS: Dict[str, str] = {
+-    "power_set": f"{_mqtt_base()}/power/set",
+-    "stop": f"{_mqtt_base()}/stop",
+-    "sleep": f"{_mqtt_base()}/sleep",
+-    "drive": f"{_mqtt_base()}/drive",
+-    "heading": f"{_mqtt_base()}/heading",
+-    "speed": f"{_mqtt_base()}/speed",
+-    "led_set": f"{_mqtt_base()}/led/set",
+-}
++# Command topics (inbound) vs State topics (outbound)
++CMD_TOPICS: Dict[str, str] = {
++    "power":   f"{_mqtt_base()}/power/set",
++    "stop":    f"{_mqtt_base()}/stop/set",
++    "sleep":   f"{_mqtt_base()}/sleep/set",
++    "drive":   f"{_mqtt_base()}/drive/set",
++    "heading": f"{_mqtt_base()}/heading/set",
++    "speed":   f"{_mqtt_base()}/speed/set",
++    "led":     f"{_mqtt_base()}/led/set",
++}
++
++STATE_TOPICS: Dict[str, str] = {
++    "power":   f"{_mqtt_base()}/power",
++    "stop":    f"{_mqtt_base()}/stop",
++    "sleep":   f"{_mqtt_base()}/sleep",
++    "drive":   f"{_mqtt_base()}/drive",
++    "heading": f"{_mqtt_base()}/heading",
++    "speed":   f"{_mqtt_base()}/speed",
++    # LED explicitly uses /state as per STP4 spec
++    "led":     f"{_mqtt_base()}/led/state",
++}
+
+
+ def _coerce_raw(value: Any) -> str | int | float:
+     if isinstance(value, (int, float, str)):
+         return value
+     # Fallback: string representation for non-scalars
+     return str(value)
+
+
+-def publish_device_echo(client: Any, topic: str, value: Any, qos: int = 1) -> None:
++def publish_device_echo(client: Any, state_topic: str, value: Any, qos: int = 1) -> None:
+     """
+     Publish raw scalar AND a JSON echo with {"value": ..., "source": "device"}.
+     Both publications are retain=False (qos 0 or 1 permitted; default 1).
+     """
+     raw = _coerce_raw(value)
+-    client.publish(topic, payload=raw, qos=qos, retain=False)
++    client.publish(state_topic, payload=raw, qos=qos, retain=False)
+     echo = {"value": value, "source": "device"}
+-    client.publish(topic, payload=json.dumps(echo), qos=qos, retain=False)
++    client.publish(state_topic, payload=json.dumps(echo), qos=qos, retain=False)
+
+-__all__ = ["TOPICS", "publish_device_echo"]
++__all__ = [
++    "CMD_TOPICS",
++    "STATE_TOPICS",
++    "publish_device_echo",
++]
+diff --git a/bb8_core/bridge_controller.py b/bb8_core/bridge_controller.py
+index b3d8aac..f4a6c13 100644
+--- a/bb8_core/bridge_controller.py
++++ b/bb8_core/bridge_controller.py
+@@ -3,12 +3,13 @@ from __future__ import annotations
+
+ import asyncio
+ import json
+ import threading
+ from typing import Any, Optional
+-from .common import TOPICS, publish_device_echo
++from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+ from . import ble_link  # first-party
+
+ _ble_loop: Optional[asyncio.AbstractEventLoop] = None
+ _ble_inited: bool = False
+
+@@ -44,34 +45,38 @@ def _init_ble_once() -> None:
+     _init_ble_once()
+
+ # Cache for last-set values (used for heading/speed attestation)
+ _last_heading: Optional[float] = None
+ _last_speed: Optional[float] = None
+-
+-# Assumes an MQTT client named `client` exists in module scope or injected.
+-# If yours is named differently, wire these handlers in your registration code.
++# Assumes an MQTT client named `client` exists in module scope or injected.
++# If yours is named differently, wire these handlers in your registration code.
+
+ def on_power_set(payload: Any) -> None:
+-    publish_device_echo(client, TOPICS["power_set"], payload)
++    publish_device_echo(client, STATE_TOPICS["power"], payload)
+
+ def on_stop() -> None:
+-    publish_device_echo(client, TOPICS["stop"], "pressed")
++    publish_device_echo(client, STATE_TOPICS["stop"], "pressed")
+
+ def on_sleep() -> None:
+-    publish_device_echo(client, TOPICS["sleep"], "idle")
++    publish_device_echo(client, STATE_TOPICS["sleep"], "idle")
+
+ def on_drive() -> None:
+     # Drive button semantics (pressed)
+-    publish_device_echo(client, TOPICS["drive"], "pressed")
++    publish_device_echo(client, STATE_TOPICS["drive"], "pressed")
+
+ def on_heading(value: float) -> None:
+     global _last_heading
+     _last_heading = value
+-    publish_device_echo(client, TOPICS["heading"], value)
++    publish_device_echo(client, STATE_TOPICS["heading"], value)
+
+ def on_speed(value: float) -> None:
+     global _last_speed
+     _last_speed = value
+-    publish_device_echo(client, TOPICS["speed"], value)
++    publish_device_echo(client, STATE_TOPICS["speed"], value)
+
+ def on_led_set(r: int, g: int, b: int) -> None:
+     payload = json.dumps({"r": r, "g": g, "b": b})
+-    client.publish(TOPICS["led_set"], payload=payload, qos=1, retain=False)
++    # Command is on /led/set; state is on /led/state
++    client.publish(CMD_TOPICS["led"], payload=payload, qos=1, retain=False)
++    client.publish(STATE_TOPICS["led"], payload=payload, qos=1, retain=False)
+
+ def submit_ble_coro(coro: asyncio.Future) -> None:
+     asyncio.run_coroutine_threadsafe(coro, _ble_loop)  # type: ignore[arg-type]
+
+ def shutdown_ble() -> None:
+     """Called on process termination to avoid pending tasks."""
+     ble_link.stop()

@@ -1,0 +1,24 @@
+# Patch ID: PATCH-STP4-250815-ruff-config
+# Aligns import sorting and keeps lint scope reasonable; Black remains the formatter
+diff --git a/ruff.toml b/ruff.toml
+new file mode 100644
+index 0000000..5555555
+--- /dev/null
++++ b/ruff.toml
+@@ -0,0 +1,28 @@
++line-length = 88
++target-version = "py313"
++
++[lint]
++select = ["E","F","I","B","UP","SIM"]
++ignore = ["E203"]  # Black compatibility on slicing whitespace
++
++extend-exclude = [
++  ".git", ".tox", ".venv", "__pycache__", ".*", "build", "dist", "reports", "services.d"
++]
++
++[lint.isort]
++known-first-party = ["beep_boop_bb8"]
++combine-as-imports = true
++force-single-line = false
++```

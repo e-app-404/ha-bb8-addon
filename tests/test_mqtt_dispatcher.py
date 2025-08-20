@@ -4,6 +4,7 @@ import time
 from unittest.mock import patch
 
 import paho.mqtt.client as mqtt  # pyright: ignore[reportMissingImports]
+
 from bb8_core.logging_setup import logger
 
 # Test parameters

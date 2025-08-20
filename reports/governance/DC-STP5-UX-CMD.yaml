@@ -1,0 +1,47 @@
+delta_contract:
+  id: "DC-STP5-UX-CMD"
+  gate: "STP5-UX-CMD"
+  objective: "Add LED command UX + HA card polish; preserve strict schema and ownership."
+  planned_change:
+    - id: "CMD-PATH"
+      title: "Command path + echo"
+      scope: "Consume bb8/led/cmd with payload {r,g,b}; publish bb8/led/state with same strict schema."
+      paths: ["addon/bb8_core/bridge_controller.py", "addon/bb8_core/facade.py"]
+    - id: "VERIFY-CMDS"
+      title: "Command verification tool"
+      scope: "tools/verify_commands.py exercises cmd->state echo; restart midpoint; asserts invariants."
+      paths: ["tools/verify_commands.py"]
+    - id: "HA-CARD"
+      title: "HA card polish"
+      scope: "Doc/examples: show presence, RSSI, optional LED control under same device block."
+      paths: ["addon/config.yaml", "reports/checkpoints/HA_CARD_NOTES.md"]
+  deliverable:
+    - "patch_bundle_contract_v1"
+    - "qa_report_contract_v1"
+  RACI_matrix:
+    Responsible: ["Pythagoras"]
+    Accountable: ["Strategos"]
+    Consulted: ["Copilot"]
+    Informed: ["Project Owner"]
+  acceptance_criteria:
+    must_meet:
+      - "cmd->state echo within 500ms on local broker"
+      - "AFTER_RESTART=PASS in command preflight"
+      - "No duplicate owners; schema strict {r,g,b}"
+      - "HA example renders correctly; LED optional remains OFF by default"
+  evidence:
+    - "reports/preflight/CMD_BEFORE_*.log"
+    - "reports/preflight/CMD_AFTER_RESTART_*.log"
+    - "reports/preflight/CMD_LED_OPTIONAL_*.log"
+  toggles:
+    PUBLISH_LED_DISCOVERY: 0
+  risk_mitigation:
+    - risk: "race-with-availability"
+      mitigation: "Order: publish avty online before cmd subscription; re-subscribe after restart."
+    - risk: "schema-regression"
+      mitigation: "Unit assertion on outbound payload keys == {'r','g','b'}"
+    - risk: "ownership-dup"
+      mitigation: "Verify tool checks single discovery owner"
+  branches:
+    base: "main"
+    proposed_feature: "feat/stp5-ux-cmd"

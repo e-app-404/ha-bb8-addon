@@ -1,0 +1,265 @@
+Looking at your terminal output and code, I can identify several issues in your `addon_config.py` script. Let me trace through the problems:
+
+## Issues Identified
+
+### 1. **Duplication of Warnings**
+The warnings appear twice because `load_config()` is being called twice:
+- Once when the module is imported
+- Once when `get_shared_config()` calls it in `collect_stp4.py`
+
+### 2. **Config Values are None**
+The config values are returning `None` because:
+- The `_load_yaml_cfg()` function is returning the config correctly
+- BUT the `setk()` function has a logic issue with the YAML key lookup
+
+### 3. **Incorrect "Key Not Found" Warnings**
+The warnings are misleading - the keys ARE in the YAML, but the lookup logic is failing.
+
+## Root Cause Analysis
+
+The main issue is in the `setk()` function's YAML key lookup logic:
+
+```python
+def setk(k, default, yaml_key=None, cast=None):
+    v, s = None, None
+    # Case-insensitive lookup for yaml_key
+    yaml_key_lc = yaml_key.lower() if yaml_key else None
+    yml_keys_lc = {str(key).lower(): key for key in yml.keys()}
+    found_key = None
+    if yaml_key_lc and yaml_key_lc in yml_keys_lc:
+        found_key = yml_keys_lc[yaml_key_lc]
+    if found_key and yml[found_key] not in (None, ""):
+        v, s = yml[found_key], "yaml"
+    else:
+        v, s = _pick(k, env, opt, yml, default)  # <-- Problem: yml is checked again with k
+```
+
+The problem is that when `yaml_key` is provided but not found, it falls back to `_pick()` which looks for the internal key `k` (like "MQTT_HOST") in the YAML, but the YAML uses different keys (like "mqtt_broker").
+
+## Fixed `addon_config.py`## Key Changes Made
+
+1. **Simplified and Fixed `_pick()` function**:
+   - Now accepts `yaml_key` parameter directly
+   - Performs case-insensitive YAML key lookup within `_pick()`
+   - Properly checks for the mapped yaml key before falling back
+
+2. **Removed Duplicate Logic in `setk()`**:
+   - The `setk()` function now just calls `_pick()` with all parameters
+   - No more duplicate YAML key lookup logic
+
+3. **Changed Warning Level**:
+   - Most warnings changed to `LOG.debug()` to reduce noise
+   - Only actual problems (like type validation failures) remain as warnings
+
+4. **Added Missing Mappings**:
+   - Some keys were missing their `yaml_key` mappings (like `cache_path`, `mqtt_client_id`, etc.)
+
+5. **Fixed Boolean Casting**:
+   - The `ENABLE_BRIDGE_TELEMETRY` field now properly casts to boolean instead of keeping it as a string
+
+## Testing the Fix
+
+With these changes, when you run `make evidence-stp4`, you should see:
+- Config values properly loaded from `config.yaml`
+- No duplicate warnings
+- The MQTT connection should use `192.168.0.129` instead of `localhost`
+- Credentials should be properly loaded (`mqtt_bb8`/`mqtt_bb8`)
+
+The debug output should now show:
+```
+[DEBUG] Loaded config for MQTT: {
+    'MQTT_USERNAME': 'mqtt_bb8',
+    'MQTT_PASSWORD': 'mqtt_bb8',
+    'MQTT_HOST': '192.168.0.129',
+    'MQTT_PORT': 1883,
+    'MQTT_BASE': 'bb8'
+}
+```
+
+Replace `addon_config.py` with this corrected version:
+
+```
+"""
+Single Source of Truth Module for loading and managing configuration for the BB-8 addon.
+
+"""
+from __future__ import annotations
+from typing import TYPE_CHECKING
+import os, json, yaml, logging
+from typing import Dict, Tuple, Optional
+from .types import (
+    BridgeController,
+    BLELink,
+    MqttClient,
+    BoolCallback,
+    IntCallback,
+    OptIntCallback,
+    RGBCallback,
+)
+if TYPE_CHECKING:
+    from .bridge_controller import BridgeController as _BridgeControllerHint
+
+LOG = logging.getLogger(__name__)
+
+def _load_options_json() -> Dict:
+    try:
+        with open("/data/options.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        LOG.debug(f"[CONFIG] Could not load /data/options.json: {e}")
+        return {}
+
+
+def _load_yaml_cfg() -> Dict:
+    # Add "config.yaml" to the search paths. This will be found
+    # when you run `make` from the add-on's root directory on your Mac.
+    for p in ("config.yaml", "/addons/local/beep_boop_bb8/config.yaml", "/app/config.yaml"):
+        try:
+            with open(p, "r", encoding="utf-8") as f:
+                yml = yaml.safe_load(f) or {}
+                if isinstance(yml, dict) and "options" in yml and isinstance(yml["options"], dict):
+                    config = yml["options"]
+                else:
+                    config = yml
+                # Validate against schema if present
+                schema = yml.get("schema") if isinstance(yml, dict) else None
+                if schema:
+                    _validate_config_schema(config, schema)
+                LOG.debug(f"[CONFIG] Loaded YAML config from {p}")
+                return config
+        except FileNotFoundError:
+            continue # Try the next path in the list
+        except Exception as e:
+            LOG.debug(f"[CONFIG] Could not load YAML config from {p}: {e}")
+            continue
+
+    LOG.debug("[CONFIG] No valid YAML config found.")
+    return {}
+
+def _validate_config_schema(cfg: Dict, schema: Dict):
+    """Validate config dict against schema block."""
+    for key, typ in schema.items():
+        if key not in cfg:
+            # Optional types (ending with ?) are allowed to be missing
+            if not (isinstance(typ, str) and typ.endswith("?")):
+                LOG.debug(f"[CONFIG] Key '{key}' missing from config, expected type {typ}.")
+            continue
+        val = cfg[key]
+        # Only basic type checks
+        if typ in ("bool", "bool?") or typ == bool:
+            if not isinstance(val, bool):
+                LOG.warning(f"[CONFIG] Key '{key}' expected bool, got {type(val).__name__}.")
+        elif typ in ("int", "int?") or typ == int:
+            try:
+                int(val)
+            except Exception:
+                LOG.warning(f"[CONFIG] Key '{key}' expected int, got {type(val).__name__} value '{val}'.")
+        elif typ in ("str", "str?") or typ == str:
+            if not isinstance(val, str):
+                LOG.warning(f"[CONFIG] Key '{key}' expected str, got {type(val).__name__}.")
+
+def _pick(key: str, env: Dict, opt: Dict, yml: Dict, default, yaml_key: Optional[str] = None):
+    """
+    Pick value with precedence: env > options > yaml > default.
+    If yaml_key is provided, try that key in yaml first.
+    """
+    # Check environment variable
+    if key in env and env[key] not in ("", None):
+        return env[key], "env"
+
+    # Check options.json
+    if key in opt and opt[key] not in ("", None):
+        return opt[key], "options"
+
+    # Check YAML with yaml_key mapping
+    if yaml_key:
+        # Case-insensitive lookup for yaml_key
+        yaml_key_lc = yaml_key.lower()
+        yml_keys_lc = {str(k).lower(): k for k in yml.keys()}
+        if yaml_key_lc in yml_keys_lc:
+            actual_key = yml_keys_lc[yaml_key_lc]
+            if yml[actual_key] not in (None, ""):
+                return yml[actual_key], "yaml"
+
+    # Check YAML with original key (fallback)
+    if key in yml and yml[key] not in (None, ""):
+        return yml[key], "yaml"
+
+    # Use default
+    LOG.debug(f"[CONFIG] Key '{key}' (yaml_key='{yaml_key}') not found in env/options/yaml, using default '{default}'.")
+    return default, "default"
+
+def load_config() -> Tuple[Dict, Dict]:
+    """Return (cfg, src) where src maps key -> 'env'|'options'|'yaml'|'default'."""
+    env = dict(os.environ)
+    opt = _load_options_json()
+    yml = _load_yaml_cfg()
+
+    cfg, src = {}, {}
+
+    def setk(k, default, yaml_key=None, cast=None):
+        """Set config key with precedence: env > options > yaml > default. Optionally cast value."""
+        v, s = _pick(k, env, opt, yml, default, yaml_key)
+
+        if cast and v not in (None, ""):
+            try:
+                v = cast(v)
+            except Exception as e:
+                LOG.warning(f"[CONFIG] Failed to cast key '{k}' value '{v}' with {cast}: {e}")
+                # Don't raise, use the original value
+
+        cfg[k], src[k] = v, s
+
+    # Keys we care about (expanded, mapped to config.yaml user-facing keys)
+    setk("DISPATCHER_DISCOVERY_ENABLED", False, yaml_key="dispatcher_discovery_enabled", cast=lambda x: str(x).lower() in ("1", "true", "yes"))
+    setk("CACHE_PATH", "/data/bb8_mac_cache.json", yaml_key="cache_path")
+    setk("CACHE_DEFAULT_TTL_HOURS", 24, yaml_key="cache_default_ttl_hours", cast=int)
+    setk("BB8_NAME", "BB-8", yaml_key="bb8_name")
+    setk("BB8_MAC", "", yaml_key="bb8_mac")
+    setk("MQTT_HOST", "localhost", yaml_key="mqtt_broker")
+    setk("MQTT_PORT", 1883, yaml_key="mqtt_port", cast=int)
+    setk("MQTT_USERNAME", "mqtt_bb8", yaml_key="mqtt_username")
+    setk("MQTT_PASSWORD", None, yaml_key="mqtt_password")
+    setk("MQTT_BASE", "bb8", yaml_key="mqtt_topic_prefix")
+    setk("MQTT_CLIENT_ID", "bb8_presence_scanner", yaml_key="mqtt_client_id")
+    setk("KEEPALIVE", 60, yaml_key="keepalive", cast=int)
+    setk("QOS", 1, yaml_key="qos", cast=int)
+    setk("RETAIN", True, yaml_key="discovery_retain", cast=lambda x: str(x).lower() in ("1", "true", "yes"))
+    setk("ENABLE_BRIDGE_TELEMETRY", False, yaml_key="enable_bridge_telemetry", cast=lambda x: str(x).lower() in ("1", "true", "yes"))
+    setk("TELEMETRY_INTERVAL_S", 20, yaml_key="telemetry_interval_s", cast=int)
+    setk("ADDON_VERSION", "unknown", yaml_key="version")
+    setk("DISCOVERY_RETAIN", False, yaml_key="discovery_retain", cast=lambda x: str(x).lower() in ("1", "true", "yes"))
+    setk("LOG_PATH", "", yaml_key="log_path")
+    setk("SCAN_SECONDS", 5, yaml_key="scan_seconds", cast=int)
+    setk("RESCAN_ON_FAIL", True, yaml_key="rescan_on_fail", cast=lambda x: str(x).lower() in ("1", "true", "yes"))
+    setk("CACHE_TTL_HOURS", 24, yaml_key="cache_ttl_hours", cast=int)
+    setk("MQTT_TLS", False, yaml_key="mqtt_tls", cast=lambda x: str(x).lower() in ("1", "true", "yes"))
+    setk("BLE_ADAPTER", "hci0", yaml_key="ble_adapter")
+    setk("HA_DISCOVERY_TOPIC", "homeassistant", yaml_key="ha_discovery_topic")
+    setk("AVAIL_ON", "online")
+    setk("AVAIL_OFF", "offline")
+    setk("BB8_SCAN_INTERVAL", 10, yaml_key="bb8_scan_interval", cast=int)
+
+    # Construct topics using resolved config
+    cfg["COMMAND_TOPIC"] = f"{cfg['MQTT_BASE']}/command/#"
+    cfg["STATUS_TOPIC"] = f"{cfg['MQTT_BASE']}/status"
+    cfg["AVAILABILITY_TOPIC"] = f"{cfg['MQTT_BASE']}/status/#"
+
+    return cfg, src
+
+def log_config(cfg: Dict, src: Dict, logger: logging.Logger):
+    lines = [
+        "[DEBUG] Effective configuration (value ⟂ source):",
+        f"  BB8_NAME='{cfg['BB8_NAME']}' ⟂ {src['BB8_NAME']}",
+        f"  BB8_MAC='{cfg['BB8_MAC']}' ⟂ {src['BB8_MAC']}",
+        f"  MQTT_HOST='{cfg['MQTT_HOST']}' ⟂ {src['MQTT_HOST']}",
+        f"  MQTT_PORT={cfg['MQTT_PORT']} ⟂ {src['MQTT_PORT']}",
+        f"  MQTT_USER='{cfg['MQTT_USERNAME']}' ⟂ {src['MQTT_USERNAME']}",
+        f"  MQTT_PASSWORD={'***' if cfg['MQTT_PASSWORD'] else None} ⟂ {src['MQTT_PASSWORD']}",
+        f"  MQTT_BASE='{cfg['MQTT_BASE']}' ⟂ {src['MQTT_BASE']}",
+        f"  ENABLE_BRIDGE_TELEMETRY={cfg['ENABLE_BRIDGE_TELEMETRY']} ⟂ {src['ENABLE_BRIDGE_TELEMETRY']}",
+        f"  TELEMETRY_INTERVAL_S={cfg['TELEMETRY_INTERVAL_S']} ⟂ {src['TELEMETRY_INTERVAL_S']}",
+        f"  Add-on version: {cfg['ADDON_VERSION']} ⟂ {src['ADDON_VERSION']}",
+    ]
+    logger.debug("\n" + "\n".join(lines))
+```

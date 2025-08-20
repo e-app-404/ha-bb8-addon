@@ -1,0 +1,211 @@
+# Patch ID: PATCH-STP4-250814-device-echo
+diff --git a/bb8_core/common.py b/bb8_core/common.py
+new file mode 100644
+index 0000000..c1a2b1c
+--- /dev/null
++++ b/bb8_core/common.py
+@@ -0,0 +1,121 @@
++from __future__ import annotations
++
++import json
++import os
++from typing import Any, Dict
++
++# Public constants & helpers shared across bridge/facade/ble
++
++def _mqtt_base() -> str:
++    return os.environ.get("MQTT_BASE", "bb8")
++
++
++TOPICS: Dict[str, str] = {
++    "power_set": f"{_mqtt_base()}/power/set",
++    "stop": f"{_mqtt_base()}/stop",
++    "sleep": f"{_mqtt_base()}/sleep",
++    "drive": f"{_mqtt_base()}/drive",
++    "heading": f"{_mqtt_base()}/heading",
++    "speed": f"{_mqtt_base()}/speed",
++    "led_set": f"{_mqtt_base()}/led/set",
++}
++
++
++def _coerce_raw(value: Any) -> str | int | float:
++    if isinstance(value, (int, float, str)):
++        return value
++    # Fallback: string representation for non-scalars
++    return str(value)
++
++
++def publish_device_echo(client: Any, topic: str, value: Any, qos: int = 1) -> None:
++    """
++    Publish raw scalar AND a JSON echo with {"value": ..., "source": "device"}.
++    Both publications are retain=False (qos 0 or 1 permitted; default 1).
++    """
++    raw = _coerce_raw(value)
++    client.publish(topic, payload=raw, qos=qos, retain=False)
++    echo = {"value": value, "source": "device"}
++    client.publish(topic, payload=json.dumps(echo), qos=qos, retain=False)
++
++
++__all__ = ["TOPICS", "publish_device_echo"]
+diff --git a/bb8_core/bridge_controller.py b/bb8_core/bridge_controller.py
+index 4c5e2dd..a7f9f21 100644
+--- a/bb8_core/bridge_controller.py
++++ b/bb8_core/bridge_controller.py
+@@ -1,18 +1,83 @@
+-from asyncio import get_event_loop
++from __future__ import annotations
++
++import asyncio
++import json
++import threading
++from typing import Any, Optional
++
++from .common import TOPICS, publish_device_echo
++from . import ble_link  # first-party
++
++# NOTE: BLE runs on a dedicated asyncio loop thread (no get_event_loop usage)
++_ble_loop: Optional[asyncio.AbstractEventLoop] = None
++
++
++def _start_ble_loop_thread() -> asyncio.AbstractEventLoop:
++    loop = asyncio.new_event_loop()
++    thread = threading.Thread(
++        target=loop.run_forever, name="BLEThread", daemon=True
++    )
++    thread.start()
++    ble_link.set_loop(loop)
++    return loop
++
++
++# Lazily initialize when module imported
++_ble_loop = _start_ble_loop_thread()
++
++# Cache for last-set values (used for heading/speed attestation)
++_last_heading: Optional[float] = None
++_last_speed: Optional[float] = None
++
++# Assumes an MQTT client named `client` exists in module scope or injected.
++# If yours is named differently, wire these handlers in your registration code.
++
++
++def on_power_set(payload: Any) -> None:
++    publish_device_echo(client, TOPICS["power_set"], payload)
++
++
++def on_stop() -> None:
++    publish_device_echo(client, TOPICS["stop"], "pressed")
++
++
++def on_sleep() -> None:
++    publish_device_echo(client, TOPICS["sleep"], "idle")
++
++
++def on_drive() -> None:
++    # Drive button semantics (pressed)
++    publish_device_echo(client, TOPICS["drive"], "pressed")
++
++
++def on_heading(value: float) -> None:
++    global _last_heading
++    _last_heading = value
++    publish_device_echo(client, TOPICS["heading"], value)
++
++
++def on_speed(value: float) -> None:
++    global _last_speed
++    _last_speed = value
++    publish_device_echo(client, TOPICS["speed"], value)
++
++
++def on_led_set(r: int, g: int, b: int) -> None:
++    payload = json.dumps({"r": r, "g": g, "b": b})
++    client.publish(TOPICS["led_set"], payload=payload, qos=1, retain=False)
++
++
++# Example BLE operation enqueued onto dedicated loop
++def submit_ble_coro(coro: asyncio.Future) -> None:
++    asyncio.run_coroutine_threadsafe(coro, _ble_loop)  # type: ignore[arg-type]
+
+-# ... previous bridge code ...
+-# Replace any get_event_loop() usage; run BLE on dedicated thread.
+diff --git a/bb8_core/ble_link.py b/bb8_core/ble_link.py
+index 2f1f3be..6a3a6e2 100644
+--- a/bb8_core/ble_link.py
++++ b/bb8_core/ble_link.py
+@@ -1,12 +1,43 @@
+-from asyncio import get_event_loop
++from __future__ import annotations
++
++import asyncio
++from typing import Optional
+
+-# ... existing BLE adapter/link code ...
++# Dedicated loop supplied by bridge_controller; avoids get_event_loop warnings.
++_loop: Optional[asyncio.AbstractEventLoop] = None
++
++
++def set_loop(loop: asyncio.AbstractEventLoop) -> None:
++    global _loop
++    _loop = loop
++
++
++def run_coro(coro) -> asyncio.Future:
++    if _loop is None:
++        raise RuntimeError("BLE loop not set; call set_loop() first")
++    return asyncio.run_coroutine_threadsafe(coro, _loop)
++
++# Example usage within this module:
++#   fut = run_coro(_ble_device.connect())
++#   fut.result(timeout=5.0)
++
+diff --git a/bb8_core/facade.py b/bb8_core/facade.py
+index 1a2b3f0..4b0a77a 100644
+--- a/bb8_core/facade.py
++++ b/bb8_core/facade.py
+@@ -1,12 +1,17 @@
+-from .types import BB8ControllerType  # type: ignore
++from __future__ import annotations
++
++# Import shared topics/helpers from common to avoid cycles
++from .common import TOPICS, publish_device_echo
++
++# Any type aliases previously imported from .types should be localized or
++# postponed (typing.TYPE_CHECKING) to prevent circular imports.
++from typing import TYPE_CHECKING
++if TYPE_CHECKING:  # pragma: no cover
++    from .types import BB8ControllerType  # noqa: F401
+
+-# rest of facade implementation ...
++# rest of facade implementation remains unchanged, now using common.TOPICS
+
+diff --git a/bb8_core/bb8_presence_scanner.py b/bb8_core/bb8_presence_scanner.py
+index 5d3be7a..a3e91d4 100644
+--- a/bb8_core/bb8_presence_scanner.py
++++ b/bb8_core/bb8_presence_scanner.py
+@@ -1,12 +1,28 @@
+-from some_dispatcher_lib import dispatcher
++from __future__ import annotations
++
++from some_dispatcher_lib import dispatcher
+
+-# previous scanner code...
++# Ensure scanner is the single discovery source; guard dispatcher init.
++_scanner_dispatcher_initialized = False
++
++
++def ensure_dispatcher_initialized(namespace: str = "bb8") -> None:
++    global _scanner_dispatcher_initialized
++    if _scanner_dispatcher_initialized:
++        return
++    # Prefer library-provided guard if available
++    is_init = getattr(dispatcher, "is_initialized", None)
++    if callable(is_init) and is_init():
++        _scanner_dispatcher_initialized = True
++        return
++    dispatcher.init(namespace)
++    _scanner_dispatcher_initialized = True
++
++# call early during module load or main()
++ensure_dispatcher_initialized()
+
+-# end

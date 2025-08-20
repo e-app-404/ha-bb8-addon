@@ -1,0 +1,12 @@
+### A5) Run & verify
+
+```bash
+python -m compileall -q . && echo READY
+pytest -q -rA -k "sleep_mapping or import_and_construct" --maxfail=1
+```
+
+**Acceptance:**
+
+* `tests/test_facade.py::test_sleep_mapping` passes (exactly 5 LED emits observed by StubCore).
+* `tests/test_smoke_controller_facade.py::test_import_and_construct` passes (imports work via `__all__`).
+* No regressions in seam/integration tests.

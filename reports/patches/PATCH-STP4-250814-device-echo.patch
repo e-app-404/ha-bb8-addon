@@ -1,0 +1,73 @@
+# Patch: STP4 strict echo compliance, BLE threading, import cleanup
+# Summary: Adds publish_device_echo helper, restructures BLE thread, cleans up imports
+
+# File: bb8_core/common.py (NEW helper and constants)
+def publish_device_echo(client, topic, value):
+    raw = value if isinstance(value, (int, float, str)) else str(value)
+    client.publish(topic, payload=raw, qos=1, retain=False)
+    echo = {"value": raw, "source": "device"}
+    client.publish(topic, payload=json.dumps(echo), qos=1, retain=False)
+
+# Shared constants (used in facade, bridge, ble)
+TOPICS = {
+    "power": "bb8/power/set",
+    "stop": "bb8/stop",
+    "sleep": "bb8/sleep",
+    "drive": "bb8/drive",
+    "heading": "bb8/heading",
+    "speed": "bb8/speed",
+    "led": "bb8/led/set",
+}
+
+
+# File: bb8_core/bridge_controller.py (wires device-echo handlers, LED, BLE)
+from bb8_core.common import publish_device_echo, TOPICS
+
+# Replace publish with helper in handlers:
+def on_power_set(payload):
+    publish_device_echo(client, TOPICS["power"], payload)
+
+def on_stop():
+    publish_device_echo(client, TOPICS["stop"], "pressed")
+
+def on_sleep():
+    publish_device_echo(client, TOPICS["sleep"], "idle")
+
+def on_drive(value):
+    publish_device_echo(client, TOPICS["drive"], value)
+
+def on_heading(value):
+    publish_device_echo(client, TOPICS["heading"], value)
+
+def on_speed(value):
+    publish_device_echo(client, TOPICS["speed"], value)
+
+def on_led_set(r, g, b):
+    payload = json.dumps({"r": r, "g": g, "b": b})
+    client.publish(TOPICS["led"], payload=payload, qos=1, retain=False)
+
+# BLE loop thread setup
+import threading, asyncio
+
+ble_loop = asyncio.new_event_loop()
+threading.Thread(target=ble_loop.run_forever, name="BLEThread", daemon=True).start()
+
+# All BLE calls must use:
+# asyncio.run_coroutine_threadsafe(your_coro(), ble_loop)
+
+
+# File: bb8_core/facade.py and bb8_core/ble_link.py
+# Remove circular imports; import constants via common
+from bb8_core.common import TOPICS
+
+
+# File: bb8_core/bb8_presence_scanner.py
+# Guard dispatcher init to ensure scanner is the source
+if not dispatcher.is_initialized():
+    dispatcher.init("bb8")  # enforce single discovery source
+
+
+# Additional: assert no use of get_event_loop
+# (Removed and replaced by explicit `new_event_loop()` above)
+
+---

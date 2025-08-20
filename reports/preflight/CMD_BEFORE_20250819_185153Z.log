@@ -1,0 +1,4 @@
+# BEFORE
+publish bb8/led/cmd {"r":255,"g":64,"b":0}
+wait bb8/led/state -> {"match":false,"payload":null,"topic":"bb8/led/state"}
+VERDICT=FAIL

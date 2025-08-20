@@ -1,0 +1,32 @@
+# Patch ID: PATCH-STP4-250816-dispatcher-early-bind
+diff --git a/bb8_core/bridge_controller.py b/bb8_core/bridge_controller.py
+index 67f1d3f..f9a5baf 100644
+--- a/bb8_core/bridge_controller.py
++++ b/bb8_core/bridge_controller.py
+@@ -6,9 +6,11 @@ import json
+ import threading
+ from typing import Any, Optional, Callable
+ import logging
+ from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
+ from . import ble_link  # first-party
++from .mqtt_dispatcher import ensure_dispatcher_started
+
+ log = logging.getLogger(__name__)
+
+ # NOTE: An MQTT client named `client` must be set (injected) by the app bootstrap.
+ # If your integration uses a different symbol, adjust the references below.
+@@ -20,6 +22,12 @@ _ble_loop: Optional[asyncio.AbstractEventLoop] = None
+ _ble_inited: bool = False
+
+
++#
++# Start MQTT dispatcher as early as possible with correct CONFIG,
++# so later divergent attempts (e.g., localhost) are suppressed.
++#
++ensure_dispatcher_started()
++
+ def _start_ble_loop_thread() -> asyncio.AbstractEventLoop:
+     loop = asyncio.new_event_loop()
+     t = threading.Thread(target=loop.run_forever, name="bb8-ble-loop", daemon=True)
+     t.start()
+     return loop

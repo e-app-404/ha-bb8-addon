@@ -1,0 +1,301 @@
+# PR: Consolidate BB‑8 BLE scanner, MQTT telemetry & HA discovery (incl. extended entities)
+
+## Why (Problem / Symptoms)
+
+* HA MQTT discovery errors due to empty `device` blocks and missing identifiers/connections.
+* Discovery published from multiple places (`discovery.py`, `discovery_publish.py`) diverges from the live scanner.
+* No availability (birth/LWT) standardization.
+* Extended entities (LED, Drive, Sleep, Heading, Speed) exist in separate scripts → duplication and drift.
+
+## Goals (What / Intent)
+
+* Single runtime: **`bb8_presence_scanner.py`** does BLE scan, telemetry, birth/LWT, and **all** HA discovery.
+* Device metadata: **MAC + D‑Bus path** in `connections`, stable `identifiers`, `serial_number`, `sw_version=addon:{ADDON_VERSION}`.
+* Discovery + telemetry **backwards compatible** for Presence/RSSI.
+* Retire `discovery.py` + `discovery_publish.py` (no behavior loss).
+
+## Out of scope
+
+* Low-level Sphero control/drive implementation (handlers stub-friendly, no‑op if bridge missing).
+* UI/dashboard wiring.
+
+---
+
+## What changed & what it touches
+
+### Topics (authoritative)
+
+* **Base:** `bb8`
+* **Availability (retained):** `bb8/status` → `online` / `offline` (LWT)
+* **Telemetry (retained):**
+
+  * Presence: `bb8/sensor/presence` → `on|off`
+  * RSSI: `bb8/sensor/rssi` → decimal string dBm
+* **Actuators (subscribe) + state echoes:**
+
+  * `bb8/power/set` (`ON|OFF`) → `bb8/power/state` (retained)
+  * `bb8/sleep/press` (any) → `bb8/stop/state` (`pressed` then `idle`, non‑retained)
+  * `bb8/drive/press` (any) → `bb8/drive/state` (`pressed` then `idle`, non‑retained)
+  * `bb8/heading/set` (0..359) → `bb8/heading/state` (retained)
+  * `bb8/speed/set` (0..255) → `bb8/speed/state` (retained)
+  * `bb8/led/set` (RGB/hex/“OFF”) → `bb8/led/state` (retained JSON)
+
+### Device block (HA discovery `device`)
+
+* `identifiers`: `["ble:{MAC}", "uuid:0000fe07-0000-1000-8000-00805f9b34fb", "mqtt:bb8-{macslug}"]`
+* `connections`: `[["mac", "{MAC}"], ["dbus", "{/org/bluez/hci0/dev_...}"]]`
+* `manufacturer`: `"Sphero"`, `model`: `"S33 BB84 LE"`, `name`: `"BB‑8"`
+* `serial_number`: `"mfd.1447:f48f924b380a3096eb"` (from ManufacturerData 0x05A7 sample)
+* `sw_version`: `"addon:{ADDON_VERSION}"`
+
+### Availability block (all discovery payloads)
+
+```json
+{
+  "availability_topic": "bb8/status",
+  "payload_available": "online",
+  "payload_not_available": "offline"
+}
+```
+
+### HA Discovery topics (retained)
+
+* Presence (binary_sensor): `homeassistant/binary_sensor/bb8_presence/config`
+* RSSI (sensor):            `homeassistant/sensor/bb8_rssi/config`
+* Sleep (button):           `homeassistant/button/bb8_sleep/config`
+* Drive (button):           `homeassistant/button/bb8_drive/config`
+* Heading (number):         `homeassistant/number/bb8_heading/config`
+* Speed (number):           `homeassistant/number/bb8_speed/config`
+* LED (light):              `homeassistant/light/bb8_led/config`
+
+`unique_id`s must include MAC slug (e.g., `eded87d72750`) to remain stable:
+`bb8_presence_{macslug}`, `bb8_rssi_{macslug}`, `bb8_led_{macslug}`, etc.
+
+---
+
+## Files changed (paths are exact)
+
+* **MODIFY** `/addons/local/beep_boop_bb8/bb8_core/bb8_presence_scanner.py`
+
+  * Add: add‑on version loader, unified discovery publisher (minimal + extended), actuator subscriptions, device block builder, birth/LWT setup, MAC/DBus sourcing from Bleak.
+  * Keep: scan loop, presence/RSSI retained telemetry.
+  * Ensure: backwards compatible unique\_ids & topics for Presence/RSSI.
+* **DEPRECATE** `/addons/local/beep_boop_bb8/discovery.py` (replace with thin shim or remove)
+* **DEPRECATE** `/addons/local/beep_boop_bb8/discovery_publish.py` (replace with thin shim or remove)
+* **READ** (no change required): `/addons/local/beep_boop_bb8/config.yaml`
+
+---
+
+## Implementation plan (step‑by‑step; Copilot can follow)
+
+1. **Version & MQTT config**
+
+   * At top of `bb8_presence_scanner.py`, ensure:
+
+     * `ADDON_VERSION = os.getenv("BB8_ADDON_VERSION") or yaml.safe_load(open("/addons/local/beep_boop_bb8/config.yaml")).get("version","unknown")`
+     * `_load_mqtt_config()` reads defaults from `config.yaml` with env overrides.
+     * Build `mqtt_client` with `will_set("bb8/status", "offline", qos=1, retain=True)`; on connect publish `"online"` retained.
+
+2. **Extraction helpers**
+
+   * `_extract_mac_and_dbus(device)`:
+
+     * MAC from `details["props"]["Address"]` or `device.address` (uppercase).
+     * DBus path from `details["path"]` or `f"/org/bluez/hci0/dev_{mac.replace(':','_')}"`.
+   * `build_device_block(mac, dbus_path, model="S33 BB84 LE", name="BB-8")`:
+
+     * Return dict per **Device block** section above (`identifiers`, `connections`, `serial_number`, `sw_version`).
+
+3. **Discovery publisher (one function)**
+
+   * `publish_discovery(client, mac, dbus_path, model="S33 BB84 LE", name="BB-8")`
+
+     * Compute `macslug = mac.replace(":","").lower()`.
+     * Prepare reusable `availability` block and `device` block.
+     * Publish retained (`qos=1, retain=True`) payloads for all 7 entities (Presence, RSSI, LED, Sleep, Drive, Heading, Speed) to **Discovery topics** above.
+     * Cache `published_discovery_for = mac` to avoid re‑publishing.
+
+4. **Subscriptions (after connect)**
+
+   * Create `_sub(topic, handler)` helper → `client.message_callback_add` + `client.subscribe(topic, qos=1)`.
+   * Handlers:
+
+     * `_on_msg_power` → `"ON"`→`bridge.connect()`→ echo `bb8/power/state "ON"`; `"OFF"`→`bridge.sleep(None)`→ echo `"OFF"`.
+     * `_on_msg_sleep` → `bridge.sleep(None)`→ publish `bb8/stop/state "pressed"` then `"idle"` (non‑retained).
+     * `_on_msg_drive` → optional `bridge.drive()` → transient state same as sleep.
+     * `_on_msg_heading` → clamp 0..359 → `bridge.set_heading(v)` → echo `bb8/heading/state`.
+     * `_on_msg_speed` → clamp 0..255 → `bridge.set_speed(v)` → echo `bb8/speed/state`.
+     * `_on_msg_led` → parse `"OFF"` or JSON `{hex|r,g,b}` → clamp 0..255 → `bridge.set_led_rgb|set_led_off` → echo `bb8/led/state` JSON.
+   * Bind for:
+
+     ```
+     bb8/power/set, bb8/sleep/press, bb8/drive/press,
+     bb8/heading/set, bb8/speed/set, bb8/led/set
+     ```
+
+5. **Scan loop (keep) + trigger discovery**
+
+   * On first successful match:
+
+     * Extract `mac, dbus_path`.
+     * If `published_discovery_for != mac`: call `publish_discovery(...)`.
+   * Publish retained telemetry each tick:
+
+     * `bb8/sensor/presence` = `on|off`; `bb8/sensor/rssi` = decimal or `""` when absent.
+
+6. **Retire legacy files**
+
+   * Replace contents of `discovery.py` and `discovery_publish.py` with:
+
+     ```python
+     # Deprecated: functionality moved into bb8_presence_scanner.py:publish_discovery(...)
+     from bb8_presence_scanner import publish_discovery  # noqa: F401
+     ```
+   * Or remove entirely (if repo policy allows).
+
+---
+
+## Representative diffs (snippets; Copilot can expand)
+
+```diff
+--- a/addons/local/beep_boop_bb8/bb8_core/bb8_presence_scanner.py
++++ b/addons/local/beep_boop_bb8/bb8_core/bb8_presence_scanner.py
+@@
++ ADDON_VERSION = os.getenv("BB8_ADDON_VERSION") or _read_cfg_version("/addons/local/beep_boop_bb8/config.yaml")
++ mqtt_client = mqtt.Client(client_id="bb8_presence_scanner", protocol=mqtt.MQTTv311)
++ if MQTT_USER and MQTT_PASSWORD:
++     mqtt_client.username_pw_set(MQTT_USER, MQTT_PASSWORD)
++ mqtt_client.will_set("bb8/status", payload="offline", qos=1, retain=True)
++ def _on_connect(client, userdata, flags, rc, properties=None):
++     client.publish("bb8/status", payload="online", qos=1, retain=True)
++     _bind_subscriptions(client)
++ mqtt_client.on_connect = _on_connect
+@@
++ def build_device_block(mac, dbus_path, model="S33 BB84 LE", name="BB-8"):
++     mac_norm = mac.upper()
++     slug = "bb8-" + mac_norm.replace(":", "").lower()
++     return {
++       "identifiers": [f"ble:{mac_norm}", "uuid:0000fe07-0000-1000-8000-00805f9b34fb", f"mqtt:{slug}"],
++       "connections": [["mac", mac_norm], ["dbus", dbus_path]],
++       "manufacturer": "Sphero", "model": model, "name": name,
++       "serial_number": "mfd.1447:f48f924b380a3096eb",
++       "sw_version": f"addon:{ADDON_VERSION}",
++     }
+@@
++ def publish_discovery(client, mac, dbus_path, model="S33 BB84 LE", name="BB-8"):
++     macslug = mac.replace(":", "").lower()
++     device = build_device_block(mac, dbus_path, model, name)
++     avail = {"availability_topic":"bb8/status", "payload_available":"online", "payload_not_available":"offline"}
++     # Presence
++     client.publish("homeassistant/binary_sensor/bb8_presence/config",
++        json.dumps({"name":"BB-8 Presence","unique_id":f"bb8_presence_{macslug}","state_topic":"bb8/sensor/presence","payload_on":"on","payload_off":"off","device_class":"connectivity",**avail,"device":device}),
++        qos=1, retain=True)
++     # RSSI
++     client.publish("homeassistant/sensor/bb8_rssi/config",
++        json.dumps({"name":"BB-8 RSSI","unique_id":f"bb8_rssi_{macslug}","state_topic":"bb8/sensor/rssi","unit_of_measurement":"dBm","state_class":"measurement","device_class":"signal_strength",**avail,"device":device}),
++        qos=1, retain=True)
++     # Sleep button
++     client.publish("homeassistant/button/bb8_sleep/config",
++        json.dumps({"name":"BB-8 Sleep","unique_id":f"bb8_sleep_{macslug}","command_topic":"bb8/sleep/press",**avail,"device":device}),
++        qos=1, retain=True)
++     # Drive button
++     client.publish("homeassistant/button/bb8_drive/config",
++        json.dumps({"name":"BB-8 Drive","unique_id":f"bb8_drive_{macslug}","command_topic":"bb8/drive/press",**avail,"device":device}),
++        qos=1, retain=True)
++     # Heading number
++     client.publish("homeassistant/number/bb8_heading/config",
++        json.dumps({"name":"BB-8 Heading","unique_id":f"bb8_heading_{macslug}","command_topic":"bb8/heading/set","min":0,"max":359,"step":1,"mode":"box",**avail,"device":device}),
++        qos=1, retain=True)
++     # Speed number
++     client.publish("homeassistant/number/bb8_speed/config",
++        json.dumps({"name":"BB-8 Speed","unique_id":f"bb8_speed_{macslug}","command_topic":"bb8/speed/set","min":0,"max":255,"step":1,"mode":"slider",**avail,"device":device}),
++        qos=1, retain=True)
++     # LED light
++     client.publish("homeassistant/light/bb8_led/config",
++        json.dumps({"name":"BB-8 LED","unique_id":f"bb8_led_{macslug}","command_topic":"bb8/led/set","schema":"json","supported_color_modes":["rgb"],"state_topic":"bb8/led/state",**avail,"device":device}),
++        qos=1, retain=True)
+@@
++ def _bind_subscriptions(client):
++     _sub(client,"bb8/power/set",_on_msg_power)
++     _sub(client,"bb8/sleep/press",_on_msg_sleep)
++     _sub(client,"bb8/drive/press",_on_msg_drive)
++     _sub(client,"bb8/heading/set",_on_msg_heading)
++     _sub(client,"bb8/speed/set",_on_msg_speed)
++     _sub(client,"bb8/led/set",_on_msg_led)
+```
+
+```diff
+--- a/addons/local/beep_boop_bb8/discovery.py
++++ b/addons/local/beep_boop_bb8/discovery.py
+@@
+- # legacy generator…
++ # Deprecated: consolidated into bb8_presence_scanner.publish_discovery(...)
++ from bb8_presence_scanner import publish_discovery  # re-export for compatibility
+```
+
+```diff
+--- a/addons/local/beep_boop_bb8/discovery_publish.py
++++ b/addons/local/beep_boop_bb8/discovery_publish.py
+@@
+- # publisher…
++ # Deprecated: consolidated into bb8_presence_scanner.publish_discovery(...)
++ from bb8_presence_scanner import publish_discovery  # re-export for compatibility
+```
+
+---
+
+## Test plan (manual)
+
+1. **Boot scanner** with BB‑8 nearby:
+
+   * `bb8/status` retained=`online`; kill process → broker shows `offline`.
+2. **Discovery**:
+
+   * Confirm 7 discovery topics exist (retained) with full `device` + `availability`.
+   * HA shows single **BB‑8 device** with all entities; `sw_version` = `addon:{version}`; `connections` has `mac` + `dbus`.
+3. **Telemetry**:
+
+   * Presence/RSSI update (retained) with RSSI as decimal string.
+4. **Controls**:
+
+   * Publish `ON|OFF` to `bb8/power/set` → state echo + (if wired) bridge action.
+   * `bb8/sleep/press` & `bb8/drive/press` → transient state.
+   * `bb8/heading/set` (`-1`, `720`) clamp to \[0..359], state echoed.
+   * `bb8/speed/set` clamp to \[0..255], state echoed.
+   * `bb8/led/set` with `"OFF"`, `{"hex":"#00FF7F"}`, `{"r":0,"g":255,"b":127}` → state mirrors; invalid JSON falls back to OFF.
+
+## Acceptance criteria
+
+* No HA discovery errors; device page shows metadata & connections.
+* Presence/RSSI entities unchanged (unique\_id, topics).
+* Extended entities present and responsive.
+* LWT/birth works (retained).
+* Only `bb8_presence_scanner.py` publishes discovery.
+
+## Risks & mitigations
+
+* **Entity duplication**: unique\_ids include MAC → stable; use same names as before for Presence/RSSI.
+* **Bridge not implemented**: handlers no‑op safely (guard with `getattr`); log warnings.
+* **Multiple BB‑8s**: current plan anchors on global `bb8/*` topics; follow‑up iteration can add `{slug}` in base topic if needed.
+
+## Rollback
+
+* Revert `bb8_presence_scanner.py` to previous commit.
+* Restore `discovery.py` / `discovery_publish.py` originals.
+* Restart add‑on.
+
+## Checklist
+
+* [ ] Code compiles & lints
+* [ ] Discovery publishes only after MAC/DBus known
+* [ ] Unique IDs use MAC slug
+* [ ] Birth/LWT confirmed retained
+* [ ] Extended entities present in HA
+* [ ] Legacy files deprecated/removed
+* [ ] README snippet updated (topics & entities)
+
+---
+
+### Reviewer notes
+
+* This PR intentionally **centralizes** all discovery logic. Any future entities should be added in the single `publish_discovery()` function and bound via the `_bind_subscriptions()` table.

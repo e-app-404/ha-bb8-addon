@@ -1,0 +1,140 @@
+delta_contract:
+  id: "DC-INT-HA-CONTROL-PREP-2025-08-19"
+  version: "1.0"
+  created_utc: "2025-08-19T00:00:00Z"
+  owner: "Strategos"
+  objective: "Carry-forward hardening for next session: decouple construction, harden asyncio lifecycle, add stub tripwire, and protect discovery via tests—without regressing STP4 strict PASS."
+
+  planned_change:
+    - id: "PORTS-LAYER"
+      title: "Introduce bb8_core.ports Protocols + factories"
+      scope: "Create Protocols (MqttBus, BleTransport, Clock, Logger) and factory assembly to remove residual cross-import pressure."
+      paths:
+        - "addon/bb8_core/ports.py (new)"
+        - "addon/bb8_core/factories.py (new)"
+        - "addon/bb8_core/bb8_presence_scanner.py"
+        - "addon/bb8_core/bridge_controller.py"
+        - "addon/bb8_core/facade.py"
+      non_goals:
+        - "Feature changes to MQTT topics or payloads"
+        - "Behavioral changes to discovery ownership (remains scanner-only)"
+
+    - id: "ASYNC-LIFECYCLE"
+      title: "Adopt TaskGroup orchestration + graceful shutdown"
+      scope: "Use asyncio.TaskGroup in controller, track tasks, ensure clean cancel/await; centralize BLE reconnect/backoff."
+      paths:
+        - "addon/bb8_core/bridge_controller.py"
+        - "addon/bb8_core/ble_link.py"
+
+    - id: "TRIPWIRE-STUBS"
+      title: "Assert no test stubs in production path"
+      scope: "Add runtime assertion to prevent _StubClient usage in production."
+      paths:
+        - "addon/bb8_core/bridge_controller.py"
+        - "addon/bb8_core/mqtt_dispatcher.py"
+
+    - id: "TEST-ASYNC-DISCOVERY"
+      title: "Add async+discovery contract tests"
+      scope: "New test ensures retained config, aligned device block, and clean task teardown using mocked Ports."
+      paths:
+        - "tests/test_asyncio_and_discovery.py (new)"
+
+    - id: "PAHO-CB-V2 (optional)"
+      title: "Modernize paho-mqtt callbacks to v2 API"
+      scope: "Bump callback signatures in tools only (verify_discovery.py, discovery_migrate.py, force_discovery_emit.py)."
+      paths:
+        - "tools/verify_discovery.py"
+        - "tools/discovery_migrate.py"
+        - "tools/force_discovery_emit.py"
+      toggle: "can be deferred if timeboxed"
+
+  deliverable:
+    - "patch_bundle_contract_v1"
+    - "qa_report_contract_v1"
+
+  action_needed:
+    - "Implement Ports Protocols + factories; refactor scanner/controller to use DI (no module-level singletons)."
+    - "Wrap controller run with asyncio.TaskGroup; ensure cancel/await shutdown; add BLE reconnect/backoff utility."
+    - "Insert stub tripwire assertion post-client creation."
+    - "Add tests with mocked Ports to validate retained discovery & task lifecycle."
+    - "(Optional) Update paho callbacks to v2 API in tools and confirm runs."
+
+  rationale:
+    - "Eliminate any lingering circular-import edge cases and strengthen construction boundaries."
+    - "Guarantee robust lifecycle (no pending tasks, no loop warnings) under restart/stop conditions."
+    - "Prevent accidental use of test stubs in production evidence runs."
+    - "Lock the discovery contract via tests to avoid regressions."
+
+  status: "Planned"
+
+  location:
+    repository: "ha-bb8-addon"
+    base_branch: "main"
+    feature_branch_proposal: "feat/ports-async-guard-2025-08-19"
+
+  RACI_matrix:
+    Responsible: ["Pythagoras"]
+    Accountable: ["Strategos"]
+    Consulted: ["Copilot"]
+    Informed: ["Project Owner"]
+
+  acceptance_criteria:
+    baseline_protection:
+      - "STP4 strict remains PASS (no regression to evidence pipeline)."
+      - "Discovery verifier PASS (presence,rssi retained; LED optional) with real MAC."
+    implementation:
+      - "Imports clean: python -c 'import addon.bb8_core.bridge_controller' exits 0"
+      - "No asyncio loop warnings in 30s smoke: PYTHONWARNINGS=default python -X dev -m addon.bb8_core.bridge_controller"
+      - "Stub tripwire not triggered in production path"
+      - "tests/test_asyncio_and_discovery.py PASS"
+    qa_gates:
+      - "black --check . → PASS"
+      - "ruff check . → PASS"
+      - "mypy addon/bb8_core tests → PASS"
+      - "pytest -q --maxfail=1 --disable-warnings → PASS"
+      - "tools/verify_discovery.py → PASS (LED off); PASS (LED on when enabled)"
+    evidence:
+      - "Attach logs: taskgroup_smoke.log, verify_discovery_no_led.log, verify_discovery_with_led.log (if LED enabled)."
+
+  risk_assessment:
+    risks:
+      - id: "import-shift"
+        desc: "Refactor could break call sites or lazy import expectations."
+        impact: "Medium"
+        likelihood: "Low"
+        mitigation: "Incremental PR; tests; import smoke before run."
+      - id: "loop-teardown"
+        desc: "Improper cancellation could stall shutdown."
+        impact: "Medium"
+        likelihood: "Medium"
+        mitigation: "TaskGroup + cancellation tests; timeouts."
+      - id: "paho-api"
+        desc: "Callback v2 changes could break older environments."
+        impact: "Low"
+        likelihood: "Low"
+        mitigation: "Guarded to tools only; defer if timeboxed."
+
+  path:
+    - "addon/bb8_core/ports.py"
+    - "addon/bb8_core/factories.py"
+    - "addon/bb8_core/bb8_presence_scanner.py"
+    - "addon/bb8_core/bridge_controller.py"
+    - "addon/bb8_core/facade.py"
+    - "addon/bb8_core/ble_link.py"
+    - "addon/bb8_core/mqtt_dispatcher.py"
+    - "tests/test_asyncio_and_discovery.py"
+    - "tools/verify_discovery.py"
+    - "tools/discovery_migrate.py"
+    - "tools/force_discovery_emit.py"
+
+  url: "https://github.com/e-app-404/ha-bb8-addon"
+
+  signoff_required: true
+
+  progress_evidence:
+    receipts_expected:
+      - "reports/qa/* (black/ruff/mypy/pytest)"
+      - "reports/verify_discovery_* (no_led/with_led)"
+      - "reports/taskgroup_smoke.log"
+    delivery:
+      - "PR with patch_bundle_contract_v1 + qa_report_contract_v1"

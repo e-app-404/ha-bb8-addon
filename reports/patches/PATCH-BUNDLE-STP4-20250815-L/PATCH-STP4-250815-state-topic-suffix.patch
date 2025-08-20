@@ -1,0 +1,69 @@
+# Patch ID: PATCH-STP4-250815-state-topic-suffix
+diff --git a/bb8_core/common.py b/bb8_core/common.py
+index d7e45aa..2de9f16 100644
+--- a/bb8_core/common.py
++++ b/bb8_core/common.py
+@@ -1,75 +1,83 @@
+ from __future__ import annotations
+
+ import json
+ import os
+-from typing import Any, Dict, Tuple
++from typing import Any, Dict, Tuple, List
+
+ # Public constants & helpers shared across bridge/facade/ble
+
+ def _mqtt_base() -> str:
+     return os.environ.get("MQTT_BASE", "bb8")
+
+-# Command topics (inbound) vs State topics (outbound)
+-CMD_TOPICS: Dict[str, str] = {
+-    "power":   f"{_mqtt_base()}/power/set",
+-    "stop":    f"{_mqtt_base()}/stop/set",
+-    "sleep":   f"{_mqtt_base()}/sleep/set",
+-    "drive":   f"{_mqtt_base()}/drive/set",
+-    "heading": f"{_mqtt_base()}/heading/set",
+-    "speed":   f"{_mqtt_base()}/speed/set",
+-    "led":     f"{_mqtt_base()}/led/set",
+-}
++# Command topics (inbound). We support both /set and /press where applicable.
++CMD_TOPICS: Dict[str, List[str]] = {
++    "power":   [f"{_mqtt_base()}/power/set"],
++    "stop":    [f"{_mqtt_base()}/stop/press",   f"{_mqtt_base()}/stop/set"],
++    "sleep":   [f"{_mqtt_base()}/sleep/press",  f"{_mqtt_base()}/sleep/set"],
++    "drive":   [f"{_mqtt_base()}/drive/press",  f"{_mqtt_base()}/drive/set"],
++    "heading": [f"{_mqtt_base()}/heading/set"],
++    "speed":   [f"{_mqtt_base()}/speed/set"],
++    "led":     [f"{_mqtt_base()}/led/set"],
++}
+
+-STATE_TOPICS: Dict[str, str] = {
+-    "power":   f"{_mqtt_base()}/power",
+-    "stop":    f"{_mqtt_base()}/stop",
+-    "sleep":   f"{_mqtt_base()}/sleep",
+-    "drive":   f"{_mqtt_base()}/drive",
+-    "heading": f"{_mqtt_base()}/heading",
+-    "speed":   f"{_mqtt_base()}/speed",
+-    # LED explicitly uses /state as per STP4 spec
+-    "led":     f"{_mqtt_base()}/led/state",
+-}
++# State topics (outbound) — STP4 expects '/state' suffix consistently
++STATE_TOPICS: Dict[str, str] = {
++    "power":   f"{_mqtt_base()}/power/state",
++    "stop":    f"{_mqtt_base()}/stop/state",
++    "sleep":   f"{_mqtt_base()}/sleep/state",
++    "drive":   f"{_mqtt_base()}/drive/state",
++    "heading": f"{_mqtt_base()}/heading/state",
++    "speed":   f"{_mqtt_base()}/speed/state",
++    "led":     f"{_mqtt_base()}/led/state",
++}
+
+@@
+ def publish_device_echo(client: Any, state_topic: str, value: Any, qos: int = 1) -> None:
+@@
+-__all__ = [
+-    "CMD_TOPICS",
+-    "STATE_TOPICS",
+-    "publish_device_echo",
+-]
++__all__ = ["CMD_TOPICS", "STATE_TOPICS", "publish_device_echo"]
