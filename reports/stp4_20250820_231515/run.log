@@ -1,0 +1,67 @@
+[evidence] ts=20250820_221515Z base=bb8 require_echo=1
+[evidence] broker=192.168.0.129:1883 user=mqtt_bb8
+[evidence] step=probe
+  File "/Users/evertappels/Projects/HA-BB8/addon/ops/evidence/mqtt_probe.py", line 42
+    host, port, user, pwd = read_mqtt_env()
+IndentationError: unexpected indent
+[evidence] step=capture
+/Users/evertappels/Projects/HA-BB8/addon/ops/evidence/capture_trace.py:46: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  client = mqtt.Client(client_id=f"trace-{int(start)}", protocol=mqtt.MQTTv5)
+Exception in thread paho-mqtt-client-trace-1755728115:
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/threading.py", line 1043, in _bootstrap_inner
+    self.run()
+    ~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/threading.py", line 994, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/evertappels/Projects/HA-BB8/addon/.venv_evidence/lib/python3.13/site-packages/paho/mqtt/client.py", line 4523, in _thread_main
+    self.loop_forever(retry_first_connection=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/evertappels/Projects/HA-BB8/addon/.venv_evidence/lib/python3.13/site-packages/paho/mqtt/client.py", line 2297, in loop_forever
+    rc = self._loop(timeout)
+  File "/Users/evertappels/Projects/HA-BB8/addon/.venv_evidence/lib/python3.13/site-packages/paho/mqtt/client.py", line 1686, in _loop
+    rc = self.loop_read()
+  File "/Users/evertappels/Projects/HA-BB8/addon/.venv_evidence/lib/python3.13/site-packages/paho/mqtt/client.py", line 2100, in loop_read
+    rc = self._packet_read()
+  File "/Users/evertappels/Projects/HA-BB8/addon/.venv_evidence/lib/python3.13/site-packages/paho/mqtt/client.py", line 3142, in _packet_read
+    rc = self._packet_handle()
+  File "/Users/evertappels/Projects/HA-BB8/addon/.venv_evidence/lib/python3.13/site-packages/paho/mqtt/client.py", line 3814, in _packet_handle
+    return self._handle_connack()
+           ~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/evertappels/Projects/HA-BB8/addon/.venv_evidence/lib/python3.13/site-packages/paho/mqtt/client.py", line 3917, in _handle_connack
+    on_connect(self, self._userdata,
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+                    flags_dict, reason, properties)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: main.<locals>.on_connect() takes 4 positional arguments but 5 were given
+[trace] wrote ../reports/stp4_20250820_231515/ha_mqtt_trace_snapshot.jsonl
+[evidence] step=collector
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+[DEBUG] Loaded config for MQTT: {'MQTT_USERNAME': 'mqtt_bb8', 'MQTT_PASSWORD': 'mqtt_bb8', 'MQTT_HOST': '192.168.0.129', 'MQTT_PORT': 1883, 'MQTT_BASE': 'bb8'}
+{
+  "generated_at": "2025-08-20T22:15:51.435527+00:00",
+  "broker": {
+    "host": "192.168.0.129",
+    "port": 1883,
+    "user_present": true
+  },
+  "base_topic": "bb8",
+  "schema": "PASS",
+  "schema_details": {
+    "valid": true,
+    "count": 0,
+    "details": []
+  },
+  "roundtrip": "FAIL",
+  "STP4/roundtrip": "FAIL (explain if FAIL)",
+  "timeouts_sec": 2.0,
+  "files": [
+    "ha_discovery_dump.json",
+    "ha_mqtt_trace_snapshot.json"
+  ]
+}
+[evidence] collector exited nonzero (continuing; manifest will record verdicts)
+[evidence] step=manifest
+[evidence] complete: roundtrip=FAIL schema=UNKNOWN
