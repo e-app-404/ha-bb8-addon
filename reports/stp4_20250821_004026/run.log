@@ -1,0 +1,10 @@
+[evidence] ts=20250820_234026Z base=bb8 require_echo=1
+[evidence] broker=192.168.0.129:1883 user=mqtt_bb8
+[evidence] step=probe
+/Users/evertappels/Projects/HA-BB8/addon/ops/evidence/mqtt_probe.py:40: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  client = mqtt.Client(
+probe: connected=True roundtrip=PASS schema=UNKNOWN
+{"connected": true, "host": "192.168.0.129", "port": 1883}
+[evidence] step=capture
+[evidence] step=collector
+[evidence] step=manifest

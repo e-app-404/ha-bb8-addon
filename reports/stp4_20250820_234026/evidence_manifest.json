@@ -1,0 +1,23 @@
+{
+  "generated_at": "2025-08-20T23:41:07.217342+00:00",
+  "broker": {
+    "host": "192.168.0.129",
+    "port": 1883,
+    "user_present": true
+  },
+  "base_topic": "bb8",
+  "schema": "UNKNOWN",
+  "schema_details": {
+    "valid": null,
+    "count": 0,
+    "details": []
+  },
+  "roundtrip": "FAIL",
+  "STP4/roundtrip": "FAIL (explain if FAIL)",
+  "timeouts_sec": 3.0,
+  "files": [
+    "ha_discovery_dump.json",
+    "ha_mqtt_trace_snapshot.json",
+    "ha_mqtt_trace_snapshot.jsonl"
+  ]
+}
