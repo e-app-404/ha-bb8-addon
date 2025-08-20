@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
-import os, sys, json, time, threading, warnings
+import json
+import os
+import sys
+import threading
+import time
+import warnings
+
 import paho.mqtt.client as mqtt
 
-warnings.filterwarnings("ignore", category=DeprecationWarning, module="paho.mqtt.client")
+warnings.filterwarnings(
+    "ignore", category=DeprecationWarning, module="paho.mqtt.client"
+)
+
 
 def read_mqtt_env():
     host = os.environ.get("MQTT_HOST")
     port_s = os.environ.get("MQTT_PORT") or "1883"
     user = os.environ.get("MQTT_USERNAME") or os.environ.get("MQTT_USER") or ""
-    pwd  = os.environ.get("MQTT_PASSWORD") or ""
+    pwd = os.environ.get("MQTT_PASSWORD") or ""
     base = os.environ.get("MQTT_BASE") or "bb8"
     try:
         port = int(port_s)
@@ -17,6 +26,7 @@ def read_mqtt_env():
     if not host:
         raise RuntimeError("MQTT_HOST is required")
     return host, port, user, pwd, base
+
 
 def main(timeout=4.0):
     host, port, user, pwd, base = read_mqtt_env()
@@ -34,7 +44,9 @@ def main(timeout=4.0):
         if msg.topic == topic and pl == "online":
             seen_online.set()
 
-    client = mqtt.Client(client_id=f"precheck-{int(time.time())}", protocol=mqtt.MQTTv5)
+    client = mqtt.Client(
+        client_id=f"precheck-{int(time.time())}", protocol=mqtt.MQTTv5
+    )
     if user:
         client.username_pw_set(user, pwd)
     client.on_connect = on_connect
@@ -46,13 +58,10 @@ def main(timeout=4.0):
     client.disconnect()
 
     ok = seen_online.is_set()
-    result = {
-        "broker": f"{host}:{port}",
-        "topic": topic,
-        "bridge_online": ok
-    }
+    result = {"broker": f"{host}:{port}", "topic": topic, "bridge_online": ok}
     print(json.dumps(result))
     return 0 if ok else 1
+
 
 if __name__ == "__main__":
     sys.exit(main())
