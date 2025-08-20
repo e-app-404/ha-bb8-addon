@@ -1,0 +1,179 @@
+{
+  "version": "2025.08.11-hotfix.2",
+  "base_topic": "bb8",
+  "availability_topic": "bb8/status",
+  "entities": [
+    {
+      "component": "update",
+      "object_id": "bb8_update",
+      "name": "BB-8 Update",
+      "state_topic": "bb8/update/state",
+      "command_topic": "bb8/update/install",
+      "device_class": "firmware",
+      "payload_install": "INSTALL",
+      "qos": 1,
+      "retain": true,
+      "_state_example": {
+        "installed_version": "v2025.8.12",
+        "latest_version": "v2025.8.12",
+        "release_summary": "Stability + battery fixes",
+        "release_url": "https://example/releases/v1.3.0"
+      },
+      "_meta": {
+        "Notes": "Use JSON on state_topic with installed_version/latest_version; command_topic triggers install.",
+        "Wiring notes for the facade/dispatcher": "Topics to publish from telemetry loop\n  - bb8/data/distance_session/state (cm, monotonically increasing until sleep)\n  - bb8/data/time_session/state (s, monotonically increasing until sleep)\n  - bb8/data/distance_lifetime/state (cm, monotonically increasing unless reset)\n  - bb8/data/time_lifetime/state (s, monotonically increasing unless reset)\n  - bb8/signal_level/state (one of: poor|fair|good|very_good|excellent, mapped from RSSI thresholds)\n\nNew command handlers\n  - bb8/update/install → bridge method or controller hook to run OTA and then republish update/state. The MQTT “update” entity expects separate state_topic (with installed/latest versions) and a command_topic that triggers install.\n  - bb8/reboot/press → bridge.reboot() (or stub/log if not supported) using button MQTT discovery.\n  - bb8/return_to_cradle/press → navigation stub (plan: later swap to a number/select or text for XY/scene target when you implement coordinates).\n\nSchema choices confirmed\n  - device_class: \"duration\" with unit_of_measurement: \"s\" renders as human-friendly durations in UI; pair with state_class: \"total_increasing\" for accumulating timers.\n  - device_class: \"distance\" explicitly allows cm.\n  - device_class: \"enum\" is valid for MQTT sensors; when you set options, you cannot also set unit_of_measurement or state_class. (We don’t set them.)\n\nMinimal handler stubs (names only)\n  - facade.attach_mqtt adds handlers for:\n    - update/install → _handle_update_install\n    - reboot/press → _handle_reboot\n    - return_to_cradle/press → _handle_return_to_cradle\n    - data/reset/press → _handle_reset_stats\n\nTelemetry loop publishes the five new state topics above."
+      }
+    },
+    {
+      "component": "button",
+      "object_id": "bb8_reboot",
+      "name": "BB-8 Reboot",
+      "command_topic": "bb8/reboot/press",
+      "payload_press": "PRESS",
+      "entity_category": "diagnostic"
+    },
+
+    {
+      "component": "button",
+      "object_id": "bb8_return_to_cradle",
+      "name": "BB-8 Return to Cradle",
+      "command_topic": "bb8/return_to_cradle/press",
+      "payload_press": "PRESS",
+      "entity_category": "config",
+      "_meta": {
+        "Notes": "Stub until navigation/pose exists; handler can ignore or log."
+      }
+    },
+
+    {
+      "component": "sensor",
+      "object_id": "bb8_data_distance_session",
+      "name": "BB-8 Distance (Session)",
+      "state_topic": "bb8/data/distance_session/state",
+      "unit_of_measurement": "cm",
+      "device_class": "distance",
+      "state_class": "total_increasing",
+      "entity_category": "diagnostic"
+    },
+    {
+      "component": "sensor",
+      "object_id": "bb8_data_time_session",
+      "name": "BB-8 Awake Time (Session)",
+      "state_topic": "bb8/data/time_session/state",
+      "unit_of_measurement": "s",
+      "device_class": "duration",
+      "state_class": "total_increasing",
+      "entity_category": "diagnostic"
+    },
+
+    {
+      "component": "sensor",
+      "object_id": "bb8_data_distance_lifetime",
+      "name": "BB-8 Distance (Lifetime)",
+      "state_topic": "bb8/data/distance_lifetime/state",
+      "unit_of_measurement": "cm",
+      "device_class": "distance",
+      "state_class": "total_increasing",
+      "entity_category": "diagnostic"
+    },
+    {
+      "component": "sensor",
+      "object_id": "bb8_data_time_lifetime",
+      "name": "BB-8 Awake Time (Lifetime)",
+      "state_topic": "bb8/data/time_lifetime/state",
+      "unit_of_measurement": "s",
+      "device_class": "duration",
+      "state_class": "total_increasing",
+      "entity_category": "diagnostic"
+    },
+    {
+      "component": "button",
+      "object_id": "bb8_data_reset",
+      "name": "BB-8 Reset Stats",
+      "command_topic": "bb8/data/reset/press",
+      "payload_press": "PRESS",
+      "entity_category": "config"
+    },
+
+    {
+      "component": "sensor",
+      "object_id": "bb8_signal_level",
+      "name": "BB-8 Signal Level",
+      "state_topic": "bb8/signal_level/state",
+      "device_class": "enum",
+      "options": ["poor", "fair", "good", "very_good", "excellent"],
+      "entity_category": "diagnostic",
+      "_meta": {
+        "MappingHint": "Derive from RSSI: <=-85:poor, -84..-75:fair, -74..-65:good, -64..-55:very_good, >=-54:excellent"
+      }
+    },
+    {
+      "component": "binary_sensor",
+      "object_id": "bb8_ble_connected",
+      "name": "BB-8 BLE Link",
+      "state_topic": "bb8/ble_connected/state",
+      "payload_on": "ON",
+      "payload_off": "OFF",
+      "entity_category": "diagnostic",
+      "device_class": "connectivity"
+    },
+    {
+      "component": "button",
+      "object_id": "bb8_sleep",
+      "name": "BB-8 Sleep",
+      "command_topic": "bb8/sleep/press",
+      "payload_press": "PRESS",
+      "entity_category": "diagnostic"
+    },
+    {
+      "component": "sensor",
+      "object_id": "bb8_firmware",
+      "name": "BB-8 Firmware",
+      "state_topic": "bb8/firmware/state",
+      "entity_category": "diagnostic"
+    },
+    {
+      "component": "binary_sensor",
+      "object_id": "bb8_presence",
+      "name": "BB-8 Presence",
+      "state_topic": "bb8/presence/state",
+      "payload_on": "ON",
+      "payload_off": "OFF"
+    },
+    {
+      "component": "sensor",
+      "object_id": "bb8_rssi",
+      "name": "BB-8 RSSI",
+      "state_topic": "bb8/rssi/state",
+      "unit_of_measurement": "dBm",
+      "device_class": "signal_strength",
+      "state_class": "measurement"
+    },
+    {
+      "component": "switch",
+      "object_id": "bb8_power",
+      "name": "BB-8 Power",
+      "command_topic": "bb8/power/set",
+      "state_topic": "bb8/power/state",
+      "payload_on": "ON",
+      "payload_off": "OFF"
+    },
+    {
+      "component": "button",
+      "object_id": "bb8_stop",
+      "name": "BB-8 Stop",
+      "command_topic": "bb8/stop/press",
+      "payload_press": "PRESS"
+    },
+    {
+      "component": "light",
+      "object_id": "bb8_led",
+      "name": "BB-8 LED",
+      "schema": "json",
+      "command_topic": "bb8/led/set",
+      "state_topic": "bb8/led/state",
+      "supported_color_modes": ["rgb"],
+      "optimistic": false
+    }
+  ]
+}

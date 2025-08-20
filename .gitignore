@@ -18,9 +18,15 @@ htmlcov/
 .idea/
 .vscode/
 .DS_Store
+<<<<<<< HEAD
 node_modules/
 # ADR-0001 guards
 .github/
 reports/
 tools/
 addon/.github/
+=======
+
+# Environment variable file
+.env!.evidence.env
+>>>>>>> c5f69de (STP4 reliability: MQTT env compatibility, PYTHONPATH in preflight, Paho v5 callbacks)

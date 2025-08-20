@@ -1,0 +1,29 @@
+# re-run evidence after merge
+MQTT_HOST=<ip-or-host> MQTT_PORT=1883 MQTT_USER=mqtt_bb8 MQTT_PASSWORD=mqtt_bb8 MQTT_BASE=bb8 \
+  make evidence-stp4
+
+# quick broker reachability
+nc -vz <host> 1883
+
+# Temporarily relax device echo
+export REQUIRE_DEVICE_ECHO=0
+
+# Sanity check topics
+mosquitto_sub -h <broker> -u mqtt_bb8 -P mqtt_bb8 -t 'bb8/#' -v
+
+mosquitto_pub -h <broker> -u mqtt_bb8 -P mqtt_bb8 -t bb8/power/set -m ON
+mosquitto_pub -h <broker> -u mqtt_bb8 -P mqtt_bb8 -t bb8/stop/press -n
+mosquitto_pub -h <broker> -u mqtt_bb8 -P mqtt_bb8 -t bb8/led/set -m '{"r":255,"g":64,"b":0}'
+
+# You should see
+bb8/power/state {"value":"ON","source":"facade"} (RET)
+bb8/stop/state pressed (non-retained)
+bb8/led/state {"r":255,"g":64,"b":0} (RET)
+
+# Re-run evidence (flat namespace)
+MQTT_HOST=<broker> MQTT_USER=mqtt_bb8 MQTT_PASSWORD=mqtt_bb8 MQTT_BASE=bb8 \
+  make evidence-stp4
+
+# Turn device echo back on
+# Once your BLE/bridge publishes real echoes ("source":"device"), set:
+export REQUIRE_DEVICE_ECHO=1

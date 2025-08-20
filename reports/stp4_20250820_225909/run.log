@@ -1,0 +1,38 @@
+[evidence] ts=20250820_215909Z base=bb8 require_echo=1
+[evidence] broker=192.168.0.129:1883 user=
+[evidence] step=probe
+/Users/evertappels/Projects/HA-BB8/addon/ops/evidence/mqtt_probe.py:36: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  client = mqtt.Client(client_id=f"probe-{int(time.time())}")
+probe: connected=False roundtrip=FAIL schema=UNKNOWN
+[evidence] step=capture
+/Users/evertappels/Projects/HA-BB8/addon/ops/evidence/capture_trace.py:37: DeprecationWarning: Callback API version 1 is deprecated, update to latest version
+  client = mqtt.Client(client_id=f"trace-{int(start)}")
+[trace] wrote ../reports/stp4_20250820_225909/ha_mqtt_trace_snapshot.jsonl
+[evidence] step=collector
+WARNING:root:[CONFIG] load_config is unavailable, usually means the module import failed or PYTHONPATH is not set.
+[DEBUG] Loaded config for MQTT: {'MQTT_USERNAME': None, 'MQTT_PASSWORD': None, 'MQTT_HOST': None, 'MQTT_PORT': None, 'MQTT_BASE': None}
+{
+  "generated_at": "2025-08-20T21:59:52.716950+00:00",
+  "broker": {
+    "host": "192.168.0.129",
+    "port": 1883,
+    "user_present": true
+  },
+  "base_topic": "bb8",
+  "schema": "PASS",
+  "schema_details": {
+    "valid": true,
+    "count": 0,
+    "details": []
+  },
+  "roundtrip": "FAIL",
+  "STP4/roundtrip": "FAIL (explain if FAIL)",
+  "timeouts_sec": 2.0,
+  "files": [
+    "ha_discovery_dump.json",
+    "ha_mqtt_trace_snapshot.json"
+  ]
+}
+[evidence] collector exited nonzero (continuing; manifest will record verdicts)
+[evidence] step=manifest
+[evidence] complete: roundtrip=FAIL schema=UNKNOWN

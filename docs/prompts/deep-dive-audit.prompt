@@ -1,0 +1,14 @@
+🛠️ **DEEP-DIVE STARTUP AUDIT REQUEST — BB-8 HA ADDON**
+
+Please analyze the following Home Assistant add-on startup logs for the `beep_boop_bb8` integration, with emphasis on:
+
+1. **S6 service lifecycle** — initialization, legacy service stop, and overlay compliance
+2. **Circular references and import validity** - failing imports, initialization of modules and firing order
+2. **BLE runtime execution** — identify cause and impact of the `RuntimeError: no running event loop`
+3. **MQTT connectivity** — validation of broker resolution, topics, and client authentication
+4. **Task lifecycle issues** — interpretation of `Task was destroyed but it is pending!` error
+5. **Config fidelity** — alignment between loaded config and MQTT/adapter behavior
+6. **Telemetry and controller lifecycle** — bridge startup, link init/stopped events, controller dispatch, telemetry suppression logic
+
+🧩 *Log excerpt begins below:*
+<insert full logs here or reference attached text block>

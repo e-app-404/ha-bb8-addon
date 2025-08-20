@@ -1,0 +1,102 @@
+v0:
+  name: "BB-8 Home Assistant Add-on"
+  description: "Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT."
+  version: "0.1.0"
+  slug: "beep_boop_bb8"
+  init: false
+  arch:
+    - aarch64
+    - amd64
+    - armhf
+    - armv7
+    - i386
+  startup: services
+  host_network: false
+  host_dbus: true
+  privileged:
+    - bluetooth
+  options:
+    bb8_mac: "00:00:00:00:00:00"
+    mqtt_broker: "mqtt://core-mosquitto"
+    mqtt_username: ""
+    mqtt_password: ""
+    mqtt_topic_prefix: "bb8"
+    ble_adapter: "hci0"
+  schema:
+    bb8_mac: str
+    mqtt_broker: str
+    mqtt_username: str?
+    mqtt_password: str?
+    mqtt_topic_prefix: str
+    ble_adapter: str
+
+  # ha-sphero-bb8 configuration file
+  # Store runtime and connection settings here
+
+  adapter: bleak
+  broker: 192.168.0.129
+  port: 1883
+  username: mqtt_bb8
+  password: mqtt_bb8
+  bb8_ble_address: 259ED00E-3026-2568-C410-4590C9A9297C
+  bb8_mac_address: B8:17:C2:A8:ED:45
+
+v1:
+  name: "BB-8 BLE/MQTT Add-on"
+  description: "Control Sphero BB-8 via BLE with MQTT discovery"
+  version: "2025.8.10"
+  slug: "bb8_addon"
+  startup: application
+  init: false
+  arch:
+    - aarch64
+    - amd64
+    - armhf
+    - armv7
+  boot: auto
+  privileged:
+    - SYS_RAWIO
+    - NET_ADMIN
+    - SYS_ADMIN
+  host_dbus: true
+  uart: true
+  devices:
+    - /dev/hci0
+  options:
+    # Optional override. When empty/omitted, add-on will auto-discover.
+    bb8_mac: ""
+    # BLE discovery window in seconds (used when override/cache absent or invalid)
+    scan_seconds: 5
+    # If an override or cached MAC fails to connect, do a one-time scan and retry
+    rescan_on_fail: true
+    # Hours before a cached MAC is considered stale; 0 disables TTL
+    cache_ttl_hours: 720
+    mqtt_broker: "mqtt://core-mosquitto"
+    mqtt_username: ""
+    mqtt_password: ""
+    mqtt_topic_prefix: "bb8"
+    ble_adapter: "hci0"
+  schema:
+    bb8_mac: "str?"
+    scan_seconds: "int?"
+    rescan_on_fail: "bool?"
+    cache_ttl_hours: "int?"
+    mqtt_broker: "str"
+    mqtt_username: "str?"
+    mqtt_password: "str?"
+    mqtt_topic_prefix: "str"
+    ble_adapter: "str"
+
+  # ha-sphero-bb8 configuration file
+  # Store runtime and connection settings here
+  adapter: bleak
+  broker: 192.168.0.129
+  port: 1883
+  username: mqtt_bb8
+  password: mqtt_bb8
+  bb8_ble_address: 259ED00E-3026-2568-C410-4590C9A9297C
+  bb8_mac_address: B8:17:C2:A8:ED:45
+
+  privileges:
+    - NET_ADMIN
+    - SYS_ADMIN

@@ -1,0 +1,136 @@
+You are GitHub Copilot assisting on a Python async + BLE + MQTT project.
+
+REPO CONTEXT (paths are relative to repo root):
+- Primary modules to touch:
+  - bb8_core/bb8_presence_scanner.py
+  - bb8_core/bridge_controller.py
+  - bb8_core/facade.py
+  - bb8_core/common.py
+  - bb8_core/ble_link.py
+- Namespace: flat MQTT => "bb8/<behavior>/<action>"
+
+GOAL
+Refactor to eliminate circular imports in and around bb8_core.bb8_presence_scanner, harden asyncio/BLE correctness, and confirm MQTT discovery/config publications.
+
+STRICT TASKS
+1) Circular-import eradication
+   - Identify cycles among: bb8_presence_scanner, bridge_controller, facade, common, ble_link.
+   - Break cycles by:
+     a) Moving imports inside functions/methods where only needed (lazy imports).
+     b) Introducing dependency injection (DI) for shared services (MQTT client, BLE adapter, logging, config).
+     c) Extracting shared interfaces to a new bb8_core/ports.py (or bb8_core/interfaces.py) using typing.Protocol.
+        • Example protocols: MqttBus, BleTransport, Clock, Logger.
+     d) For data-only helpers/constants, move to bb8_core/common.py (no side effects).
+   - Ensure NO module executes I/O at import time (no client creation, no asyncio loop creation).
+
+2) Import hygiene
+   - Replace "from X import Y" that creates cycles with local imports inside call sites.
+   - In constructors, accept ports/clients via DI; do not import peer modules just to access singletons.
+
+3) AsyncIO / BLE loop correctness
+   - Use asyncio.get_running_loop() (not get_event_loop) inside coroutines.
+   - Provide a single async entrypoint: async def main().
+     if __name__ == "__main__": asyncio.run(main())   (no nested asyncio.run)
+   - If BLE runs on its own thread, create a dedicated event loop there with asyncio.new_event_loop() and set it explicitly; ensure clean shutdown.
+   - Wrap concurrent tasks in asyncio.TaskGroup (py3.11+) or a managed set with try/finally cancellation.
+   - Guarantee graceful teardown:
+     • Track all created tasks in self._tasks (set).
+     • On stop(), cancel + await them with asyncio.gather(..., return_exceptions=True).
+   - Eliminate warnings:
+     • No "There is no current event loop" or "get_event_loop" deprecation warnings.
+
+4) Task lifecycle management
+   - Every create_task(...) is registered; no orphaned tasks.
+   - Guard long-lived tasks with cancellation handling (CancelledError) and backoff/retry for BLE disconnects.
+
+5) MQTT discovery/config verification
+   - After import errors are gone, verify that config/discovery topics are published and devices are discovered.
+   - Policy:
+     • Scanner is the single source of discovery publications.
+     • Topics (examples):
+       - bb8/presence/state  (retain=true)
+       - bb8/rssi/state      (retain=true)
+       - bb8/power/state     (retain=false)
+       - bb8/led/state       (retain=false) — payload strictly {"r":int,"g":int,"b":int}
+   - Provide a lightweight verifier script at tools/verify_discovery.py that:
+     • Connects to the broker (env: MQTT_HOST, MQTT_PORT, MQTT_BASE=bb8).
+     • Subscribes to bb8/+/state and any config/discovery topics used by the app.
+     • Asserts retained flags and payload schema for the topics above.
+     • Prints a summary table and exits nonzero on violations.
+
+IMPLEMENTATION PLAN (Copilot: follow step-by-step, then generate diffs)
+A) Analyze and propose a minimal “ports” layer
+   - Create bb8_core/ports.py with Protocols:
+     - class MqttBus(Protocol): publish(topic:str, payload:bytes|str, retain:bool=False, qos:int=0) -> Awaitable[None]; subscribe(...); etc.
+     - class BleTransport(Protocol): start(), stop(), scan(), read_char(...), write_char(...), on_event(cb) -> None.
+     - class Clock(Protocol): monotonic() -> float; sleep(float) -> Awaitable[None].
+     - class Logger(Protocol): debug/info/warning/error/exception(...)
+   - Update bb8_presence_scanner.Scanner to accept {mqtt: MqttBus, ble: BleTransport, clock: Clock, log: Logger} via __init__.
+   - Remove imports of facade or bridge_controller from scanner; pass any callbacks/ports via DI.
+
+B) Localize imports to break cycles
+   - In bridge_controller/facade, move imports of scanner/ble_link inside factory functions (e.g., make_scanner(...)).
+   - Replace top-level singletons with factory functions in a new bb8_core/factories.py (pure functions, no I/O at import).
+
+C) Event loop entry + task groups
+   - In bridge_controller.py:
+     • Implement async def run_controller(...).
+     • In main(), parse env/config, assemble ports, then:
+         async with asyncio.TaskGroup() as tg:
+             tg.create_task(scanner.run())
+             tg.create_task(ble_link.run())
+             # add others...
+   - Ensure stop() signals propagate; add shutdown hooks (SIGINT/SIGTERM) that cancel the TaskGroup cleanly.
+
+D) BLE resilience
+   - Centralize BLE reconnect with capped exponential backoff.
+   - Ensure any bleak imports are inside functions (lazy), to avoid import-time BLE initialization.
+
+E) MQTT discovery publish
+   - Implement scanner.publish_discovery(...) that sets correct retain flags and payload schemas.
+   - Ensure discovery is emitted once (boot) and on significant topology changes.
+   - Add a small schema helper in common.py to validate LED payload is exactly {r,g,b} and nothing else.
+
+F) Verification assets
+   - Add tools/verify_discovery.py as described.
+   - Add tests/test_asyncio_and_discovery.py:
+     • Uses pytest + pytest-asyncio.
+     • Mocks MqttBus and BleTransport to assert publications and task lifecycles.
+     • Fails on any get_event_loop or “no current event loop” warnings (use caplog + warnings filter).
+
+DELIVERABLES
+1) Unified diffs for all touched files:
+   - bb8_core/ports.py (new)
+   - bb8_core/factories.py (new)
+   - bb8_core/common.py (updated, no side effects)
+   - bb8_core/bb8_presence_scanner.py (refactored to DI; no peer imports)
+   - bb8_core/bridge_controller.py (async entrypoint + TaskGroup + factories)
+   - bb8_core/facade.py (uses factories; no scanner import at module import time)
+   - bb8_core/ble_link.py (lazy bleak imports; TaskGroup-friendly)
+   - tools/verify_discovery.py (new)
+   - tests/test_asyncio_and_discovery.py (new)
+2) A runnable checklist in PR description:
+   - [ ] repo imports clean (python -c "import bb8_core.bridge_controller" exits 0)
+   - [ ] no asyncio warnings in a 30s smoke run
+   - [ ] tools/verify_discovery.py passes and shows correct retain flags
+   - [ ] presence/rssi retained, power/led non-retained
+   - [ ] LED/state payload strictly {"r","g","b"}
+
+ACCEPTANCE CRITERIA (must all pass)
+- evidence_manifest.roundtrip == PASS (simulate via tests asserting publish→observe→validate)
+- evidence_manifest.schema == PASS (payload schemas validated)
+- No “get_event_loop” or “There is no current event loop” warnings
+- Scalar echoes include {"source":"device"} when REQUIRE_DEVICE_ECHO=1 (do not add 'source' to bb8/led/state)
+- Imports resolve with zero circular dependencies
+
+CONSTRAINTS
+- Prefer minimal API changes; use adapters to maintain call sites.
+- No global singletons in import scope.
+- Keep module top-level side-effect free.
+
+NOW, PRODUCE:
+1) A brief bullet plan of the concrete edits.
+2) Then the unified diff patches for the files above (cohesive, compilable).
+3) Finally, a PR description including the checklist and how to run tools/verify_discovery.py.
+
+Do not include commentary outside the plan, diffs, and PR description.

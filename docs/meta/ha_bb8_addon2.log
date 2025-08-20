@@ -1,0 +1,1157 @@
+s6-rc: info: service s6rc-oneshot-runner: starting
+s6-rc: info: service s6rc-oneshot-runner successfully started
+s6-rc: info: service fix-attrs: starting
+s6-rc: info: service fix-attrs successfully started
+s6-rc: info: service legacy-cont-init: starting
+s6-rc: info: service legacy-cont-init successfully started
+s6-rc: info: service legacy-services: starting
+services-up: info: copying legacy longrun ble_bridge (no readiness notification)
+s6-rc: info: service legacy-services successfully started
+2025-08-18T14:42:51+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:42:52,422 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:42:52,486 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:42:53+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:42:54,086 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:42:54,145 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:42:55+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:42:55,693 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:42:55,761 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:42:56+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:42:57,302 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:42:57,367 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:42:58+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:42:58,924 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:42:58,985 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:00+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:00,529 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:00,588 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:01+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:02,123 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:02,184 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:03+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:03,705 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:03,765 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:04+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:43:05,336 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:05,403 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:06+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:06,940 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:06,999 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:08+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:08,530 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:08,589 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:09+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:10,124 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+2025-08-18 14:43:10,192 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:11+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:11,720 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:11,780 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:12+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:13,335 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:13,398 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:14+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:14,942 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:15,004 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:16+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:43:16,557 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:16,621 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:17+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:18,154 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:18,214 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:19+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:19,748 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:43:19,807 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:20+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:21,332 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:21,393 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:22+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:22,968 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+2025-08-18 14:43:23,028 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:24+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:24,560 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:24,620 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:25+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:26,146 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:26,206 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:27+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:27,736 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:27,795 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:28+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:29,315 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:29,377 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:30+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:30,920 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:30,982 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:32+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:43:32,511 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:32,568 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:33+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:34,152 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:43:34,214 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:35+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:35,741 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:35,810 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:36+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:37,316 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:37,375 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:38+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:38,875 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:43:38,933 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:40+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:43:40,482 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:40,542 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:41+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:42,075 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:42,135 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:43+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:43,655 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:43,714 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:44+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:45,238 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:45,298 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:46+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:46,805 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:46,863 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:48+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:48,387 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:48,447 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:49+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:49,952 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:43:50,015 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:51+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:51,590 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:51,652 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:52+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:53,171 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+2025-08-18 14:43:53,243 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:54+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:54,782 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:54,842 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:55+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:56,377 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:56,436 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:57+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:57,981 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:43:58,041 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:43:59+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:43:59,570 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:43:59,629 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:00+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:01,156 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:01,216 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:02+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:02,771 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:02,841 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:04+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:04,396 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:04,458 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:05+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:05,973 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:06,030 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:07+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:07,524 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:07,583 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:08+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:09,114 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:09,175 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:10+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:10,706 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:10,765 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:11+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:12,287 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:12,349 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:13+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:44:13,872 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:13,932 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:15+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:15,451 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:15,511 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:16+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:17,043 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:17,102 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:18+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:18,644 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:18,705 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:19+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:44:20,337 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+2025-08-18 14:44:20,405 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:21+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:21,932 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:21,998 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:23+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:44:23,517 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:23,577 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:24+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:25,083 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:25,140 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:26+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:26,642 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:26,697 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:27+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:28,203 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:28,261 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:29+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:44:29,759 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:29,817 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:30+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:44:31,340 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:31,403 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:32+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:32,943 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:33,003 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:34+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:44:34,539 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:34,598 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:35+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:36,141 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:36,203 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:37+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:37,781 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:37,843 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:38+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:44:39,360 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:39,426 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:40+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:40,955 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:41,016 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:42+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:42,551 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:42,611 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:43+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:44,110 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:44,166 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:45+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:45,678 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:45,735 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:46+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:47,241 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:47,298 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:48+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:48,837 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:44:48,897 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:50+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:50,452 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:50,512 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:51+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:52,038 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:52,096 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:53+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:53,621 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:53,681 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:54+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:55,245 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:55,304 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:56+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:56,829 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:56,904 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:58+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:44:58,425 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:44:58,484 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:44:59+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:45:00,032 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:00,092 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:01+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:01,627 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:45:01,687 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:02+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:03,223 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:03,283 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:04+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:04,820 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:04,880 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:06+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:06,479 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:06,541 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:07+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:08,070 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:08,134 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:09+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:09,661 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:45:09,721 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:10+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:11,257 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:11,316 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:12+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:12,840 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:12,899 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:14+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:14,445 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:14,504 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:15+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:16,010 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:16,066 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:17+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:17,585 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:17,643 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:18+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:19,161 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:19,220 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:20+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:20,734 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:45:20,793 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:21+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:22,317 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:22,382 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:23+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:45:23,967 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:24,027 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:25+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:25,560 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:25,627 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:26+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:27,154 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:45:27,215 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:28+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:28,750 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+2025-08-18 14:45:28,810 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:29+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:30,356 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:30,417 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:31+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:31,945 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:32,006 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:33+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:45:33,538 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:33,599 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:34+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:35,162 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:45:35,230 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:36+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:36,767 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:36,828 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:37+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:38,356 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:38,416 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:39+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:39,944 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:40,009 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:41+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:41,556 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:41,613 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:42+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:43,131 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:43,189 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:44+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:44,705 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:44,764 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:45+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:46,283 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:46,341 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:47+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:47,842 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:45:47,903 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:49+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:49,454 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:49,514 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:50+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:51,041 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:51,102 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:52+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:52,711 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+2025-08-18 14:45:52,772 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:53+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:54,322 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:45:54,383 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:55+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:55,910 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:55,970 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:57+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:57,510 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:57,569 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:45:58+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:45:59,085 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:45:59,144 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:46:00+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:46:00,694 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:46:00,754 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:46:01+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:46:02,280 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:46:02,338 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:46:03+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:46:03,899 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:46:03,963 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:46:05+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:46:05,507 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:46:05,566 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:46:06+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:46:07,095 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:46:07,154 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:46:08+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:46:08,687 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:46:08,746 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:46:09+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 14:46:10,343 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 14:46:10,403 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:46:11+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:46:11,946 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+2025-08-18 14:46:12,007 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:46:13+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:46:13,530 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 14:46:13,589 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+discovery_skip reason=scanner_import_or_call_failed err=cannot import name 'publish_discovery' from partially initialized module 'bb8_core.bb8_presence_scanner' (most likely due to a circular import) (/app/bb8_core/bb8_presence_scanner.py)
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T14:46:14+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 14:46:15,132 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}

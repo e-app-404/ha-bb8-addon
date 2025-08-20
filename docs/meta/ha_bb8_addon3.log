@@ -1,0 +1,872 @@
+s6-rc: info: service s6rc-oneshot-runner successfully started
+s6-rc: info: service fix-attrs: starting
+s6-rc: info: service fix-attrs successfully started
+s6-rc: info: service legacy-cont-init: starting
+s6-rc: info: service legacy-cont-init successfully started
+s6-rc: info: service legacy-services: starting
+services-up: info: copying legacy longrun ble_bridge (no readiness notification)
+s6-rc: info: service legacy-services successfully started
+2025-08-18T15:44:41+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:44:42,150 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:44:42,215 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:44:43+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:44:43,777 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:44:43,841 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:44:44+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:44:45,394 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:44:45,466 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:44:46+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:44:47,004 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:44:47,063 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:44:48+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:44:48,580 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:44:48,639 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:44:49+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:44:50,141 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:44:50,200 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:44:51+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:44:51,717 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:44:51,777 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:44:52+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:44:53,293 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:44:53,354 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:44:54+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 15:44:54,885 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:44:54,947 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:44:56+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:44:56,468 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:44:56,531 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:44:57+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 15:44:58,112 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:44:58,179 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:44:59+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 15:44:59,736 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:44:59,799 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:00+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 15:45:01,336 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:01,401 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:02+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:02,943 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:03,006 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:04+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:04,529 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:04,589 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:05+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:06,121 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:06,180 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:07+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:07,685 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:07,744 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:08+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:09,243 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:09,299 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:10+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:10,795 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:10,854 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:12+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:12,401 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:12,463 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:13+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:13,996 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 15:45:14,063 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:15+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:15,668 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:15,732 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:16+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:17,276 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 15:45:17,339 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:18+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:18,873 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:18,939 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:20+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:20,473 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 15:45:20,534 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:21+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:22,060 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:22,120 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:23+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:23,654 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:23,716 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:24+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:25,233 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:25,294 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:26+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:26,834 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 15:45:26,901 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:28+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:28,431 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:28,492 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:29+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:30,059 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:30,119 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:31+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:31,639 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 15:45:31,706 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:32+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:33,272 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:33,333 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:34+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:34,875 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 15:45:34,936 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:36+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:36,474 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:36,534 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:37+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:38,046 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:38,104 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:39+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:39,604 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:39,662 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:40+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:41,189 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:41,250 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:42+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:42,752 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:42,810 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:43+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:44,367 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:44,432 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:45+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:45,968 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 15:45:46,037 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:47+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:47,570 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:47,631 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:48+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:49,174 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:49,238 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:50+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:50,792 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:50,852 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:52+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:52,401 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:52,465 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:53+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:53,984 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 15:45:54,046 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:55+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:55,576 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:55,636 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:56+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:57,183 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:57,249 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:58+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:45:58,775 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:45:58,836 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:45:59+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:00,421 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:00,483 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:01+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 15:46:02,050 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:02,114 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:03+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:03,618 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:03,677 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:04+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:05,171 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:05,230 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:06+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:06,733 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:06,791 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:07+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:08,290 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:08,349 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:09+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 15:46:09,870 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:09,931 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:11+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:11,462 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:11,524 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:12+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:13,074 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 15:46:13,139 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:14+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:14,666 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:14,736 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:15+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 15:46:16,261 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:16,323 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:17+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:17,851 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:17,912 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:19+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 15:46:19,479 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:19,543 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:20+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:21,081 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:21,143 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:22+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:22,680 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:22,741 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:23+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:24,270 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:24,331 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:25+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:25,852 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:25,914 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:27+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:27,462 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:27,524 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:28+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:29,048 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:29,117 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:30+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:30,690 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:30,761 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:31+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:32,305 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:32,366 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:33+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:33,883 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:33,944 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:35+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:35,466 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:35,525 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:36+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:37,026 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:37,085 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:38+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:38,612 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:38,670 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:39+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:40,174 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:40,233 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:41+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:41,741 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:41,798 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:42+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:43,315 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:43,375 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:44+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:44,880 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:44,940 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:46+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:46,438 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:46,499 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:47+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 15:46:48,074 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:48,140 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:49+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:49,671 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 15:46:49,733 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:50+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:51,260 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:51,321 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:52+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:52,855 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:52,920 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:54+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:54,494 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:54,555 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:55+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:56,092 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:56,153 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:57+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:57,683 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:57,744 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:46:58+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:46:59,284 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:46:59,346 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:00+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:00,900 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:00,963 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:02+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:02,492 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:02,554 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:03+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:04,077 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:04,137 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:05+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:05,669 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:05,734 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:06+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:07,283 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:07,344 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:08+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:08,871 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:08,934 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:10+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:10,477 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:10,540 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:11+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:12,116 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:12,194 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:13+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:13,721 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:13,783 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:14+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:15,319 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:15,381 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:16+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:16,904 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:16,966 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:18+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 15:47:18,506 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:18,567 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:19+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:20,095 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:20,158 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:21+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:21,693 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:21,755 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:22+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:23,342 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-18 15:47:23,404 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:24+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:24,928 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:24,989 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:26+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:26,508 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:26,577 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:27+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:28,100 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:28,167 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:29+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:29,703 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:29,768 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:30+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:31,298 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-18 15:47:31,361 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour
+2025-08-18T15:47:32+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-18 15:47:32,886 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-18 15:47:32,948 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+<frozen runpy>:128: RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'; this may result in unpredictable behaviour

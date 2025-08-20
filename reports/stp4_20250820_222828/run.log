@@ -1,0 +1,10 @@
+[evidence] ts=20250820_212828Z base=bb8 require_echo=1
+[evidence] broker=192.168.0.129: user=
+[evidence] step=probe
+ops/evidence/evidence_preflight.sh: line 20: python: command not found
+[evidence] step=capture
+ops/evidence/evidence_preflight.sh: line 23: python: command not found
+[evidence] step=collector
+ops/evidence/evidence_preflight.sh: line 33: python: command not found
+[evidence] collector exited nonzero (continuing; manifest will record verdicts)
+[evidence] step=manifest

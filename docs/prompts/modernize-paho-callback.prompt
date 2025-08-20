@@ -1,0 +1,19 @@
+You are GitHub Copilot (GPT-4.1). Upgrade paho-mqtt usage to the v2 callback API. No extra commentary.
+
+SCOPE
+- tools/verify_discovery.py
+- tools/force_discovery_emit.py
+- tools/discovery_migrate.py
+
+CHANGES
+- Construct client with v2 callbacks:
+    import paho.mqtt.client as mqtt
+    c = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.V5)
+- Update on_connect signature to v2: on_connect(client, userdata, flags, reason_code, properties)
+- Where on_message used, ensure signature v2: on_message(client, userdata, message)
+- Keep username_pw_set and connect logic the same.
+- Test: run each tool once to ensure no exceptions.
+
+RECEIPTS
+- Commit diff summary (files touched)
+- One run output per tool (single line confirming execution)

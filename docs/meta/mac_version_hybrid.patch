@@ -1,0 +1,228 @@
+# Copilot‑Ready Hybrid Patch Plan — BB‑8 MAC Auto‑Detect (STP1)
+
+**Combines:**
+- Version B’s: Supervisor-friendly schema, MAC validation, structured (dict) logging, lowercase name matching.
+- Version A’s: Lazy Bleak import for testability, explicit cache path as an option (not just env), easy monkeypatching for tests.
+
+---
+
+## 1) config.yaml — Supervisor-UI Schema, Defaults, and Comments
+
+```yaml
+name: BB-8 BLE/MQTT Add-on
+version: "x.y.z"
+slug: bb8_addon
+description: Control Sphero BB-8 via BLE with MQTT discovery
+
+schema:
+  bb8_mac:
+    type: str
+    required: false
+    default: ""
+  scan_seconds:
+    type: int
+    required: false
+    default: 5
+  rescan_on_fail:
+    type: bool
+    required: false
+    default: true
+  cache_ttl_hours:
+    type: int
+    required: false
+    default: 720
+
+options:
+  # Optional override. When empty/omitted, add-on will auto-discover.
+  bb8_mac: ""
+  # BLE discovery window in seconds (used when override/cache absent or invalid)
+  scan_seconds: 5
+  # If an override or cached MAC fails to connect, do a one-time scan and retry
+  rescan_on_fail: true
+  # Hours before a cached MAC is considered stale; 0 disables TTL
+  cache_ttl_hours: 720
+
+privileges:
+  - NET_ADMIN
+  - SYS_ADMIN
+```
+
+---
+
+## 2) run.sh — Robust Option Extraction, Defensive, CLI + Env
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+mkdir -p /data
+OPTS_JSON="/data/options.json"
+
+BB8_MAC="$(jq -r '.bb8_mac // ""' "$OPTS_JSON")"
+SCAN_SEC="$(jq -r '.scan_seconds // 5' "$OPTS_JSON")"
+RESCAN="$(jq -r '.rescan_on_fail // true' "$OPTS_JSON")"
+TTL_HR="$(jq -r '.cache_ttl_hours // 720' "$OPTS_JSON")"
+
+export BB8_MAC_OVERRIDE="${BB8_MAC:-}"
+export BB8_SCAN_SECONDS="${SCAN_SEC:-5}"
+export BB8_RESCAN_ON_FAIL="${RESCAN:-true}"
+export BB8_CACHE_TTL_HOURS="${TTL_HR:-720}"
+export BB8_CACHE_PATH="/data/bb8_cache.json"
+
+exec python -m bb8_core.main \
+  --bb8-mac "${BB8_MAC_OVERRIDE}" \
+  --scan-seconds "${BB8_SCAN_SECONDS}" \
+  --rescan-on-fail "${BB8_RESCAN_ON_FAIL}" \
+  --cache-ttl-hours "${BB8_CACHE_TTL_HOURS}"
+```
+
+---
+
+## 3) bb8_core/auto_detect.py — Hybrid Implementation
+
+```python
+from __future__ import annotations
+from dataclasses import dataclass
+from typing import Optional, List, Tuple, Any
+import json, time, os, re, contextlib, logging
+
+# Lazy import for testability
+with contextlib.suppress(ImportError):
+    from bleak import BleakScanner, BleakClient  # type: ignore
+
+DEFAULT_CACHE_PATH = os.getenv("BB8_CACHE_PATH", "/data/bb8_cache.json")
+
+@dataclass
+class Options:
+    bb8_mac: Optional[str] = ""
+    scan_seconds: int = 5
+    rescan_on_fail: bool = True
+    cache_ttl_hours: int = 720
+    cache_path: str = DEFAULT_CACHE_PATH
+
+@dataclass
+class Candidate:
+    mac: str
+    name: str
+    rssi: Optional[int]
+
+def _valid_mac(mac: str) -> bool:
+    return bool(re.fullmatch(r"([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}", mac or ""))
+
+def _now() -> float:
+    return time.time()
+
+def load_cache(now: float, ttl_hours: int, cache_path: str) -> Optional[Candidate]:
+    if not cache_path or not os.path.exists(cache_path):
+        return None
+    try:
+        with open(cache_path, "r") as f:
+            data = json.load(f)
+        if ttl_hours > 0:
+            age_hours = (now - data.get("last_seen_epoch", 0)) / 3600.0
+            if age_hours > ttl_hours:
+                return None
+        if not _valid_mac(data.get("mac", "")):
+            return None
+        return Candidate(mac=data["mac"], name=data.get("advertised_name", ""), rssi=None)
+    except Exception:
+        return None
+
+def save_cache(mac: str, name: str, cache_path: str) -> None:
+    payload = {
+        "mac": mac,
+        "advertised_name": name or "",
+        "last_seen_epoch": int(_now()),
+        "source": "discovery",
+    }
+    os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+    with open(cache_path, "w") as f:
+        json.dump(payload, f)
+
+def is_probable_bb8(name: Optional[str]) -> bool:
+    if not name:
+        return False
+    name_l = name.lower()
+    return any(t in name_l for t in ("bb-8", "droid", "sphero"))
+
+async def scan_for_bb8(scan_seconds: int) -> List[Candidate]:
+    devices = await BleakScanner.discover(timeout=scan_seconds)  # type: ignore[name-defined]
+    out: List[Candidate] = []
+    for d in devices:
+        name = getattr(d, "name", None)
+        if is_probable_bb8(name):
+            out.append(Candidate(
+                mac=getattr(d, "address", ""),
+                name=name or "",
+                rssi=getattr(d, "rssi", None),
+            ))
+    # Sort: exact name first, stronger RSSI, then MAC
+    def score(c: Candidate) -> Tuple[int, int, str]:
+        exact = 1 if c.name.lower() == "bb-8" else 0
+        rssi = c.rssi if isinstance(c.rssi, int) else -999
+        return (exact, rssi, c.mac)
+    out.sort(key=score, reverse=True)
+    return out
+
+async def resolve_bb8_mac(opts: Options, logger: logging.Logger) -> str:
+    now = _now()
+    # 1) Override
+    if opts.bb8_mac and _valid_mac(opts.bb8_mac.strip()):
+        logger.info({"event": "mac_override", "mac": opts.bb8_mac.strip()})
+        return opts.bb8_mac.strip()
+
+    # 2) Cache
+    cached = load_cache(now, opts.cache_ttl_hours, opts.cache_path)
+    if cached:
+        logger.info({"event": "cache_hit", "mac": cached.mac, "name": cached.name})
+        return cached.mac
+
+    # 3) Scan
+    logger.info({"event": "scan_start", "seconds": opts.scan_seconds})
+    candidates = await scan_for_bb8(opts.scan_seconds)
+    if not candidates:
+        raise RuntimeError("No BB-8 devices found. Check adapter, permissions, and RF environment.")
+    winner = candidates[0]
+    save_cache(winner.mac, winner.name, opts.cache_path)
+    logger.info({"event": "scan_winner", "mac": winner.mac, "name": winner.name, "rssi": winner.rssi})
+    return winner.mac
+
+async def connect_bb8(opts: Options, logger: logging.Logger):
+    mac = await resolve_bb8_mac(opts, logger)
+
+    async def _try(mac_addr: str):
+        logger.info({"event": "connect_attempt", "mac": mac_addr})
+        async with BleakClient(mac_addr) as client:  # type: ignore[name-defined]
+            if not await client.is_connected():
+                raise RuntimeError("Connected=False after context enter")
+            return client
+
+    try:
+        return await _try(mac)
+    except Exception as e:
+        logger.warning({"event": "connect_fail", "error": str(e)})
+        if not opts.rescan_on_fail:
+            raise
+        logger.info({"event": "rescan_trigger"})
+        candidates = await scan_for_bb8(opts.scan_seconds)
+        if not candidates:
+            raise RuntimeError("Rescan found no BB-8 candidates.") from e
+        winner = candidates[0]
+        save_cache(winner.mac, winner.name, opts.cache_path)
+        return await _try(winner.mac)
+```
+
+---
+
+## 4) tests/test_auto_detect.py — Hybrid Testability
+
+- Use monkeypatching and explicit cache_path for all tests.
+- Test MAC validation, cache expiry, override, scan, and retry logic.
+- Use dummy logger or caplog for structured log assertions.
+
+---
+
+## 5) Usage/Wiring
+
+- Use `Options` with explicit `cache_path` and pass a logger.
+- All logs are structured dicts for easy parsing.

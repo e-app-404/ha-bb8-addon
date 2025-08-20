@@ -1,0 +1,56 @@
+phases:
+  - id: P0-BOOT
+    label: "Boot + Rehydrate"
+    outputs: ["session anchor", "recap", "indexes"]
+    status: completed
+
+  - id: P1-STP4-EVIDENCE
+    label: "STP4 evidence capture & wiring"
+    outputs:
+      [
+        "collect_stp4.py ordering + source tagging",
+        "evidence_manifest.json",
+        "ha_mqtt_trace_snapshot.jsonl",
+      ]
+    status: in_progress
+    pending:
+      - "Namespace: flat bb8/... confirmed"
+      - "Require device echo: temporarily relaxed via REQUIRE_DEVICE_ECHO=0"
+
+  - id: P2-NAMESPACE
+    label: "Topic alignment"
+    outputs: ["flat namespace decision", "fallback subscribers (optional)"]
+    status: completed
+
+  - id: P3-SCANNER-CONSOLIDATION
+    label: "Scanner as SoT (+ extended entities)"
+    outputs: ["scanner-consolidation.delta", "deprecated discovery modules"]
+    status: completed
+    notes: "Ensure extended discovery points at flat topics or disable until handlers exist"
+
+  - id: P4-TELEMETRY-HARDENING
+    label: "Telemetry guards (H3)"
+    outputs:
+      [
+        "TelemetryLoop callable guards",
+        "bridge telemetry toggle",
+        "config provenance logging",
+      ]
+    status: completed
+
+  - id: P5-BLE-EVENT-LOOP
+    label: "BLE loop thread & event loop"
+    outputs: ["async loop thread start", "run_coroutine_threadsafe"]
+    status: pending
+    block: "DeprecationWarning still present on some path"
+
+  - id: P6-DEVICE-ECHO
+    label: "Device-originated echoes"
+    outputs:
+      [
+        "power/state {source:'device'}",
+        "motion/state {source:'device'}",
+        "led/state {source:'device'}",
+      ]
+    status: planned
+    acceptance: "Strict STP4 PASS with REQUIRE_DEVICE_ECHO=1"

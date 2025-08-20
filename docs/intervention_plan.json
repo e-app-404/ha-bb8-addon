@@ -1,0 +1,36 @@
+{
+  "contract": "intervention_plan",
+  "project": "beep_boop_bb8",
+  "version": "2025.08.11-hotfix.1",
+  "trigger_type": "quality",
+  "urgency_level": "high",
+  "intervention_type": "Complete HA Discovery + command/state roundtrip and telemetry",
+  "scope": {
+    "includes": ["MQTT discovery parity", "Command subscription & dispatch", "State echo", "Telemetry (RSSI/presence)"],
+    "excludes": ["Advanced AppArmor hardening", "Non-essential entity types"]
+  },
+  "actions": [
+    {"id": "DISC-001", "desc": "Publish HA discovery for presence, RSSI, power, stop, LED (and any documented entities).", "owner": "Evert Appels", "due": "13-Aug-2025"},
+    {"id": "CMD-002", "desc": "Subscribe to command topics; route to BLEBridge ops; echo state ≤2s.", "owner": "Evert Appels", "due": "14-Aug-2025"},
+    {"id": "TEL-003", "desc": "Emit RSSI/presence telemetry (15–30 s); retain last-known states.", "owner": "Evert Appels", "due": "14-Aug-2025"},
+    {"id": "SCH-004", "desc": "Validate discovery payloads against HA schema; fix any discrepancies.", "owner": "Evert Appels", "due": "14-Aug-2025"},
+    {"id": "EVD-005", "desc": "Capture STP4 roundtrip trace (cmd→state with timestamps <2s).", "owner": "Evert Appels", "due": "14-Aug-2025"}
+  ],
+  "success_criteria": [
+    "All documented entities appear in HA via MQTT discovery.",
+    "Each entity command produces a state echo within ≤2000 ms (p95).",
+    "Discovery schema validation: PASS.",
+    "bb8/status retained 'online' on connect and 'offline' on shutdown."
+  ],
+  "resource_requirements": {
+    "people": ["Evert Appels (dev/owner)", "Strategos (oversight)"],
+    "env": ["Home Assistant 2025.8.x (pinned for acceptance)", "core-mosquitto broker", "BB-8 hardware, adapter hci0"],
+    "tooling": ["pytest (optional)", "mosquitto-clients (optional for diagnostics)"]
+  },
+  "evidence": {
+    "paths": [
+      "/addons/local/beep_boop_bb8/reports/ha_discovery_payloads.json",
+      "/addons/local/beep_boop_bb8/reports/ha_mqtt_trace_snapshot.json"
+    ]
+  }
+}

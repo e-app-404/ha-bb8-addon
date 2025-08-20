@@ -1,0 +1,25 @@
+[evidence] ts=20250820_214417Z base=bb8 require_echo=1
+[evidence] broker=192.168.0.129: user=
+[evidence] step=probe
+Traceback (most recent call last):
+  File "/Users/evertappels/Projects/HA-BB8/addon/ops/evidence/mqtt_probe.py", line 86, in <module>
+    main()
+    ~~~~^^
+  File "/Users/evertappels/Projects/HA-BB8/addon/ops/evidence/mqtt_probe.py", line 27, in main
+    port = int(env("MQTT_PORT", "1883"))
+ValueError: invalid literal for int() with base 10: ''
+[evidence] step=capture
+Traceback (most recent call last):
+  File "/Users/evertappels/Projects/HA-BB8/addon/ops/evidence/capture_trace.py", line 75, in <module>
+    main()
+    ~~~~^^
+  File "/Users/evertappels/Projects/HA-BB8/addon/ops/evidence/capture_trace.py", line 25, in main
+    port = int(env("MQTT_PORT", "1883"))
+ValueError: invalid literal for int() with base 10: ''
+[evidence] step=collector
+WARNING:root:[CONFIG] load_config is unavailable, usually means the module import failed or PYTHONPATH is not set.
+[ERROR] MQTT config missing: host and/or port not set. Please set MQTT_HOST and MQTT_PORT in your environment or config.
+[DEBUG] Loaded config for MQTT: {'MQTT_USERNAME': None, 'MQTT_PASSWORD': None, 'MQTT_HOST': None, 'MQTT_PORT': None, 'MQTT_BASE': None}
+[evidence] collector exited nonzero (continuing; manifest will record verdicts)
+[evidence] step=manifest
+[evidence] complete: roundtrip=FAIL schema=UNKNOWN

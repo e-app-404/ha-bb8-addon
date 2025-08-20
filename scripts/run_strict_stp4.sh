@@ -18,6 +18,10 @@ set +a
 # Validate required vars; default port
 : "${MQTT_HOST:?[run] MQTT_HOST is required in .evidence.env}"
 MQTT_PORT="${MQTT_PORT:-1883}"
+# username compatibility
+export MQTT_USERNAME="${MQTT_USERNAME:-${MQTT_USER:-}}"
+export MQTT_USER="${MQTT_USER:-${MQTT_USERNAME:-}}"
+export MQTT_PASSWORD="${MQTT_PASSWORD:-}"
 if ! [[ "${MQTT_PORT}" =~ ^[0-9]+$ ]]; then
   echo "[run] MQTT_PORT must be an integer; got '${MQTT_PORT}'" >&2
   exit 3

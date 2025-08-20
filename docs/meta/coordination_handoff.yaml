@@ -1,0 +1,19 @@
+# contract: coordination_handoff
+escalation_reason: "Complete STP4 discovery + roundtrip; finalize acceptance artifacts and docs."
+project_state:
+  date: "11-Aug-2025"
+  summary: "Add-on boots cleanly; MQTT connected (rc=0); BLE initialized; STP2 PASS; STP4 at 75%."
+  evidence:
+    - "/addons/local/beep_boop_bb8/reports/bb8_health_endpoint_log.json"
+    - "/addons/local/beep_boop_bb8/reports/ha_mqtt_trace_snapshot.json"
+strategic_input_needed:
+  decisions:
+    - "Confirm final entity set for discovery (presence, RSSI, power, stop, LED) vs README."
+    - "Pin HA version for acceptance window (2025.8.x)."
+  by_when: "12-Aug-2025"
+handoff_to: "Evert Appels"
+next_steps:
+  - "Publish discovery for agreed entity set."
+  - "Implement command subscriptions and state echo (≤2s)."
+  - "Capture roundtrip trace and schema validation."
+contact: "Strategos (oversight) · Europe/London"

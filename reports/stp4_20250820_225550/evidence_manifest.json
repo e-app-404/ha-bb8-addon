@@ -1,0 +1,10 @@
+{
+  "timestamp_utc": "2025-08-20T21:56:33Z",
+  "roundtrip": "FAIL",
+  "schema": "UNKNOWN",
+  "files": {
+    "trace": "../reports/stp4_20250820_225550/ha_mqtt_trace_snapshot.jsonl",
+    "manifest_self": "../reports/stp4_20250820_225550/evidence_manifest.json",
+    "run_log": "../reports/stp4_20250820_225550/run.log"
+  }
+}

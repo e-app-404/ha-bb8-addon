@@ -1,0 +1,29 @@
+2025-08-06: Add bluez install to Dockerfile for BLE testing (hciconfig etc). Bump run.sh VERSION to 0.1.3. [copilot]
+[2025-08-06 20:xx] Copilot patch applied:
+  - Exposed /dev/hci0 via config.yaml
+  - Ensured bluez installed for BLE diagnostics
+  - Updated run.sh to v0.1.4, added BLE check at startup
+  - Full audit logged
+[2025-08-06 21:xx] Copilot patch applied:
+  - test_ble_adapter.py now uses sysfs for BLE adapter check (no hciconfig dependency)
+  - Bumped run.sh to v0.1.5
+[2025-08-06 22:xx] Copilot patch applied:
+  - Added async BLE scan/connect with bleak in ble_bridge.py
+  - Added MQTT Discovery registration in mqtt_dispatcher.py
+  - Bumped run.sh to v0.1.6
+[2025-08-06 23:xx] Copilot patch: MQTT power command handler for bb8/command/power, debug logs, run.sh v0.1.8.
+[2025-08-07 00:xx] Copilot patch: Integrated spherov2, real BB-8 BLE ON/OFF control, run.sh v0.1.9.
+[2025-08-07 00:xx] Copilot patch: Added Pulse Sunrise LED sequence for BB-8 ON/OFF feedback via Home Assistant MQTT control.
+## PATCH 2025-08-07: Fix BB-8 constructor for spherov2 adapter_cls
+
+- Updated imports in bb8_core/ble_bridge.py and bb8_core/mqtt_dispatcher.py:
+  - Now import BleakAdapter from spherov2.adapter.bleak_adapter
+  - All BB8() instantiations now pass both address and adapter_cls=BleakAdapter
+- Updated bb8_find() to use find_toys(adapter_cls=BleakAdapter) and return BB8(toy.address, adapter_cls=BleakAdapter)
+- Updated turn_on_bb8() and turn_off_bb8() to use adapter_cls=BleakAdapter
+- All other Pulse Sunrise and power handler code remains unchanged
+- Lint errors for unresolved import are expected in static analysis, but correct at runtime if spherov2 is installed in the container
+- This resolves the positional argument error and enables actual BLE command transmission
+- Version: 0.2.1
+
+---
