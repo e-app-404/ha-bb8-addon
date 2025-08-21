@@ -29,4 +29,12 @@ addon/.github/
 
 # Environment variable file
 .env!.evidence.env
+<<<<<<< HEAD
 >>>>>>> c5f69de (STP4 reliability: MQTT env compatibility, PYTHONPATH in preflight, Paho v5 callbacks)
+=======
+
+# Python cache
+__pycache__/
+*.pyc
+
+>>>>>>> 2c89acc (chore: ignore Python caches)
