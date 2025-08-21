@@ -1,0 +1,67 @@
+chore(repo): prune __pycache__/ *.pyc; finalize green build receipts
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 3cf58ea
+# Last commands done (2 commands done):
+#    pick 15258a1 chore(tests): fix single Ruff E501 in tests/conftest.py; project full green
+#    pick 668ad48 chore(repo): prune __pycache__/ *.pyc; finalize green build receipts
+# Next commands to do (23 remaining commands):
+#    pick 86eb668 Finalize local main before force push
+#    pick 83c9cb7 chore(audit): make tools symlink-aware; accept addon/bb8_core; fix consolidation check
+# You are currently rebasing branch 'main' on '3cf58ea'.
+#
+# Changes to be committed:
+#	modified:   .gitignore
+#	deleted:    bb8_core/__pycache__/__init__.cpython-313.pyc
+#	deleted:    bb8_core/__pycache__/ble_bridge.cpython-313.pyc
+#	deleted:    bb8_core/__pycache__/mqtt_dispatcher.cpython-313.pyc
+#	new file:   reports/addon_audit.json
+#	new file:   reports/addon_audit_20250818_172330Z.json
+#	new file:   reports/addon_audit_20250818_193218Z.json
+#	new file:   reports/addon_audit_latest.json
+#	new file:   reports/consolidation_plan_20250818_172330Z.json
+#	new file:   reports/consolidation_plan_20250818_193218Z.json
+#	new file:   reports/consolidation_receipt_20250818_172330Z.status
+#	new file:   reports/consolidation_receipt_20250818_193218Z.status
+#	new file:   reports/patches/20250818_172330Z/discovery_and_types.patch
+#	new file:   reports/patches/20250818_190000Z/discovery_fix.patch
+#	new file:   reports/patches/20250818_190000Z/ruff_mypy_fixes.patch
+#	new file:   reports/project_status_audit_20250818_172330Z.json
+#	new file:   reports/project_status_audit_20250818_172330Z.md
+#	new file:   reports/project_status_audit_20250818_193218Z.json
+#	new file:   reports/project_status_audit_20250818_193218Z.md
+#	new file:   reports/ruff_fix_20250818_185821Z.log
+#	new file:   reports/ruff_fix_20250818_192055Z.log
+#	new file:   reports/ruff_fix_20250818_193210Z.log
+#	deleted:    tests/__pycache__/__init__.cpython-313.pyc
+#	deleted:    tests/__pycache__/conftest.cpython-313-pytest-8.4.1.pyc
+#	deleted:    tests/__pycache__/conftest.cpython-313.pyc
+#	deleted:    tests/__pycache__/test_ble_link.cpython-313-pytest-8.4.1.pyc
+#	deleted:    tests/__pycache__/test_ble_link.cpython-313.pyc
+#	deleted:    tests/__pycache__/test_discovery_publisher.cpython-313-pytest-8.4.1.pyc
+#	deleted:    tests/__pycache__/test_discovery_publisher.cpython-313.pyc
+#	deleted:    tests/__pycache__/test_facade.cpython-313-pytest-8.4.1.pyc
+#	deleted:    tests/__pycache__/test_facade.cpython-313.pyc
+#	deleted:    tests/__pycache__/test_import_order_warning.cpython-313-pytest-8.4.1.pyc
+#	deleted:    tests/__pycache__/test_imports_no_cycles.cpython-313-pytest-8.4.1.pyc
+#	deleted:    tests/__pycache__/test_mqtt_discovery.cpython-313-pytest-8.4.1.pyc
+#	deleted:    tests/__pycache__/test_mqtt_discovery.cpython-313.pyc
+#	deleted:    tests/__pycache__/test_mqtt_dispatcher.cpython-313-pytest-8.4.1.pyc
+#	deleted:    tests/__pycache__/test_mqtt_dispatcher.cpython-313.pyc
+#	deleted:    tests/__pycache__/test_mqtt_echo.cpython-313-pytest-8.4.1.pyc
+#	deleted:    tests/__pycache__/test_mqtt_echo.cpython-313.pyc
+#	deleted:    tests/__pycache__/test_mqtt_smoke.cpython-313-pytest-8.4.1.pyc
+#	deleted:    tests/__pycache__/test_mqtt_smoke.cpython-313.pyc
+#	deleted:    tests/__pycache__/test_scanner_discovery_seam_direct.cpython-313-pytest-8.4.1.pyc
+#	deleted:    tests/__pycache__/test_scanner_discovery_seam_direct.cpython-313.pyc
+#	deleted:    tests/__pycache__/test_scanner_discovery_seam_hook.cpython-313-pytest-8.4.1.pyc
+#	deleted:    tests/__pycache__/test_scanner_discovery_seam_hook.cpython-313.pyc
+#	deleted:    tests/__pycache__/test_smoke_controller_facade.cpython-313-pytest-8.4.1.pyc
+#	deleted:    tests/__pycache__/test_smoke_controller_facade.cpython-313.pyc
+#	deleted:    tests/__pycache__/test_types_import.cpython-313-pytest-8.4.1.pyc
+#	deleted:    tests/__pycache__/test_types_import.cpython-313.pyc
+#	modified:   tests/conftest.py
+#	modified:   tests/test_discovery_publisher.py
+#
