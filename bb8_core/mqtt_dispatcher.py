@@ -1,18 +1,18 @@
 from __future__ import annotations
 
+import asyncio
 import inspect
 import json
 import logging
 import os
 import socket
 from collections.abc import Callable
-
-# --- at module scope ---
 from typing import Any
 
 import paho.mqtt.client as mqtt
 
 from .addon_config import CONFIG, CONFIG_SOURCE, init_config
+from .bb8_presence_scanner import publish_discovery as _publish_discovery_async
 from .common import CMD_TOPICS, STATE_TOPICS
 from .logging_setup import logger
 
@@ -49,7 +49,7 @@ def _get_scanner_publisher() -> Callable[..., None]:
         log.info("scanner_pub_source=hook id=%s", id(pub))
         return pub
     # Lazily import so tests can override before invocation
-    from bb8_core.bb8_presence_scanner import publish_discovery as _pub
+    from .bb8_presence_scanner import publish_discovery as _pub
 
     log.info("scanner_pub_source=module id=%s", id(_pub))
     # If _pub is a coroutine function, wrap it to run synchronously
@@ -123,9 +123,19 @@ def _pytest_args_for(func: Callable[..., None]):
 
 log = logging.getLogger(__name__)
 
+
 # No cached scanner aliases; all scanner discovery routed
 # via _trigger_discovery_connected()
-publish_discovery = None
+
+
+def publish_discovery(*args, **kwargs):
+    """Run async publish_discovery from bb8_presence_scanner in the event loop."""
+    if inspect.iscoroutinefunction(_publish_discovery_async):
+        return asyncio.run(_publish_discovery_async(*args, **kwargs))
+    result = _publish_discovery_async(*args, **kwargs)
+    if inspect.iscoroutine(result):
+        return asyncio.run(result)
+    return result
 
 
 class _StubMid:
@@ -175,7 +185,9 @@ def _trigger_discovery_connected() -> None:
         try:
             # Always call _get_scanner_publisher fresh at use time
             pub = _get_scanner_publisher()
-            log.debug("Publisher obtained in _trigger_discovery_connected: %r", pub)
+            log.debug(
+                "Publisher obtained in _trigger_discovery_connected: %r", pub
+            )
             try:
                 pub()
                 log.info("discovery_scanner_called_without_args=true")
@@ -196,16 +208,21 @@ def _trigger_discovery_connected() -> None:
                     log.debug("Publisher called with dummy args: %r", pub)
                     return
                 log.info(
-                    "discovery_skip reason=scanner_publish_requires_args err=%s", te
+                    "discovery_skip reason=scanner_publish_requires_args err=%s",
+                    te,
                 )
         except Exception as e:
-            log.warning("discovery_skip reason=scanner_import_or_call_failed err=%s", e)
+            log.warning(
+                "discovery_skip reason=scanner_import_or_call_failed err=%s", e
+            )
             log.debug("Exception in _trigger_discovery_connected: %s", e)
     else:
         log.info("discovery_route=dispatcher reason=DEFAULT")
         _maybe_publish_bb8_discovery()
         # Additional telemetry logging
-        log.info("Telemetry is %s", "enabled" if _telemetry_enabled() else "disabled")
+        log.info(
+            "Telemetry is %s", "enabled" if _telemetry_enabled() else "disabled"
+        )
         # Call the hook if it exists
         if SCANNER_PUBLISH_HOOK:
             log.info("Calling the scanner publish hook.")
@@ -635,7 +652,9 @@ def _maybe_publish_bb8_discovery() -> None:
     ]
     for topic, uniq_id, payload in entities:
         if uniq_id in _DISCOVERY_PUBLISHED:
-            log.info(f"discovery_skip reason=already_published entity={uniq_id}")
+            log.info(
+                f"discovery_skip reason=already_published entity={uniq_id}"
+            )
             continue
         keys = sorted(payload.keys())
         log.info(f"publishing_discovery topic={topic} retain=True keys={keys}")
@@ -708,7 +727,9 @@ def ensure_dispatcher_started(*args: Any, **kwargs: Any) -> bool:
         )
         user_flag = bool(username)
         client_id = (
-            kwargs.get("client_id") or CONFIG.get("MQTT_CLIENT_ID") or "bb8-addon"
+            kwargs.get("client_id")
+            or CONFIG.get("MQTT_CLIENT_ID")
+            or "bb8-addon"
         )
         logger.info(
             "Dispatcher config (resolved): host=%s port=%s user=%s topic=%s "
@@ -802,20 +823,18 @@ def start_mqtt_dispatcher(
     Reason-logged connect/disconnect
     Optional TLS (default False)
     """
-    logger.info(
-        {
-            "event": "mqtt_connect_attempt",
-            "host": mqtt_host,
-            "port": mqtt_port,
-            "resolved": resolved,
-            "client_id": client_id,
-            "user": bool(username),
-            "tls": tls,
-            "topic": mqtt_topic,
-            "status_topic": status_topic,
-            "source": host_source,
-        }
-    )
+    logger.info({
+        "event": "mqtt_connect_attempt",
+        "host": mqtt_host,
+        "port": mqtt_port,
+        "resolved": resolved,
+        "client_id": client_id,
+        "user": bool(username),
+        "tls": tls,
+        "topic": mqtt_topic,
+        "status_topic": status_topic,
+        "source": host_source,
+    })
 
     # Paho v2 API (compatible with our version); v311 is fine for HA
     client = mqtt.Client(
@@ -842,18 +861,27 @@ def start_mqtt_dispatcher(
         reason = REASONS.get(rc, f"unknown_{rc}")
         if rc == 0:
             logger.info({"event": "mqtt_connected", "rc": rc, "reason": reason})
-            client.publish(status_topic, payload="online", qos=qos, retain=False)
+            client.publish(
+                status_topic, payload="online", qos=qos, retain=False
+            )
             # Authoritative seam invocation at call time (thread-safe & testable)
             _trigger_discovery_connected()
             if hasattr(controller, "attach_mqtt"):
                 try:
-                    controller.attach_mqtt(client, mqtt_topic, qos=qos, retain=retain)
-                except Exception as e:
-                    logger.error(
-                        {"event": "controller_attach_mqtt_error", "error": repr(e)}
+                    controller.attach_mqtt(
+                        client, mqtt_topic, qos=qos, retain=retain
                     )
+                except Exception as e:
+                    logger.error({
+                        "event": "controller_attach_mqtt_error",
+                        "error": repr(e),
+                    })
         else:
-            logger.error({"event": "mqtt_connect_failed", "rc": rc, "reason": reason})
+            logger.error({
+                "event": "mqtt_connect_failed",
+                "rc": rc,
+                "reason": reason,
+            })
 
     def _on_disconnect(client, userdata, rc, properties=None):
         logger.warning({"event": "mqtt_disconnected", "rc": rc})
@@ -927,7 +955,9 @@ def _make_cb(handler):
         try:
             handler(text)
         except Exception as exc:
-            log.warning("command dispatch failed for %s: %s", message.topic, exc)
+            log.warning(
+                "command dispatch failed for %s: %s", message.topic, exc
+            )
 
 
 def _bind_subscription(topic, handler):

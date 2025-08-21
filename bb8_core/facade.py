@@ -144,7 +144,7 @@ class BB8Facade:
 
     def set_led_rgb(self, r: int, g: int, b: int, *args, **kwargs) -> None:
         """Set BB-8 LED color. SINGLE emission path via `_emit_led` only."""
-        # 🔒 Single source of truth: do not call any other publisher/recorder here.
+        # Single source of truth: do not call any other publisher/recorder here.
         self._emit_led(r, g, b)
         # Inter-call delay (pytest monkeypatchable)
         try:
@@ -229,7 +229,9 @@ class BB8Facade:
             return None
 
         # Local config: device echo required?
-        REQUIRE_DEVICE_ECHO = os.environ.get("REQUIRE_DEVICE_ECHO", "1") not in (
+        REQUIRE_DEVICE_ECHO = os.environ.get(
+            "REQUIRE_DEVICE_ECHO", "1"
+        ) not in (
             "0",
             "false",
             "no",
@@ -239,13 +241,11 @@ class BB8Facade:
         # Handlers
         def _handle_power(_c, _u, msg):
             if REQUIRE_DEVICE_ECHO:
-                logger.warning(
-                    {
-                        "event": "shim_disabled",
-                        "reason": "REQUIRE_DEVICE_ECHO=1",
-                        "topic": "power/set",
-                    }
-                )
+                logger.warning({
+                    "event": "shim_disabled",
+                    "reason": "REQUIRE_DEVICE_ECHO=1",
+                    "topic": "power/set",
+                })
                 return
             try:
                 v = (msg.payload or b"").decode("utf-8").strip().upper()
@@ -256,7 +256,10 @@ class BB8Facade:
                     self.power(False)
                     _pub("power/state", {"value": "OFF", "source": "facade"})
                 else:
-                    logger.warning({"event": "power_invalid_payload", "payload": v})
+                    logger.warning({
+                        "event": "power_invalid_payload",
+                        "payload": v,
+                    })
             except Exception as e:
                 logger.error({"event": "power_handler_error", "error": repr(e)})
 
@@ -269,7 +272,10 @@ class BB8Facade:
                     _pub("led/state", {"state": "OFF"})
                 else:
                     self.set_led_rgb(rgb["r"], rgb["g"], rgb["b"])
-                    _pub("led/state", {"r": rgb["r"], "g": rgb["g"], "b": rgb["b"]})
+                    _pub(
+                        "led/state",
+                        {"r": rgb["r"], "g": rgb["g"], "b": rgb["b"]},
+                    )
             except Exception as e:
                 logger.error({"event": "led_handler_error", "error": repr(e)})
 
@@ -290,8 +296,16 @@ class BB8Facade:
         dbus_path = os.environ.get("BB8_DBUS_PATH") or CFG.get(
             "BB8_DBUS_PATH", "/org/bluez/hci0"
         )
-        publish_discovery(
-            client, MQTT_CLIENT_ID, dbus_path=dbus_path, model=BB8_NAME, name=BB8_NAME
+        import asyncio
+
+        asyncio.create_task(
+            publish_discovery(
+                client,
+                MQTT_CLIENT_ID,
+                dbus_path=dbus_path,
+                model=BB8_NAME,
+                name=BB8_NAME,
+            )
         )
 
         # bind telemetry publishers for use by controller/telemetry loop
@@ -302,26 +316,29 @@ class BB8Facade:
 
         # ---- Subscriptions ----
         if not REQUIRE_DEVICE_ECHO:
-            client.message_callback_add(f"{base_topic}/power/set", _handle_power)
+            client.message_callback_add(
+                f"{base_topic}/power/set", _handle_power
+            )
             client.subscribe(f"{base_topic}/power/set", qos=qos_val)
 
             client.message_callback_add(f"{base_topic}/led/set", _handle_led)
             client.subscribe(f"{base_topic}/led/set", qos=qos_val)
 
-            client.message_callback_add(f"{base_topic}/stop/press", _handle_stop)
+            client.message_callback_add(
+                f"{base_topic}/stop/press", _handle_stop
+            )
             client.subscribe(f"{base_topic}/stop/press", qos=qos_val)
             logger.info({"event": "facade_mqtt_attached", "base": base_topic})
         else:
-            logger.warning(
-                {
-                    "event": "facade_shim_subscriptions_skipped",
-                    "reason": "REQUIRE_DEVICE_ECHO=1",
-                    "base": base_topic,
-                }
-            )
+            logger.warning({
+                "event": "facade_shim_subscriptions_skipped",
+                "reason": "REQUIRE_DEVICE_ECHO=1",
+                "base": base_topic,
+            })
 
     def _emit_led(self, r: int, g: int, b: int) -> None:
-        """Emit an RGB LED update exactly once per logical emit, test-friendly shape."""
+        """Emit an RGB LED update exactly once per logical emit,
+        test-friendly shape."""
         # Clamp RGB values
         r = max(0, min(255, int(r)))
         g = max(0, min(255, int(g)))

@@ -709,6 +709,7 @@ def register_bb8_entities(bb8_mac):
     }
     ha_disc = CFG.get("HA_DISCOVERY_TOPIC", "homeassistant")
     topic_prefix = CFG.get("MQTT_BASE", "bb8")
+
     publish_discovery(
         f"{ha_disc}/switch/{topic_prefix}_power/config",
         {
@@ -728,7 +729,9 @@ def register_bb8_entities(bb8_mac):
             "unique_id": f"{topic_prefix}_led",
             "command_topic": f"{topic_prefix}/command",
             "schema": "json",
-            "rgb_command_template": "{{ {'command': 'set_led', 'r': red, 'g': green, 'b': blue} | tojson }}",
+            "rgb_command_template": (
+                "{{ {'command': 'set_led', 'r': red, 'g': green, 'b': blue} | tojson }}"
+            ),
             "device": base_device,
         },
     )
@@ -738,7 +741,7 @@ def register_bb8_entities(bb8_mac):
             "name": f"{BB8_NAME} Roll",
             "unique_id": f"{topic_prefix}_roll",
             "command_topic": f"{topic_prefix}/command",
-            "payload_press": '{"command": "roll", "heading": 0, "speed": 50}',
+            "payload_press": ('{"command": "roll", "heading": 0, "speed": 50}'),
             "device": base_device,
         },
     )

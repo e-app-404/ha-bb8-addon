@@ -125,11 +125,6 @@ async def publish_discovery(
         logger.info(f"discovery: published topic={topic3}")
 
 
-"""bb8_presence_scanner.py
-Daemon: Periodically scans for BB-8 (Sphero) and publishes presence/RSSI to MQTT.
-Implements Home Assistant MQTT Discovery, explicit birth/LWT, and a rich device block.
-"""
-
 logger = logging.getLogger("bb8_presence_scanner")
 
 
@@ -246,7 +241,7 @@ def publish_extended_discovery(client, base, device_id, device_block):
         "payload_available": "online",
         "payload_not_available": "offline",
     }
-    # All extended entities now use flat namespace topics (bb8/led, bb8/speed, etc.)
+    # All extended entities use flat namespace topics (bb8/led, bb8/speed, etc.)
 
     # LED (light)
     # Clear old config (if structure changed)
@@ -435,7 +430,6 @@ async def scan_and_publish():
             mac_upper = mac.upper() if mac else ""
             if found and mac and published_discovery_for != mac:
                 # Publish discovery using new retained config
-                # NOTE: Replace with async publish_discovery if using async MQTT
                 dev = _device_block(mac_upper)
                 pres_cfg = {
                     "name": "BB-8 Presence",
@@ -574,9 +568,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("bb8_presence_scanner")
 
-    # -----------------------------------------------------------------------------
+    # --------------
     # Entrypoint
-    # -----------------------------------------------------------------------------
+    # --------------
 
     if __name__ == "__main__":
         # ...existing CLI setup...
@@ -626,7 +620,8 @@ if __name__ == "__main__":
 
 
 class _NullBridge:
-    """Safe no-op bridge so the scanner runs even if the real bridge is absent."""
+    """Safe no-op bridge so the scanner runs even
+    if the real bridge is absent."""
 
     def connect(self):
         pass
