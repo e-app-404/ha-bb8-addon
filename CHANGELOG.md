@@ -2,8 +2,52 @@
 <!-- markdownlint-disable MD022 MD032 MD024 -->
 <!-- Refer to meta schema section at the end of this document for changelog entry format guidance -->
 # Changelog
-<!-- Version [2025.08.21] - 2025-08-16 for updating starts here -->
+<!-- Version [2025.08.22] - 2025-08-16 for updating starts here -->
+
 <!-- Current version for updating ends here -->
+## [2025.8.21] — 2025-08-21
+
+### Summary
+ADR-0001 “Canonical Topology — Dual-Clone via Git Remote” implemented. Workspace and runtime now follow a dual-clone model (no symlinks/submodules), ops tooling reorganized by domain, CI/templates consolidated, and deployment/verification are fully automated with green gates.
+
+### Added
+- ADR-0001 receipt + governance tokens emitted on deploy (`STRUCTURE_OK`, `DEPLOY_OK`, `VERIFY_OK`, `WS_READY`).
+- `ops/deploy_dual_clone.sh` one-step deploy + runtime realign.
+- Domain folders under `ops/`: `audit/`, `workspace/`, `deploy/`, `qa/`, `diagnostics/`, `maintenance/`, `artifacts/`.
+
+### Changed
+- **Topology**: Two real git clones of the same remote (workspace `addon/` and HA runtime), deploy = push → fetch + hard reset.
+- **Ops structure**: Scripts regrouped by functional domain for maintainability.
+- **Wrappers**: `scripts/` are the canonical wrappers; they now export `WORKSPACE_ROOT` and `REPORT_ROOT`.
+- **Git**: Ignore Python caches (`__pycache__/`, `*.pyc`) and local-only clutter; `.gitignore` unified.
+- **Tests**: All tests live under `addon/tests/`; suite passes locally.
+- **BLE/MQTT**: `publish_discovery(...)` now accepts optional `dbus_path` kwarg to preserve backward compatibility.
+
+### Fixed
+- Resolved rebase conflicts and orphan `HEAD`.
+- Removed stray runtime symlinks (`addon` → self, `docs` → external), preventing HA confusion.
+- Eliminated duplicate/ambiguous `.github` + workflows; ensured the single root workflow runs.
+
+### Removed
+- `addon/.github/`, `addon/.vscode/`, `addon/tools/`, `addon/reports/` (superseded by root `.github`, `ops/`, and `reports/`).
+- Repo-tracked Python cache artifacts.
+
+### CI / Templates
+- Consolidated PR templates and `addon-audit.yml` workflow at repo root `.github/`.
+
+### Migration notes
+- Pull latest `main`; use **only** `scripts/` wrappers for local actions.
+- Any tooling that assumed old `ops/*` flat paths should be updated to new domain subpaths.
+- HA runtime is now aligned by deploy script; restart add-on after deploy if needed.
+
+### Evidence
+- `DEPLOY_OK runtime_head=243c989 branch=main`
+- `VERIFY_OK ws_head=243c989 runtime_head=243c989 remote=git@github.com:e-app-404/ha-bb8-addon.git`
+- `STRUCTURE_OK`
+- `WS_READY addon_ws=git_clone_ok runtime=git_clone_ok reports=ok wrappers=ok ops=ok`
+
+---
+
 ## v2025.08.20
 
 ### Highlights

@@ -1,6 +1,6 @@
 name: "HA-BB-8"
 description: "Homeassistant Sphero BB-8 bluetooth integration using MQTT discovery"
-version: "2025.08.20"
+version: "2025.08.21"
 slug: "beep_boop_bb8"
 startup: application
 init: false

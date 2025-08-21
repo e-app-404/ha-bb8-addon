@@ -1,3 +1,5 @@
+import asyncio
+import inspect
 import json
 
 import pytest
@@ -31,7 +33,7 @@ class FakeMQTT:
         self.on_message = None
         self._mid = 0
 
-    def publish(self, topic, payload=None, qos=0, retain=False):
+    async def publish(self, topic, payload=None, qos=0, retain=False):
         self.published.append((topic, payload, qos, retain))
         self._mid += 1
         return self._FakeMid(self._mid)
@@ -92,7 +94,14 @@ class FakeMQTT:
         if handler is None:
             handler = self.on_message
         if callable(handler):
-            handler(self, None, msg)
+            if inspect.iscoroutinefunction(handler):
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    asyncio.create_task(handler(self, None, msg))
+                else:
+                    loop.run_until_complete(handler(self, None, msg))
+            else:
+                handler(self, None, msg)
         # else: silently ignore
 
 
@@ -136,19 +145,19 @@ async def test_discovery_and_dispatcher_smoke(caplog):
 
     # Minimal controller/facade for echo
     class MinimalController:
-        def handle_led(self, client, userdata, msg):
+        async def handle_led(self, client, userdata, msg):
             # Echo LED state
-            client.publish(
+            await client.publish(
                 f"bb8/{device_id}/state/led", msg.payload, qos=1, retain=False
             )
 
-        def handle_sleep(self, client, userdata, msg):
-            client.publish(
+        async def handle_sleep(self, client, userdata, msg):
+            await client.publish(
                 f"bb8/{device_id}/event/slept", msg.payload, qos=1, retain=False
             )
 
-        def handle_drive(self, client, userdata, msg):
-            client.publish(
+        async def handle_drive(self, client, userdata, msg):
+            await client.publish(
                 f"bb8/{device_id}/state/motion",
                 msg.payload,
                 qos=1,
@@ -181,6 +190,10 @@ async def test_discovery_and_dispatcher_smoke(caplog):
         f"bb8/{device_id}/cmd/drive",
         json.dumps({"heading_deg": 90, "speed": 100, "duration_ms": 10}),
     )
+    # Allow async handler tasks to complete
+    import asyncio
+
+    await asyncio.sleep(0.01)
     # Validate state echo
     assert any(f"bb8/{device_id}/state/led" in t for t, *_ in mqtt.published)
     assert any(f"bb8/{device_id}/event/slept" in t for t, *_ in mqtt.published)
