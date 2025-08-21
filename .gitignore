@@ -38,3 +38,10 @@ __pycache__/
 *.pyc
 
 >>>>>>> 2c89acc (chore: ignore Python caches)
+
+# workspace-only (not part of addon repo)
+/docs/
+/ops/
+/reports/
+/scripts/
+/tools/
