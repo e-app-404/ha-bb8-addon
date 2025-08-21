@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import queue
 import threading
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class EvidenceRecorder:
@@ -29,10 +30,10 @@ class EvidenceRecorder:
         self.report_path = report_path
         self.max_lines = max_lines
         self.timeout_s = timeout_s
-        self._cmd_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
-        self._evt_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+        self._cmd_q: queue.Queue[dict[str, Any]] = queue.Queue()
+        self._evt_q: queue.Queue[dict[str, Any]] = queue.Queue()
         self._stop = threading.Event()
-        self._t: Optional[threading.Thread] = None
+        self._t: threading.Thread | None = None
 
     def start(self):
         if self._t and self._t.is_alive():
@@ -68,10 +69,9 @@ class EvidenceRecorder:
 
         def chained(client, userdata, msg):
             if callable(old):
-                try:
+                with contextlib.suppress(Exception):
                     old(client, userdata, msg)
-                except Exception:
-                    pass
+            on_message(client, userdata, msg)
             on_message(client, userdata, msg)
 
         self.client.on_message = chained

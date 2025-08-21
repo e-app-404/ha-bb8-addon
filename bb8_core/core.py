@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from .logging_setup import logger
 
 
@@ -11,14 +9,14 @@ class Core:
     This class isolates vendor/BLE specifics from higher layers.
     """
 
-    def __init__(self, address: str, adapter: Optional[str] = None) -> None:
+    def __init__(self, address: str, adapter: str | None = None) -> None:
         self.address = address
         self.adapter = adapter
         self._connected = False
         self.publish_led_rgb = None  # Optional LED publisher seam
         logger.info({"event": "core_init", "address": address, "adapter": adapter})
 
-    def __enter__(self) -> "Core":
+    def __enter__(self) -> Core:
         logger.info({"event": "core_enter", "address": self.address})
         self.connect()
         return self
@@ -42,9 +40,7 @@ class Core:
         self._connected = False
         logger.info({"event": "core_disconnected", "address": self.address})
 
-    def set_main_led(
-        self, r: int, g: int, b: int, persist: Optional[bool] = None
-    ) -> None:
+    def set_main_led(self, r: int, g: int, b: int, persist: bool | None = None) -> None:
         logger.info(
             {
                 "event": "core_set_main_led",

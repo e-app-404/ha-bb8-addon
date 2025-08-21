@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import os
-from typing import Any, Dict, List
+import threading
+from typing import Any
 
 
 # Public constants & helpers shared across bridge/facade/ble
@@ -10,19 +12,19 @@ def _mqtt_base() -> str:
     return os.environ.get("MQTT_BASE", "bb8")
 
 
-# Command topics (inbound). We support both /set and /press where applicable.
-CMD_TOPICS: Dict[str, List[str]] = {
+# Command topics (inbound). Support both legacy `/set` and new `/cmd` for LED.
+CMD_TOPICS: dict[str, list[str]] = {
     "power": [f"{_mqtt_base()}/power/set"],
     "stop": [f"{_mqtt_base()}/stop/press", f"{_mqtt_base()}/stop/set"],
     "sleep": [f"{_mqtt_base()}/sleep/press", f"{_mqtt_base()}/sleep/set"],
     "drive": [f"{_mqtt_base()}/drive/press", f"{_mqtt_base()}/drive/set"],
     "heading": [f"{_mqtt_base()}/heading/set"],
     "speed": [f"{_mqtt_base()}/speed/set"],
-    "led": [f"{_mqtt_base()}/led/set"],
+    "led": [f"{_mqtt_base()}/led/set", f"{_mqtt_base()}/led/cmd"],
 }
 
 # State topics (outbound) — STP4 expects '/state' suffix consistently
-STATE_TOPICS: Dict[str, str] = {
+STATE_TOPICS: dict[str, str] = {
     "power": f"{_mqtt_base()}/power/state",
     "stop": f"{_mqtt_base()}/stop/state",
     "sleep": f"{_mqtt_base()}/sleep/state",
@@ -34,7 +36,7 @@ STATE_TOPICS: Dict[str, str] = {
 
 
 def _coerce_raw(value: Any) -> str | int | float:
-    if isinstance(value, (int, float, str)):
+    if isinstance(value, int | float | str):
         return value
     return str(value)
 
@@ -77,14 +79,12 @@ def on_speed(client, value):
 
 
 def on_led_set(client, r, g, b):
-    payload = json.dumps({"r": r, "g": g, "b": b})
-    client.publish(CMD_TOPICS["led"], payload=payload, qos=1, retain=False)
+    """Direct LED state publication helper. Does **not** publish to command topics."""
+    payload = json.dumps({"r": int(r), "g": int(g), "b": int(b)})
     client.publish(STATE_TOPICS["led"], payload=payload, qos=1, retain=False)
 
 
 # BLE loop thread setup
-import asyncio
-import threading
 
 ble_loop = asyncio.new_event_loop()
 threading.Thread(target=ble_loop.run_forever, name="BLEThread", daemon=True).start()

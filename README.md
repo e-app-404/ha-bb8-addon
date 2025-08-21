@@ -1,4 +1,4 @@
-# beep_boop_bb8
+# bb8_core
 
 Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT.
 
@@ -24,7 +24,7 @@ Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT.
 
 ```text
 local/
-├─beep_boop_bb8/
+├─bb8_core/
 │   ├── app/
 │   │   ├── bb8_bletest_diag.sh
 │   │   ├── ble_test_diag.sh

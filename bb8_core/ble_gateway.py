@@ -1,10 +1,9 @@
 """
 ble_gateway.py
 
-Handles BLE adapter selection, device scanning, and connection status for BB-8 device management.
+Handles BLE adapter selection, device scanning, and connection status for BB-8
+device management.
 """
-
-from typing import Optional
 
 from .logging_setup import logger
 
@@ -29,7 +28,7 @@ def initialized():
 
 
 class BleGateway:
-    def __init__(self, mode: str = "bleak", adapter: Optional[str] = None) -> None:
+    def __init__(self, mode: str = "bleak", adapter: str | None = None) -> None:
         self.mode = mode
         self.adapter = adapter
         self.connected: bool = False
@@ -51,7 +50,7 @@ class BleGateway:
             }
         )
 
-    def resolve_adapter(self) -> Optional[str]:
+    def resolve_adapter(self) -> str | None:
         logger.debug({"event": "ble_gateway_resolve_adapter", "adapter": self.adapter})
         return self.adapter
 

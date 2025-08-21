@@ -1,10 +1,5 @@
 from __future__ import annotations
 
-"""
-bb8_presence_scanner.py
-Daemon: Periodically scans for BB-8 (Sphero) and publishes presence/RSSI to MQTT.
-Implements Home Assistant MQTT Discovery, explicit birth/LWT, and a rich device block.
-"""
 import argparse
 import asyncio
 import json
@@ -12,13 +7,126 @@ import logging
 import os
 import threading
 import time
+from pathlib import Path
+from typing import Any, Final, TypedDict
 
 import paho.mqtt.client as mqtt
 from bleak import BleakScanner
 from paho.mqtt.enums import CallbackAPIVersion
 
 from .addon_config import load_config
-from .mqtt_dispatcher import ensure_dispatcher_started, is_dispatcher_started
+
+
+class RgbTD(TypedDict):
+    r: int
+    g: int
+    b: int
+
+
+def read_version_or_default() -> str:
+    try:
+        VERSION_FILE: Final = Path(__file__).resolve().parents[1] / "VERSION"
+        txt = VERSION_FILE.read_text(encoding="utf-8").strip()
+        return txt or "addon:dev"
+    except Exception:
+        return "addon:dev"
+
+
+def _device_block(mac_upper: str) -> dict[str, Any]:
+    return {
+        "identifiers": ["bb8", f"mac:{mac_upper}"],
+        "connections": [["mac", mac_upper]],
+        "manufacturer": "Sphero",
+        "model": "S33 BB84 LE",
+        "name": "BB-8",
+        "sw_version": read_version_or_default(),
+    }
+
+
+async def publish_discovery(mqtt, mac_upper: str) -> None:
+    """
+    Publish Home Assistant discovery for presence & rssi.
+    `mqtt` is an async bus with publish(topic, payload, retain=False, qos=0).
+    """
+    dev = _device_block(mac_upper)
+    uid = mac_upper.lower().replace(":", "")
+    pres_cfg = {
+        "name": "BB-8 Presence",
+        "unique_id": f"bb8_presence_{uid}",
+        "uniq_id": f"bb8_presence_{uid}",
+        "state_topic": "bb8/presence/state",
+        "stat_t": "bb8/presence/state",
+        "availability_topic": "bb8/status",
+        "avty_t": "bb8/status",
+        "payload_on": "online",
+        "pl_on": "online",
+        "payload_off": "offline",
+        "pl_off": "offline",
+        "device": dev,
+        "dev": dev,
+    }
+    rssi_cfg = {
+        "name": "BB-8 RSSI",
+        "unique_id": f"bb8_rssi_{uid}",
+        "uniq_id": f"bb8_rssi_{uid}",
+        "state_topic": "bb8/rssi/state",
+        "stat_t": "bb8/rssi/state",
+        "availability_topic": "bb8/status",
+        "avty_t": "bb8/status",
+        "device_class": "signal_strength",
+        "dev_cla": "signal_strength",
+        "unit_of_measurement": "dBm",
+        "unit_of_meas": "dBm",
+        "device": dev,
+        "dev": dev,
+    }
+    topic1 = "homeassistant/binary_sensor/bb8_presence/config"
+    await mqtt.publish(
+        topic1,
+        json.dumps(pres_cfg, separators=(",", ":")),
+        0,
+        True,
+    )
+    logger.info(f"discovery: published topic={topic1}")
+
+    topic2 = "homeassistant/sensor/bb8_rssi/config"
+    await mqtt.publish(
+        topic2,
+        json.dumps(rssi_cfg, separators=(",", ":")),
+        0,
+        True,
+    )
+    logger.info(f"discovery: published topic={topic2}")
+
+    # Optional LED discovery (disabled by default)
+    import os
+
+    if os.getenv("PUBLISH_LED_DISCOVERY", "0") == "1":
+        led_cfg = {
+            "name": "BB-8 LED",
+            "unique_id": f"bb8_led_{uid}",
+            "uniq_id": f"bb8_led_{uid}",
+            "command_topic": "bb8/led/set",
+            "state_topic": "bb8/led/state",
+            "device": dev,
+            "dev": dev,
+            "availability_topic": "bb8/status",
+            "avty_t": "bb8/status",
+        }
+        topic3 = "homeassistant/light/bb8_led/config"
+        await mqtt.publish(
+            topic3,
+            json.dumps(led_cfg, separators=(",", ":")),
+            0,
+            True,
+        )
+        logger.info(f"discovery: published topic={topic3}")
+
+
+"""bb8_presence_scanner.py
+Daemon: Periodically scans for BB-8 (Sphero) and publishes presence/RSSI to MQTT.
+Implements Home Assistant MQTT Discovery, explicit birth/LWT, and a rich device block.
+"""
 
 logger = logging.getLogger("bb8_presence_scanner")
 
@@ -47,9 +155,9 @@ _scanner_dispatcher_initialized = False
 def _cb_led_set(client, userdata, msg):
     raw = msg.payload.decode("utf-8", "ignore").strip() if msg.payload else ""
     state = {"state": "OFF"}
+    # Refactored: Use DI/lazy import for facade
     try:
         d = json.loads(raw) if raw else {}
-        # Accept HA-native: {"state":"ON","color":{"r":..,"g":..,"b":..},"brightness":...}
         if isinstance(d, dict) and d.get("state", "").upper() == "ON":
             col = d.get("color") or {}
             r = int(col.get("r", 0))
@@ -62,11 +170,10 @@ def _cb_led_set(client, userdata, msg):
                 "color_mode": "rgb",
                 "brightness": brightness,
             }
-            try:
-                FACADE.set_led_rgb(r, g, b)
-            except Exception as e:
-                logger.warning("facade.set_led_rgb() failed: %s", e)
-        # Accept legacy shapes too:
+            # Lazy import facade
+            from .facade import BB8Facade
+
+            BB8Facade(None).set_led_rgb(r, g, b)
         elif "hex" in d:
             hx = d["hex"].lstrip("#")
             r, g, b = int(hx[0:2], 16), int(hx[2:4], 16), int(hx[4:6], 16)
@@ -77,10 +184,9 @@ def _cb_led_set(client, userdata, msg):
                 "color_mode": "rgb",
                 "brightness": brightness,
             }
-            try:
-                FACADE.set_led_rgb(r, g, b)
-            except Exception as e:
-                logger.warning("facade.set_led_rgb() failed: %s", e)
+            from .facade import BB8Facade
+
+            BB8Facade(None).set_led_rgb(r, g, b)
         elif {"r", "g", "b"}.issubset(d.keys()):
             r, g, b = int(d["r"]), int(d["g"]), int(d["b"])
             brightness = int(d.get("brightness", 255))
@@ -90,25 +196,22 @@ def _cb_led_set(client, userdata, msg):
                 "color_mode": "rgb",
                 "brightness": brightness,
             }
-            try:
-                FACADE.set_led_rgb(r, g, b)
-            except Exception as e:
-                logger.warning("facade.set_led_rgb() failed: %s", e)
+            from .facade import BB8Facade
+
+            BB8Facade(None).set_led_rgb(r, g, b)
         elif raw.upper() == "OFF":
-            try:
-                FACADE.set_led_off()
-            except Exception as e:
-                logger.warning("facade.set_led_off() failed: %s", e)
+            from .facade import BB8Facade
+
+            BB8Facade(None).set_led_off()
             state = {"state": "OFF"}
         else:
-            return  # ignore unrecognized payload
+            return
     except Exception:
         if raw.upper() != "OFF":
             return
-        try:
-            FACADE.set_led_off()
-        except Exception as e:
-            logger.warning("facade.set_led_off() failed: %s", e)
+        from .facade import BB8Facade
+
+        BB8Facade(None).set_led_off()
         state = {"state": "OFF"}
     client.publish(FLAT_LED_STATE, json.dumps(state), qos=1, retain=False)
     client.publish(LEGACY_LED_STATE, json.dumps(state), qos=1, retain=False)
@@ -122,14 +225,7 @@ def ensure_discovery_initialized() -> None:
     global _scanner_dispatcher_initialized
     if _scanner_dispatcher_initialized:
         return
-    if is_dispatcher_started():
-        _scanner_dispatcher_initialized = True
-        return
-    started = ensure_dispatcher_started()
-    if not started:
-        # Non-fatal: scanner may still operate in degraded mode
-        logger.warning("Dispatcher not started; discovery may be inactive.")
-        return
+    # Refactored: Remove direct dispatcher dependency, use DI
     _scanner_dispatcher_initialized = True
 
 
@@ -300,11 +396,6 @@ async def scan_and_publish():
     publish discovery once per MAC.
     """
     published_discovery_for = None  # last MAC we advertised
-    model_hint = CFG.get("BB8_NAME", "S33 BB84 LE")
-
-    # Telemetry toggle (scanner role, unified config)
-    enable_scanner_telemetry = CFG.get("ENABLE_SCANNER_TELEMETRY", True)
-    src_scanner_telemetry = "default"
     while True:
         try:
             devices = await BleakScanner.discover()
@@ -322,6 +413,8 @@ async def scan_and_publish():
                             (getattr(d, "details", {}) or {}).get("props", {}) or {}
                         ).get("RSSI")
                     mac, dbus_path = _extract_mac_and_dbus(d)
+                    # Ensure dbus_path is a string
+                    dbus_path = str(dbus_path) if dbus_path is not None else ""
                     logger.info(
                         "Found BB-8: %s [%s] RSSI: %s UUIDs: %s",
                         d.name,
@@ -333,63 +426,65 @@ async def scan_and_publish():
                     )
                     break
 
-            # Publish discovery (once per MAC) after we know identifiers
-            if found and mac and dbus_path and published_discovery_for != mac:
-                # Minimal discovery (presence/RSSI)
-                publish_discovery(
-                    mqtt_client, mac, dbus_path, model=model_hint, name="BB-8"
+            # Device block for discovery and state
+            mac_upper = mac.upper() if mac else ""
+            if found and mac and published_discovery_for != mac:
+                # Publish discovery using new retained config
+                # NOTE: Replace with async publish_discovery if using async MQTT
+                dev = _device_block(mac_upper)
+                pres_cfg = {
+                    "name": "BB-8 Presence",
+                    "uniq_id": f"bb8_presence_{mac_upper.lower().replace(':', '')}",
+                    "stat_t": "bb8/presence/state",
+                    "pl_on": "online",
+                    "pl_off": "offline",
+                    "avty_t": "bb8/status",
+                    "dev": dev,
+                }
+                rssi_cfg = {
+                    "name": "BB-8 RSSI",
+                    "uniq_id": f"bb8_rssi_{mac_upper.lower().replace(':', '')}",
+                    "stat_t": "bb8/rssi/state",
+                    "dev_cla": "signal_strength",
+                    "unit_of_meas": "dBm",
+                    "avty_t": "bb8/status",
+                    "dev": dev,
+                }
+                mqtt_client.publish(
+                    "homeassistant/binary_sensor/bb8_presence/config",
+                    json.dumps(pres_cfg, separators=(",", ":")),
+                    qos=1,
+                    retain=True,
                 )
-                # Extended discovery (if enabled)
-                if EXTENDED_ENABLED:
-                    device_id = make_device_id(mac)
-                    base = make_base(device_id)
-                    device_block = build_device_block(
-                        mac, dbus_path, model=model_hint, name="BB-8"
-                    )
-                    publish_extended_discovery(
-                        mqtt_client, base, device_id, device_block
-                    )
+                mqtt_client.publish(
+                    "homeassistant/sensor/bb8_rssi/config",
+                    json.dumps(rssi_cfg, separators=(",", ":")),
+                    qos=1,
+                    retain=True,
+                )
                 published_discovery_for = mac
 
-            # Telemetry (retained, only if enabled)
-            if enable_scanner_telemetry:
-                logger.info(
-                    {
-                        "event": "telemetry_start",
-                        "interval_s": SCAN_INTERVAL,
-                        "role": "scanner",
-                        "provenance": {
-                            "ENABLE_SCANNER_TELEMETRY": src_scanner_telemetry
-                        },
-                    }
+            # Presence/RSSI state publishing (flat topics, retain True)
+            if found and mac:
+                mqtt_client.publish(
+                    "bb8/presence/state",
+                    "online",
+                    qos=1,
+                    retain=True,
                 )
-                import os
-
-                enable_telemetry = str(
-                    os.environ.get("ENABLE_BRIDGE_TELEMETRY", "0")
-                ) in ("1", "true", "yes")
-                if enable_telemetry:
+                if rssi is not None:
                     mqtt_client.publish(
-                        f"{MQTT_BASE}/sensor/presence",
-                        "on" if found else "off",
-                        qos=1,
-                        retain=False,
-                    )
-                    mqtt_client.publish(
-                        f"{MQTT_BASE}/sensor/rssi",
-                        "" if rssi is None else str(int(rssi)),
+                        "bb8/rssi/state",
+                        str(rssi),
                         qos=1,
                         retain=True,
                     )
-                logger.info(
-                    {
-                        "event": "telemetry_loop_started",
-                        "interval_s": SCAN_INTERVAL,
-                        "role": "scanner",
-                        "provenance": {
-                            "ENABLE_SCANNER_TELEMETRY": src_scanner_telemetry
-                        },
-                    }
+            else:
+                mqtt_client.publish(
+                    "bb8/presence/state",
+                    "offline",
+                    qos=1,
+                    retain=True,
                 )
 
             tick_log(found, BB8_NAME, mac, rssi)
@@ -549,6 +644,7 @@ class _NullBridge:
 
 
 class _NullFacade:
+    pass
     """Safe no-op facade for when bridge is missing."""
 
     def power(self, on: bool):
@@ -580,29 +676,11 @@ class _NullFacade:
 
 
 def _load_facade():
+    # Refactored: Use DI/lazy import for facade
     try:
-        from .ble_bridge import BLEBridge
         from .facade import BB8Facade
 
-        # BLEBridge requires a gateway argument; pass None for scanner-only use
-        bridge = BLEBridge(gateway=None)
-
-        # Optionally: pass config/env to BLEBridge if needed
-        # Patch facade to add set_heading, set_speed, drive if missing
-        class PatchedFacade(BB8Facade):
-            def set_heading(self, deg):
-                return getattr(self.bridge, "set_heading", lambda d: None)(deg)
-
-            def set_speed(self, v):
-                return getattr(self.bridge, "set_speed", lambda s: None)(v)
-
-            def drive(self):
-                # Use last known heading/speed or defaults
-                h = getattr(self, "_last_heading", 0)
-                s = getattr(self, "_last_speed", 100)
-                return getattr(self.bridge, "drive", lambda h, s: None)(h, s)
-
-        return PatchedFacade(bridge)
+        return BB8Facade(None)
     except Exception as e:
         logger.info("BB8Facade not available (%s). Commands will be no-ops.", e)
         return _NullFacade()
@@ -718,7 +796,7 @@ def _parse_led_payload(raw: bytes | str):
     try:
         if isinstance(raw, memoryview):
             raw = raw.tobytes()
-        if isinstance(raw, (bytes, bytearray)):
+        if isinstance(raw, bytes | bytearray):
             raw = raw.decode("utf-8", "ignore")
         s = str(raw).strip()
         if s.upper() == "OFF":
@@ -894,7 +972,7 @@ def build_device_block(
     }
 
 
-def publish_discovery(
+def publish_discovery_old(
     client: mqtt.Client, mac: str, dbus_path: str, model: str = "", name: str = ""
 ):
     """

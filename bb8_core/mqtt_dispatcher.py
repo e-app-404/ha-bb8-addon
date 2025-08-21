@@ -1,18 +1,14 @@
 from __future__ import annotations
 
-"""
-mqtt_dispatcher.py
-
-Connects to the MQTT broker, subscribes to command topics, dispatches commands to the BLE bridge/controller, and publishes status and discovery information for Home Assistant.
-"""
 import inspect
 import json
 import logging
 import os
 import socket
+from collections.abc import Callable
 
 # --- at module scope ---
-from typing import Any, Callable, Optional, Set, Tuple
+from typing import Any
 
 import paho.mqtt.client as mqtt
 
@@ -20,25 +16,30 @@ from .addon_config import CONFIG, CONFIG_SOURCE, init_config
 from .common import CMD_TOPICS, STATE_TOPICS
 from .logging_setup import logger
 
+"""
+mqtt_dispatcher.py
+
+Connects to the MQTT broker, subscribes to command topics, dispatches commands to 
+the BLE bridge/controller, and publishes status + discovery information for HA.
+"""
 log = logging.getLogger(__name__)
 
-SCANNER_PUBLISH_HOOK: Optional[Callable[..., None]] = None
+SCANNER_PUBLISH_HOOK: Callable[..., None] | None = None
 
 # Idempotency set for direct discovery publisher (per-entity unique_id)
-_DISCOVERY_PUBLISHED_UIDS: Set[str] = set()
+_DISCOVERY_PUBLISHED_UIDS: set[str] = set()
 
 
 log = logging.getLogger(__name__)
 
 # ---- Seam hook for tests (safe no-op in production) ----
-SCANNER_PUBLISH_HOOK: Optional[Callable[..., None]] = None
+SCANNER_PUBLISH_HOOK: Callable[..., None] | None = None
 
 
 def _get_scanner_publisher() -> Callable[..., None]:
     """Return the callable used to publish scanner discovery.
-    Prefers the test hook if present; otherwise import the production publisher lazily.
+    Prefer hook on the authoritative module object (resilient to aliasing)
     """
-    # Prefer hook on the authoritative module object (resilient to aliasing)
     import sys
 
     mod = sys.modules.get(__name__)
@@ -51,7 +52,26 @@ def _get_scanner_publisher() -> Callable[..., None]:
     from bb8_core.bb8_presence_scanner import publish_discovery as _pub
 
     log.info("scanner_pub_source=module id=%s", id(_pub))
-    return _pub
+    # If _pub is a coroutine function, wrap it to run synchronously
+    import asyncio
+
+    if inspect.iscoroutinefunction(_pub):
+
+        def sync_pub(*args, **kwargs):
+            asyncio.run(_pub(*args, **kwargs))
+            return None
+
+        return sync_pub
+
+    def wrapper(*args, **kwargs):
+        result = _pub(*args, **kwargs)
+        # If the function returns a coroutine, run it
+        if inspect.iscoroutine(result):
+            asyncio.run(result)
+            return None
+        return result
+
+    return wrapper
 
 
 def _pytest_args_for(func: Callable[..., None]):
@@ -103,7 +123,9 @@ def _pytest_args_for(func: Callable[..., None]):
 
 log = logging.getLogger(__name__)
 
-publish_discovery = None  # No cached scanner aliases; all scanner discovery routed via _trigger_discovery_connected()
+# No cached scanner aliases; all scanner discovery routed
+# via _trigger_discovery_connected()
+publish_discovery = None
 
 
 class _StubMid:
@@ -122,9 +144,7 @@ class _StubClient:
 
 
 def _telemetry_enabled() -> bool:
-    v = os.environ.get(
-        "ENABLE_BRIDGE_TELEMETRY", os.environ.get("enable_bridge_telemetry", "0")
-    )
+    v = os.environ.get("ENABLE_BRIDGE_TELEMETRY", "0")
     return str(v).lower() in ("1", "true", "yes", "on")
 
 
@@ -166,7 +186,7 @@ def _trigger_discovery_connected() -> None:
                 if "PYTEST_CURRENT_TEST" in os.environ:
                     args = _pytest_args_for(pub)
                     log.debug("Calling publisher with dummy args: %r", args)
-                    # Always call _get_scanner_publisher again before calling with dummy args
+                    # Call _get_scanner_publisher again before calling with dummy args
                     pub = _get_scanner_publisher()
                     pub(*args)
                     log.info(
@@ -226,8 +246,8 @@ REASONS = {
 # Dispatcher runtime state
 _DISPATCHER_STARTED: bool = False
 # (host, port, topic, client_id, user_present)
-_START_KEY: Optional[Tuple[str, int, str, str, bool]] = None
-CLIENT: Optional[Any] = None
+_START_KEY: tuple[str, int, str, str, bool] | None = None
+CLIENT: Any | None = None
 _PENDING_SUBS: list = []
 _BOUND_TOPICS: set = set()
 
@@ -242,13 +262,11 @@ def publish_led_discovery(publish_fn) -> None:
     """
     if not CONFIG.get("dispatcher_discovery_enabled", False):
         return
-    ha_prefix = CONFIG.get("ha_discovery_topic", "homeassistant")
-    obj_id = "bb8_led"
     # Call the default BB-8 discovery publisher if enabled
     publish_bb8_discovery(publish_fn)
 
 
-def _norm_mac(mac: Optional[str]) -> str:
+def _norm_mac(mac: str | None) -> str:
     """
     Normalize a MAC address to uppercase, no separators.
     """
@@ -629,7 +647,9 @@ def _maybe_publish_bb8_discovery() -> None:
         )
         ok = getattr(mid, "wait_for_publish", lambda timeout=3: True)(timeout=3)
         log.info(
-            f"discovery_publish_result topic={topic} mid={getattr(mid, 'mid', None)} wait_ok={ok}"
+            f"discovery_publish_result topic={topic} "
+            f"mid={getattr(mid, 'mid', None)} "
+            f"wait_ok={ok}"
         )
         if ok:
             _DISCOVERY_PUBLISHED.add(uniq_id)
@@ -686,12 +706,13 @@ def ensure_dispatcher_started(*args: Any, **kwargs: Any) -> bool:
             or CONFIG.get("MQTT_PASSWORD")
             or CONFIG.get("mqtt_password")
         )
-        client_id = (
-            kwargs.get("client_id") or CONFIG.get("mqtt_client_id") or "bb8-addon"
-        )
         user_flag = bool(username)
+        client_id = (
+            kwargs.get("client_id") or CONFIG.get("MQTT_CLIENT_ID") or "bb8-addon"
+        )
         logger.info(
-            "Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s",
+            "Dispatcher config (resolved): host=%s port=%s user=%s topic=%s "
+            "client_id=%s source=%s",
             host,
             port,
             user_flag,
@@ -716,7 +737,7 @@ def ensure_dispatcher_started(*args: Any, **kwargs: Any) -> bool:
         except Exception:  # noqa: BLE001
             port = 1883  # fallback to default port
 
-        # Start the dispatcher here (you may need to call start_mqtt_dispatcher or similar)
+        # Start the dispatcher here (you may need to call start_mqtt_dispatcher or like)
         # For demonstration, we just set the flag
         _DISPATCHER_STARTED = True
         # Replace discovery trigger with runtime-gated call
@@ -728,20 +749,20 @@ def ensure_dispatcher_started(*args: Any, **kwargs: Any) -> bool:
 
 
 def start_mqtt_dispatcher(
-    mqtt_host: Optional[str] = None,
-    mqtt_port: Optional[int] = None,
-    mqtt_topic: Optional[str] = None,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
+    mqtt_host: str | None = None,
+    mqtt_port: int | None = None,
+    mqtt_topic: str | None = None,
+    username: str | None = None,
+    password: str | None = None,
     controller: Any = None,
-    client_id: Optional[str] = None,
-    keepalive: Optional[int] = None,
-    qos: Optional[int] = None,
-    retain: Optional[bool] = None,
-    status_topic: Optional[str] = None,
-    tls: Optional[bool] = None,
-    mqtt_user: Optional[str] = None,
-    mqtt_password: Optional[str] = None,
+    client_id: str | None = None,
+    keepalive: int | None = None,
+    qos: int | None = None,
+    retain: bool | None = None,
+    status_topic: str | None = None,
+    tls: bool | None = None,
+    mqtt_user: str | None = None,
+    mqtt_password: str | None = None,
 ) -> mqtt.Client:
     """
     Single entry-point used by bridge_controller via the compat shim.
@@ -843,7 +864,7 @@ def start_mqtt_dispatcher(
     client.connect_async(str(mqtt_host), mqtt_port, keepalive)
     client.loop_start()
 
-    # Do not proactively trigger here; on_connect will handle publication deterministically.
+    # No proactive triggering here; on_connect handles publication deterministically.
     return client
 
 
@@ -891,7 +912,7 @@ def turn_off_bb8():
     return False
 
 
-def get_client() -> Optional[Any]:
+def get_client() -> Any | None:
     """Return the active MQTT client if available."""
     return CLIENT
 
@@ -930,10 +951,10 @@ def _apply_pending_subscriptions():
         return
     for topic, handler in list(_PENDING_SUBS):
         if _bind_subscription(topic, handler):
-            try:
+            import contextlib
+
+            with contextlib.suppress(ValueError):
                 _PENDING_SUBS.remove((topic, handler))
-            except ValueError:
-                pass
 
 
 def register_subscription(topic, handler):

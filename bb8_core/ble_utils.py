@@ -1,11 +1,11 @@
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
 import inspect
 
 
-async def resolve_services(client: Any) -> Optional[Any]:
+async def resolve_services(client: Any) -> Any | None:
     """
     Works with Bleak versions where:
       - await client.get_services() exists, OR
@@ -24,6 +24,6 @@ async def resolve_services(client: Any) -> Optional[Any]:
 
     # Fallback to property-style access
     if hasattr(client, "services"):
-        return getattr(client, "services")
+        return client.services
 
     return None

@@ -2,9 +2,44 @@
 <!-- markdownlint-disable MD022 MD032 MD024 -->
 <!-- Refer to meta schema section at the end of this document for changelog entry format guidance -->
 # Changelog
-<!-- Version [2025.08.20] - 2025-08-16 for updating starts here -->
-
+<!-- Version [2025.08.21] - 2025-08-16 for updating starts here -->
 <!-- Current version for updating ends here -->
+## v2025.08.20
+
+### Highlights
+- **STP4 (strict) graduation — PASS**  
+  Device-originated scalar echoes verified; LED RGB JSON shape enforced; command→state pairing clean.
+
+### Added
+- **Tools:** `tools/env_sanity.py`, `tools/check_configs.py`, `tools/stp4_diagnose.py`, `tools/audit_addon_tree.py`.
+- **CI Gate:** `addon-audit` GitHub Action to prevent stray tooling/config inside `addon/`.
+- **Build Context Control:** `addon/.dockerignore` to minimize image context.
+- **Evidence Receipt:** `reports/strict_accept_<ts>.status` stamped after strict acceptance.
+
+### Changed
+- **Editable Packaging:** `addon/pyproject.toml` now auto-discovers `bb8_core*`; repo installs via `pip install -e addon`.
+- **Import Hygiene:** Removed all repo-level `PYTHONPATH` usage; editable install is the sole import mechanism.
+- **Tooling Single-Source:** Root-level `pytest.ini`, `ruff.toml`, and `mypy.ini` are authoritative; duplicate sections removed from `pyproject.toml`.
+- **Ruff Isort Hint:** `known-first-party = ["bb8_core"]`.
+- **Add-on Tree Cleanliness:** Forbidden dev files relocated to `docs/addon_legacy/`.
+
+### Fixed / Validated
+- **Shim Hard-Disable in Strict:** `REQUIRE_DEVICE_ECHO=1` guarantees no facade echoes.
+- **BLE Loop Robustness:** Dedicated asyncio loop thread validated (no `get_event_loop` warnings in strict run).
+- **Discovery Scope:** Scanner remains single source; discovery dump validated during evidence.
+- **Retain Policy:** Commandable echoes publish with `retain=false`; sensors may retain as configured.
+
+### Ops Notes
+- **MQTT Namespace:** Flat `bb8/<signal>/{set|state}`; scalars accept raw or `{"value": ...}`, LED must be `{"r","g","b"}`.
+- **Env Toggles:** `REQUIRE_DEVICE_ECHO=1`, `ENABLE_BRIDGE_TELEMETRY=1`, `MQTT_BASE=bb8`.
+- **Artifacts:** Strict evidence stored under `addon/reports/stp4_<ts>/` with `diagnose.txt` and `evidence_manifest.json`.
+
+### Migration
+- If any automation referenced the old package name `beep_boop_bb8`, switch imports to **`bb8_core`**.
+- Local dev: use the workspace **.venv** and `pip install -e addon`; no `PYTHONPATH` needed.
+
+---
+
 ## [2025.08.19] - 2025-08-16
 
 ### PATCH-BUNDLE-STP4-20250816-H
@@ -31,6 +66,8 @@
 #### Result
 The codebase is now deterministic, testable, and robust for scanner discovery, sleep/LED mapping, and MQTT dispatcher integration, with all critical tests passing and instrumentation in place for future development.
 
+---
+
 ## [2025.08.18] - 2025-08-16
 
 ### bb8: deterministic discovery seam + race fix
@@ -39,6 +76,8 @@ Refactored MQTT dispatcher to resolve scanner publisher at call time (no cached 
 Added stable seam (SCANNER_PUBLISH_HOOK) for deterministic, thread-safe test injection.
 Updated tests for robust coverage of discovery and seam logic.
 No public API changes; all changes are internal and covered by focused tests.
+
+---
 
 ## [2025.08.17] - 2025-08-15
 

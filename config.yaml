@@ -1,6 +1,6 @@
 name: "HA-BB-8"
 description: "Homeassistant Sphero BB-8 bluetooth integration using MQTT discovery"
-version: "2025.08.19"
+version: "2025.08.20"
 slug: "beep_boop_bb8"
 startup: application
 init: false
@@ -30,7 +30,7 @@ options:
   bb8_scan_interval: 10
   dispatcher_discovery_enabled: false
   discovery_retain: false
-  log_path: "/Volumes/addons/local/beep_boop_bb8/reports/ha_bb8_addon.log"
+  log_path: "/Volumes/addons/docs/reports/ha_bb8_addon.log"
 
   # --- Device Identification ---
   bb8_mac: "ED:ED:87:D7:27:50"

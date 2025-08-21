@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import yaml
 
@@ -13,27 +13,27 @@ logger = logging.getLogger(__name__)
 LOG = logger
 
 # Public module-level handles; populated by init_config()
-CONFIG: Dict[str, Any] = {}
-CONFIG_SOURCE: Optional[Path] = None
+CONFIG: dict[str, Any] = {}
+CONFIG_SOURCE: Path | None = None
 
 
-def _candidate_paths() -> List[Path]:
+def _candidate_paths() -> list[Path]:
     """
     Ordered config locations (HA first, then add-on, then local/dev).
     The '/Volumes/...' path is dev-only and logged at DEBUG.
     """
     env_path = os.environ.get("CONFIG_PATH")
-    paths: List[Path] = []
+    paths: list[Path] = []
     if env_path:
         paths.append(Path(env_path))
     paths.extend(
         [
             Path("/data/config.yaml"),  # HA add-on standard
             Path("/config/config.yaml"),
-            Path("/addons/local/beep_boop_bb8/config.yaml"),
+            Path("/addons/docs/config.yaml"),
             Path(__file__).parent / "config.yaml",
             Path("/app/config.yaml"),
-            Path("/Volumes/addons/local/beep_boop_bb8/config.yaml"),
+            Path("/Volumes/addons/docs/config.yaml"),
         ]
     )
     return paths
@@ -41,7 +41,7 @@ def _candidate_paths() -> List[Path]:
 
 def _load_options_json(
     path: Path = Path("/data/options.json"),
-) -> Tuple[Dict[str, Any], Optional[Path]]:
+) -> tuple[dict[str, Any], Path | None]:
     """
     Load Home Assistant add-on options (JSON). Returns (data, source_path).
     """
@@ -62,8 +62,8 @@ def _load_options_json(
 
 
 def _load_yaml_cfg(
-    paths: Optional[List[Path]] = None,
-) -> Tuple[Dict[str, Any], Optional[Path]]:
+    paths: list[Path] | None = None,
+) -> tuple[dict[str, Any], Path | None]:
     """
     Load YAML config from the first available candidate path.
     Returns (data, source_path). Empty dict if none valid.
@@ -89,7 +89,7 @@ def _load_yaml_cfg(
     return {}, None
 
 
-def load_config() -> Tuple[Dict[str, Any], Optional[Path]]:
+def load_config() -> tuple[dict[str, Any], Path | None]:
     """
     Produce the effective configuration.
     Precedence: /data/options.json (HA) overrides YAML values.
@@ -98,7 +98,7 @@ def load_config() -> Tuple[Dict[str, Any], Optional[Path]]:
     opts, opts_src = _load_options_json()
     yml, yml_src = _load_yaml_cfg()
 
-    merged: Dict[str, Any] = {}
+    merged: dict[str, Any] = {}
     if yml:
         merged.update(yml)
     if opts:

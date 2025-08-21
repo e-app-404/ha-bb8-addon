@@ -1,5 +1,0 @@
-handoff:
-  anchor: "STRAT-f8202ca110cc"
-  next_entrypoint: "BLE-LOOP then DEVICE-ECHO"
-  requester: "Evert"
-  ready_for: "Strategos (rehydrated)"

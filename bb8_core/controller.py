@@ -1,7 +1,8 @@
 """
 Unified BB-8 Controller for Home Assistant add-on.
 
-This module provides the main controller class for BB-8 integration with Home Assistant, including BLE device management, command dispatch, and MQTT diagnostics.
+This module provides the main controller class for HA integration of BB-8,
+incl. BLE device management, command dispatch, and MQTT diagnostics.
 
 Classes
 -------
@@ -19,7 +20,7 @@ Example
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from .logging_setup import logger
 
@@ -38,7 +39,7 @@ class ControllerStatus:
     command_count: int = 0
     error_count: int = 0
     uptime: float = 0.0
-    features_available: Optional[Dict[str, bool]] = None
+    features_available: Optional[dict[str, bool]] = None
 
 
 class BB8Controller:
@@ -69,8 +70,8 @@ class BB8Controller:
         self.start_time = time.time()
         self.command_count = 0
         self.error_count = 0
-        self.last_command = None
-        self.device_connected = True if device is not None else False
+        self.last_command: Optional[str] = None
+        self.device_connected = bool(device)
         self.mqtt_handler = mqtt_handler
         self.telemetry = None
         logger.debug(
@@ -191,7 +192,7 @@ class BB8Controller:
             )
             return self._create_error_result("roll", str(e))
 
-    def stop(self) -> Dict[str, Any]:
+    def stop(self) -> dict[str, Any]:
         """
         Stop the BB-8 device.
 
@@ -325,7 +326,7 @@ class BB8Controller:
             )
             return {"success": False, "command": "set_led", "error": str(e)}
 
-    def get_diagnostics_for_mqtt(self) -> Dict[str, Any]:
+    def get_diagnostics_for_mqtt(self) -> dict[str, Any]:
         status = self.get_controller_status()
         payload = {
             "controller": {
@@ -371,7 +372,7 @@ class BB8Controller:
         logger.debug({"event": "controller_status", "status": status.__dict__})
         return status
 
-    def _create_error_result(self, command: str, error: str) -> Dict[str, Any]:
+    def _create_error_result(self, command: str, error: str) -> dict[str, Any]:
         """
         Helper to create a standardized error result dictionary.
 

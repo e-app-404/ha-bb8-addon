@@ -1,17 +1,12 @@
 from __future__ import annotations
 
-"""
-ble_bridge.py
-
-Orchestrates BLE operations for BB-8, manages device connection, and exposes diagnostics for Home Assistant add-on integration.
-"""
 import asyncio
 import importlib.metadata
 import json
 import os
 import threading
 import time
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import paho.mqtt.publish as publish
 from bleak import BleakClient
@@ -164,7 +159,7 @@ class BLEBridge:
                     {"event": "ble_led_error", "r": r, "g": g, "b": b, "error": repr(e)}
                 )
 
-    def sleep(self, after_ms: Optional[int] = None) -> None:
+    def sleep(self, after_ms: int | None = None) -> None:
         """Put device to sleep; default immediate. Safe no-op if not connected."""
         with self._lock:
             try:
@@ -204,7 +199,7 @@ class BLEBridge:
             gw_get = getattr(self.gateway, "get_rssi", None)
             if callable(gw_get):
                 val = gw_get(self.target_mac)
-                if isinstance(val, (int, float)):
+                if isinstance(val, int | float):
                     return int(val)
         except Exception as e:
             logger.debug({"event": "ble_get_rssi_error", "error": repr(e)})
@@ -224,7 +219,7 @@ class BLEBridge:
             if r is None:
                 r = retain
             t = f"{base_topic}/{topic_suffix}"
-            if isinstance(payload, (dict, list)):
+            if isinstance(payload, dict | list):
                 payload = json.dumps(payload, separators=(",", ":"))
             client.publish(t, payload=payload, qos=qos, retain=r)
 
@@ -271,7 +266,7 @@ class BLEBridge:
             except Exception as e:
                 logger.error({"event": "ble_cmd_led_handler_error", "error": repr(e)})
 
-        # Removed unused _handle_stop function and replaced self.stop() with self.shutdown() if needed.
+        # Removed unused _handle_stop function and subbed self.stop() w/ self.shutdown()
         # If you need to handle a stop command, implement it as needed, for example:
         def handle_stop_command():
             try:
@@ -291,8 +286,8 @@ class BLEBridge:
     def __init__(
         self,
         gateway,
-        target_mac: Optional[str] = None,
-        mac: Optional[str] = None,
+        target_mac: str | None = None,
+        mac: str | None = None,
         **kwargs,
     ) -> None:
         import threading
@@ -302,12 +297,12 @@ class BLEBridge:
         self.publish_presence = None
         self.publish_rssi = None
         self.gateway = gateway
-        self.target_mac: Optional[str] = target_mac or mac
+        self.target_mac: str | None = target_mac or mac
         if not self.target_mac:
             raise ValueError("BLEBridge requires target_mac/mac to be provided")
         # Runtime/control attributes referenced elsewhere
         self.timeout: float = float(kwargs.get("timeout", 10.0))
-        self.controller: Optional[Any] = kwargs.get("controller")
+        self.controller: Any | None = kwargs.get("controller")
         # Low-level core
         self.core = Core(
             address=self.target_mac, adapter=self.gateway.resolve_adapter()
@@ -458,10 +453,7 @@ def bb8_power_on_sequence(core_or_facade, *args, **kwargs):
 def _power_on_sequence_body(bb8):
     # Defensive: check connection status if available
     is_connected = getattr(bb8, "is_connected", lambda: None)
-    if callable(is_connected):
-        connected = is_connected()
-    else:
-        connected = is_connected
+    connected = is_connected() if callable(is_connected) else is_connected
     logger.info(f"[BB-8] is_connected: {connected}")
     if connected is not None and not connected:
         logger.error("[BB-8] Not connected after context manager entry.")
@@ -520,10 +512,7 @@ def bb8_power_off_sequence():
         logger.info("[BB-8] After BB-8 connect...")
         with bb8:
             is_connected = getattr(bb8, "is_connected", lambda: None)
-            if callable(is_connected):
-                connected = is_connected()
-            else:
-                connected = is_connected
+            connected = is_connected() if callable(is_connected) else is_connected
             logger.info(f"[BB-8] is_connected: {connected}")
             if connected is not None and not connected:
                 logger.error("[BB-8] Not connected after context manager entry.")

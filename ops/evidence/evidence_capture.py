@@ -5,10 +5,13 @@ import os
 import queue
 import threading
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 """
-Your collector already honors REQUIRE_DEVICE_ECHO with default requirement ON (anything not "device" becomes facade_only). That logic is sound—keep it. Use REQUIRE_DEVICE_ECHO=0 while the shim stands in, then flip to 1 for real hardware acceptance. (See the env/logic in record(...).)
+Your collector already honors REQUIRE_DEVICE_ECHO with default requirement ON 
+(anything not "device" becomes facade_only). That logic is sound—keep it.
+Use REQUIRE_DEVICE_ECHO=0 while the shim stands in, then flip to 1 for real 
+hardware acceptance. (See the env/logic in record(...).)
 """
 
 
@@ -33,10 +36,10 @@ class EvidenceRecorder:
         self.report_path = report_path
         self.max_lines = max_lines
         self.timeout_s = timeout_s
-        self._cmd_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
-        self._evt_q: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+        self._cmd_q: queue.Queue[dict[str, Any]] = queue.Queue()
+        self._evt_q: queue.Queue[dict[str, Any]] = queue.Queue()
         self._stop = threading.Event()
-        self._t: Optional[threading.Thread] = None
+        self._t: threading.Thread | None = None
 
     def start(self):
         if self._t and self._t.is_alive():
@@ -70,12 +73,12 @@ class EvidenceRecorder:
 
         old = getattr(self.client, "on_message", None)
 
+        import contextlib
+
         def chained(client, userdata, msg):
             if callable(old):
-                try:
+                with contextlib.suppress(Exception):
                     old(client, userdata, msg)
-                except Exception:
-                    pass
             on_message(client, userdata, msg)
 
         self.client.on_message = chained
@@ -83,8 +86,7 @@ class EvidenceRecorder:
     def _runner(self):
         lines = 0
         os.makedirs(os.path.dirname(self.report_path), exist_ok=True)
-        out = open(self.report_path, "a", encoding="utf-8")
-        try:
+        with open(self.report_path, "a", encoding="utf-8") as out:
             while not self._stop.is_set() and lines < self.max_lines:
                 try:
                     cmd = self._cmd_q.get(timeout=0.5)
@@ -112,5 +114,3 @@ class EvidenceRecorder:
                 out.write(json.dumps(record, ensure_ascii=False) + "\n")
                 out.flush()
                 lines += 1
-        finally:
-            out.close()

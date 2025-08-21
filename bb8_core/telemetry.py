@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import TYPE_CHECKING, Callable, Optional
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from .logging_setup import logger
 
@@ -15,8 +16,8 @@ class Telemetry:
         self,
         bridge,
         interval_s: int = 20,
-        publish_presence: Optional[Callable[[bool], None]] = None,
-        publish_rssi: Optional[Callable[[int], None]] = None,
+        publish_presence: Callable[[bool], None] | None = None,
+        publish_rssi: Callable[[int], None] | None = None,
     ):
         self.bridge = bridge
         self.interval_s = interval_s
@@ -44,10 +45,7 @@ class Telemetry:
             try:
                 # --- connectivity probe ---
                 is_connected = getattr(self.bridge, "is_connected", None)
-                if callable(is_connected):
-                    online = bool(is_connected())
-                else:
-                    online = True  # or False, depending on your default
+                online = bool(is_connected()) if callable(is_connected) else True
 
                 # --- presence publish ---
                 cb_presence = self._cb_presence
@@ -78,7 +76,7 @@ class Telemetry:
                     cb_rssi = getattr(self.bridge, "publish_rssi", None)
                 if callable(cb_rssi) and dbm is not None:
                     try:
-                        if isinstance(dbm, (int, float, str)):
+                        if isinstance(dbm, int | float | str):
                             cb_rssi(int(dbm))
                         else:
                             logger.warning(

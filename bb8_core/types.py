@@ -1,12 +1,13 @@
-# beep_boop_bb8/bb8_core/types.py
+# bb8_core/types.py
 from __future__ import annotations
 
-from typing import Any, Callable, Optional, Protocol, Tuple, runtime_checkable
+from collections.abc import Callable
+from typing import Any, Protocol, runtime_checkable
 
 # ---------------------------
 # Simple aliases (stable)
 # ---------------------------
-RGB = Tuple[int, int, int]
+RGB = tuple[int, int, int]
 Scalar = (
     "Scalar"  # alias for readable callbacks below (string-based to avoid 3.8 | syntax)
 )
@@ -22,7 +23,7 @@ Scalar = (
 # ---------------------------
 BoolCallback = Callable[[bool], None]
 IntCallback = Callable[[int], None]
-OptIntCallback = Callable[[Optional[int]], None]
+OptIntCallback = Callable[[int | None], None]
 RGBCallback = Callable[[int, int, int], None]
 ScalarCallback = Callable[[Any], None]  # Scalar echo: bool|int|float|str
 

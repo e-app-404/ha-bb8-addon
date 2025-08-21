@@ -29,11 +29,7 @@ class JsonRedactingHandler(logging.StreamHandler):
     def emit(self, record: logging.LogRecord) -> None:
         try:
             msg = record.msg
-            if isinstance(msg, dict):
-                line = json.dumps(msg, default=str)
-            else:
-                line = str(msg)
-            # Use new redact function
+            line = json.dumps(msg, default=str) if isinstance(msg, dict) else str(msg)
             line = redact(line)
             stream = self.stream if hasattr(self, "stream") else sys.stdout
             stream.write(line + "\n")
@@ -109,14 +105,14 @@ def _writable(path: str) -> bool:
 
 
 def init_file_handler(
-    default_path="/addons/local/beep_boop_bb8/reports/ha_bb8_addon.log",
+    default_path="/addons/docs/reports/ha_bb8_addon.log",
 ) -> logging.Handler:
     """
-    Prefer LOG_PATH from config, then BB8_LOG_PATH env, then default_path, then /tmp, then stderr.
-    Emits one warning on fallback.
+    Prefer LOG_PATH from config, then BB8_LOG_PATH env, then default_path, then /tmp,
+    then stderr. Emits one warning on fallback.
     """
     candidate = _cfg.get("LOG_PATH") or os.environ.get("BB8_LOG_PATH") or default_path
-    # Detect environment: if running in Home Assistant, /addons is present and /Volumes is not
+    # Detect environment: if running in HA, /addons is present and /Volumes is not
     is_ha = os.path.exists("/addons") and not os.path.exists("/Volumes")
     # If running in HA and candidate starts with /Volumes, strip it
     if is_ha and candidate.startswith("/Volumes"):

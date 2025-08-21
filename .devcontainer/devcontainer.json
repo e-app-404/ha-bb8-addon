@@ -1,5 +1,5 @@
 {
-  "name": "HA Add-on Dev (beep_boop_bb8)",
+  "name": "HA Add-on Dev (bb8_core)",
   "image": "ghcr.io/home-assistant/devcontainer:stable",
   "runArgs": [
     "--privileged",
@@ -13,8 +13,8 @@
     "--cap-add=NET_ADMIN",
     "--group-add=bluetooth"
   ],
-  "workspaceMount": "source=${localWorkspaceFolder}/addons/local/beep_boop_bb8,target=/workspace/beep_boop_bb8,type=bind,consistency=cached",
-  "workspaceFolder": "/workspace/beep_boop_bb8",
+  "workspaceMount": "source=${localWorkspaceFolder}/addons/docs,target=/workspace/bb8_core,type=bind,consistency=cached",
+  "workspaceFolder": "/workspace/bb8_core",
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.12"

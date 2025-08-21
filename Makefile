@@ -1,18 +1,36 @@
 # =========
+#.RECIPEPREFIX =  # <- INTENTIONAL SINGLE SPACE AFTER '='
+# Strategos: allow space-indented recipe lines (fixes 'missing separator' from GNU make).
+# This is a build-only change. No targets or commands altered.
+# GNU Make 3.82+ supports .RECIPEPREFIX.
 # Evidence
 # =========
+VENV := $(CURDIR)/.venv
+PYTHON := $(VENV)/bin/python
+PIP := $(VENV)/bin/pip
+
+.PHONY: venv
+venv:
+	@test -x "$(PYTHON)" || (python3 -m venv "$(VENV)" && "$(PIP)" install -U pip)
+
+testcov: venv
+	@mkdir -p reports/qa_$(STAMP)
+	PYTHONPATH=$(PYTHONPATH) "$(PYTHON)" -m pytest -q --maxfail=1 --disable-warnings \
+	--cov=bb8_core --cov-report=term-missing | tee reports/qa_$(STAMP)/pytest.log
 
 STAMP ?= $(shell date +"%Y%m%d_%H%M%S")
+# Consolidated reports directory (root-level); override via env if needed
+REPORTS_DIR ?= ../reports
 
 .PHONY: evidence-stp4 evidence-clean
 
 evidence-stp4:
 	@if [ -z "$$MQTT_HOST" ]; then \
-		echo "ERROR: MQTT_HOST must be set in the environment (e.g., export MQTT_HOST=192.168.x.x)"; \
-		exit 1; \
+	echo "ERROR: MQTT_HOST must be set in the environment (e.g., export MQTT_HOST=192.168.0.129)"; \
+	exit 1; \
 	fi
-	@mkdir -p reports
-	@echo ">> collecting STP4 evidence to reports/stp4_$(STAMP)"
+	@mkdir -p $(REPORTS_DIR)
+	@echo ">> collecting STP4 evidence to $(REPORTS_DIR)/stp4_$(STAMP)"
 	@export MQTT_HOST=$$MQTT_HOST; \
 	export MQTT_BASE=$$MQTT_BASE; \
 	export REQUIRE_DEVICE_ECHO=$$REQUIRE_DEVICE_ECHO; \
@@ -21,14 +39,14 @@ evidence-stp4:
 	export MQTT_USERNAME=$$MQTT_USERNAME; \
 	export MQTT_PASSWORD=$$MQTT_PASSWORD; \
 	export MQTT_PORT=$$MQTT_PORT; \
-	bash ops/evidence/run_evidence_stp4.sh "reports/stp4_$(STAMP)"
+	bash ops/evidence/evidence_preflight.sh "$(REPORTS_DIR)/stp4_$(STAMP)"
 
 evidence-validate:
 	@echo ">> validating latest STP4 evidence bundle"
 	@bash ops/evidence/stp4_evidence_validate.sh
 
 evidence-clean:
-	@rm -rf reports/stp4_* || true
+	@rm -rf $(REPORTS_DIR)/stp4_* || true
 	@echo ">> cleaned prior STP4 evidence bundles"
 
 PYTHON=python3
@@ -37,33 +55,37 @@ PYTHON=python3
 # QA & CI Targets
 # =====================
 
+.PHONY: addon-audit
+addon-audit:
+	python tools/audit_addon_tree.py --strict --out reports/addon_audit_ci.json
+
 .PHONY: format lint types testcov security qa ci
 
 format:
-	@mkdir -p reports/qa_$(STAMP)
-	black --check . 2>&1 | tee reports/qa_$(STAMP)/black.log
+	@mkdir -p $(REPORTS_DIR)/qa_$(STAMP)
+	black --check . 2>&1 | tee $(REPORTS_DIR)/qa_$(STAMP)/black.log
 
 lint:
-	@mkdir -p reports/qa_$(STAMP)
-	ruff check . | tee reports/qa_$(STAMP)/ruff.log
+	@mkdir -p $(REPORTS_DIR)/qa_$(STAMP)
+	ruff check . | tee $(REPORTS_DIR)/qa_$(STAMP)/ruff.log
 
 types:
-	@mkdir -p reports/qa_$(STAMP)
-	mypy --install-types --non-interactive . | tee reports/qa_$(STAMP)/mypy.log
+	@mkdir -p $(REPORTS_DIR)/qa_$(STAMP)
+	mypy --install-types --non-interactive . | tee $(REPORTS_DIR)/qa_$(STAMP)/mypy.log
 
 testcov:
-	@mkdir -p reports/qa_$(STAMP)
-	PYTHONPATH=. pytest -q --maxfail=1 --disable-warnings --cov=bb8_core --cov-report=term-missing | tee reports/qa_$(STAMP)/pytest.log
+	@mkdir -p $(REPORTS_DIR)/qa_$(STAMP)
+	PYTHONPATH=. pytest -q --maxfail=1 --disable-warnings --cov=bb8_core --cov-report=term-missing | tee $(REPORTS_DIR)/qa_$(STAMP)/pytest.log
 
 security:
-	@mkdir -p reports/qa_$(STAMP)
-	bandit -q -r bb8_core | tee reports/qa_$(STAMP)/bandit.log || true
-	safety scan --full-report | tee reports/qa_$(STAMP)/safety.log || true
+	@mkdir -p $(REPORTS_DIR)/qa_$(STAMP)
+	bandit -q -r bb8_core | tee $(REPORTS_DIR)/qa_$(STAMP)/bandit.log || true
+	safety scan --full-report | tee $(REPORTS_DIR)/qa_$(STAMP)/safety.log || true
 
 qa:
 	@STAMP=$(STAMP); \
-	mkdir -p reports/qa_$$STAMP; \
-	echo ">> running QA suite to reports/qa_$$STAMP/"; \
+	mkdir -p $(REPORTS_DIR)/qa_$$STAMP; \
+	echo ">> running QA suite to $(REPORTS_DIR)/qa_$$STAMP/"; \
 	$(MAKE) format STAMP=$$STAMP; \
 	$(MAKE) lint STAMP=$$STAMP; \
 	$(MAKE) types STAMP=$$STAMP; \
@@ -72,11 +94,11 @@ qa:
 
 ci:
 	@STAMP=$(STAMP); \
-	mkdir -p reports/ci_$$STAMP; \
-	echo ">> running CI suite to reports/ci_$$STAMP/"; \
+	mkdir -p $(REPORTS_DIR)/ci_$$STAMP; \
+	echo ">> running CI suite to $(REPORTS_DIR)/ci_$$STAMP/"; \
 	$(MAKE) format STAMP=$$STAMP; \
 	$(MAKE) lint STAMP=$$STAMP; \
 	$(MAKE) types STAMP=$$STAMP; \
 	$(MAKE) testcov STAMP=$$STAMP; \
 	$(MAKE) security STAMP=$$STAMP \
-	| tee reports/ci_$$STAMP/ci.log
+	| tee $(REPORTS_DIR)/ci_$$STAMP/ci.log

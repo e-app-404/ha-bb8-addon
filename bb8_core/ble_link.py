@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Coroutine
 from concurrent.futures import Future
-from typing import Any, Coroutine, List, Optional, TypeVar
-from venv import logger
+from typing import Any
 
-T = TypeVar("T")
 log = logging.getLogger(__name__)
-_loop: Optional[asyncio.AbstractEventLoop] = None
-_runner_future: Optional[Future] = None
+_loop: asyncio.AbstractEventLoop | None = None
+_runner_future: Future | None = None
 _started: bool = False
 
 
@@ -20,63 +19,6 @@ def set_loop(loop: asyncio.AbstractEventLoop) -> None:
 
 
 async def _run() -> None:
-    backoff = [0.1, 0.2, 0.5, 1.0, 2.0]
-    i = 0
-    try:
-        while True:
-            # ... BLE connect/IO logic ...
-            await asyncio.sleep(backoff[min(i, 4)])
-            i = min(i + 1, 4)
-    except asyncio.CancelledError:
-        logger.info("BLE worker cancelled; shutting down cleanly.")
-        raise
-
-
-async def _cancel_and_drain() -> int:
-    """
-    Cancel and await completion of all pending tasks on the BLE loop.
-    Must be executed *inside* the BLE loop.
-    Returns the number of tasks cancelled.
-    """
-    current = asyncio.current_task()
-    # Snapshot all tasks bound to this loop
-    pending: List[asyncio.Task[Any]] = [
-        t for t in asyncio.all_tasks() if t is not current and not t.done()
-    ]
-    for t in pending:
-        t.cancel()
-    if pending:
-        results = await asyncio.gather(*pending, return_exceptions=True)
-        excs = [r for r in results if isinstance(r, Exception)]
-        if excs:
-            log.debug(
-                "BLE cleanup gathered %d exception(s): %s",
-                len(excs),
-                ", ".join(type(e).__name__ for e in excs),
-            )
-    return len(pending)
-    """
-    Cancel and await completion of all pending tasks on the BLE loop.
-    Must be executed *inside* the BLE loop.
-    Returns the number of tasks cancelled.
-    """
-    current = asyncio.current_task()
-    # Snapshot all tasks bound to this loop
-    pending: List[asyncio.Task[Any]] = [
-        t for t in asyncio.all_tasks() if t is not current and not t.done()
-    ]
-    for t in pending:
-        t.cancel()
-    if pending:
-        results = await asyncio.gather(*pending, return_exceptions=True)
-        excs = [r for r in results if isinstance(r, Exception)]
-        if excs:
-            log.debug(
-                "BLE cleanup gathered %d exception(s): %s",
-                len(excs),
-                ", ".join(type(e).__name__ for e in excs),
-            )
-    return len(pending)
     """
     BLE worker main coroutine.
     Must only be scheduled on the dedicated loop.
@@ -89,8 +31,33 @@ async def _cancel_and_drain() -> int:
             await asyncio.sleep(backoff[min(i, 4)])
             i = min(i + 1, 4)
     except asyncio.CancelledError:
-        logger.info("BLE worker cancelled; shutting down cleanly.")
+        log.info("BLE worker cancelled; shutting down cleanly.")
         raise
+
+
+async def _cancel_and_drain() -> int:
+    """
+    Cancel and await completion of all pending tasks on the BLE loop.
+    Must be executed *inside* the BLE loop.
+    Returns the number of tasks cancelled.
+    """
+    current = asyncio.current_task()
+    # Snapshot all tasks bound to this loop
+    pending: list[asyncio.Task[Any]] = [
+        t for t in asyncio.all_tasks() if t is not current and not t.done()
+    ]
+    for t in pending:
+        t.cancel()
+    if pending:
+        results = await asyncio.gather(*pending, return_exceptions=True)
+        excs = [r for r in results if isinstance(r, Exception)]
+        if excs:
+            log.debug(
+                "BLE cleanup gathered %d exception(s): %s",
+                len(excs),
+                ", ".join(type(e).__name__ for e in excs),
+            )
+    return len(pending)
 
 
 def start() -> None:
@@ -102,7 +69,7 @@ def start() -> None:
         raise RuntimeError("BLE loop not set; call set_loop() before start()")
     _runner_future = asyncio.run_coroutine_threadsafe(_run(), _loop)
     _started = True
-    logger.info("BLE link runner started.")
+    log.info("BLE link runner started.")
 
 
 def stop(timeout: float = 2.5) -> None:
@@ -125,14 +92,14 @@ def stop(timeout: float = 2.5) -> None:
             drained = asyncio.run_coroutine_threadsafe(
                 _cancel_and_drain(), _loop
             ).result(timeout=timeout)
-            logger.info("BLE cleanup: cancelled %d pending task(s).", drained)
-        except asyncio.TimeoutError:
+            log.info("BLE cleanup: cancelled %d pending task(s).", drained)
+        except TimeoutError:
             log.warning("BLE cleanup timed out after %.2fs.", timeout)
         except Exception as exc:  # noqa: BLE001
             log.warning("BLE cleanup wait raised: %s", exc)
 
 
-def run_coro(coro: Coroutine[Any, Any, T]) -> Future[T]:
+def run_coro(coro: Coroutine[Any, Any, Any]) -> Future:
     """Schedule a coroutine on the dedicated BLE loop."""
     if _loop is None:
         raise RuntimeError("BLE loop not set; call set_loop() first")
@@ -148,7 +115,7 @@ class BLELink:
     Internally delegates to the module-level runner functions above.
     """
 
-    def __init__(self, mac: Optional[str] = None, adapter: Optional[str] = None):
+    def __init__(self, mac: str | None = None, adapter: str | None = None):
         self.mac = mac
         self.adapter = adapter
 
@@ -160,7 +127,7 @@ class BLELink:
         """Stop the shared BLE runner cleanly."""
         stop(timeout=timeout)
 
-    def submit(self, coro: Coroutine[Any, Any, T]) -> Future[T]:
+    def submit(self, coro: Coroutine[Any, Any, Any]) -> Future:
         """
         Schedule a coroutine onto the dedicated BLE loop.
         Example: link.submit(device.connect())

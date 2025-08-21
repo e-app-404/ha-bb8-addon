@@ -1,10 +1,5 @@
 from __future__ import annotations
 
-"""
-auto_detect.py
-
-Device discovery and auto-detection logic, scans for BB-8 and caches MAC address.
-"""
 import asyncio
 import contextlib
 import json
@@ -12,12 +7,18 @@ import os
 import re
 import threading
 import time
-from typing import Any, Iterable, List, Optional, Tuple
+from collections.abc import Iterable
+from typing import Any
 
 from .addon_config import load_config
 from .ble_gateway import BleGateway
 from .logging_setup import logger
 
+"""
+auto_detect.py
+
+Device discovery and auto-detection logic, scans for BB-8 and caches MAC address.
+"""
 # Lazy import for testability
 with contextlib.suppress(ImportError):
     from bleak import BleakClient, BleakScanner  # type: ignore
@@ -45,18 +46,18 @@ class Candidate:
 
 
 def _valid_mac(mac: str) -> bool:
-    return bool(re.fullmatch(r"([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}", mac or ""))
+    return bool(re.fullmatch("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}", str(mac or "")))
 
 
 def _now() -> float:
     return time.time()
 
 
-def load_cache(now: float, ttl_hours: int, cache_path: str) -> Optional[Candidate]:
+def load_cache(now: float, ttl_hours: int, cache_path: str) -> Candidate | None:
     if not cache_path or not os.path.exists(cache_path):
         return None
     try:
-        with open(cache_path, "r") as f:
+        with open(cache_path) as f:
             data = json.load(f)
         if ttl_hours > 0:
             age_hours = (now - data.get("last_seen_epoch", 0)) / 3600.0
@@ -83,16 +84,16 @@ def save_cache(mac: str, name: str, cache_path: str) -> None:
         json.dump(payload, f)
 
 
-def is_probable_bb8(name: Optional[str]) -> bool:
+def is_probable_bb8(name: str | None) -> bool:
     if not name:
         return False
     name_l = name.lower()
     return any(t in name_l for t in ("bb-8", "droid", "sphero"))
 
 
-async def async_scan_for_bb8(scan_seconds: int) -> List[Candidate]:
+async def async_scan_for_bb8(scan_seconds: int) -> list[Candidate]:
     devices = await BleakScanner.discover(timeout=scan_seconds)  # type: ignore[name-defined]
-    out: List[Candidate] = []
+    out: list[Candidate] = []
     for d in devices:
         name = getattr(d, "name", None)
         if is_probable_bb8(name):
@@ -105,7 +106,7 @@ async def async_scan_for_bb8(scan_seconds: int) -> List[Candidate]:
             )
 
     # Sort: exact name first, stronger RSSI, then MAC
-    def score(c: Candidate) -> Tuple[int, int, str]:
+    def score(c: Candidate) -> tuple[int, int, str]:
         exact = 1 if c.name.lower() == "bb-8" else 0
         rssi = c.rssi if isinstance(c.rssi, int) else -999
         return (exact, rssi, c.mac)
@@ -118,7 +119,7 @@ def resolve_bb8_mac(
     scan_seconds: int,
     cache_ttl_hours: int,
     rescan_on_fail: bool,
-    adapter: Optional[str] = None,
+    adapter: str | None = None,
 ) -> str:
     mac = load_mac_from_cache(ttl_hours=cache_ttl_hours)
     if mac:
@@ -143,7 +144,7 @@ def resolve_bb8_mac(
     return mac
 
 
-def load_mac_from_cache(ttl_hours: int = CACHE_DEFAULT_TTL_HOURS) -> Optional[str]:
+def load_mac_from_cache(ttl_hours: int = CACHE_DEFAULT_TTL_HOURS) -> str | None:
     cache_path = CFG.get("CACHE_PATH", CACHE_PATH)
     try:
         st = os.stat(cache_path)
@@ -151,7 +152,7 @@ def load_mac_from_cache(ttl_hours: int = CACHE_DEFAULT_TTL_HOURS) -> Optional[st
         if age_hours > max(1, ttl_hours):
             logger.debug({"event": "auto_detect_cache_stale", "age_hours": age_hours})
             return None
-        with open(cache_path, "r", encoding="utf-8") as f:
+        with open(cache_path, encoding="utf-8") as f:
             data = json.load(f)
         mac = data.get("bb8_mac")
         return mac
@@ -172,7 +173,7 @@ def save_mac_to_cache(mac: str) -> None:
         logger.warning({"event": "auto_detect_cache_write_error", "error": repr(e)})
 
 
-def scan_for_bb8(scan_seconds: int, adapter: Optional[str]) -> list[dict]:
+def scan_for_bb8(scan_seconds: int, adapter: str | None) -> list[dict]:
     gw = BleGateway(mode="bleak", adapter=adapter)
     try:
         loop = asyncio.new_event_loop()
@@ -189,7 +190,7 @@ def scan_for_bb8(scan_seconds: int, adapter: Optional[str]) -> list[dict]:
         return []
 
 
-def pick_bb8_mac(devices: Iterable[dict]) -> Optional[str]:
+def pick_bb8_mac(devices: Iterable[dict]) -> str | None:
     candidates = []
     for d in devices:
         name = (d.get("name") or "").upper()

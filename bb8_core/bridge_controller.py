@@ -1,5 +1,32 @@
 from __future__ import annotations
 
+import asyncio
+import json
+import logging
+import os
+import threading
+from typing import Any
+
+from .addon_config import load_config
+from .auto_detect import resolve_bb8_mac
+from .ble_bridge import BLEBridge
+from .ble_gateway import BleGateway
+from .ble_link import BLELink
+from .common import (  # noqa: F401  (used via constants)
+    CMD_TOPICS,
+    STATE_TOPICS,
+    publish_device_echo,
+)
+from .evidence_capture import EvidenceRecorder
+from .facade import BB8Facade
+from .logging_setup import logger
+from .mqtt_dispatcher import (
+    ensure_dispatcher_started,
+    register_subscription,  # dynamic topic binding
+)
+
+log = logging.getLogger(__name__)
+
 # Explicit export set (helps linters/import tools)
 __all__ = [
     "start_bridge_controller",
@@ -16,21 +43,7 @@ Orchestrates BLE and MQTT setup for the BB-8 add-on:
 
 All code lives inside functions; only the __main__ guard executes main().
 """
-import asyncio
-import json
-import os  # Needed for os.environ
-import threading
-from typing import Any, Dict, Optional
 
-from .addon_config import load_config
-from .auto_detect import resolve_bb8_mac
-from .ble_bridge import BLEBridge
-from .ble_gateway import BleGateway
-from .ble_link import BLELink
-from .common import CMD_TOPICS, STATE_TOPICS, publish_device_echo
-from .evidence_capture import EvidenceRecorder
-from .facade import BB8Facade
-from .logging_setup import logger
 
 DEFAULT_MQTT_HOST = "localhost"
 DEFAULT_MQTT_PORT = 1883
@@ -39,29 +52,45 @@ DEFAULT_MQTT_PORT = 1883
 # Removed import of get_client (unknown symbol)
 
 
-# Client lookup when publishing; avoids import-order issues.
-# Define get_client as a stub or import from the correct module
 def get_client():
-    # TODO: Replace with actual client getter logic
-    return None
+    """
+    Return the live MQTT client from the dispatcher.
+    Lazy import avoids import-time cycles. This function fails fast with a clear
+    message if the dispatcher has not initialized the client yet.
+    """
+    # Lazy import keeps import graph acyclic at module import time.
+    from .mqtt_dispatcher import get_client as _get_client  # type: ignore
+
+    client = _get_client()
+    if client is None:
+        raise RuntimeError(
+            "MQTT client unavailable: start mqtt_dispatcher before bridge_controller."
+        )
+    return client
+
+
+_client_or_none_cached_client = None
 
 
 def _client_or_none():
-    c = get_client()
-    return c
+    global _client_or_none_cached_client
+    if _client_or_none_cached_client is None:
+        try:
+            _client_or_none_cached_client = get_client()
+        except Exception:
+            _client_or_none_cached_client = None
+    return _client_or_none_cached_client
 
 
 # so later divergent attempts (e.g., localhost) are suppressed.
-from .mqtt_dispatcher import ensure_dispatcher_started
-
 ensure_dispatcher_started()
-_ble_loop: Optional[asyncio.AbstractEventLoop] = None
+_ble_loop: asyncio.AbstractEventLoop | None = None
 _ble_inited: bool = False
 client = None
 
 
 def on_power_set(payload):
-    c = _client_or_none()
+    c = get_client()
     if not c:
         logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["power"])
         return
@@ -72,7 +101,7 @@ def on_power_set(payload):
 
 
 def on_stop():
-    c = _client_or_none()
+    c = get_client()
     if not c:
         logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["stop"])
         return
@@ -83,7 +112,7 @@ def on_stop():
 
 
 def on_sleep():
-    c = _client_or_none()
+    c = get_client()
     if not c:
         logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["sleep"])
         return
@@ -94,7 +123,7 @@ def on_sleep():
 
 
 def on_drive(value=None):
-    c = _client_or_none()
+    c = get_client()
     if not c:
         logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["drive"])
         return
@@ -105,7 +134,7 @@ def on_drive(value=None):
 
 
 def on_heading(value=None):
-    c = _client_or_none()
+    c = get_client()
     if not c:
         logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["heading"])
         return
@@ -116,7 +145,7 @@ def on_heading(value=None):
 
 
 def on_speed(value=None):
-    c = _client_or_none()
+    c = get_client()
     if not c:
         logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["speed"])
         return
@@ -126,17 +155,120 @@ def on_speed(value=None):
     )
 
 
-def on_led_set(r, g, b):
-    payload = json.dumps({"r": r, "g": g, "b": b})
-    c = _client_or_none()
-    if not c:
-        logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["led"])
-        return
-    c.publish(CMD_TOPICS["led"][0], payload=payload, qos=1, retain=False)
-    c.publish(STATE_TOPICS["led"], payload=payload, qos=1, retain=False)
-    logger.info(
-        "echo_pub topic=%s retain=false qos=1 payload=%s", STATE_TOPICS["led"], payload
+def _mqtt_publish(
+    topic: str, payload: str, *, qos: int = 0, retain: bool = False
+) -> None:
+    """
+    Single publish seam used by echo paths. Resolves client AT CALL TIME to
+    pick up test monkeypatches reliably.
+    """
+    client = None
+    try:
+        from .mqtt_dispatcher import get_client as _get_client
+
+        client = _get_client()
+    except Exception:
+        client = None
+    if client is None:
+        try:
+            client = get_client()
+        except Exception:
+            client = None
+    if client is None:
+        raise RuntimeError("MQTT client not available for publish")
+    log.info(
+        "echo_pub topic=%s retain=%s qos=%s payload=%s", topic, retain, qos, payload
     )
+    client.publish(topic, payload, qos=qos, retain=retain)
+
+
+def on_led_set(r, g, b):
+    """Publish strict LED state JSON; never reflect to command topics."""
+    payload = json.dumps({"r": int(r), "g": int(g), "b": int(b)})
+    _mqtt_publish(STATE_TOPICS["led"], payload, qos=0, retain=False)
+
+
+def _on_led_command(text: str) -> None:
+    """
+    MQTT command handler for LED payloads coming via `/led/set` or `/led/cmd`.
+    Expects JSON: {"r":<int>,"g":<int>,"b":<int>}.
+    """
+    try:
+        data = json.loads(text or "{}")
+        if not isinstance(data, dict):
+            return
+        r = int(data.get("r", 0))
+        g = int(data.get("g", 0))
+        b = int(data.get("b", 0))
+    except Exception as exc:
+        log.warning("led_cmd parse error: %s payload=%r", exc, text)
+        return
+    on_led_set(r, g, b)
+
+
+def _wire_led_command_handler() -> None:
+    """
+    Subscribe to bb8/led/cmd and publish strict {"r","g","b"} to
+    bb8/led/state. No 'source' field; retain=False (STP4 strict).
+    Uses dispatcher subscription registry for idempotent binding.
+    """
+    base = os.environ.get("MQTT_BASE", "bb8")
+    topic_cmd = f"{base}/led/cmd"
+    topic_set = f"{base}/led/set"  # legacy path also supported
+    topic_state = f"{base}/led/state"
+    qos = 0
+
+    def _publish_led_state(rgb: dict[str, int]) -> None:
+        cli = get_client() if get_client else None  # type: ignore
+        if cli is None:
+            log.warning("LED echo skipped (no mqtt client): %s", topic_state)
+            return
+        payload = json.dumps(rgb, separators=(",", ":"))
+        try:
+            cli.publish(topic_state, payload=payload, qos=qos, retain=False)
+            log.info("LED state echoed -> %s", payload)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("LED echo publish failed: %s", exc)
+
+    def _on_led_cmd_text(text: str) -> None:
+        try:
+            data = json.loads(text or "{}")
+            if not isinstance(data, dict):
+                return
+            r = int(data.get("r", 0))
+            g = int(data.get("g", 0))
+            b = int(data.get("b", 0))
+        except Exception as exc:
+            log.warning("led_cmd parse error: %s payload=%r", exc, text)
+            return
+        _publish_led_state({"r": r, "g": g, "b": b})
+
+    # Register via dispatcher if available; otherwise, try direct paho hooks.
+    if register_subscription:
+        try:
+            register_subscription(topic_cmd, _on_led_cmd_text)
+            register_subscription(topic_set, _on_led_cmd_text)
+            log.info("LED cmd handlers registered: %s , %s", topic_cmd, topic_set)
+            return
+        except Exception as exc:  # pragma: no cover
+            log.debug("register_subscription failed: %s", exc)
+
+    # Fallback: bind directly if client exists now.
+    cli = get_client() if get_client else None  # type: ignore
+    if cli is None:
+        log.warning("LED cmd wiring deferred: no mqtt client yet")
+        return
+
+    def _on_msg(_c, _u, msg):
+        try:
+            _on_led_cmd_text(msg.payload.decode("utf-8"))
+        except Exception as exc:  # noqa: BLE001
+            log.debug("LED msg decode failed: %s", exc)
+
+    for t in (topic_cmd, topic_set):
+        cli.message_callback_add(t, _on_msg)
+        cli.subscribe(t, qos=qos)
+    log.info("LED cmd handler wired (fallback): %s , %s", topic_cmd, topic_set)
 
 
 def _start_ble_loop_thread() -> asyncio.AbstractEventLoop:
@@ -177,10 +309,11 @@ def shutdown_ble() -> None:
 
 
 # -------- Dispatcher compatibility shim --------
-def _start_dispatcher_compat(func, supplied: Dict[str, Any]) -> Any:
+def _start_dispatcher_compat(func, supplied: dict[str, Any]) -> Any:
     """
     Start MQTT dispatcher, pruning/aliasing kwargs to match the function signature.
-    Supports both legacy ('host','port','topic','user','password','controller') and new-style ('mqtt_host','mqtt_port','mqtt_topic','username','passwd','bridge') names.
+    Supports both legacy ('host','port','topic','user','password','controller') and
+    new-style ('mqtt_host','mqtt_port','mqtt_topic','username','passwd','bridge') names.
     """
     import inspect
 
@@ -213,8 +346,8 @@ def _start_dispatcher_compat(func, supplied: Dict[str, Any]) -> Any:
         "topic_prefix": "topic",
     }
 
-    pruned: Dict[str, Any] = {}
-    for name in sig.parameters.keys():
+    pruned: dict[str, Any] = {}
+    for name in sig.parameters:
         if name in offered:
             pruned[name] = offered[name]
         elif name in aliases and aliases[name] in offered:
@@ -235,8 +368,8 @@ def _start_dispatcher_compat(func, supplied: Dict[str, Any]) -> Any:
 # -------- Core orchestration --------
 # Canonical entry point for controller startup
 def start_bridge_controller(
-    config: Optional[Dict[str, Any]] = None,
-) -> Optional[BB8Facade]:
+    config: dict[str, Any] | None = None,
+) -> BB8Facade | None:
     """
     Canonical entry point for starting the BB-8 bridge controller.
     Resolves BB-8 MAC, initializes BLE gateway/bridge, starts MQTT dispatcher.
@@ -268,7 +401,7 @@ def start_bridge_controller(
             "adapter": cfg.get("ble_adapter"),
         }
     )
-    target_mac: Optional[str] = (cfg.get("bb8_mac") or "").strip() or None
+    target_mac: str | None = (cfg.get("bb8_mac") or "").strip() or None
     if not target_mac:
         logger.info(
             {
@@ -312,15 +445,7 @@ def start_bridge_controller(
 
 def _wait_forever(client, bridge, ble=None) -> None:
     """Block the main thread until SIGTERM/SIGINT; then shutdown cleanly."""
-    stop = threading.Event()
-
-    def _handle(sig, _frame):
-        try:
-            from .logging_setup import logger
-
-            logger.info({"event": "shutdown_signal", "signal": int(sig)})
-        except Exception:
-            pass
+    pass
 
     # Example config loading (replace with actual config logic)
     cfg, _ = load_config() if "load_config" in globals() else ({}, None)
@@ -345,7 +470,7 @@ def _wait_forever(client, bridge, ble=None) -> None:
     )
 
     # Resolve BB-8 MAC if not provided
-    target_mac: Optional[str] = (cfg.get("bb8_mac") or "").strip() or None
+    target_mac: str | None = (cfg.get("bb8_mac") or "").strip() or None
     if not target_mac:
         logger.info(
             {
@@ -438,7 +563,7 @@ def _wait_forever(client, bridge, ble=None) -> None:
         }
     )
     # Removed unused status_topic assignment
-    status_topic = cfg.get("status_topic") if cfg else f"{mqtt_topic}/status"
+    # status_topic = cfg.get("status_topic") if cfg else f"{mqtt_topic}/status"
     # Example usage of dispatcher (replace with actual call)
     # If you need to use dispatcher_args, ensure you reference it later in the code.
     # For now, start the dispatcher directly if needed:

@@ -17,8 +17,8 @@ import os
 import sys
 import threading
 import time
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import UTC, datetime
+from typing import Any
 
 # Use shared config
 try:
@@ -38,9 +38,11 @@ except Exception as e:
     logging.basicConfig(level=logging.WARNING)
     logging.warning(
         f"[DEPENDENCY] paho-mqtt not installed or import failed: {e}. "
-        f"This usually means an inactive virtual environment or missing dependencies."
+        f"Usually means inactive virtual environment or missing dependencies."
     )
-    print("ERR: paho-mqtt not installed. pip install paho-mqtt", file=sys.stderr)
+    print(
+        "ERR: paho-mqtt not installed. pip install paho-mqtt", file=sys.stderr
+    )
     raise
 
 # ----- config / args -----
@@ -62,7 +64,8 @@ def get_shared_config():
             print(f"[ERROR] Failed to load config: {e}", file=sys.stderr)
             return {}
     logging.warning(
-        "[CONFIG] load_config is not available. This usually means the module import failed or PYTHONPATH is not set."
+        "[CONFIG] load_config is unavailable, usually means the module import "
+        "failed or PYTHONPATH is not set."
     )
     return {}
 
@@ -86,13 +89,16 @@ def parse_args():
     missing_port = not cfg.get("MQTT_PORT") and not os.environ.get("MQTT_PORT")
     if missing_host or missing_port:
         print(
-            "[ERROR] MQTT config missing: host and/or port not set. Please set MQTT_HOST and MQTT_PORT in your environment or config.",
+            "[ERROR] MQTT config missing: host and/or port not set. "
+            "Please set MQTT_HOST and MQTT_PORT in your environment or config.",
             file=sys.stderr,
         )
         sys.exit(2)
 
     p = argparse.ArgumentParser()
-    p.add_argument("--host", default=cfg.get("MQTT_HOST", os.environ.get("MQTT_HOST")))
+    p.add_argument(
+        "--host", default=cfg.get("MQTT_HOST", os.environ.get("MQTT_HOST"))
+    )
     p.add_argument(
         "--port",
         type=int,
@@ -102,13 +108,16 @@ def parse_args():
         "--user", default=cfg.get("MQTT_USERNAME", os.environ.get("MQTT_USER"))
     )
     p.add_argument(
-        "--password", default=cfg.get("MQTT_PASSWORD", os.environ.get("MQTT_PASSWORD"))
+        "--password",
+        default=cfg.get("MQTT_PASSWORD", os.environ.get("MQTT_PASSWORD")),
     )
     p.add_argument(
-        "--base", default=cfg.get("MQTT_BASE", os.environ.get("MQTT_BASE", "bb8"))
+        "--base",
+        default=cfg.get("MQTT_BASE", os.environ.get("MQTT_BASE", "bb8")),
     )
     p.add_argument(
-        "--out", default="reports/stp4_" + datetime.now().strftime("%Y%m%d_%H%M%S")
+        "--out",
+        default="reports/stp4_" + datetime.now().strftime("%Y%m%d_%H%M%S"),
     )
     p.add_argument(
         "--timeout", type=float, default=2.0, help="State echo timeout seconds"
@@ -118,7 +127,7 @@ def parse_args():
 
 # ----- helpers -----
 def utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def ensure_dir(path: str):
@@ -131,7 +140,7 @@ def dump_json(path: str, obj: Any):
 
 
 # Minimal HA discovery key presence check
-def validate_discovery_obj(obj: Dict[str, Any]) -> Tuple[bool, str]:
+def validate_discovery_obj(obj: dict[str, Any]) -> tuple[bool, str]:
     required = ["name", "unique_id", "availability_topic"]
     for k in required:
         if k not in obj:
@@ -150,7 +159,7 @@ def validate_discovery(configs, device_identifiers, base_topic=None):
     """
     relevant = []
     for item in configs:
-        if isinstance(item, (list, tuple)) and len(item) >= 2:
+        if isinstance(item, list | tuple) and len(item) >= 2:
             topic, payload = item[0], item[1]
         elif isinstance(item, dict):
             topic, payload = item.get("topic"), item.get("payload")
@@ -174,28 +183,39 @@ def validate_discovery(configs, device_identifiers, base_topic=None):
         req = ["unique_id", "name", "state_topic", "device"]
         missing = [k for k in req if k not in o]
         if missing:
-            results.append(
-                {"topic": topic, "valid": False, "reason": f"missing:{missing}"}
-            )
+            results.append({
+                "topic": topic,
+                "valid": False,
+                "reason": f"missing:{missing}",
+            })
             ok = False
             continue
         if o["device"].get("identifiers") in (
             None,
             [],
         ):
-            results.append(
-                {"topic": topic, "valid": False, "reason": "device.identifiers missing"}
-            )
+            results.append({
+                "topic": topic,
+                "valid": False,
+                "reason": "device.identifiers missing",
+            })
             ok = False
             continue
         # commandables need command_topic
-        if any(x in topic for x in ("/light/", "/switch/", "/button/", "/number/")):
-            if "command_topic" not in o:
-                results.append(
-                    {"topic": topic, "valid": False, "reason": "command_topic missing"}
-                )
-                ok = False
-                continue
+        if (
+            any(
+                x in topic
+                for x in ("/light/", "/switch/", "/button/", "/number/")
+            )
+            and "command_topic" not in o
+        ):
+            results.append({
+                "topic": topic,
+                "valid": False,
+                "reason": "command_topic missing",
+            })
+            ok = False
+            continue
         results.append({"topic": topic, "valid": True})
     return {"valid": ok, "count": len(relevant), "details": results}
 
@@ -206,13 +226,18 @@ class Collector:
         self,
         host: str,
         port: int,
-        user: Optional[str],
-        password: Optional[str],
+        user: str | None,
+        password: str | None,
         base: str,
         outdir: str,
         timeout: float,
     ):
-        self.host, self.port, self.user, self.password = host, port, user, password
+        self.host, self.port, self.user, self.password = (
+            host,
+            port,
+            user,
+            password,
+        )
         self.base, self.outdir, self.timeout = base, outdir, timeout
         self.client = mqtt.Client(
             client_id=f"stp4-evidence-{int(time.time())}",
@@ -221,10 +246,10 @@ class Collector:
         )
         if user is not None:
             self.client.username_pw_set(user, password or None)
-        self.msg_log: List[Dict[str, Any]] = []
+        self.msg_log: list[dict[str, Any]] = []
         self.msg_cv = threading.Condition()
         self.connected = threading.Event()
-        self.discovery_dump: Dict[str, Any] = {}
+        self.discovery_dump: dict[str, Any] = {}
         # subscribe topic list
         self.state_topics = [
             f"{base}/power/state",
@@ -279,7 +304,7 @@ class Collector:
 
     def wait_for_topic(
         self, topic: str, predicate, timeout: float
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         deadline = time.time() + timeout
         with self.msg_cv:
             # search backlog first
@@ -295,11 +320,12 @@ class Collector:
                 self.msg_cv.wait(timeout=remaining)
                 for m in reversed(self.msg_log):
                     if m["topic"] == topic and predicate(m):
-                        # Only accept state with ts >= command_ts (reject stale/prestate)
+                        # Only accept state w/ ts >= command_ts
+                        # (reject stale/prestate)
                         return self._extract_state(m)
         return None
 
-    def _extract_state(self, evt: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_state(self, evt: dict[str, Any]) -> dict[str, Any]:
         src = "device"
         try:
             data = json.loads(evt["payload_raw"])
@@ -314,7 +340,7 @@ class Collector:
         }
 
     def connect(self):
-        self.client.enable_logger()  # optional: route to std logging if configured
+        self.client.enable_logger()  # opt.: route to std logging if configured
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.client.will_set(
@@ -328,12 +354,12 @@ class Collector:
         try:
             self.client.disconnect()
         finally:
-            try:
-                self.client.loop_stop()
-            except Exception:
-                pass
+            import contextlib
 
-    def publish(self, topic: str, payload: Optional[str], qos=1, retain=False):
+            with contextlib.suppress(Exception):
+                self.client.loop_stop()
+
+    def publish(self, topic: str, payload: str | None, qos=1, retain=False):
         """
         Publish and return a UTC ISO timestamp captured *before* publish.
         This timestamp is the authoritative command_ts for roundtrip ordering.
@@ -345,12 +371,12 @@ class Collector:
         return ts
 
     # Roundtrip test helpers
-    def run(self) -> Dict[str, Any]:
+    def run(self) -> dict[str, Any]:
         ensure_dir(self.outdir)
         self.connect()
 
-        traces: List[Dict[str, Any]] = []
-        failures: List[str] = []
+        traces: list[dict[str, Any]] = []
+        failures: list[str] = []
 
         import json
 
@@ -372,9 +398,9 @@ class Collector:
             cmd_p: str,
             state_t: str,
             expect,
-            m: Optional[Dict[str, Any]],
+            m: dict[str, Any] | None,
             note: str = "",
-            cmd_ts: Optional[str] = None,
+            cmd_ts: str | None = None,
         ):
             now = cmd_ts or utc_now_iso()
             cmd = {
@@ -395,7 +421,9 @@ class Collector:
                     try:
                         return datetime.fromisoformat(ts)
                     except Exception:
-                        return datetime.strptime(ts[:26], "%Y-%m-%dT%H:%M:%S.%f")
+                        return datetime.strptime(
+                            ts[:26], "%Y-%m-%dT%H:%M:%S.%f"
+                        )
 
                 if echo.get("state_ts"):
                     state_dt = parse_time(echo["state_ts"])
@@ -411,33 +439,29 @@ class Collector:
                             else:
                                 j_echo = None
                                 j_expect = None
-                                try:
+                                import contextlib
+
+                                with contextlib.suppress(Exception):
                                     j_echo = json.loads(echo["state_payload"])
-                                except Exception:
-                                    pass
-                                try:
+                                with contextlib.suppress(Exception):
                                     j_expect = json.loads(expect)
-                                except Exception:
-                                    pass
-                                # 2) JSON==JSON structural equality (e.g. LED RGB)
+                                # 2) JSON==JSON structural equality (eg LED RGB)
                                 if (
-                                    j_echo is not None
-                                    and j_expect is not None
-                                    and j_echo == j_expect
-                                ):
-                                    passed, note_val = True, ""
-                                # 3) JSON with {"value": ...} vs raw expect (strings or numbers)
-                                elif (
-                                    isinstance(j_echo, dict)
-                                    and "value" in j_echo
-                                    and str(j_echo["value"]).strip()
-                                    == str(expect).strip()
-                                ):
-                                    passed, note_val = True, ""
-                                # 4) final string fallback
-                                elif (
-                                    str(echo["state_payload"]).strip()
-                                    == str(expect).strip()
+                                    (
+                                        j_echo is not None
+                                        and j_expect is not None
+                                        and j_echo == j_expect
+                                    )
+                                    or (
+                                        isinstance(j_echo, dict)
+                                        and "value" in j_echo
+                                        and str(j_echo["value"]).strip()
+                                        == str(expect).strip()
+                                    )
+                                    or (
+                                        str(echo["state_payload"]).strip()
+                                        == str(expect).strip()
+                                    )
                                 ):
                                     passed, note_val = True, ""
                                 else:
@@ -456,9 +480,16 @@ class Collector:
                 require_device = os.getenv("REQUIRE_DEVICE_ECHO", "1") != "0"
                 is_commandable = ("/cmd/" in cmd_t) or cmd_t.endswith("/set")
                 print(
-                    f"[DEBUG] REQUIRE_DEVICE_ECHO={os.getenv('REQUIRE_DEVICE_ECHO')}, require_device={require_device}, is_commandable={is_commandable}, echo_source={echo.get('source')}"
+                    f"[DEBUG] REQUIRE_DEVICE_ECHO={os.getenv('REQUIRE_DEVICE_ECHO')}, "
+                    f"require_device={require_device}, "
+                    f"is_commandable={is_commandable}, "
+                    f"echo_source={echo.get('source')}"
                 )
-                if require_device and is_commandable and echo.get("source") != "device":
+                if (
+                    require_device
+                    and is_commandable
+                    and echo.get("source") != "device"
+                ):
                     passed, note_val = False, "facade_only"
 
             res = {
@@ -514,7 +545,9 @@ class Collector:
             m1,
             cmd_ts=_ts,
         )
-        m2 = self.wait_for_topic(f"{base}/stop/state", val_pred("idle"), to + 1.0)
+        m2 = self.wait_for_topic(
+            f"{base}/stop/state", val_pred("idle"), to + 1.0
+        )
         record(
             "stop_idle",
             f"{base}/stop/press",
@@ -556,14 +589,12 @@ class Collector:
             and str(x["payload_raw"]).strip() != "",
             to,
         )
-        traces.append(
-            {
-                "entity": "presence_state",
-                "state_topic": f"{base}/presence/state",
-                "state_payload": pres.get("payload_raw") if pres else None,
-                "pass": bool(pres),
-            }
-        )
+        traces.append({
+            "entity": "presence_state",
+            "state_topic": f"{base}/presence/state",
+            "state_payload": pres.get("payload_raw") if pres else None,
+            "pass": bool(pres),
+        })
         if not pres:
             failures.append("presence:no_state")
         rssi = self.wait_for_topic(
@@ -572,14 +603,12 @@ class Collector:
             and str(x["payload_raw"]).strip() != "",
             to,
         )
-        traces.append(
-            {
-                "entity": "rssi_state",
-                "state_topic": f"{base}/rssi/state",
-                "state_payload": rssi.get("payload_raw") if rssi else None,
-                "pass": bool(rssi),
-            }
-        )
+        traces.append({
+            "entity": "rssi_state",
+            "state_topic": f"{base}/rssi/state",
+            "state_payload": rssi.get("payload_raw") if rssi else None,
+            "pass": bool(rssi),
+        })
         if not rssi:
             failures.append("rssi:no_state")
 
@@ -596,7 +625,9 @@ class Collector:
             m1,
             cmd_ts=_ts,
         )
-        m2 = self.wait_for_topic(f"{base}/sleep/state", val_pred("idle"), to + 1.0)
+        m2 = self.wait_for_topic(
+            f"{base}/sleep/state", val_pred("idle"), to + 1.0
+        )
         record(
             "sleep_idle",
             f"{base}/sleep/press",
@@ -649,7 +680,9 @@ class Collector:
             m1,
             cmd_ts=_ts,
         )
-        m2 = self.wait_for_topic(f"{base}/drive/state", val_pred("idle"), to + 1.0)
+        m2 = self.wait_for_topic(
+            f"{base}/drive/state", val_pred("idle"), to + 1.0
+        )
         record(
             "drive_idle",
             f"{base}/drive/press",
@@ -663,9 +696,12 @@ class Collector:
         # ----- dump artifacts -----
         ensure_dir(self.outdir)
         dump_json(
-            os.path.join(self.outdir, "ha_discovery_dump.json"), self.discovery_dump
+            os.path.join(self.outdir, "ha_discovery_dump.json"),
+            self.discovery_dump,
         )
-        dump_json(os.path.join(self.outdir, "ha_mqtt_trace_snapshot.json"), traces)
+        dump_json(
+            os.path.join(self.outdir, "ha_mqtt_trace_snapshot.json"), traces
+        )
 
         # schema verdict (scoped)
         # Build identifiers for THIS device only
@@ -679,7 +715,9 @@ class Collector:
         configs = [
             (
                 topic,
-                entry["obj"] if isinstance(entry, dict) and "obj" in entry else "{}",
+                entry["obj"]
+                if isinstance(entry, dict) and "obj" in entry
+                else "{}",
             )
             for topic, entry in self.discovery_dump.items()
         ]

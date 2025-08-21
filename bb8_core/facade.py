@@ -4,10 +4,11 @@ import os
 import sys
 import threading
 import time
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from .addon_config import load_config
-from .bb8_presence_scanner import publish_discovery  # use retained cfg payloads
+from .bb8_presence_scanner import publish_discovery  # retained cfg payloads
 from .common import STATE_TOPICS
 from .logging_setup import logger
 
@@ -24,6 +25,18 @@ def _sleep_led_pattern():
 
 
 class BB8Facade:
+    def set_heading(self, deg):
+        """Set heading (stub for scanner DI)."""
+        pass
+
+    def set_speed(self, v):
+        """Set speed (stub for scanner DI)."""
+        pass
+
+    def drive(self):
+        """Drive (stub for scanner DI)."""
+        pass
+
     """
     High-level, MQTT-facing API for BB-8 Home Assistant integration.
 
@@ -62,8 +75,8 @@ class BB8Facade:
         self.bridge = bridge
         self._mqtt = {"client": None, "base": None, "qos": 1, "retain": True}
         # telemetry publishers bound at attach_mqtt()
-        self.publish_presence: Optional[Callable[[bool], None]] = None
-        self.publish_rssi: Optional[Callable[[int], None]] = None
+        self.publish_presence: Callable[[bool], None] | None = None
+        self.publish_rssi: Callable[[int], None] | None = None
 
     # --------- High-level actions (validate → delegate to bridge) ---------
     def power(self, on: bool) -> None:
@@ -159,10 +172,9 @@ class BB8Facade:
         self,
         client,
         base_topic: str,
-        qos: Optional[int] = None,
-        retain: Optional[bool] = None,
+        qos: int | None = None,
+        retain: bool | None = None,
     ) -> None:
-
         # Load config and set up MQTT topics
         CFG, _ = load_config()
         MQTT_BASE = CFG.get("MQTT_BASE", "bb8")
@@ -181,7 +193,7 @@ class BB8Facade:
         # Helper: publish to MQTT
         def _pub(suffix: str, payload, r: bool = retain_val):
             topic = f"{base_topic}/{suffix}"
-            if isinstance(payload, (dict, list)):
+            if isinstance(payload, dict | list):
                 msg = json.dumps(payload, separators=(",", ":"))
             else:
                 msg = payload
@@ -193,7 +205,7 @@ class BB8Facade:
             )
 
         # Helper: parse color payload
-        def _parse_color(raw: str) -> Optional[dict]:
+        def _parse_color(raw: str) -> dict | None:
             raw = raw.strip()
             if raw.upper() == "OFF":
                 return None
@@ -339,35 +351,19 @@ class BB8Facade:
             return
         return
 
-        def sleep(self) -> None:
-            """Emit 5-step LED pattern for sleep; SINGLE emission path via `_emit_led`."""
-            pattern = _sleep_led_pattern()
-            for r, g, b in pattern:
-                self._emit_led(r, g, b)
-                try:
-                    time.sleep(max(int(os.getenv("BB8_LED_FADE_MS", "25")), 0) / 1000.0)
-                except Exception:
-                    pass
-            try:
-                logging.getLogger(__name__).info(
-                    "facade_sleep_to_led=true count=%d", len(pattern)
-                )
-            except Exception:
-                pass
-
 
 def sleep(self) -> None:
-    """Emit 5-step LED pattern for sleep; SINGLE emission path via `_emit_led`."""
+    """Emit 5-step LED pattern for sleep; SINGLE emission path via
+    `_emit_led`.
+    """
+    import contextlib
+
     pattern = _sleep_led_pattern()
     for r, g, b in pattern:
         self._emit_led(r, g, b)
-        try:
+        with contextlib.suppress(Exception):
             time.sleep(max(int(os.getenv("BB8_LED_FADE_MS", "25")), 0) / 1000.0)
-        except Exception:
-            pass
-    try:
+    with contextlib.suppress(Exception):
         logging.getLogger(__name__).info(
             "facade_sleep_to_led=true count=%d", len(pattern)
         )
-    except Exception:
-        pass
