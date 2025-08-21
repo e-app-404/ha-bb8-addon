@@ -1,8 +1,0 @@
-[drive] cmds=0 states=0 dev_src=0  → OK 
-[heading] cmds=0 states=0 dev_src=0  → OK 
-[led] cmds=0 states=0 dev_src=0  → OK 
-[power] cmds=0 states=0 dev_src=0  → OK 
-[sleep] cmds=0 states=0 dev_src=0  → OK 
-[speed] cmds=0 states=0 dev_src=0  → OK 
-[stop] cmds=0 states=0 dev_src=0  → OK 
-TRACE STRICT CHECKS: PASS

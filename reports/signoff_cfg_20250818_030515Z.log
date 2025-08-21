@@ -1,6 +1,0 @@
-ROOT: /Users/evertappels/Projects/HA-BB8
-pytest.ini: ['pytest.ini']
-ruff.toml: ['ruff.toml']
-mypy.ini/mypy: ['mypy.ini']
-pyproject.toml: ['pyproject.toml']
-CONFIG OK
