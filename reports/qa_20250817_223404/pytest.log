@@ -1,0 +1,147 @@
+
+----------------------------- live log collection ------------------------------
+INFO     bb8_core.addon_config:addon_config.py:80 [CONFIG] Loaded YAML config from: /Volumes/addons/local/beep_boop_bb8/config.yaml
+INFO     bb8_core.addon_config:addon_config.py:80 [CONFIG] Loaded YAML config from: /Volumes/addons/local/beep_boop_bb8/config.yaml
+INFO     bb8_core.addon_config:addon_config.py:80 [CONFIG] Loaded YAML config from: /Volumes/addons/local/beep_boop_bb8/config.yaml
+INFO     bb8_core.addon_config:addon_config.py:80 [CONFIG] Loaded YAML config from: /Volumes/addons/local/beep_boop_bb8/config.yaml
+INFO     bb8_core.addon_config:addon_config.py:80 [CONFIG] Loaded YAML config from: /Volumes/addons/local/beep_boop_bb8/config.yaml
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:185 discovery_route=dispatcher reason=DEFAULT
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:460 discovery_enabled=False source=default
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:462 discovery_skip reason=gate_disabled entity=ALL
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:188 Telemetry is disabled
+INFO     bb8_core.addon_config:addon_config.py:80 [CONFIG] Loaded YAML config from: /Volumes/addons/local/beep_boop_bb8/config.yaml
+INFO     bb8_presence_scanner:bb8_presence_scanner.py:607 BB8Facade not available (cannot import name 'BB8Facade' from partially initialized module 'bb8_core.facade' (most likely due to a circular import) (/Volumes/addons/local/beep_boop_bb8/bb8_core/facade.py)). Commands will be no-ops.
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:655 MQTT dispatcher started.
+INFO     venv:ble_link.py:105 BLE link runner started.
+
+tests/test_ble_link.py::test_ble_link_thread_lifecycle 
+-------------------------------- live log call ---------------------------------
+WARNING  bb8_core.ble_link:ble_link.py:121 BLE runner stop wait raised: 
+INFO     venv:ble_link.py:31 BLE worker cancelled; shutting down cleanly.
+WARNING  bb8_core.ble_link:ble_link.py:130 BLE cleanup timed out after 2.50s.
+PASSED                                                                   [  5%]
+tests/test_discovery_publisher.py::test_scanner_discovery_uses_hook_when_set 
+-------------------------------- live log call ---------------------------------
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:202 mqtt_host=127.0.0.1 source=env:MQTT_HOST
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:154 discovery_route=scanner reason=ENABLE_BRIDGE_TELEMETRY
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:161 discovery_scanner_called_without_args=true
+PASSED                                                                   [ 11%]
+tests/test_discovery_publisher.py::test_scanner_only_discovery_when_bridge_telemetry_enabled 
+-------------------------------- live log call ---------------------------------
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:202 mqtt_host=127.0.0.1 source=env:MQTT_HOST
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:154 discovery_route=scanner reason=ENABLE_BRIDGE_TELEMETRY
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:161 discovery_scanner_called_without_args=true
+PASSED                                                                   [ 17%]
+tests/test_facade.py::test_sleep_mapping PASSED                          [ 23%]
+tests/test_facade.py::test_drive_autostop PASSED                         [ 29%]
+tests/test_mqtt_discovery.py::test_gate_on_publishes 
+-------------------------------- live log call ---------------------------------
+INFO     beep_boop_bb8.bb8_core.addon_config:addon_config.py:80 [CONFIG] Loaded YAML config from: /Volumes/addons/local/beep_boop_bb8/config.yaml
+INFO     beep_boop_bb8.bb8_core.addon_config:addon_config.py:80 [CONFIG] Loaded YAML config from: /Volumes/addons/local/beep_boop_bb8/config.yaml
+INFO     beep_boop_bb8.bb8_core.addon_config:addon_config.py:80 [CONFIG] Loaded YAML config from: /Volumes/addons/local/beep_boop_bb8/config.yaml
+INFO     beep_boop_bb8.bb8_core.addon_config:addon_config.py:80 [CONFIG] Loaded YAML config from: /Volumes/addons/local/beep_boop_bb8/config.yaml
+INFO     beep_boop_bb8.bb8_core.addon_config:addon_config.py:80 [CONFIG] Loaded YAML config from: /Volumes/addons/local/beep_boop_bb8/config.yaml
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:154 discovery_route=scanner reason=ENABLE_BRIDGE_TELEMETRY
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:53 scanner_pub_source=module id=4418173536
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:53 scanner_pub_source=module id=4418173536
+INFO     bb8_presence_scanner:bb8_presence_scanner.py:947 Published HA discovery for MAC=AA:BB:CC:DD:EE:FF
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:172 discovery_scanner_called_with_dummy_args=true count=3
+INFO     beep_boop_bb8.bb8_core.addon_config:addon_config.py:80 [CONFIG] Loaded YAML config from: /Volumes/addons/local/beep_boop_bb8/config.yaml
+INFO     bb8_presence_scanner:bb8_presence_scanner.py:607 BB8Facade not available (cannot import name 'BB8Facade' from partially initialized module 'beep_boop_bb8.bb8_core.facade' (most likely due to a circular import) (/Volumes/addons/local/beep_boop_bb8/bb8_core/facade.py)). Commands will be no-ops.
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:655 MQTT dispatcher started.
+INFO     venv:ble_link.py:105 BLE link runner started.
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:300 Published discovery: homeassistant/binary_sensor/bb8_presence/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:301 discovery: published topic=homeassistant/binary_sensor/bb8_presence/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:300 Published discovery: homeassistant/sensor/bb8_rssi/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:301 discovery: published topic=homeassistant/sensor/bb8_rssi/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:300 Published discovery: homeassistant/switch/bb8_power/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:301 discovery: published topic=homeassistant/switch/bb8_power/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:300 Published discovery: homeassistant/number/bb8_heading/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:301 discovery: published topic=homeassistant/number/bb8_heading/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:300 Published discovery: homeassistant/number/bb8_speed/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:301 discovery: published topic=homeassistant/number/bb8_speed/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:300 Published discovery: homeassistant/button/bb8_drive/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:301 discovery: published topic=homeassistant/button/bb8_drive/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:300 Published discovery: homeassistant/button/bb8_sleep/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:301 discovery: published topic=homeassistant/button/bb8_sleep/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:300 Published discovery: homeassistant/light/bb8_led/config
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:301 discovery: published topic=homeassistant/light/bb8_led/config
+PASSED                                                                   [ 35%]
+tests/test_mqtt_discovery.py::test_idempotency 
+-------------------------------- live log call ---------------------------------
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_presence
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_rssi
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_power
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_heading
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_speed
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_drive
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_sleep
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_led
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_presence
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_rssi
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_power
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_heading
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_speed
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_drive
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_sleep
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_led
+PASSED                                                                   [ 41%]
+tests/test_mqtt_discovery.py::test_force_republish 
+-------------------------------- live log call ---------------------------------
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_presence
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_rssi
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_power
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_heading
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_speed
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_drive
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_sleep
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_led
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_presence
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_rssi
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_power
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_heading
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_speed
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_drive
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_sleep
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_led
+PASSED                                                                   [ 47%]
+tests/test_mqtt_discovery.py::test_json_payload 
+-------------------------------- live log call ---------------------------------
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_presence
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_rssi
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_power
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_heading
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_speed
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_drive
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_sleep
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:295 discovery_skip reason=already_published uid=bb8_led
+PASSED                                                                   [ 52%]
+tests/test_mqtt_discovery.py::test_gate_off 
+-------------------------------- live log call ---------------------------------
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:278 discovery_enabled=False source=default
+INFO     beep_boop_bb8.bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:279 discovery_skip reason=gate_disabled entity=ALL
+PASSED                                                                   [ 58%]
+tests/test_mqtt_echo.py::test_echo_scalar_device PASSED                  [ 64%]
+tests/test_mqtt_echo.py::test_echo_led PASSED                            [ 70%]
+tests/test_mqtt_smoke.py::test_discovery_and_dispatcher_smoke 
+-------------------------------- live log call ---------------------------------
+INFO     bb8_presence_scanner:bb8_presence_scanner.py:947 Published HA discovery for MAC=testbb8
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:202 mqtt_host=127.0.0.1 source=env:MQTT_HOST
+PASSED                                                                   [ 76%]
+tests/test_scanner_discovery_seam_direct.py::test_scanner_discovery_seam_direct 
+-------------------------------- live log call ---------------------------------
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:154 discovery_route=scanner reason=ENABLE_BRIDGE_TELEMETRY
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:154 discovery_route=scanner reason=ENABLE_BRIDGE_TELEMETRY
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:161 discovery_scanner_called_without_args=true
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:161 discovery_scanner_called_without_args=true
+PASSED                                                                   [ 82%]
+tests/test_scanner_discovery_seam_hook.py::test_scanner_discovery_seam_hook 
+-------------------------------- live log call ---------------------------------
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:154 discovery_route=scanner reason=ENABLE_BRIDGE_TELEMETRY
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:48 scanner_pub_source=hook id=4418563648
+INFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:161 discovery_scanner_called_without_args=true
+PASSED                                                                   [ 88%]
+tests/test_smoke_controller_facade.py::TestSmokeControllerFacade::test_import_and_construct PASSED [ 94%]
+tests/test_types_import.py::test_import_types_has_no_side_effects PASSED [100%]
+
+======================== 17 passed, 1 warning in 3.31s =========================

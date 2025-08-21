@@ -1,3 +1,5 @@
+dbus/
+
 # Byte-compiled files
 __pycache__/
 *.py[cod]
@@ -36,3 +38,11 @@ build/
 addons/
 local.addons/
 *.bak/
+
+# Node.js
+node_modules/
+dist/
+.DS_Store
+
+# Environment variable file
+.env

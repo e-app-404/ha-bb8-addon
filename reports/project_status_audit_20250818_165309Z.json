@@ -1,0 +1,69 @@
+{
+  "ts": "20250818_165309Z",
+  "root": "/Users/evertappels/Projects/HA-BB8",
+  "git_present": true,
+  "git": {
+    "branch": null,
+    "remote": "",
+    "dirty": true,
+    "last_tag": null,
+    "recent_commits": []
+  },
+  "addon_version": "dev",
+  "files": {
+    "pytest.ini": true,
+    "ruff.toml": true,
+    "mypy.ini": true,
+    "bb8_core/__init__.py": false,
+    "tools/verify_discovery.py": true
+  },
+  "duplicate_dirs_present": {
+    "addon/tests": true,
+    "addon/tools": true,
+    "addon/reports": true,
+    "docs/reports": true
+  },
+  "addon_audit": {
+    "rc": 1,
+    "stderr": ""
+  },
+  "consolidation": {
+    "rc": 1,
+    "stderr": "/Users/evertappels/Projects/HA-BB8/tools/consolidate_workspace.py:36: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).\n  ts = datetime.utcnow().strftime(\"%Y%m%d_%H%M%SZ\")",
+    "out": "CONSOLIDATION: FAIL"
+  },
+  "imports_tests": {
+    "rc": 0,
+    "out": "tests/test_import_order_warning.py::test_no_runtimewarning_on_import_order \n-------------------------------- live log call ---------------------------------\nINFO     bb8_presence_scanner:bb8_presence_scanner.py:576 BB8Facade not available (cannot import name 'BB8Facade' from partially initialized module 'bb8_core.facade' (most likely due to a circular import) (/Volumes/addons/local/beep_boop_bb8/bb8_core/facade.py)). Commands will be no-ops.\nINFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:185 discovery_route=dispatcher reason=DEFAULT\nINFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:458 discovery_enabled=False source=default\nINFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:460 discovery_skip reason=gate_disabled entity=ALL\nINFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:188 Telemetry is disabled\nINFO     bb8_core.ble_link:ble_link.py:72 BLE link runner started.\nPASSED                                                                   [ 50%]\ntests/test_imports_no_cycles.py::test_imports_clean \n-------------------------------- live log call ---------------------------------\nINFO     bb8_core.mqtt_dispatcher:mqtt_dispatcher.py:655 MQTT dispatcher started.\nPASSED                                                                   [100%]\n\n============================== 2 passed in 0.36s ===============================",
+    "err": ""
+  },
+  "lint": {
+    "ruff_rc": 1,
+    "ruff_summary": [
+      "--> bb8_core:1:1",
+      "",
+      "Found 1 error."
+    ],
+    "mypy_rc": 2,
+    "mypy_summary": []
+  },
+  "bridge_client_stub_present": false,
+  "eager_imports_in_init": false,
+  "verify_discovery": {
+    "rc": 1,
+    "out_tail": [
+      "Topic                      | Retained | stat_t              | avty_t      | sw_version      | identifiers",
+      "---------------------------|----------|---------------------|-------------|----------------|-------------------",
+      "homeassistant/binary_sensor/bb8_presence/config | False    |                     |             |                | []",
+      "homeassistant/sensor/bb8_rssi/config | False    |                     |             |                | []",
+      "",
+      "FAIL: One or more checks did not pass."
+    ],
+    "err_tail": [
+      "/Users/evertappels/Projects/HA-BB8/tools/verify_discovery.py:40: DeprecationWarning: Callback API version 1 is deprecated, update to latest version",
+      "  client = mqtt.Client()"
+    ]
+  },
+  "overall_verdict": "WARN",
+  "notes": []
+}

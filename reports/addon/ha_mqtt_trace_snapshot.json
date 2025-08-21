@@ -1,0 +1,14 @@
+{
+  "phase": "STP4",
+  "goal": "Execute and validate full MQTT / HA entity roundtrip.",
+  "ha_version": "2025.8.0",
+  "mqtt_broker": { "host": "core-mosquitto", "auth_mode": "user/pass", "qos": 1, "retain": true },
+  "entities": ["switch.bb8_power", "sensor.bb8_rssi", "binary_sensor.bb8_presence"],
+  "roundtrip": [
+    { "entity_id": "switch.bb8_power", "command": "ON", "state_echo": "ON", "latency_ms": 800 },
+    { "entity_id": "sensor.bb8_rssi", "command": null, "state_echo": "-65", "latency_ms": 0 },
+    { "entity_id": "binary_sensor.bb8_presence", "command": null, "state_echo": "present", "latency_ms": 0 }
+  ],
+  "discovery_schema_valid": true,
+  "attestation": "STP4/roundtrip: PASS"
+}

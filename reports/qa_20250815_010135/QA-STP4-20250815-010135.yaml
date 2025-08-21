@@ -1,0 +1,108 @@
+qa_report_id: QA-STP4-20250815-010135
+commit: "<sha>" # Fill in with your actual commit SHA
+patch_ids: ["PATCH-STP4-250814-config-path", "PATCH-STP4-250814-device-echo"]
+env:
+  MQTT_BASE: "bb8"
+  REQUIRE_DEVICE_ECHO: 1
+  ENABLE_BRIDGE_TELEMETRY: 1
+  EVIDENCE_TIMEOUT_SEC: 3.0
+
+lint:
+  black: { status: FAIL, notes: "39 files would be reformatted" }
+  ruff:
+    {
+      status: FAIL,
+      notes: "Import sorting, line length, unused imports, see log tail",
+    }
+
+types:
+  mypy:
+    {
+      status: FAIL,
+      notes: "Found 2 errors in 2 files (errors prevented further checking)",
+    }
+
+tests:
+  pytest:
+    {
+      status: FAIL,
+      total: 0,
+      failed: 0,
+      errors: 1,
+      notes: "INTERNALERROR during collection",
+    }
+
+coverage:
+  bb8_core: null # Coverage not reported due to pytest failure
+
+security:
+  bandit:
+    {
+      status: PASS,
+      high: 0,
+      med: 0,
+      notes: "10 low severity try/except/pass issues",
+    }
+  safety: { status: PASS, vulns: 0, notes: "No actionable vulnerabilities" }
+
+artifacts:
+  logs:
+    black: |-
+      would reformat /Volumes/addons/local/beep_boop_bb8/app/test_ble_adapter.py
+      would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/__init__.py
+      ...
+      Oh no! 💥 💔 💥
+      39 files would be reformatted, 3 files would be left unchanged.
+    ruff: |-
+      I001 [*] Import block is un-sorted or un-formatted
+      E501 Line too long (89 > 88)
+      F401 [*] `.types.BridgeController` imported but unused
+      ...
+      help: Remove unused import
+    mypy: |-
+      Found 2 errors in 2 files (errors prevented further checking)
+    pytest: |-
+      INTERNALERROR> Traceback (most recent call last):
+      INTERNALERROR>   File "/Users/evertappels/Projects/HABIBI-8/local.mac.beep_boop_bb8/.venv_new/lib/python3.13/site-packages/_pytest/main.py", line 289, in wrap_session
+      ...
+      INTERNALERROR>     res = hook_impl.function(*args)
+    bandit: |-
+      >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+      Location: bb8_core/bb8_presence_scanner.py:348:4
+      ...
+      Total issues (by severity):
+          Low: 10
+          Medium: 0
+          High: 0
+    safety: |-
+      ✅ pyproject.toml: No issues found.
+      ✅ requirements.txt: No issues found.
+      4 vulnerabilities found, 4 ignored due to policy.
+
+failures:
+  - {
+      tool: black,
+      file: "multiple",
+      line: "-",
+      message: "39 files would be reformatted",
+    }
+  - {
+      tool: ruff,
+      file: "multiple",
+      line: "-",
+      message: "Import sorting, line length, unused imports",
+    }
+  - {
+      tool: mypy,
+      file: "multiple",
+      line: "-",
+      message: "Found 2 errors in 2 files",
+    }
+  - {
+      tool: pytest,
+      file: "-",
+      line: "-",
+      message: "INTERNALERROR during test collection",
+    }
+
+verdict: FAIL

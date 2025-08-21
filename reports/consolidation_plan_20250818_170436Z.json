@@ -1,0 +1,277 @@
+{
+  "moves": [
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/test_discovery_publisher.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/test_discovery_publisher.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/test_scanner_discovery_seam_direct.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/test_scanner_discovery_seam_direct.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/test_ble_link.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/test_ble_link.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/test_types_import.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/test_types_import.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/pytest.ini",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/pytest.ini"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/conftest.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/conftest.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/test_smoke_controller_facade.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/test_smoke_controller_facade.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/test_mqtt_echo.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/test_mqtt_echo.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/test_mqtt_discovery.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/test_mqtt_discovery.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/test_scanner_discovery_seam_hook.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/test_scanner_discovery_seam_hook.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/test_mqtt_smoke.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/test_mqtt_smoke.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/test_facade.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/test_facade.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/test_mqtt_dispatcher.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/test_mqtt_dispatcher.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__init__.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__init__.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_facade.cpython-313-pytest-8.4.1.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_facade.cpython-313-pytest-8.4.1.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/__init__.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/__init__.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_types_import.cpython-313-pytest-8.4.1.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_types_import.cpython-313-pytest-8.4.1.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_scanner_discovery_seam_direct.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_scanner_discovery_seam_direct.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_mqtt_discovery.cpython-313-pytest-8.4.1.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_mqtt_discovery.cpython-313-pytest-8.4.1.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_mqtt_dispatcher.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_mqtt_dispatcher.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_mqtt_smoke.cpython-313-pytest-8.4.1.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_mqtt_smoke.cpython-313-pytest-8.4.1.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_facade.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_facade.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_ble_link.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_ble_link.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_mqtt_smoke.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_mqtt_smoke.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_scanner_discovery_seam_direct.cpython-313-pytest-8.4.1.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_scanner_discovery_seam_direct.cpython-313-pytest-8.4.1.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_mqtt_echo.cpython-313-pytest-8.4.1.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_mqtt_echo.cpython-313-pytest-8.4.1.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/conftest.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/conftest.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_scanner_discovery_seam_hook.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_scanner_discovery_seam_hook.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/conftest.cpython-313-pytest-8.4.1.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/conftest.cpython-313-pytest-8.4.1.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_discovery_publisher.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_discovery_publisher.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_discovery_publisher.cpython-313-pytest-8.4.1.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_discovery_publisher.cpython-313-pytest-8.4.1.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_smoke_controller_facade.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_smoke_controller_facade.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_smoke_controller_facade.cpython-313-pytest-8.4.1.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_smoke_controller_facade.cpython-313-pytest-8.4.1.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_scanner_discovery_seam_hook.cpython-313-pytest-8.4.1.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_scanner_discovery_seam_hook.cpython-313-pytest-8.4.1.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_mqtt_discovery.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_mqtt_discovery.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_ble_link.cpython-313-pytest-8.4.1.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_ble_link.cpython-313-pytest-8.4.1.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_mqtt_dispatcher.cpython-313-pytest-8.4.1.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_mqtt_dispatcher.cpython-313-pytest-8.4.1.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_types_import.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_types_import.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/__pycache__/test_mqtt_echo.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/__pycache__/test_mqtt_echo.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/.pytest_cache/.gitignore",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/.pytest_cache/.gitignore"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/.pytest_cache/CACHEDIR.TAG",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/.pytest_cache/CACHEDIR.TAG"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/.pytest_cache/README.md",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/.pytest_cache/README.md"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/.pytest_cache/v/cache/nodeids",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/.pytest_cache/v/cache/nodeids"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tests/.pytest_cache/v/cache/lastfailed",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tests/.pytest_cache/v/cache/lastfailed"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tools/qa_suite.sh",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tools/qa_suite.sh"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tools/trace_smoke_check.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tools/trace_smoke_check.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tools/strict_trace_check.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tools/strict_trace_check.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tools/blebridge_handler_surface_check.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tools/blebridge_handler_surface_check.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tools/scan_bb8_gatt.py",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tools/scan_bb8_gatt.py"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tools/grep_facade.sh",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tools/grep_facade.sh"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tools/__pycache__/strict_trace_check.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tools/__pycache__/strict_trace_check.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/tools/__pycache__/trace_smoke_check.cpython-313.pyc",
+      "dst": "/Users/evertappels/Projects/HA-BB8/tools/__pycache__/trace_smoke_check.cpython-313.pyc"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/reports/bb8_milestones.json",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/addon/bb8_milestones.json"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/reports/QA-STP4-20250816-074404.yaml",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/addon/QA-STP4-20250816-074404.yaml"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/reports/qa_STP4_20250815_190628.yaml",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/addon/qa_STP4_20250815_190628.yaml"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/reports/ruff.log",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/addon/ruff.log"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/reports/bb8_health_endpoint_log.json",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/addon/bb8_health_endpoint_log.json"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/reports/QA_REPORT.md",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/addon/QA_REPORT.md"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/reports/ha_mqtt_trace_snapshot.json",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/addon/ha_mqtt_trace_snapshot.json"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/reports/black.log",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/addon/black.log"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/reports/bb8_status_rollup.json",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/addon/bb8_status_rollup.json"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/reports/ha_bb8_addon.log",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/addon/ha_bb8_addon.log"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/addon/reports/patch_bundle_contract_v1.yaml",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/addon/patch_bundle_contract_v1.yaml"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/docs/reports/.DS_Store",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/docs/.DS_Store"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/docs/reports/bb8_health_endpoint_log.json",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/docs/bb8_health_endpoint_log.json"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/docs/reports/ha_mqtt_trace_snapshot.json",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/docs/ha_mqtt_trace_snapshot.json"
+    },
+    {
+      "src": "/Users/evertappels/Projects/HA-BB8/docs/reports/presence_finder_data.txt",
+      "dst": "/Users/evertappels/Projects/HA-BB8/reports/docs/presence_finder_data.txt"
+    }
+  ],
+  "collisions": [],
+  "removed_empty": [
+    "/Users/evertappels/Projects/HA-BB8/addon/reports",
+    "/Users/evertappels/Projects/HA-BB8/docs/reports"
+  ]
+}

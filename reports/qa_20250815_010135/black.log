@@ -1,0 +1,42 @@
+would reformat /Volumes/addons/local/beep_boop_bb8/app/test_ble_adapter.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/__init__.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_ascii_templates.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/ble_utils.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/ble_gateway.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/common.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/ble_link.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/discovery_publish.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/core.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/evidence_capture.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/addon_config.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/auto_detect.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/mqtt_echo.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/logging_setup.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/telemetry.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/util.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/mqtt_dispatcher.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/bridge_controller.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/types.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/version_probe.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/facade.py
+would reformat /Volumes/addons/local/beep_boop_bb8/ops/test_logging_fallback.py
+would reformat /Volumes/addons/local/beep_boop_bb8/ops/blebridge_handler_surface_check.py
+would reformat /Volumes/addons/local/beep_boop_bb8/tests/test_ble_link.py
+would reformat /Volumes/addons/local/beep_boop_bb8/ops/test_facade_attach_mqtt.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/controller.py
+would reformat /Volumes/addons/local/beep_boop_bb8/tests/test_discovery_publisher.py
+would reformat /Volumes/addons/local/beep_boop_bb8/tests/test_mqtt_echo.py
+would reformat /Volumes/addons/local/beep_boop_bb8/scan_bb8_gatt.py
+would reformat /Volumes/addons/local/beep_boop_bb8/tests/test_facade.py
+would reformat /Volumes/addons/local/beep_boop_bb8/tests/test_smoke_controller_facade.py
+would reformat /Volumes/addons/local/beep_boop_bb8/ops/evidence/evidence_capture.py
+would reformat /Volumes/addons/local/beep_boop_bb8/tests/test_types_import.py
+would reformat /Volumes/addons/local/beep_boop_bb8/tests/test_mqtt_dispatcher.py
+would reformat /Volumes/addons/local/beep_boop_bb8/tests/test_mqtt_smoke.py
+would reformat /Volumes/addons/local/beep_boop_bb8/tools/trace_smoke_check.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/bb8_presence_scanner.py
+would reformat /Volumes/addons/local/beep_boop_bb8/bb8_core/ble_bridge.py
+would reformat /Volumes/addons/local/beep_boop_bb8/ops/evidence/collect_stp4.py
+
+Oh no! 💥 💔 💥
+39 files would be reformatted, 3 files would be left unchanged.

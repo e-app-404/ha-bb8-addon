@@ -1,0 +1,164 @@
+F401 [*] `sys` imported but unused
+ --> bb8_ble_test.py:4:8
+  |
+2 | # Place BB-8 on charger or wake it up before running!
+3 |
+4 | import sys
+  |        ^^^
+5 | import time
+6 | from spherov2.scanner import find_toys
+  |
+help: Remove unused import: `sys`
+
+F401 [*] `time` imported but unused
+ --> bb8_ble_test.py:5:8
+  |
+4 | import sys
+5 | import time
+  |        ^^^^
+6 | from spherov2.scanner import find_toys
+7 | from spherov2.toy.bb8 import BB8
+  |
+help: Remove unused import: `time`
+
+E401 [*] Multiple imports on one line
+  --> patches/addon_config/cl_addon_config.py:8:1
+   |
+ 6 | from __future__ import annotations
+ 7 | from typing import TYPE_CHECKING
+ 8 | import os, json, yaml, logging
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 9 | from typing import Dict, Tuple, Optional
+10 | from .types import (
+   |
+help: Split imports
+
+F401 [*] `.types.BridgeController` imported but unused
+  --> patches/addon_config/cl_addon_config.py:11:5
+   |
+ 9 | from typing import Dict, Tuple, Optional
+10 | from .types import (
+11 |     BridgeController,
+   |     ^^^^^^^^^^^^^^^^
+12 |     BLELink,
+13 |     MqttClient,
+   |
+help: Remove unused import
+
+F401 [*] `.types.BLELink` imported but unused
+  --> patches/addon_config/cl_addon_config.py:12:5
+   |
+10 | from .types import (
+11 |     BridgeController,
+12 |     BLELink,
+   |     ^^^^^^^
+13 |     MqttClient,
+14 |     BoolCallback,
+   |
+help: Remove unused import
+
+F401 [*] `.types.MqttClient` imported but unused
+  --> patches/addon_config/cl_addon_config.py:13:5
+   |
+11 |     BridgeController,
+12 |     BLELink,
+13 |     MqttClient,
+   |     ^^^^^^^^^^
+14 |     BoolCallback,
+15 |     IntCallback,
+   |
+help: Remove unused import
+
+F401 [*] `.types.BoolCallback` imported but unused
+  --> patches/addon_config/cl_addon_config.py:14:5
+   |
+12 |     BLELink,
+13 |     MqttClient,
+14 |     BoolCallback,
+   |     ^^^^^^^^^^^^
+15 |     IntCallback,
+16 |     OptIntCallback,
+   |
+help: Remove unused import
+
+F401 [*] `.types.IntCallback` imported but unused
+  --> patches/addon_config/cl_addon_config.py:15:5
+   |
+13 |     MqttClient,
+14 |     BoolCallback,
+15 |     IntCallback,
+   |     ^^^^^^^^^^^
+16 |     OptIntCallback,
+17 |     RGBCallback,
+   |
+help: Remove unused import
+
+F401 [*] `.types.OptIntCallback` imported but unused
+  --> patches/addon_config/cl_addon_config.py:16:5
+   |
+14 |     BoolCallback,
+15 |     IntCallback,
+16 |     OptIntCallback,
+   |     ^^^^^^^^^^^^^^
+17 |     RGBCallback,
+18 | )
+   |
+help: Remove unused import
+
+F401 [*] `.types.RGBCallback` imported but unused
+  --> patches/addon_config/cl_addon_config.py:17:5
+   |
+15 |     IntCallback,
+16 |     OptIntCallback,
+17 |     RGBCallback,
+   |     ^^^^^^^^^^^
+18 | )
+   |
+help: Remove unused import
+
+F401 [*] `.bridge_controller.BridgeController` imported but unused
+  --> patches/addon_config/cl_addon_config.py:21:56
+   |
+20 | if TYPE_CHECKING:
+21 |     from .bridge_controller import BridgeController as _BridgeControllerHint
+   |                                                        ^^^^^^^^^^^^^^^^^^^^^
+22 |
+23 | LOG = logging.getLogger(__name__)
+   |
+help: Remove unused import: `.bridge_controller.BridgeController`
+
+E721 Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance checks
+  --> patches/addon_config/cl_addon_config.py:82:40
+   |
+80 |         val = cfg[key]
+81 |         # Only basic type checks
+82 |         if typ in ("bool", "bool?") or typ == bool:
+   |                                        ^^^^^^^^^^^
+83 |             if not isinstance(val, bool):
+84 |                 LOG.warning(
+   |
+
+E721 Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance checks
+  --> patches/addon_config/cl_addon_config.py:87:40
+   |
+85 |                     f"[CONFIG] Key '{key}' expected bool, got {type(val).__name__}."
+86 |                 )
+87 |         elif typ in ("int", "int?") or typ == int:
+   |                                        ^^^^^^^^^^
+88 |             try:
+89 |                 int(val)
+   |
+
+E721 Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance checks
+  --> patches/addon_config/cl_addon_config.py:94:40
+   |
+92 |                     f"[CONFIG] Key '{key}' expected int, got {type(val).__name__} value '{val}'."
+93 |                 )
+94 |         elif typ in ("str", "str?") or typ == str:
+   |                                        ^^^^^^^^^^
+95 |             if not isinstance(val, str):
+96 |                 LOG.warning(
+   |
+
+Found 14 errors.
+[*] 11 fixable with the `--fix` option.
