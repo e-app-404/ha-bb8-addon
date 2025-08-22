@@ -20,4 +20,6 @@ addon/scripts/
 addon/reports/
 addon/docs/
 !reports/.gitkeep
+reports/**
+!reports/.gitkeep
 !scripts/.gitkeep
