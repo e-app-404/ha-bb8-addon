@@ -23,6 +23,7 @@ CFG_TOPICS = [
 
 def on_message(_, _unused, msg):
     # payload is not used, remove assignment
+    pass
 
 
 def get_any(d: dict[str, Any], key: str) -> Any:
@@ -59,9 +60,7 @@ def verify_configs_and_states(
     def on_message(_c, _u, msg):
         if msg.topic in (t for t, _ in CFG_TOPICS):
             retained[msg.topic] = bool(msg.retain)
-            results[msg.topic] = extract_cfg(
-                msg.payload.decode("utf-8", "ignore")
-            )
+            results[msg.topic] = extract_cfg(msg.payload.decode("utf-8", "ignore"))
             done[msg.topic] = True
 
     client.on_message = on_message
@@ -82,9 +81,7 @@ def verify_configs_and_states(
             "stat_t": get_any(cfg, "stat_t") or "",
             "avty_t": get_any(cfg, "avty_t") or "",
             "sw_version": (
-                (dev or {}).get("sw_version", "")
-                if isinstance(dev, dict)
-                else ""
+                (dev or {}).get("sw_version", "") if isinstance(dev, dict) else ""
             ),
             "identifiers": first_identifiers(dev),
         }
@@ -110,9 +107,7 @@ def main():
     client.connect(host, port, keepalive=10)
     rows, ok = verify_configs_and_states(client)
     print("Discovery Verification Results:")
-    print(
-        "Topic                 | Retained | stat_t        | avty_t   | sw_ver   | ids"
-    )
+    print("Topic           | Retained | stat_t        | avty_t   | sw_ver   | ids")
     for r in rows:
         print(
             f"{r['topic']:27} | {str(r['retained']):8} | {r['stat_t']:19} | "

@@ -12,18 +12,13 @@ from .auto_detect import resolve_bb8_mac
 from .ble_bridge import BLEBridge
 from .ble_gateway import BleGateway
 from .ble_link import BLELink
-from .common import (
-    CMD_TOPICS,  # noqa: F401  (used via constants)
-    STATE_TOPICS,
-    publish_device_echo,
-)
+from .common import CMD_TOPICS  # noqa: F401  (used via constants)
+from .common import STATE_TOPICS, publish_device_echo
 from .evidence_capture import EvidenceRecorder
 from .facade import BB8Facade
 from .logging_setup import logger
-from .mqtt_dispatcher import (
-    ensure_dispatcher_started,
-    register_subscription,  # dynamic topic binding
-)
+from .mqtt_dispatcher import register_subscription  # dynamic topic binding
+from .mqtt_dispatcher import ensure_dispatcher_started
 
 log = logging.getLogger(__name__)
 
