@@ -155,3 +155,18 @@ action:
 6. **Runtime**
    - BLE and MQTT events handled by dispatcher and bridge.
    - All actions and errors are logged with structured JSON lines.
+
+## MQTT Library Version Policy
+- Runtime dependency: **paho-mqtt >= 2.0, < 3.0** (pinned in `requirements.txt`).
+- The code explicitly selects `CallbackAPIVersion.VERSION1` when creating `mqtt.Client(...)`
+  to preserve v1 callback signatures while running on paho-mqtt v2.
+- If migrating to v2 callbacks later, switch to `CallbackAPIVersion.VERSION2` and update callback
+  signatures accordingly.
+
+### Local development quickstart
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+python -m pip install -U pip setuptools wheel
+python -m pip install -r addon/requirements.txt -r addon/requirements-dev.txt
+pytest -q addon/tests
+
