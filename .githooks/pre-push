@@ -1,42 +1,47 @@
+
 #!/usr/bin/env bash
 set -euo pipefail
-ADDON="addon"
-FAIL=0
 
-# No 'addon' symlink
-[ -L addon ] && { echo "ERROR: 'addon' must not be a symlink."; exit 1; }
+fail=0
+die(){ echo "ERROR: $*"; fail=1; }
 
-# No submodule gitlink for addon
-if git ls-files -s | awk '$1==160000 && $4=="addon" {found=1} END{exit !found}'; then
-  echo "ERROR: 'addon' is a submodule (gitlink)."; exit 1;
-fi
-
-# No nested repo under addon
-[ -d addon/.git ] && { echo "ERROR: nested git repo at addon/.git is forbidden."; exit 1; }
-
-# No symlinks under addon tree
-if find addon -type l | grep -q .; then
-  echo "ERROR: symlinks under addon/ are not allowed."; exit 1;
-fi
-
-if find _backup -type f ! -name '*.tar.gz' ! -name 'README.md' ! -name '.gitkeep' ! -name '*.sha256' | grep -q .; then
-  echo "ERROR: Non-tarball artifacts in _backup/"; FAIL=1
-fi
-for d in tests tools; do
-  [ ! -e "$d" ] || { echo "ERROR: '$d' must NOT exist at workspace root"; FAIL=1; }
-done
-for p in tests tools app bb8_core config.yaml services.d scripts reports Dockerfile Makefile README.md VERSION apparmor.txt; do
-  [ -e "$ADDON/$p" ] || { echo "ERROR: addon missing: $p"; FAIL=1; }
-done
-for p in ops _backup .venv .pytest_cache .ruff_cache .mypy_cache; do
-  [ ! -e "$ADDON/$p" ] || { echo "ERROR: addon must NOT contain: $p"; FAIL=1; }
+# --- Workspace MUST-HAVE ---
+for d in ops reports scripts docs .githooks .github _backups; do
+  [ -e "$d" ] || die "workspace missing: $d"
 done
 
-
-if [ $FAIL -ne 0 ]; then
-  echo "Push blocked by ADR-0001 guard."
-  exit 1
+# --- Workspace MUST-NOT ---
+for d in tests tools _backup; do
+  [ -e "$d" ] && die "workspace must NOT contain: $d"
+done
+# no loose _backup_* at root
+if find . -maxdepth 1 -type d -name '_backup_*' | grep -q .; then
+  die "loose backup folders at root (must be tarballs in _backups/)"
 fi
+
+# --- Add-on MUST-HAVE ---
+for p in addon/bb8_core addon/tools addon/tests addon/services.d addon/app \
+         addon/config.yaml addon/Dockerfile addon/Makefile addon/README.md addon/VERSION addon/apparmor.txt \
+         addon/.devcontainer; do
+  [ -e "$p" ] || die "addon missing: $p"
+done
+
+# --- Add-on MUST-NOT ---
+for p in addon/scripts addon/reports addon/docs addon/_backup addon/_backups \
+         addon/.venv addon/.pytest_cache addon/.ruff_cache addon/.mypy_cache; do
+  [ -e "$p" ] && die "addon must NOT contain: $p"
+done
+
+# --- No symlink/submodule/nested repo traps ---
+[ -L addon ] && die "'addon' must not be a symlink"
+if git ls-files -s | awk '$1==160000 && $4=="addon"{f=1} END{exit !f}'; then die "'addon' is a submodule (gitlink)"; fi
+[ -d addon/.git ] && die "nested git repo at addon/.git is forbidden"
+if find addon -type l | grep -q .; then die "symlinks under addon/ not allowed"; fi
+
+if [ $fail -ne 0 ]; then
+  echo "Push blocked by ADR-0001 guard."; exit 1
+fi
+
 echo "WS_READY"
 echo "STRUCTURE_OK — backups normalized"
 echo "STRUCTURE_OK — topology"

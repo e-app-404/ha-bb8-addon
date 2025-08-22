@@ -21,3 +21,13 @@
 - The repo’s `addon/reports/` (and `addon/docs/reports/`) are template-only; generated content is ignored via `.gitignore`.
 - The deploy step includes `git clean -fdx` on the runtime clone prior to reset to guarantee a clean runtime.
 - Acceptance tokens now include `CLEAN_RUNTIME_OK` preceding `DEPLOY_OK`.
+
+
+**Addendum v2 (2025-08-22): Canonical Paths & Directory Rules**
+Effective immediately:
+
+- Workspace must-have (root): `ops/`, `reports/`, `scripts/`, `docs/`, `.githooks/`, `.github/`, `_backups/`
+- Workspace must-not (root): `tests/`, `tools/`, `_backup/` (old name), any `*_backup_*` loose folders
+- Add-on must-have: `addon/bb8_core/`, `addon/tools/`, `addon/tests/`, `addon/services.d/`, `addon/app/`, `addon/.devcontainer/`, and core files: `addon/config.yaml`, `addon/Dockerfile`, `addon/Makefile`, `addon/README.md`, `addon/VERSION`, `addon/apparmor.txt`
+- Add-on must-not: `addon/scripts/`, `addon/reports/`, `addon/docs/`, `addon/_backup*/`, env caches (`.venv`, `.pytest_cache`, `.ruff_cache`, `.mypy_cache`)
+- Runtime artifacts remain in container: `/data/...` (host: `/data/addons/data/<slug>/...`)
