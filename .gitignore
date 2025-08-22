@@ -1,42 +1,10 @@
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.build/
-build/
-dist/
-.eggs/
-*.egg-info/
+
+.venv/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-.coverage
-htmlcov/
-.env
-.env.*
-.venv/
-.idea/
-.vscode/
-.DS_Store
-node_modules/
-# ADR-0001 guards
-.github/
-reports/
-tools/
-addon/.github/
-# Environment variable file
-.env
-!.evidence.env
-# workspace-only (not part of addon repo)
-/docs/
-/ops/
-/reports/
-/scripts/
-/tools/
-/addon/
-/github/
-# .gitignore in workspace
-/_backup_*/
-.venv*/
-/reports/
-.evidence.env
+
+addon/reports/*
+!addon/reports/.gitkeep
+addon/docs/reports/*
+!addon/docs/reports/.gitkeep
