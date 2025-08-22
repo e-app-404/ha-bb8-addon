@@ -946,3 +946,9 @@ Before publishing a changelog entry:
 **For existing entries:** Previous semantic versions (0.3.x) should be considered legacy. New entries should follow the YYYY.MM.PATCH format going forward.
 
 **Consolidation:** Consider grouping minor patches when preparing release summaries or major version documentation. -->
+
+## 2025-08-23
+- deps: pin **paho-mqtt >= 2,<3** and update code to pass  on client construction.
+- deps: ensure **PyYAML >= 6.0.1** present.
+- docs: add MQTT Version Policy to README.
+- ADR: add **ADR-0002** for dependency & runtime compatibility.
