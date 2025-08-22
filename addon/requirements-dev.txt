@@ -11,3 +11,4 @@ pytest-cov
 bandit
 safety
 pytest>=8.0
+isort
