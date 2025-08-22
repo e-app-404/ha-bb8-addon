@@ -30,7 +30,8 @@ if find addon -type l | grep -q .; then die "symlinks under addon/ are not allow
 
 # Warn on direct push to add-on repo main; use publisher instead
 if git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null | grep -qE '^origin/main$'; then
-  echo "INFO: Use ops/workspace/publish_addon_archive.sh to publish add-on-only HEAD."
+  echo "ERROR: direct push to origin/main is forbidden; use ops/workspace/publish_addon_archive.sh"
+  exit 1
 fi
 
 if [ $fail -ne 0 ]; then echo "Push blocked by ADR-0001 guard."; exit 1; fi
