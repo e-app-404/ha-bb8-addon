@@ -952,3 +952,9 @@ Before publishing a changelog entry:
 - deps: ensure **PyYAML >= 6.0.1** present.
 - docs: add MQTT Version Policy to README.
 - ADR: add **ADR-0002** for dependency & runtime compatibility.
+
+## 2025-08-23
+- deps: pin **paho-mqtt >= 2,<3** and update code to pass  on client construction.
+- deps: ensure **PyYAML >= 6.0.1** present.
+- docs: add MQTT Version Policy to README.
+- ADR: add **ADR-0002** for dependency & runtime compatibility.
