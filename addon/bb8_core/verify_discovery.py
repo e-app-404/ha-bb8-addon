@@ -15,9 +15,16 @@ KEY_SYNONYMS = {
     "unit_of_meas": ["unit_of_meas", "unit_of_measurement", "unit"],
 }
 
+CFG_TOPICS = [
+    ("homeassistant/binary_sensor/bb8_presence/config", "presence"),
+    ("homeassistant/sensor/bb8_rssi/config", "rssi"),
+]
+
 
 def on_message(_, _unused, msg):
-    payload = msg.payload.decode("utf-8")
+    # payload is not used, remove assignment
+
+
 def get_any(d: dict[str, Any], key: str) -> Any:
     for k in KEY_SYNONYMS.get(key, [key]):
         if k in d:
@@ -38,22 +45,8 @@ def extract_cfg(raw: str) -> dict[str, Any]:
     try:
         return json.loads(raw)
     except Exception:
-        print(f"Invalid JSON on {msg.topic}: {payload}")
-        sys.exit(2)
-    results[msg.topic] = data
-    retained[msg.topic] = msg.retain
-    # Extract MAC for device block check
-    dev = data.get("dev") or data.get("device")
-    if dev and isinstance(dev, dict):
-        for _ in dev.get("identifiers", []):
-            pass  # No need to assign mac_upper since it's not used
+        print("Invalid JSON encountered.")
         return {}
-
-
-CFG_TOPICS = [
-    ("homeassistant/binary_sensor/bb8_presence/config", "presence"),
-    ("homeassistant/sensor/bb8_rssi/config", "rssi"),
-]
 
 
 def verify_configs_and_states(
@@ -66,7 +59,9 @@ def verify_configs_and_states(
     def on_message(_c, _u, msg):
         if msg.topic in (t for t, _ in CFG_TOPICS):
             retained[msg.topic] = bool(msg.retain)
-            results[msg.topic] = extract_cfg(msg.payload.decode("utf-8", "ignore"))
+            results[msg.topic] = extract_cfg(
+                msg.payload.decode("utf-8", "ignore")
+            )
             done[msg.topic] = True
 
     client.on_message = on_message
@@ -86,9 +81,11 @@ def verify_configs_and_states(
             "retained": retained.get(topic, False),
             "stat_t": get_any(cfg, "stat_t") or "",
             "avty_t": get_any(cfg, "avty_t") or "",
-            "sw_version": (dev or {}).get("sw_version", "")
-            if isinstance(dev, dict)
-            else "",
+            "sw_version": (
+                (dev or {}).get("sw_version", "")
+                if isinstance(dev, dict)
+                else ""
+            ),
             "identifiers": first_identifiers(dev),
         }
         ok = (
@@ -114,16 +111,12 @@ def main():
     rows, ok = verify_configs_and_states(client)
     print("Discovery Verification Results:")
     print(
-        "Topic                      | Retained | stat_t              | avty_t      | sw_version      | identifiers"
-    )
-    print(
-        f"{t:27} | {str(retained.get(t, False)):8} | {stat_t:19} | "
-        f"{avty_t:11} | {sw_version:14} | {identifiers}"
-        "---------------------------|----------|---------------------|-------------|----------------|-------------------"
+        "Topic                 | Retained | stat_t        | avty_t   | sw_ver   | ids"
     )
     for r in rows:
         print(
-            f"{r['topic']} | {str(r['retained']):<7} | {r['stat_t']:<19} | {r['avty_t']:<11} | {r['sw_version']:<14} | {r['identifiers']}"
+            f"{r['topic']:27} | {str(r['retained']):8} | {r['stat_t']:19} | "
+            f"{r['avty_t']:11} | {r['sw_version']:14} | {r['identifiers']}"
         )
     print("\nPASS" if ok else "\nFAIL: One or more checks did not pass.")
 

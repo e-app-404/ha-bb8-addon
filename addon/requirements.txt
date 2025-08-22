@@ -5,9 +5,10 @@
 # Runtime pins
 
 bleak==0.22.3
-paho-mqtt==2.1.0
+paho-mqtt>=2.0,<3.0
 spherov2==0.12.1
 pyyaml
 
 # (Optional) When hashes are available, switch Docker build with:
 #   docker build --build-arg STRICT_HASH=1 .
+PyYAML>=6.0.1
