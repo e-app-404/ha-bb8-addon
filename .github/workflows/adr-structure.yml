@@ -1,0 +1,51 @@
+name: ADR-0001 Structure Gate
+on:
+  push:
+  pull_request:
+
+jobs:
+  enforce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enforce ADR-0001 + Backup Policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          FAIL=0
+          ADDON="addon"
+
+          echo "== Check _backup tarball-only =="
+          mkdir -p _backup
+          if find _backup -type f ! -name '*.tar.gz' ! -name 'README.md' ! -name '.gitkeep' ! -name '*.sha256' | grep -q .; then
+            echo "::error::Non-tarball artifacts in _backup/"; FAIL=1
+          fi
+
+          echo "== Workspace MUST-NOT at root =="
+          for d in tests tools; do
+            if [ -e "$d" ]; then echo "::error::'$d' must NOT exist at workspace root"; FAIL=1; fi
+          done
+
+          echo "== Add-on MUST-HAVE =="
+          for p in tests tools app bb8_core config.yaml services.d scripts reports Dockerfile Makefile README.md VERSION apparmor.txt; do
+            [ -e "$ADDON/$p" ] || { echo "::error::addon missing: $p"; FAIL=1; }
+          done
+
+          echo "== Add-on MUST-NOT =="
+          for p in ops _backup .venv .pytest_cache .ruff_cache .mypy_cache; do
+            [ ! -e "$ADDON/$p" ] || { echo "::error::addon must NOT contain: $p"; FAIL=1; }
+          done
+
+          echo "== Recommended config keys present (warn-only) =="
+          grep -qE '(^|[[:space:]])report_root:[[:space:]]*/data/reports' "$ADDON/config.yaml" \
+            || echo "::warning::report_root not set to /data/reports in addon/config.yaml"
+          grep -qE '(^|[[:space:]])log_path:[[:space:]]*/data/reports/ha_bb8_addon.log' "$ADDON/config.yaml" \
+            || echo "::warning::log_path not set to /data/reports/ha_bb8_addon.log in addon/config.yaml"
+
+          if [ $FAIL -eq 0 ]; then
+            echo "WS_READY"
+            echo "STRUCTURE_OK — backups normalized"
+            echo "STRUCTURE_OK — topology"
+          else
+            exit 1
+          fi

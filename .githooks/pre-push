@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ADDON="addon"
+FAIL=0
+
+# No 'addon' symlink
+[ -L addon ] && { echo "ERROR: 'addon' must not be a symlink."; exit 1; }
+
+# No submodule gitlink for addon
+if git ls-files -s | awk '$1==160000 && $4=="addon" {found=1} END{exit !found}'; then
+  echo "ERROR: 'addon' is a submodule (gitlink)."; exit 1;
+fi
+
+# No nested repo under addon
+[ -d addon/.git ] && { echo "ERROR: nested git repo at addon/.git is forbidden."; exit 1; }
+
+# No symlinks under addon tree
+if find addon -type l | grep -q .; then
+  echo "ERROR: symlinks under addon/ are not allowed."; exit 1;
+fi
+
+if find _backup -type f ! -name '*.tar.gz' ! -name 'README.md' ! -name '.gitkeep' ! -name '*.sha256' | grep -q .; then
+  echo "ERROR: Non-tarball artifacts in _backup/"; FAIL=1
+fi
+for d in tests tools; do
+  [ ! -e "$d" ] || { echo "ERROR: '$d' must NOT exist at workspace root"; FAIL=1; }
+done
+for p in tests tools app bb8_core config.yaml services.d scripts reports Dockerfile Makefile README.md VERSION apparmor.txt; do
+  [ -e "$ADDON/$p" ] || { echo "ERROR: addon missing: $p"; FAIL=1; }
+done
+for p in ops _backup .venv .pytest_cache .ruff_cache .mypy_cache; do
+  [ ! -e "$ADDON/$p" ] || { echo "ERROR: addon must NOT contain: $p"; FAIL=1; }
+done
+
+
+if [ $FAIL -ne 0 ]; then
+  echo "Push blocked by ADR-0001 guard."
+  exit 1
+fi
+echo "WS_READY"
+echo "STRUCTURE_OK — backups normalized"
+echo "STRUCTURE_OK — topology"

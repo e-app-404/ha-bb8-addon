@@ -8,3 +8,9 @@ addon/reports/*
 !addon/reports/.gitkeep
 addon/docs/reports/*
 !addon/docs/reports/.gitkeep
+.DS_Store
+docs/.DS_Store
+addon/reports/*
+!addon/reports/.gitkeep
+addon/docs/reports/*
+!addon/docs/reports/.gitkeep
