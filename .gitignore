@@ -15,3 +15,9 @@ addon/reports/*
 addon/docs/reports/*
 !addon/docs/reports/.gitkeep
 _backup/*.tar.gz
+_backups/*.tar.gz
+addon/scripts/
+addon/reports/
+addon/docs/
+!reports/.gitkeep
+!scripts/.gitkeep
