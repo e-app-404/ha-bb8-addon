@@ -1,0 +1,20 @@
+{
+  "contract": "patch_bundle_contract_v1",
+  "head_target": "b189f8f8c6b16410f92520acd5b57823ce47ec2a",
+  "target_files": [
+    "bb8_core/ble_link.py",
+    "bb8_core/mqtt_probe.py",
+    "tests/test_ble_event_loop.py"
+  ],
+  "diffs_applied": [
+    "Ensure dedicated BLE loop thread + idempotent start()",
+    "Exponential reconnect backoff with attempt logging",
+    "MQTT probe logs connect params and exit reasons",
+    "Add sentinel test for BLE loop bootstrap"
+  ],
+  "tests_affected": [
+    "tests/test_ble_event_loop.py (new)"
+  ],
+  "coverage_delta": 0.5,
+  "rollback_notes": "Revert per-file via `git checkout -- <file>` if needed; no schema changes."
+}

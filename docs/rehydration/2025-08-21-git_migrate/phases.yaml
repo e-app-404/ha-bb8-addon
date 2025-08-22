@@ -1,0 +1,84 @@
+phase_registry:
+  - id: "P0-BOOT"
+    summary: "Strategos boot, governance anchoring, snapshot integrity check"
+    outputs: ["session_recap_prior", "artifact_index"]
+    status: "completed"
+
+  - id: "P1-STP4-EVIDENCE (shim)"
+    summary: "Evidence collection with facade echoes accepted"
+    outputs:
+      - "evidence_manifest.json"
+      - "ha_mqtt_trace_snapshot.json"
+      - "ha_discovery_dump.json"
+    status: "completed (PASS)"
+
+  - id: "P2-ADR0001-TOPOLOGY"
+    summary: "Dual-clone canonicalization; workspace and runtime git clones; no symlinks/submodules"
+    outputs:
+      - "STRUCTURE_OK"
+      - "DEPLOY_OK"
+      - "VERIFY_OK"
+      - "WS_READY"
+      - "ADR-0001 receipt (*.status)"
+    status: "completed"
+
+  - id: "P3-OPS-DOMAINS"
+    summary: "Split ops into domain subfolders (audit, workspace, deploy, qa, diagnostics, maintenance, evidence); wrappers export env"
+    outputs:
+      - "ops/audit/*"
+      - "ops/workspace/*"
+      - "ops/deploy/*"
+      - "ops/qa/*"
+      - "ops/diagnostics/*"
+      - "ops/maintenance/*"
+      - "ops/evidence/*"
+    status: "completed"
+
+  - id: "P4-TESTS-CONSOLIDATION"
+    summary: "All tests under addon/tests; suite green locally"
+    outputs:
+      - "addon/tests/**"
+      - "pytest run: PASS"
+    status: "completed (PASS)"
+
+  - id: "P5-BLE-EVENT-LOOP"
+    summary: "Dedicated asyncio loop thread; structured logs; avoid get_event_loop warnings"
+    outputs:
+      - "run.log (local)"
+      - "ble_link_started markers"
+    status: "implemented (confirm under strict run)"
+
+  - id: "P6-DEVICE-ECHO"
+    summary: "Device-originated scalar echoes via centralized helper; retain=false; LED RGB JSON"
+    outputs:
+      - "code changes in ble_bridge.py / mqtt_echo helper"
+    status: "completed (awaiting attestation in strict run)"
+
+  - id: "P7-DEPLOY-VERIFY"
+    summary: "Push workspace; runtime fetch + hard reset; stamp governance tokens"
+    outputs:
+      - "DEPLOY_OK runtime_head=9c31463 branch=main"
+      - "VERIFY_OK ws_head=9c31463 runtime_head=9c31463"
+      - "STRUCTURE_OK"
+      - "WS_READY"
+    status: "completed"
+
+  - id: "P8-RELEASE-TAG"
+    summary: "Release bump and tag"
+    outputs:
+      - "config.yaml version: 2025.08.21"
+      - "tag v2025.8.21 @ 9c31463"
+    status: "completed"
+
+  - id: "P1b-STP4-EVIDENCE (strict)"
+    summary: "Strict run with shim disabled and device echoes required"
+    outputs_expected:
+      - "evidence_manifest.json (strict)"
+      - "ha_mqtt_trace_snapshot.json[l]"
+      - "run.log excerpt"
+    status: "pending attestation"
+
+pending_copilot_items:
+  - "Add CI workflow to run ops/audit/check_structure.sh and scripts/verify_workspace.sh; assert tokens in logs"
+  - "Add README.md per ops subfolder documenting purpose and entrypoints"
+  - "Optional: integrate HA add-on restart hook into deploy_dual_clone.sh (if manual restart undesired)"

@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+export WORKSPACE_ROOT="/Users/evertappels/Projects/HA-BB8"
+export REPORT_ROOT="/Users/evertappels/Projects/HA-BB8/reports"
+
 set -euo pipefail
 
 PROJ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -30,11 +33,16 @@ fi
 # Bootstrap evidence venv
 bash "${PROJ}/scripts/bootstrap_evidence_env.sh"
 
-# Preflight: confirm the BB-8 bridge is on this broker (requires bb8/status=online)
 "${ADDON}/.venv_evidence/bin/python" "${PROJ}/scripts/check_bridge_broker.py" || {
   echo "[run] BB-8 bridge not visible on ${MQTT_HOST}:${MQTT_PORT} (no '${MQTT_BASE}/status'='online')." >&2
   echo "[run] Fix: Either (A) point .evidence.env to the broker the add-on uses, or (B) reconfigure the add-on to this broker, then try again." >&2
   exit 20
+}
+
+# Smoke check for MQTT handler attachment
+"${ADDON}/.venv_evidence/bin/python" "${PROJ}/scripts/smoke_handlers.py" || {
+  echo "[run] MQTT handlers not active on ${MQTT_HOST}:${MQTT_PORT} (no diag/echo_stop seen). Fix handler attach in mqtt_dispatcher.on_connect." >&2
+  exit 21
 }
 
 # Run evidence from addon

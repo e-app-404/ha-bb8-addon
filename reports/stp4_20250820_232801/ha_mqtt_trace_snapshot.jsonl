@@ -1,8 +1,0 @@
-{"ts": "2025-08-20T23:28:03.062873Z", "topic": "bb8/sensor/presence", "payload": "on", "retain": true}
-{"ts": "2025-08-20T23:28:03.063168Z", "topic": "bb8/sensor/rssi", "payload": "-59", "retain": true}
-{"ts": "2025-08-20T23:28:03.063218Z", "topic": "bb8/presence/state", "payload": "online", "retain": true}
-{"ts": "2025-08-20T23:28:03.063252Z", "topic": "bb8/rssi/state", "payload": "-60", "retain": true}
-{"ts": "2025-08-20T23:28:03.063319Z", "topic": "bb8/availability/scanner", "payload": "online", "retain": true}
-{"ts": "2025-08-20T23:28:03.063364Z", "topic": "bb8/status", "payload": "online", "retain": true}
-{"ts": "2025-08-20T23:28:03.523749Z", "topic": "bb8/power/set", "payload": "ON", "retain": false}
-{"ts": "2025-08-20T23:28:06.501180Z", "topic": "bb8/stop/press", "payload": "", "retain": false}

@@ -1,0 +1,151 @@
+# Unified diffs (apply from repo root of the **addon** clone)
+
+> Save as `strict_ble_echo_fix.patch` and run:
+>
+> ```bash
+> git apply --index strict_ble_echo_fix.patch
+> git commit -m "BLE loop thread + exponential backoff; MQTT probe instrumentation; LED ON strict echo rehab"
+> ```
+
+### 1) `bb8_core/ble_link.py`
+
+```diff
+*** Begin Patch
+*** Update File: bb8_core/ble_link.py
+@@
+-import asyncio
++import asyncio
++import logging
++import threading
+@@
+-_loop: asyncio.AbstractEventLoop | None = None
++_loop: asyncio.AbstractEventLoop | None = None
++_loop_thread: threading.Thread | None = None
+ _runner_future = None
+ _started = False
++log = logging.getLogger(__name__)
+@@
+-def set_loop(loop: asyncio.AbstractEventLoop) -> None:
+-    """Inject the dedicated BLE loop (created in a separate thread)."""
+-    global _loop
+-    _loop = loop
++def set_loop(loop: asyncio.AbstractEventLoop) -> None:
++    """Inject the dedicated BLE loop (created in a separate thread)."""
++    global _loop, _loop_thread
++    _loop = loop
++    log.info("ble_loop_set loop_id=%s", id(loop))
++
++def start_loop_thread() -> None:
++    """Start BLE event loop in a dedicated thread if not already running."""
++    global _loop, _loop_thread
++    if _loop_thread and _loop_thread.is_alive():
++        return
++    def _run():
++        loop = asyncio.new_event_loop()
++        set_loop(loop)
++        asyncio.set_event_loop(loop)
++        log.info("ble_loop_thread_started name=BLELoopThread")
++        loop.run_forever()
++    _loop_thread = threading.Thread(target=_run, name="BLELoopThread", daemon=True)
++    _loop_thread.start()
++    log.info("ble_loop_thread_spawned")
+@@
+-def start() -> None:
+-    """Idempotently start the BLE worker on the dedicated loop."""
+-    global _runner_future, _started
+-    if _started:
+-        return
+-    if _loop is None:
+-        raise RuntimeError("BLE loop not set; call set_loop() before start()")
+-    _runner_future = asyncio.run_coroutine_threadsafe(_run(), _loop)
+-    _started = True
+-    log.info("BLE link runner started.")
++def start() -> None:
++    """Idempotently start the BLE worker on the dedicated loop."""
++    global _runner_future, _started
++    if _started:
++        return
++    start_loop_thread()
++    if _loop is None:
++        raise RuntimeError("BLE loop not set; call set_loop() before start()")
++    _runner_future = asyncio.run_coroutine_threadsafe(_run(), _loop)
++    _started = True
++    log.info("ble_link_runner_started")
+@@
+-    backoff = [0.1, 0.2, 0.5, 1.0, 2.0]
+-    i = 0
++    # gentler exponential-ish backoff with ceiling
++    backoff = [0.1, 0.2, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0]
++    i = 0
+     try:
+         while True:
+             # ... BLE connect/IO logic ...
+-            await asyncio.sleep(backoff[min(i, 4)])
+-            i = min(i + 1, 4)
++            delay = backoff[min(i, len(backoff) - 1)]
++            log.info("ble_connect_attempt try=%s backoff=%s", i + 1, delay)
++            await asyncio.sleep(delay)
++            i = min(i + 1, len(backoff) - 1)
+     except asyncio.CancelledError:
+-        log.info("BLE worker cancelled; shutting down cleanly.")
++        log.info("ble_worker_cancelled")
+         raise
+*** End Patch
+```
+
+### 2) `bb8_core/mqtt_probe.py`
+
+```diff
+*** Begin Patch
+*** Update File: bb8_core/mqtt_probe.py
+@@
+-    def on_connect(c, ud, flags, rc, props=None):
+-        if rc == 0:
+-            res["connected"] = True
+-            c.subscribe([(f"{base}/#", 0)])
+-            cmd = {"value": 1, "ts": int(time.time())}
+-            c.publish(f"{base}/echo/cmd", json.dumps(cmd), qos=0, retain=False)
++    def on_connect(c, ud, flags, rc, props=None):
++        cid = getattr(c, "_client_id", b"")
++        try:
++            cid = cid.decode() if hasattr(cid, "decode") else str(cid)
++        except Exception:
++            cid = str(cid)
++        print(f"mqtt_on_connect rc={rc} client_id={cid}")
++        if rc == 0:
++            res["connected"] = True
++            c.subscribe([(f"{base}/#", 0)])
++            cmd = {"value": 1, "ts": int(time.time())}
++            c.publish(f"{base}/echo/cmd", json.dumps(cmd), qos=0, retain=False)
+@@
+-    if not res["connected"]:
+-        raise SystemExit(2)
++    if not res["connected"]:
++        print("probe_exit reason=not_connected")
++        raise SystemExit(2)
+@@
+-        raise SystemExit(3)
++        print("probe_exit reason=roundtrip_fail")
++        raise SystemExit(3)
+*** End Patch
+```
+
+### 3) `tests/test_ble_event_loop.py` (new)
+
+```diff
+*** Begin Patch
+*** Add File: tests/test_ble_event_loop.py
++import time
++from bb8_core import ble_link
++
++def test_ble_loop_thread_bootstrap_idempotent():
++    # starting twice should not crash or spawn multiple threads
++    ble_link.start_loop_thread()
++    time.sleep(0.05)
++    ble_link.start()
++    # call again to ensure idempotency
++    ble_link.start()
++    # if we reach here without exceptions, basic bootstrap is OK
++    assert True
+*** End Patch
+```

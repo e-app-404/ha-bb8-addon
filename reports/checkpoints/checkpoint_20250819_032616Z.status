@@ -1,9 +1,0 @@
-CHECKPOINT: OK
-TIME: 20250819_032616Z
-VERSION: 2025.08.20
-REAL_MAC: ED:ED:87:D7:27:50
-LED_DISCOVERY_DEFAULT: 0
-STATUS_JSON: reports/project_status_audit_20250819_013850Z.json
-STATUS_MD: reports/project_status_audit_20250819_013850Z.md
-VERIFY_NO_LED: reports/verify_discovery_migrated_no_led.log
-VERIFY_WITH_LED: reports/verify_discovery_migrated_with_led.log

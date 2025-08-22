@@ -1,0 +1,91 @@
+*** Update File: addon/bb8_core/bb8_presence_scanner.py
+@@ async def scan_and_publish():
+-            # Device block for discovery and state
+-            mac_upper = mac.upper() if mac else ""
+-            dev = {
+-                "identifiers": ["bb8", f"mac:{mac_upper}"],
+-                "connections": [["mac", mac_upper]],
+-                "manufacturer": "Sphero",
+-                "model": "S33 BB84 LE",
+-                "name": "BB-8",
+-                "sw_version": read_version_or_default(),
+-            }
+-
+-            # Publish discovery (once per MAC) after we know identifiers
+-            if found and mac and published_discovery_for != mac:
+-                # Presence (binary_sensor)
+-                presence_cfg = {
+-                    "name": "BB-8 Presence",
+-                    "stat_t": "bb8/presence/state",
+-                    "pl_on": "online",
+-                    "pl_off": "offline",
+-                    "avty_t": "bb8/status",
+-                    "dev": dev,
+-                }
+-                mqtt_client.publish(
+-                    "homeassistant/binary_sensor/bb8_presence/config",
+-                    json.dumps(presence_cfg),
+-                    qos=1,
+-                    retain=True,
+-                )
+-                # RSSI (sensor)
+-                rssi_cfg = {
+-                    "name": "BB-8 RSSI",
+-                    "stat_t": "bb8/rssi/state",
+-                    "unit_of_meas": "dBm",
+-                    "dev_cla": "signal_strength",
+-                    "avty_t": "bb8/status",
+-                    "dev": dev,
+-                }
+-                mqtt_client.publish(
+-                    "homeassistant/sensor/bb8_rssi/config",
+-                    json.dumps(rssi_cfg),
+-                    qos=1,
+-                    retain=True,
+-                )
+-                published_discovery_for = mac
++
++            # Device block for discovery and state
++            mac_upper = mac.upper() if mac else ""
++            dev = {
++                "identifiers": ["bb8", f"mac:{mac_upper}"],
++                "connections": [["mac", mac_upper]],
++                "manufacturer": "Sphero",
++                "model": "S33 BB84 LE",
++                "name": "BB-8",
++                "sw_version": read_version_or_default(),
++            }
++
++            # Publish discovery (once per MAC) after we know identifiers
++            if found and mac and published_discovery_for != mac:
++                # Presence (binary_sensor)
++                presence_cfg = {
++                    "name": "BB-8 Presence",
++                    "stat_t": "bb8/presence/state",
++                    "pl_on": "online",
++                    "pl_off": "offline",
++                    "avty_t": "bb8/status",
++                    "dev": dev,
++                }
++                mqtt_client.publish(
++                    "homeassistant/binary_sensor/bb8_presence/config",
++                    json.dumps(presence_cfg),
++                    qos=1,
++                    retain=True,
++                )
++                # RSSI (sensor)
++                rssi_cfg = {
++                    "name": "BB-8 RSSI",
++                    "stat_t": "bb8/rssi/state",
++                    "unit_of_meas": "dBm",
++                    "dev_cla": "signal_strength",
++                    "avty_t": "bb8/status",
++                    "dev": dev,
++                }
++                mqtt_client.publish(
++                    "homeassistant/sensor/bb8_rssi/config",
++                    json.dumps(rssi_cfg),
++                    qos=1,
++                    retain=True,
++                )
++                published_discovery_for = mac

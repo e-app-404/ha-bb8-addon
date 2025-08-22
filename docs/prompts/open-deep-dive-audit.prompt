@@ -1,0 +1,105 @@
+HA-BB8 ADDON — OPEN-ENDED DEEP-DIVE AUDIT (ROOT CAUSE FINDING)
+Mode: execute-first, evidence-driven. Avoid questions; run the steps, then summarize. Don’t push code. Use a scratch branch if you need to stage diffs.
+
+GOAL
+Identify why the HA-BB8 addon fails to make a *stable* connection with the BB-8 device. Consider all plausible layers (MQTT, BLE, dispatcher, facade, threading/async, config, topic maps, discovery, retries). Produce evidence, hypotheses, and (if warranted) minimal patches as diffs (no commits).
+
+WORKSPACE & GUARDRAILS
+- Root: /Volumes/addons/local/beep_boop_bb8
+- Python venv (if present): .venv_new or .venv (activate before running Python tools)
+- Create a scratch branch: `git switch -c audit/bb8-stability`
+- Do NOT push. Do NOT rewrite history. Keep changes as working tree diffs or separate patches.
+- Prefer read-only inspection first; only add minimal instrumentation logs if evidence is ambiguous.
+
+INPUTS ALREADY KNOWN (use to focus):
+- Repeated startup messages show proper MQTT config (host=192.168.0.129), version probes for bleak/spherov2, and dispatcher boot cycles.
+- Strict STP4 requires device-originated echoes (source:"device") on bb8/echo/state.
+- We’ve had prior fixes around discovery seams, idempotency, and mqtt smoke tests; don’t assume those subsystems are at fault or clean—verify.
+
+DELIVERABLES (must produce):
+1) A “root_cause_audit.md” under reports/ with:
+   - Top 5 hypotheses table (probability, evidence, file+line refs)
+   - Minimal-repro steps (commands) and outcomes
+   - Topic map verification (subscribes/handlers/publishes) as a checklist
+   - Threading/async health notes (event loop, callbacks, locks)
+   - Config resolution tree (which source wins for MQTT host/creds, timeouts)
+   - “Next experiments” list (if inconclusive)
+2) A patch proposal (if warranted): single unified diff per file, minimal & surgical, with comments in the diff explaining intent.
+3) A quick triage log snippet pack (last 60 lines of key logs) embedded in the report.
+
+TASKS (execute sequentially)
+
+A) PREP & CONTEXT SNAPSHOT
+- Open workspace root. Print `git status -s` and current branch.
+- If needed: `. .venv_new/bin/activate || . .venv/bin/activate || true`
+- Record: `python3 -V`, `pip show paho-mqtt bleak spherov2`
+- Collect and paste into the report the latest 100 lines from any addon logs you can find (paths likely under docs/reports/, reports/, or runtime logs). If multiple, choose the freshest and list all candidates.
+
+B) STATIC SCAN — MAP THE PIPELINES
+Use fast code search (rg or VS Code search). Produce a section in the report that lists results and source snippets:
+1) MQTT wiring & lifecycle
+   - Search for: `Client(`, `.connect(`, `.loop_start`, `.on_connect`, `message_callback_add`, `.subscribe(`, `.publish(`, `.reconnect`, backoff/timeout usage, and any custom MQTT wrapper.
+   - Files to open: bb8_core/mqtt_dispatcher.py, bb8_core/bridge_controller.py, bb8_core/bb8_presence_scanner.py, bb8_core/facade.py, bb8_core/ble_link.py, ops/evidence/mqtt_probe.py.
+   - Confirm Paho callback signatures are v5-compatible: `def on_connect(client, userdata, flags, rc, properties=None)`.
+   - Note any *async/await* usage with Paho (red flag if awaiting sync `.publish()`).
+
+2) BLE wiring
+   - Search for: `BleakClient`, `BleakScanner`, `connect`, `disconnect`, `start_notify`, `stop_notify`, error handling, retries, timeouts.
+   - Confirm event loop usage: no “There is no current event loop” patterns; check for dedicated loop thread if required by design.
+   - Identify where BLE connection success/failure is logged and how that propagates up.
+
+3) Discovery & topics (publish/subscribe maps)
+   - Search keys: `"homeassistant/"`, `bb8/`, `state`, `cmd`, `echo`, `led`, `power`, `heading`, `speed`, `drive`, `sleep`.
+   - Extract a topic map table: for each cmd topic subscribed → which handler → which state/echo published (retain flags, QoS).
+   - Verify `bb8/echo/state` origin: where is it produced? device vs facade? Ensure presence of `{"source":"device"}` in strict mode.
+
+4) Facade/controller linkage
+   - Find where user commands (e.g., set LED) flow: MQTT → dispatcher → controller/facade → BLE calls → *device echo* path back to MQTT.
+   - Note any paths that short-circuit by publishing facade-originated echoes instead of device-originated ones.
+
+5) Threading/async health
+   - Grep for `threading.Thread`, `asyncio.get_event_loop`, custom loop threads.
+   - Verify safe cross-thread calls to Paho (publish/subscribe) and BLE libs.
+   - Record any locks/guards for connection lifecycle and idempotent init.
+
+C) DYNAMIC PROBES — MINIMAL REPRO (LOCAL)
+In a terminal (with venv):
+- Broker reachability: `python3 ops/evidence/mqtt_probe.py` (uses config.yaml/env). Capture output. If fails, try `mosquitto_sub -h 192.168.0.129 -p 1883 -t 'bb8/#' -v` in a separate terminal.
+- Manual roundtrip sanity:
+  1) Publish a benign command (e.g., an LED set) to the expected cmd topic, then listen for state/echo on expected state/echo topics. Record whether ANY state/echo arrives, with timing.
+  2) If nothing arrives, note whether subscriptions exist (from static map) and whether a handler is registered for that cmd topic.
+- If device not present, simulate the BLE layer (if a stub exists) to ensure MQTT handlers fire. If no stub, consider instrumenting the handler to log a “handler invoked” line just for this audit (do not commit).
+
+D) FLAKY/RECONNECT SCENARIOS
+- Search for reconnect/backoff: look for logic on connection loss (MQTT or BLE). Is there a loop that starts multiple times? Is discovery retriggered repeatedly?
+- Add temporary log probes (if needed) around on_connect/on_disconnect to count invocations and print thread name & timestamps. Keep changes as a diff in the report.
+
+E) HYPOTHESIS LEDGER
+- Based on the evidence, write 5–8 hypotheses (e.g., “Subscribed to the wrong cmd topic”, “handlers never registered”, “BLE connect never completes → no echo”, “on_connect signature mismatch → callback never fires”, “device echo path bypassed”, “facade publishes but device echo required”, “threading: race before subscriptions bind”).
+- For each hypothesis, attach citations (file:line, log snippet) and assign a probability (low/med/high) with rationale.
+- Pick the top 1–2 and design a *minimal* experiment (one-line instrumentation, or a single fake publish) to disambiguate. Run it and record outcome.
+
+F) PATCH (ONLY IF EVIDENCE WARRANTS)
+- If you can demonstrate a clear defect, prepare a minimal unified diff per file. Requirements:
+  - Keep signatures stable.
+  - Prefer surgical fixes (subscribe/handler registration, callback signatures, correct topic names, ensure handler publishes state/echo, add missing retries, clamp timings).
+  - Add one high-signal log per fix path (key=value style).
+- Include the diffs inline in the report under a “Proposed Fixes” section. Do not commit.
+
+G) REPORT OUT
+Create/overwrite: `reports/audit_root_cause_<YYYYMMDD_HHMMSS>.md` with:
+- Executive summary (1–2 paragraphs): symptom, top hypothesis, confidence, next steps.
+- Evidence sections A–F.
+- If no smoking gun, clearly list the most valuable next two experiments (and the exact commands/code lines to add).
+
+SPECIFICS TO DOUBLE-CHECK (DON’T BIAS—JUST VERIFY)
+- MQTT host resolution path: ensure runtime uses 192.168.0.129 (not 127.0.0.1) and that creds from config.yaml are applied in both dispatcher and probes.
+- Paho v5 callback signatures everywhere (including ops/evidence scripts).
+- `message_callback_add` (or equivalent) is used and handlers are actually registered for each `bb8/<device>/cmd/...` topic (or wildcard) *before* publishing commands in tests.
+- State/echo publish paths exist and are called on handler execution; in strict mode, ensure `{"source":"device"}` is included and retain=False for dynamic signals.
+- BLE connect lifecycle: confirm success path emits an unmistakable “connected device <MAC>” log; ensure disconnects are handled and reconnect attempts happen with sane backoff.
+- Facade vs device echo: ensure facade-only echoes are not used when strict evidence requires device-originated payloads.
+
+OUTPUT FORMAT
+- At completion, print a short TL;DR: “Likely root cause(s): … (confidence X%). See reports/audit_root_cause_<ts>.md”
+- If you made any code changes for instrumentation, show the unified diff inline in the message (do not commit).

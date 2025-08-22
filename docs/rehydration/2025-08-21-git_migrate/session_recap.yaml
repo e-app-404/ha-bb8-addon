@@ -1,0 +1,45 @@
+session_label: "WS Restore + ADR-0001 Dual-Clone; Release 2025.8.21"
+trace_id: "STRAT-9c31463" # anchor = HEAD short SHA after release
+timestamp_utc: "2025-08-21T15:42:07Z"
+active_personas:
+  - id: Strategos
+    role: Executive Project Strategist & Integration Delivery Manager
+  - id: Pythagoras
+    role: Code Implementer & QA (Copilot-facing)
+operational_mode: "governance + execution (dual-mode)"
+escalation_context:
+  - "Runtime symlink purge (addon→self, docs→external) → removed"
+  - "Orphan HEAD on remote → cleaned; branch main normalized"
+  - ".gitignore rebase conflict → union merge"
+  - "Duplicate .github/.vscode/.tools/.reports in addon → consolidated to root"
+last_validated_checkpoint:
+  id: "ADR-0001-P7-DEPLOY-VERIFY"
+  desc: "Dual-clone canonicalization complete; deploy=push→fetch+hard-reset; tokens green"
+  evidence:
+    - "DEPLOY_OK runtime_head=9c31463 branch=main"
+    - "VERIFY_OK ws_head=9c31463 runtime_head=9c31463 remote=git@github.com:e-app-404/ha-bb8-addon.git"
+    - "STRUCTURE_OK"
+    - "WS_READY addon_ws=git_clone_ok runtime=git_clone_ok reports=ok wrappers=ok ops=ok"
+governance_traits:
+  empirical_validation: true
+  contract_driven: true
+  binary_acceptance: true
+  drift_score: low
+  confidence_score: 0.90
+  evidence_tolerance_level: 0
+unresolved_blockers:
+  - id: "CI-TOKEN-GATE"
+    desc: "CI pipeline should enforce STRUCTURE_OK / VERIFY_OK tokens on PRs"
+    status: "pending"
+  - id: "STP4-STRICT-ATTEST"
+    desc: "Strict evidence run with shim disabled; device-echo acceptance proof"
+    status: "pending attestation"
+strategic_posture:
+  intent: "Maintain canonical topology; graduate STP4 to strict; prepare STP5"
+  near_term:
+    - "Create CI gate running ops/audit/check_structure.sh and scripts/verify_workspace.sh; assert tokens"
+    - "Run strict STP4 evidence (shim OFF, REQUIRE_DEVICE_ECHO=1) and attach artifacts"
+    - "Optionally integrate HA add-on auto-restart into deploy_dual_clone.sh"
+  medium_term:
+    - "Tighten schema/namespace checks to flat 'bb8/...'"
+    - "QA hardening: coverage ≥ 80%, type + lint clean, security scans green"

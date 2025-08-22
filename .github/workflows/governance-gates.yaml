@@ -1,0 +1,26 @@
+name: governance-gates
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -euxo pipefail {0}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run structure + verify and assert tokens
+        env:
+          WORKSPACE_ROOT: ${{ github.workspace }}
+          REPORT_ROOT: ${{ github.workspace }}/reports
+        run: |
+          mkdir -p "$REPORT_ROOT"
+          bash ops/audit/check_structure.sh | tee "$REPORT_ROOT/ci_structure.log"
+          bash scripts/verify_workspace.sh | tee "$REPORT_ROOT/ci_verify.log"
+          TOKENS='STRUCTURE_OK|VERIFY_OK|WS_READY'
+          grep -Eh "$TOKENS" "$REPORT_ROOT"/ci_*.log
