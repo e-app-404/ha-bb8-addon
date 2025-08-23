@@ -35,6 +35,7 @@ def main():
     res = {"connected": False, "roundtrip": "FAIL", "schema": "UNKNOWN"}
     got_echo = threading.Event()
     payload_seen: dict | None = None
+    from .telemetry import echo_roundtrip
 
     def on_message(c, ud, msg):
         nonlocal payload_seen
@@ -66,6 +67,13 @@ def main():
     got_echo.wait(timeout=args.timeout)
     client.loop_stop()
     client.disconnect()
+    # Telemetry hook (non-fatal)
+    try:
+        ms = int(args.timeout * 1000)
+        ok = got_echo.is_set() and payload_seen and payload_seen.get("source") == "device"
+        echo_roundtrip(client, ms, "PASS" if ok else "FAIL")
+    except Exception:
+        pass
 
     if got_echo.is_set() and payload_seen:
         if payload_seen.get("source") == "device":
