@@ -52,3 +52,5 @@ __pycache__/
 /reports/
 /addon/
 /.github/
+bb8_core/
+app/
