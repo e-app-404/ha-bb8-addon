@@ -19,20 +19,8 @@ run_ssh() { ssh "$REMOTE_HOST_ALIAS" "$@"; }
 remote_llat_probe() {
   run_ssh env HA_LLAT_KEY="$HA_LLAT_KEY" sh -eu <<'REMOTE'
 SECRETS="/config/secrets.yaml"; KEY="${HA_LLAT_KEY:-ha_llat}"
-# Extract: value after "key:", strip quotes/comments/whitespace
-VAL="$(awk -v k="$KEY" '
-  BEGIN{FS=":"}
-  /^[[:space:]]*#/ {next}
-  $1 ~ "^[[:space:]]*"k"[[:space:]]*$" {
-    line=$0
-    sub(/^[^:]*:[ \t]*/,"",line)
-    sub(/[ \t]*#.*$/,"",line)
-    gsub(/^[ \t]+|[ \t]+$/,"",line)
-    gsub(/^'\''|^"/,"",line)
-    gsub(/'\''$|"$/,"",line)
-    print line; exit
-  }' "$SECRETS" 2>/dev/null || true)"
-[ -n "$VAL" ] && echo "LLAT_PRESENT" || { echo "LLAT_MISSING"; exit 2; }
+# Just presence check; do NOT print token
+grep -Eq "^[[:space:]]*${KEY}[[:space:]]*:" "$SECRETS" 2>/dev/null && echo "LLAT_PRESENT" || { echo "LLAT_MISSING"; exit 2; }
 REMOTE
 }
 
@@ -58,6 +46,11 @@ git reset --hard origin/main
 echo "DEPLOY_OK — runtime hard-reset to origin/main"
 
 SECRETS="/config/secrets.yaml"; KEY="${HA_LLAT_KEY:-ha_llat}"
+
+# 1) Presence gate (no token output)
+grep -Eq "^[[:space:]]*${KEY}[[:space:]]*:" "$SECRETS" 2>/dev/null || { echo "ERROR: LLAT key ${KEY} not present in $SECRETS"; exit 2; }
+
+# 2) Robust extract: awk first, sed fallback; strip quotes/comments/whitespace
 TOKEN="$(awk -v k="$KEY" '
   BEGIN{FS=":"}
   /^[[:space:]]*#/ {next}
@@ -70,14 +63,23 @@ TOKEN="$(awk -v k="$KEY" '
     gsub(/'\''$|"$/,"",line)
     print line; exit
   }' "$SECRETS" 2>/dev/null || true)"
-[ -n "$TOKEN" ] || { echo "ERROR: No LLAT token found in $SECRETS under key $KEY" >&2; exit 2; }
 
-# Never echo $TOKEN. Use it only in the header:
+if [ -z "$TOKEN" ]; then
+  TOKEN="$(sed -n "s/^[[:space:]]*${KEY}[[:space:]]*:[[:space:]]*//p" "$SECRETS" 2>/dev/null \
+           | head -n1 \
+           | sed -E 's/[[:space:]]*#.*$//' \
+           | sed -E 's/^[[:space:]]*["'\'']?//' \
+           | sed -E 's/["'\'']?[[:space:]]*$//' )"
+fi
+
+[ -n "$TOKEN" ] || { echo "ERROR: LLAT token parse failed from $SECRETS under key $KEY"; exit 2; }
+
+# 3) Restart via HTTP (token never echoed)
 curl -sS -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
      -X POST "$HA_URL/api/services/hassio/addon_restart" \
      -d "{\"addon\":\"$REMOTE_SLUG\"}" | grep -q '"result"[[:space:]]*:[[:space:]]*"ok"' \
      && echo "VERIFY_OK — add-on restarted and running (HTTP)" \
-     || { echo "ERROR: HTTP fallback restart failed" >&2; exit 1; }
+     || { echo "ERROR: HTTP fallback restart failed"; exit 1; }
 REMOTE
     fi
     echo "DEPLOY_SSH_OK"
