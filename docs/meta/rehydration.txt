@@ -1,0 +1,185 @@
+🔖 SESSION RECAP SUMMARY
+
+session_label: BB8_HA_Addon_Dev_Session_20250804
+trace_id: BB8-STP1-STRAT20250804-A1
+personas:
+  - Strategos: Executive Project Strategist & Delivery Governance Agent
+  - Copilot: Implementation and Testing Automation Assistant
+operational_mode: Phase-Gated Execution with Escalation Routing
+escalation_context:
+  current_trigger: STP1-9.BLE_TEST execution gating failure
+  recent_mode: Configuration Validation and BLE Adapter Runtime Test
+last_validated_phase: STP1-8.BRIDGE_CTRL
+last_decision_checkpoint: ANCHOR_BB8_SETUP_20250804_1
+governance_traits:
+  confidence_score: 0.91
+  intervention_thresholds:
+    timeline_variance: 0%
+    stakeholder_alignment: 87%
+    evidence_package: present
+strategic_posture:
+  intent: Proceed to BLE connectivity verification (container runtime)
+  delivery_target: STP1-10.HEALTHCHECK readiness
+unresolved_blockers:
+  - Add-on visibility failure in HA Supervisor (appears as "error" state)
+  - S6 init process error: missing `/run/s6/container_environment`
+
+⸻
+
+📦 ARTIFACT REFERENCE INDEX
+
+artifact_index:
+  - filename: config.yaml
+    role: addon_config
+    context: Home Assistant addon descriptor
+  - filename: Dockerfile
+    role: container_definition
+    context: Python, BLE, MQTT runtime
+  - filename: bb8_core_20250804.tar.gz
+    role: core_package
+    context: Refactored BLE, controller, dispatcher modules
+  - filename: beep_boop_bb8_snapshot_20250804_215322.tar.gz
+    role: runtime_container_snapshot
+    context: Full add-on structure in HA local add-ons directory
+  - filename: system_instruction.yaml
+    role: strategist_bootloader
+    context: Persona initialization (Strategos)
+  - filename: 2025-06-18_strategos_v1.3.yaml
+    role: strategist_persona
+    context: Strategos definition file
+
+⸻
+
+🗺️ PHASE + OUTPUT REGISTRY
+
+phase_output_registry:
+  - phase: STP1-1.REG_INIT
+    output: Initialized GitHub repository, `ha-bb8-addon`
+    status: completed
+  - phase: STP1-3.AUDIT_CLI
+    output: Refactored CLI scripts → bb8_core package
+    status: completed
+  - phase: STP1-6.MQTT_HANDLER
+    output: mqtt_dispatcher.py with full lifecycle logic
+    status: completed
+  - phase: STP1-8.BRIDGE_CTRL
+    output: bridge_controller.py with orchestrated boot logic
+    status: completed
+  - phase: STP1-9.BLE_TEST
+    output: `test_ble_adapter.py` inside /app, Dockerfile updated
+    status: blocked
+    blocker: add-on does not start properly under HA supervisor
+  - pending:
+      - Copilot: Generate error-capturing logs inside S6 environment
+      - Strategos: Evaluate recovery path for S6 init failure
+
+
+⸻
+
+🧠 MEMORY VARIABLES FOR REHYDRATION
+
+memory_variables:
+  last_valid_patch: bridge_controller refactor
+  last_decision_checkpoint: ANCHOR_BB8_SETUP_20250804_1
+  clustered_entity_count: 3 (BLEBridge, BB8Controller, BleGateway)
+  alias_count: 2 (bb8_core.ble_bridge, bridge_controller)
+  inclusion_coverage: 91%
+  semantic_summary: BLE + MQTT integration architecture with Home Assistant add-on bootstrap and runtime orchestration validated up to BLE container test
+  open_validation_loops:
+    - BLE adapter accessibility in HA container
+    - S6 process runtime validation
+    - Add-on visibility under supervisor reload
+
+⸻
+
+🔐 REHYDRATION SEED EXPORT PROMPT
+
+rehydration_seed:
+  boot_context: BB8_HA_Addon_Dev_20250804
+  strategist_persona: strategos_v1.3_20250618
+  governance_model: strict_contract_execution
+  phase_checkpoint: ANCHOR_BB8_SETUP_20250804_1
+  seed_inputs:
+    - config.yaml
+    - Dockerfile
+    - bb8_core_20250804.tar.gz
+    - test_ble_adapter.py
+  unresolved_state:
+    - Add-on not appearing in container list
+    - s6-envdir: /run/s6/container_environment missing
+  next_directive:
+    - Diagnose and patch s6 service environment issue
+    - Resume with STP1-9.BLE_TEST validation
+    - Ensure add-on `slug` and folder `name` alignment remains intact
+
+⸻
+
+📄 FINAL ADVISORY
+	•	Token Usage Advisory: High token volume across multi-phase integration. Expect ~4k tokens rehydration burst on full context load.
+	•	Recommended GPT Startup Configuration:
+	•	Persona: Strategos (v1.3 or newer)
+	•	Expansion Pack: dual_mode_xp_v1_250615.yaml
+	•	Mode: “strategic_integration_resume”
+	•	Risks Needing Validation on Resume:
+	•	Add-on startup errors related to S6 process environment
+	•	Potential misalignment between runtime folder, slug, and Docker context
+	•	BLE adapter permissions and Docker capability mapping in HA OS
+
+⸻
+
+🧷 HANDOFF TAG — BB8_HA_ADDON_SESSION_20250804_H1
+
+🎯 Strategic Handoff Metadata
+
+handoff_tag: BB8_HA_ADDON_SESSION_20250804_H1
+source_persona: Strategos
+version: v1.3 (bootloader: 2025-06-18)
+handoff_type: strategic_session_resume
+phase_anchor: STP1-9.BLE_TEST
+reason: Runtime execution issue – BLE adapter + S6 service path
+status: compressed_and_complete
+dependencies:
+  - Strategos
+  - Copilot
+rehydration_seed: see section below
+
+⸻
+
+🧪 Output Contracts Archive
+
+Phase	Output	Status
+STP1-1.REG_INIT	GitHub repo initialized, slug aligned	✅ completed
+STP1-3.AUDIT_CLI	CLI code modularized into bb8_core/	✅ completed
+STP1-6.MQTT_HANDLER	mqtt_dispatcher implemented and tested	✅ completed
+STP1-8.BRIDGE_CTRL	Orchestration finalized in controller	✅ completed
+STP1-9.BLE_TEST	Container runtime test prepared	🚧 blocked
+-	test_ble_adapter.py created	✅ completed
+-	Add-on S6 runtime error unresolved	⚠️ unresolved
+
+⸻
+
+🪪 Rehydration Seed Snapshot
+
+rehydration_seed:
+  session: BB8_HA_Addon_Dev_20250804
+  strategist: strategos_v1.3_20250618
+  expansion: dual_mode_xp_v1_250615
+  checkpoint: ANCHOR_BB8_SETUP_20250804_1
+  directory_structure: addons/beep_boop_bb8
+  slug: local_beep_boop_bb8
+  next_action:
+    - Diagnose /run/s6/container_environment error
+    - Resume STP1-9 BLE container test via ha CLI
+  evidence_files:
+    - config.yaml
+    - Dockerfile
+    - bb8_core_20250804.tar.gz
+    - test_ble_adapter.py
+    - beep_boop_bb8_snapshot_20250804_215322.tar.gz
+
+⸻
+
+🛑 Session Status
+	•	⏸️ Frozen at: STP1-9.BLE_TEST
+	•	🧭 Next GPT agent: Strategos v1.3 or compatible Promachos
+	•	🧷 Use handoff_tag: BB8_HA_ADDON_SESSION_20250804_H1 to resume

@@ -1,0 +1,14 @@
+{
+  "profile": "extended",
+  "entities": [
+    { "domain": "sensor", "name": "Presence", "topic": "{base}/presence/state", "retain": true },
+    { "domain": "sensor", "name": "RSSI", "topic": "{base}/rssi/state", "retain": true },
+    { "domain": "switch", "name": "Power", "cmd": "{base}/power/set", "state": "{base}/power/state", "retain_state": true },
+    { "domain": "button", "name": "Stop", "cmd": "{base}/stop/press", "state": "{base}/stop/state", "retain_state": false },
+    { "domain": "light", "name": "LED", "cmd": "{base}/led/set", "state": "{base}/led/state", "retain_state": true },
+    { "domain": "button", "name": "Sleep", "cmd": "{base}/sleep/press", "state": "{base}/sleep/state", "retain_state": false },
+    { "domain": "button", "name": "Drive", "cmd": "{base}/drive/press", "state": "{base}/drive/state", "retain_state": false },
+    { "domain": "number", "name": "Heading", "cmd": "{base}/heading/set", "state": "{base}/heading/state", "min": 0, "max": 359, "step": 1, "retain_state": true },
+    { "domain": "number", "name": "Speed", "cmd": "{base}/speed/set", "state": "{base}/speed/state", "min": 0, "max": 255, "step": 1, "retain_state": true }
+  ]
+}

@@ -1,0 +1,134 @@
+--- a/addon/bb8_core/bb8_presence_scanner.py
++++ b/addon/bb8_core/bb8_presence_scanner.py
+@@ -1,7 +1,15 @@
+-from __future__ import annotations
+-from typing import TypedDict, Final
++from __future__ import annotations
++from typing import TypedDict
++import argparse
++import asyncio
++import json
++import logging
++import os
++import threading
++import time
++import paho.mqtt.client as mqtt
++from bleak import BleakScanner
++from paho.mqtt.enums import CallbackAPIVersion
++from .addon_config import load_config
+@@ async def scan_and_publish():
+-            # Publish discovery (once per MAC) after we know identifiers
+-            if found and mac and published_discovery_for != mac:
+-                publish_discovery(
+-                    mqtt_client,
+-                    str(mac),
+-                    str(dbus_path),
+-                    str(model_hint),
+-                    str(name_hint),
+-                )
+-                # Extended discovery (if enabled)
+-                if EXTENDED_ENABLED:
+-                    device_id = make_device_id(mac)
+-                    base = make_base(device_id)
+-                    device_block = build_device_block(
+-                        str(mac),
+-                        str(dbus_path),
+-                        str(model_hint),
+-                        str(name_hint),
+-                    )
+-                    publish_extended_discovery(
+-                        mqtt_client, base, device_id, device_block
+-                    )
+-                published_discovery_for = mac
+-
+-            # Presence/RSSI state publishing (flat topics, retain True)
+-            if found and mac:
+-                mqtt_client.publish(
+-                    "bb8/presence/state",
+-                    "online",
+-                    qos=1,
+-                    retain=True,
+-                )
+-                if rssi is not None:
+-                    mqtt_client.publish(
+-                        "bb8/rssi/state",
+-                        str(rssi),
+-                        qos=1,
+-                        retain=True,
+-                    )
+-            else:
+-                mqtt_client.publish(
+-                    "bb8/presence/state",
+-                    "offline",
+-                    qos=1,
+-                    retain=True,
+-                )
++
++            # Device block for discovery and state
++            mac_upper = mac.upper() if mac else ""
++            dev = {
++                "identifiers": ["bb8", f"mac:{mac_upper}"],
++                "connections": [["mac", mac_upper]],
++                "manufacturer": "Sphero",
++                "model": "S33 BB84 LE",
++                "name": "BB-8",
++                "sw_version": read_version_or_default(),
++            }
++
++            # Publish discovery (once per MAC) after we know identifiers
++            if found and mac and published_discovery_for != mac:
++                # Presence (binary_sensor)
++                presence_cfg = {
++                    "name": "BB-8 Presence",
++                    "stat_t": "bb8/presence/state",
++                    "pl_on": "online",
++                    "pl_off": "offline",
++                    "avty_t": "bb8/status",
++                    "dev": dev,
++                }
++                mqtt_client.publish(
++                    "homeassistant/binary_sensor/bb8_presence/config",
++                    json.dumps(presence_cfg),
++                    qos=1,
++                    retain=True,
++                )
++                # RSSI (sensor)
++                rssi_cfg = {
++                    "name": "BB-8 RSSI",
++                    "stat_t": "bb8/rssi/state",
++                    "unit_of_meas": "dBm",
++                    "dev_cla": "signal_strength",
++                    "avty_t": "bb8/status",
++                    "dev": dev,
++                }
++                mqtt_client.publish(
++                    "homeassistant/sensor/bb8_rssi/config",
++                    json.dumps(rssi_cfg),
++                    qos=1,
++                    retain=True,
++                )
++                published_discovery_for = mac
++
++            # Presence/RSSI state publishing (flat topics, retain True)
++            if found and mac:
++                mqtt_client.publish(
++                    "bb8/presence/state",
++                    "online",
++                    qos=1,
++                    retain=True,
++                )
++                if rssi is not None:
++                    mqtt_client.publish(
++                        "bb8/rssi/state",
++                        str(rssi),
++                        qos=1,
++                        retain=True,
++                    )
++            else:
++                mqtt_client.publish(
++                    "bb8/presence/state",
++                    "offline",
++                    qos=1,
++                    retain=True,
++                )
+*** End Patch

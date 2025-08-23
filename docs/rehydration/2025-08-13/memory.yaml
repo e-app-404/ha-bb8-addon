@@ -1,0 +1,29 @@
+rehydration_memory:
+  last_valid_patch: "H3 — Telemetry guards + bridge telemetry toggle + config provenance"
+  last_decision_checkpoint: "Flat namespace 'bb8/...'; scanner publishes discovery; dispatcher discovery disabled by default"
+  clustered_entities_count:
+    topics: { publish: 8, subscribe: 6 }
+    ha_entities:
+      {
+        presence:1,
+        rssi:1,
+        power:1,
+        light:1,
+        stop:1,
+        drive:1,
+        heading:1,
+        speed:1,
+      }
+  alias_map:
+    device_ids: ["bb8_<device_id>", "ble:<MAC>", "mqtt:bb8"]
+  inclusion_coverage:
+    evidence: ["roundtrip", "schema", "timeouts"]
+    discovery:
+      ["presence", "rssi", "power", "led", "stop", "drive", "heading", "speed"]
+  semantic_summary: >
+    We adopted a flat MQTT namespace (bb8/...), consolidated discovery and command shims into the scanner,
+    hardened telemetry, and introduced a bridge-telemetry toggle. Remaining gaps are BLE event loop threading
+    in the bridge and true device echoes to satisfy strict STP4.
+  open_validation_loops:
+    - "BLE loop thread patch applied & logs clean (no get_event_loop warning)"
+    - "Evidence PASS with REQUIRE_DEVICE_ECHO=1"
