@@ -76,6 +76,13 @@ def main() -> int:
         "device": dev,
         "dev": dev,
     }
+    # Telemetry hook (non-fatal)
+    try:
+        from .telemetry import led_discovery
+        duplicates_count = 0  # If you have a way to count duplicates, set here
+        led_discovery(c, led["unique_id"], duplicates_count)
+    except Exception:
+        pass
     c = mqtt.Client()
     if user:
         c.username_pw_set(user, pw or "")

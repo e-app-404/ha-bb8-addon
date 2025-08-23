@@ -1,14 +1,41 @@
 from __future__ import annotations
 
+import json
+import os
 import threading
 import time
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict
 
 from .logging_setup import logger
 
 if TYPE_CHECKING:
     pass
+
+TELEMETRY_BASE = os.environ.get("MQTT_BASE", "bb8") + "/telemetry"
+RET = False  # retain=false by policy
+
+
+def _now() -> int:
+    return int(time.time())
+
+
+def publish_metric(mqtt, name: str, data: Dict[str, Any]) -> None:
+    topic = f"{TELEMETRY_BASE}/{name}"
+    payload = json.dumps({**data, "ts": _now()})
+    mqtt.publish(topic, payload, qos=0, retain=RET)
+
+
+def echo_roundtrip(mqtt, ms: int, outcome: str) -> None:
+    publish_metric(mqtt, "echo_roundtrip", {"ms": ms, "outcome": outcome})
+
+
+def ble_connect_attempt(mqtt, try_no: int, backoff_s: float) -> None:
+    publish_metric(mqtt, "ble_connect_attempt", {"try": try_no, "backoff_s": backoff_s})
+
+
+def led_discovery(mqtt, unique_id: str, duplicates: int) -> None:
+    publish_metric(mqtt, "led_discovery", {"unique_id": unique_id, "duplicates": duplicates})
 
 
 class Telemetry:

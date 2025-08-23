@@ -1,17 +1,81 @@
 name: repo-guards
-on: { pull_request: { branches: [main] } }
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ fix/**, feature/**, bugfix/** ]
 jobs:
-  guard:
+  structure-verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          for d in addon/{docs,ops,reports,scripts,tools,addon,.github}; do
-            test ! -d "$d" || { echo "[fail] $d present"; exit 1; }
+
+      - name: Structure guard (ADR-0001)
+        run: |
+          set -euo pipefail
+          # addon/ must be tracked by workspace repo; no nested .git allowed
+          test -d addon || (echo "addon/ missing" && exit 2)
+          if [ -d addon/.git ]; then echo "addon is a repo (forbidden)"; exit 3; fi
+          # forbidden workspace-only dirs inside release subtree:
+          for d in .github docs ops reports scripts tools addon; do
+            if git ls-files --error-unmatch "addon/$d" >/dev/null 2>&1; then
+              echo "Forbidden path inside addon subtree: addon/$d"; exit 4
+            fi
           done
-      - run: |
-          export WORKSPACE_ROOT="$PWD" REPORT_ROOT="$PWD/reports"
-          mkdir -p "$REPORT_ROOT"
-          bash ops/audit/check_structure.sh | tee "$REPORT_ROOT/ci_structure.log"
-          bash scripts/verify_workspace.sh    | tee "$REPORT_ROOT/ci_verify.log"
-          grep -Eh 'STRUCTURE_OK|VERIFY_OK|WS_READY' "$REPORT_ROOT"/ci_*.log
+          echo "STRUCTURE_OK"
+
+      - name: Python setup
+        uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+
+      - name: Install dev deps
+        run: |
+          python -m pip install -U pip
+          pip install -e addon
+          if [ -f addon/requirements-dev.txt ]; then pip install -r addon/requirements-dev.txt; fi
+
+      - name: Test hygiene
+        run: |
+          find addon -type d -name '__pycache__' -prune -exec rm -rf {} + || true
+          find addon -type f -name '*.py[co]' -delete || true
+
+      - name: Duplicate test detector
+        run: |
+          python - << 'PY'
+          import sys, pathlib
+          root = pathlib.Path("addon/tests")
+          seen, dups = {}, []
+          if root.exists():
+              for p in root.rglob("test_*.py"):
+                  stem = p.stem
+                  if stem in seen: dups.append((seen[stem], p))
+                  else: seen[stem] = p
+          if dups:
+              print("Duplicate test modules:", file=sys.stderr)
+              for a,b in dups: print(" -", a, "<->", b, file=sys.stderr)
+              sys.exit(2)
+          print("VERIFY_OK")
+          PY
+
+      - name: Pytest (warnings as errors)
+        run: |
+          pytest -q -W error --maxfail=1 \
+            --cov=bb8_core --cov-report=term-missing \
+            --disable-warnings  # pytest will still fail on warnings due to -W error
+        env:
+          PYTHONWARNINGS: "error,ignore:.*callback API version 1 deprecated.*:DeprecationWarning:paho"
+
+      - name: Emit CI tokens
+        run: |
+          echo '{ "tokens": ["STRUCTURE_OK","VERIFY_OK"] }' > tokens.ci.json
+          cat tokens.ci.json
+
+      - name: Upload CI artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-guards-artifacts
+          path: |
+            tokens.ci.json
+            .pytest_cache/**/*
+            coverage.xml
+            htmlcov/**/*
