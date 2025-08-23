@@ -15,12 +15,15 @@ HA_LLAT_KEY="${HA_LLAT_KEY:-ha_llat}"
 
 run_ssh() { ssh "$REMOTE_HOST_ALIAS" "$@"; }
 
-# Helper: robust LLAT extraction on the remote (no token output)
+# Silent presence check (awk exit code only; no stdout from secrets.yaml)
 remote_llat_probe() {
   run_ssh env HA_LLAT_KEY="$HA_LLAT_KEY" sh -eu <<'REMOTE'
 SECRETS="/config/secrets.yaml"; KEY="${HA_LLAT_KEY:-ha_llat}"
-# Just presence check; do NOT print token
-grep -Eq "^[[:space:]]*${KEY}[[:space:]]*:" "$SECRETS" 2>/dev/null && echo "LLAT_PRESENT" || { echo "LLAT_MISSING"; exit 2; }
+awk -v k="$KEY" '
+  /^[[:space:]]*#/ {next}
+  $1 ~ "^[[:space:]]*"k"[[:space:]]*$" {found=1; exit}
+  END{exit found?0:1}
+' "$SECRETS" >/dev/null 2>&1 && echo "LLAT_PRESENT" || { echo "LLAT_MISSING"; exit 2; }
 REMOTE
 }
 
@@ -46,11 +49,7 @@ git reset --hard origin/main
 echo "DEPLOY_OK — runtime hard-reset to origin/main"
 
 SECRETS="/config/secrets.yaml"; KEY="${HA_LLAT_KEY:-ha_llat}"
-
-# 1) Presence gate (no token output)
-grep -Eq "^[[:space:]]*${KEY}[[:space:]]*:" "$SECRETS" 2>/dev/null || { echo "ERROR: LLAT key ${KEY} not present in $SECRETS"; exit 2; }
-
-# 2) Robust extract: awk first, sed fallback; strip quotes/comments/whitespace
+# Robust extract (no prints)
 TOKEN="$(awk -v k="$KEY" '
   BEGIN{FS=":"}
   /^[[:space:]]*#/ {next}
@@ -63,18 +62,8 @@ TOKEN="$(awk -v k="$KEY" '
     gsub(/'\''$|"$/,"",line)
     print line; exit
   }' "$SECRETS" 2>/dev/null || true)"
-
-if [ -z "$TOKEN" ]; then
-  TOKEN="$(sed -n "s/^[[:space:]]*${KEY}[[:space:]]*:[[:space:]]*//p" "$SECRETS" 2>/dev/null \
-           | head -n1 \
-           | sed -E 's/[[:space:]]*#.*$//' \
-           | sed -E 's/^[[:space:]]*["'\'']?//' \
-           | sed -E 's/["'\'']?[[:space:]]*$//' )"
-fi
-
 [ -n "$TOKEN" ] || { echo "ERROR: LLAT token parse failed from $SECRETS under key $KEY"; exit 2; }
 
-# 3) Restart via HTTP (token never echoed)
 curl -sS -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
      -X POST "$HA_URL/api/services/hassio/addon_restart" \
      -d "{\"addon\":\"$REMOTE_SLUG\"}" | grep -q '"result"[[:space:]]*:[[:space:]]*"ok"' \
