@@ -1,58 +1,47 @@
+# --- OS/IDE ---
+.DS_Store
+.idea/
+.vscode/
+
+# --- Python env & caches ---
+.venv/
+.env
+.env.*
+!.evidence.env
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.build/
-build/
-dist/
-.eggs/
-*.egg-info/
+*.py[cod]
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
-.env
-.env.*
-.venv/
-.idea/
-.vscode/
-.DS_Store
-<<<<<<< HEAD
+
+# --- Node ---
 node_modules/
-# ADR-0001 guards
-.github/
-reports/
-tools/
-addon/.github/
-=======
 
-# Environment variable file
-.env!.evidence.env
-<<<<<<< HEAD
->>>>>>> c5f69de (STP4 reliability: MQTT env compatibility, PYTHONPATH in preflight, Paho v5 callbacks)
-=======
+# --- Build artifacts ---
+.build/
+build/
+dist/
+.eggs/
+*.egg-info/
 
-# Python cache
-__pycache__/
-*.pyc
-
->>>>>>> 2c89acc (chore: ignore Python caches)
-
-# workspace-only (not part of addon repo)
-/docs/
-/ops/
-/reports/
-/scripts/
-/tools/
-
-/docs/
-/scripts/
-/tools/
-/reports/
-/addon/
-/.github/
-bb8_core/
-app/
+# --- Backups (keep dir, ignore tarballs) ---
 _backups/*.tar.gz
 _backups/*.tgz
+
+# --- Reports (track dir and .gitkeep; ignore contents) ---
+reports/*
+!reports/.gitkeep
+
+# --- Add-on template-only report dirs (if they ever reappear) ---
+addon/docs/reports/*
+!addon/docs/reports/.gitkeep
+
+# --- Explicitly DO NOT ignore these (must be tracked per ADR-0001) ---
+# (We don't add ignore rules for them at all)
+# ops/
+# docs/
+# scripts/
+# addon/
+# .github/
