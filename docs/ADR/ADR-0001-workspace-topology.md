@@ -1,12 +1,21 @@
 
 # ADR-0001: Canonical Topology — Dual-Clone via Git Remote (Short)
 
-**Decision (2025-08-21):**
-- Workspace clone at `HA-BB8/addon/` (no symlinks, no submodules)
-- Runtime clone at `/addons/local/beep_boop_bb8`
-- Deploy = push (workspace) → fetch+hard-reset (runtime), then restart add-on in HA
-- Single report sink via `REPORT_ROOT` exported by wrappers
-- Operational tools live under `HA-BB8/ops/` (not inside `addon/`)
+
+## Git Repo Structure & Publishing (2025-08-23, Reinforced)
+
+- `addon/` is **not** a git repo in the workspace. Do **not** run `git init` inside `addon/`; no `.git`, no submodules, no symlinks, no nested repos.
+- All git operations are run from the workspace root (`HA-BB8/`).
+- Publishing to the add-on repo uses `git subtree split -P addon` from the workspace root.
+- Scripts and CI must reference `addon/` via pathspecs, e.g.:
+	```bash
+	WS_ROOT="$(git rev-parse --show-toplevel)"
+	git -C "$WS_ROOT" status -- addon
+	git -C "$WS_ROOT" diff origin/main -- addon
+	git -C "$WS_ROOT" subtree split -P addon -b __addon_pub_tmp
+	```
+- Running git commands inside `addon/` will fail (no `.git`); this is expected and by design.
+- Separation between workspace and add-on repo is handled at publish time (subtree) and at runtime (independent clone on HA).
 
 **Status:** Approved. Supersedes symlink proposals.
 
@@ -16,6 +25,8 @@
 - All workspace backups must be stored as folder tarballs inside the `_backups` directory.
 - Good example: `_backups/_backups_20250821_034242.tar.gz` (single tarball file)
 - Bad example: `_backups_20250821_071118Z` (loose backup folder, not tarballed)
+**Addendum v4 (2025-08-23): Deploy uses HA Core Services API (/api/services/hassio/addon_restart) authenticated via LLAT from /config/secrets.yaml (key ha_llat). Publisher is no-op tolerant: if no addon/ changes are present, publish is skipped and deploy proceeds.**
+
 **Addendum v3 (2025-08-22): Remote HEAD = Add-on Subtree**
 - The GitHub repository `e-app-404/ha-bb8-addon`’s `main` branch contains **only** the add-on (the contents of `HA-BB8/addon`) at the repository root.
 - Publishing from the workspace uses a subtree publish (archive/filter): export `HA-BB8/addon/` and force-push to `main`.
@@ -33,7 +44,6 @@
 
 **Addendum v2 (2025-08-22): Canonical Paths & Directory Rules**
 Effective immediately:
-
 - Workspace must-have (root): `ops/`, `reports/`, `scripts/`, `docs/`, `.githooks/`, `.github/`, `_backups/`
 - Workspace must-not (root): `tests/`, `tools/`, `_backup/` (old name), any `*_backup_*` loose folders
 - Add-on must-have: `addon/bb8_core/`, `addon/tools/`, `addon/tests/`, `addon/services.d/`, `addon/app/`, `addon/.devcontainer/`, and core files: `addon/config.yaml`, `addon/Dockerfile`, `addon/Makefile`, `addon/README.md`, `addon/VERSION`, `addon/apparmor.txt`

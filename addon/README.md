@@ -1,3 +1,57 @@
+#
+# Release Automation & Workspace Commands
+
+## Automated Release Workflow
+
+This workspace supports a fully automated release workflow for the Home Assistant BB-8 add-on. The following commands are available from the repo root:
+
+### Patch bump + publish + deploy
+
+```
+make release-patch
+```
+* Increments the patch version in `addon/config.yaml` and `addon/Dockerfile`.
+* Appends a changelog entry to `addon/CHANGELOG.md`.
+* Publishes the `addon/` subtree to the remote repository (idempotent: skips if no changes).
+* Deploys the add-on to Home Assistant via SSH and the Core Services API.
+* Prints tokens: `BUMP_OK:<version>`, `SUBTREE_PUBLISH_OK:main@<sha>`, and HA deploy tokens (`AUTH_OK`, `CLEAN_RUNTIME_OK`, `DEPLOY_OK`, `VERIFY_OK`, `RUNTIME_TOPOLOGY_OK`).
+
+### Minor/major bump + publish + deploy
+
+```
+make release-minor
+make release-major
+```
+* Same as above, but increments the minor or major version.
+
+### Explicit version bump + publish + deploy
+
+```
+make release VERSION=1.4.2
+```
+* Sets the version to `1.4.2` (or any valid semver) and runs the full release workflow.
+
+### Manual steps (if needed)
+
+* You can run the individual scripts directly:
+   - `ops/release/bump_version.sh <patch|minor|major|x.y.z>` — bump version and update changelog/Dockerfile
+   - `ops/workspace/publish_addon_archive.sh` — publish only the `addon/` subtree
+   - `ops/release/deploy_ha_over_ssh.sh` — deploy the add-on to Home Assistant
+
+### Acceptance tokens
+
+* The release workflow prints tokens for CI and manual verification:
+   - `BUMP_OK:<version>` — version bump succeeded
+   - `SUBTREE_PUBLISH_OK:main@<sha>` — subtree publish succeeded
+   - `AUTH_OK`, `CLEAN_RUNTIME_OK`, `DEPLOY_OK`, `VERIFY_OK`, `RUNTIME_TOPOLOGY_OK` — Home Assistant deploy and verification steps
+
+### Notes
+
+* All release scripts are located in `ops/release/` and `ops/workspace/`.
+* The workflow is idempotent: publishing is skipped if no changes are present in `addon/`.
+* Makefile targets are tab-indented and ready for one-command releases.
+
+---
 # bb8_core
 
 Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT.

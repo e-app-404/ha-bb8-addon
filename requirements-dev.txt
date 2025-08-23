@@ -7,7 +7,7 @@ tox==4.15.1
 types-requests==2.32.0.20240712
 types-setuptools==80.9.0.20250822
 black
-pytest-cov
+pytest-cov>=4.0
 bandit
 safety
 pytest>=8.0

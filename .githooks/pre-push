@@ -1,4 +1,14 @@
 
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Block push if deletions detected under docs/, ops/, scripts/
+BASE=$(git rev-parse HEAD^ 2>/dev/null || echo HEAD)
+if git diff --diff-filter=D --name-only "$BASE"..HEAD -- docs ops scripts | grep -q .; then
+  echo "ERROR: Deletions detected under docs/ ops/ scripts/. Push blocked."
+  exit 1
+fi
+
 echo "WS_READY"
 echo "STRUCTURE_OK — backups normalized"
 echo "STRUCTURE_OK — topology"

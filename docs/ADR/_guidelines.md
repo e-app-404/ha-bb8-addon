@@ -1,7 +1,9 @@
 # BB-8 Patch Etiquette & Session Guidelines
 
+
 ## Contract
 
+- **Repo Structure:** `addon/` is never a git repo in the workspace. Do **not** run `git init` inside `addon/`; all git operations are workspace-root only. Separation is handled by subtree publish and runtime clone, not by nested repos.
 - **Namespace:** Flat MQTT `bb8/<behavior>/<action>` only.
 - **Discovery:** Published by the *scanner* exclusively; dispatcher discovery OFF by default.
 - **Evidence-first:** Changes must make STP4 *easier* to pass (never harder).

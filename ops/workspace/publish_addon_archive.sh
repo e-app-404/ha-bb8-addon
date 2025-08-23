@@ -33,9 +33,16 @@ else
   git archive HEAD addon | tar -x -C "$TMPDIR" --strip-components 1
 fi
 
+
 [ -e "$TMPDIR/config.yaml" ] || [ -e "$TMPDIR/Dockerfile" ] || {
   echo "ERROR: Export seems empty or wrong. Check that addon/ contains add-on files."; exit 4;
 }
+
+# Idempotency: skip publish if no changes in addon/
+if git diff --quiet HEAD^ HEAD -- addon; then
+  echo "No changes in addon/. Skipping publish."
+  exit 0
+fi
 
 (
   cd "$TMPDIR"
