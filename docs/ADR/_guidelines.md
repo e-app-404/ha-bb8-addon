@@ -47,3 +47,20 @@
 - Discovery ownership changes require Strategos sign-off.
 
 *Last updated:* 2025-08-13 • Anchor STRAT-f8202ca110cc
+
+## Release Quickstart (Workspace → GitHub → HA runtime)
+
+1. Dev & test locally (`make dev`).
+2. Publish add-on subtree to GitHub:
+	```sh
+	make publish
+	```
+
+	(No-op safe if addon/ unchanged.)
+3. Deploy to HA runtime and restart add-on:
+
+	REMOTE_HOST_ALIAS=home-assistant ops/release/deploy_ha_over_ssh.sh
+
+Acceptance tokens you should see: SUBTREE_PUBLISH_OK, DEPLOY_OK, VERIFY_OK, RUNTIME_TOPOLOGY_OK.
+
+This doesn’t change policy; it consolidates the release path already defined in ADR-0001 addenda. :contentReference[oaicite:9]{index=9}
