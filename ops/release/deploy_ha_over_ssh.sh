@@ -2,12 +2,13 @@ echo "DEPLOY_SSH_OK"
 
 #!/usr/bin/env bash
 set -euo pipefail
-
-# Defaults for your environment; override via env if needed
-REMOTE_HOST_ALIAS="${REMOTE_HOST_ALIAS:-home-assistant}"          # your working alias (babylon-babes)
+REMOTE_HOST_ALIAS="${REMOTE_HOST_ALIAS:-home-assistant}"      # your working alias (babylon-babes)
 REMOTE_SCRIPT="${REMOTE_SCRIPT:-/config/domain/shell_commands/addons_runtime_fetch.sh}"
 REMOTE_RUNTIME="${REMOTE_RUNTIME:-/addons/local/beep_boop_bb8}"
 REMOTE_SLUG="${REMOTE_SLUG:-local_beep_boop_bb8}"
+# Use loopback by default to avoid mDNS issues on the HA host
+HA_URL="${HA_URL:-http://127.0.0.1:8123}"
+HA_LLAT_KEY="${HA_LLAT_KEY:-ha_llat}"
 HA_URL="${HA_URL:-http://homeassistant.local:8123}"
 
 run_ssh() { ssh "$REMOTE_HOST_ALIAS" "$@"; }
