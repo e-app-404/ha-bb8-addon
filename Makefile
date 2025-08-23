@@ -102,3 +102,14 @@ ci:
 	$(MAKE) testcov STAMP=$$STAMP; \
 	$(MAKE) security STAMP=$$STAMP \
 	| tee $(REPORTS_DIR)/ci_$$STAMP/ci.log
+
+.PHONY: diagnose-ssh deploy-ssh publish
+
+diagnose-ssh:
+	REMOTE_HOST_ALIAS=home-assistant ops/release/deploy_ha_over_ssh.sh diagnose
+
+deploy-ssh:
+	REMOTE_HOST_ALIAS=home-assistant ops/release/deploy_ha_over_ssh.sh
+
+publish:
+	REMOTE_HOST_ALIAS=home-assistant ops/release/publish_and_deploy.sh
