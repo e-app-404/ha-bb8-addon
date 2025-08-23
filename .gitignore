@@ -54,3 +54,5 @@ __pycache__/
 /.github/
 bb8_core/
 app/
+_backups/*.tar.gz
+_backups/*.tgz
