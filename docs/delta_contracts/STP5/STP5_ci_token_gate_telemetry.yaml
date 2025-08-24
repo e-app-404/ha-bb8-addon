@@ -1,0 +1,38 @@
+planned_change: "Add PR-time CI token gate; harden runtime telemetry for echoes/BLE/MQTT; keep LED discovery ON by default"
+deliverable:
+  - .github/workflows/repo-guards.yml
+  - bb8_core/telemetry.py (new) + hooks in ble_link.py and mqtt_probe.py
+  - ops/run_strict_attestation.sh (kept; adds telemetry snapshot capture)
+  - evidence: telemetry_snapshot.json, metrics_summary.json
+action_needed:
+  - "Enforce STRUCTURE_OK and VERIFY_OK at PR time (no runtime deploy in CI)"
+  - "Publish structured telemetry (JSON over logs + MQTT metrics under bb8/telemetry/*, retain=false)"
+  - "Capture telemetry snapshot during strict runs; attach to evidence manifest"
+rationale: "Prevent regressions before merge; quantify echo/BLE health; keep governance guardrails outside runtime"
+status: ready
+branch: "fix/stray-roots"
+RACI_matrix:
+  Strategos: Accountable
+  Pythagoras: Responsible
+  Copilot: Consulted
+  Evert: Informed
+acceptance_criteria:
+  ci_tokens:
+    - "STRUCTURE_OK (workspace-root; ADR-0001 checks)"
+    - "VERIFY_OK (wrapper sanity, tests collected, no forbidden dirs)"
+  quality_bars:
+    - "coverage >= 80% (unchanged floor)"
+    - "warnings == 0 with -W error (paho v1 deprecation suppressed only)"
+  telemetry_slo (attestation or nightly job):
+    - "echo_roundtrip_ms p50<=150, p95<=500 (scalar echoes, retain=false)"
+    - "ble_connect_attempts per hour <= 6"
+    - "discovery_dupe_count == 0 (LED unique_id stable)"
+risks:
+  - "CI cannot emit DEPLOY_OK by design → keep DEPLOY_OK as runtime-only token"
+  - "Over-verbose telemetry could bloat logs → limit to structured key events"
+mitigations:
+  - "Gate only STRUCTURE_OK & VERIFY_OK in CI; DEPLOY_OK stays runtime"
+  - "Telemetry uses retain=false; bounded sampling; JSON lines + optional MQTT metrics"
+trace:
+  baseline_tag: "v2025.8.21.1"
+  head_branch: "fix/stray-roots"

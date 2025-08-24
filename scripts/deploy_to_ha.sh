@@ -8,13 +8,18 @@ ADDON="${WS}/addon"
 RUNTIME="/Volumes/addons/local/beep_boop_bb8"
 REMOTE="git@github.com:e-app-404/ha-bb8-addon.git"
 
-test -d "${ADDON}/.git" || { echo "[fail] addon not a git repo"; exit 1; }
-git -C "${ADDON}" remote set-url origin "${REMOTE}"
+# Subtree publish: skip if addon/ unchanged
+if git -C "$WS" diff --quiet HEAD -- addon; then
+	echo "SUBTREE_NOOP (addon unchanged)"
+else
+	git -C "$WS" subtree split -P addon -b __addon_pub_tmp
+	git -C "$WS" push -f "$REMOTE" __addon_pub_tmp:main
+	git -C "$WS" branch -D __addon_pub_tmp || true
+	echo "SUBTREE_PUBLISH_OK"
+fi
 
-BR="$(git -C "${ADDON}" rev-parse --abbrev-ref HEAD)"
-git -C "${ADDON}" fetch --all
-git -C "${ADDON}" push origin "${BR}"
-
+# Runtime reset (ADR-0001 compliant)
+BR="main"
 if [ ! -d "${RUNTIME}/.git" ]; then echo "[fail] runtime not a git repo: ${RUNTIME}"; exit 2; fi
 git -C "${RUNTIME}" remote set-url origin "${REMOTE}"
 git -C "${RUNTIME}" fetch --all --prune

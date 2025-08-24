@@ -1,0 +1,20 @@
+planned_change: "Fix wrappers for ADR-0001 topology; stabilize async tests; keep paho v1 per ADR-0002 without warning leaks"
+deliverable:
+  - wrapper hotfix (workspace-root, subtree publish)
+  - async test harness (pytest-asyncio auto; remove duplicate loop fixtures)
+  - ble_link safe stop/cancel drain
+  - warning policy: suppress paho DeprecationWarning only
+action_needed:
+  - "Restore/confirm addon/ working tree without .git (if needed) per RESTORE_ADDON.md"
+  - "Patch wrappers to operate from workspace root and use git subtree for publish; runtime deploy via SSH/Services API"
+  - "Install dev deps; enable pytest-asyncio; remove custom event loop fixture; add ble_link.stop()"
+  - "Re-run Protocols 2→9 (VERIFY → DEPLOY → TESTS → STRICT echo → DISCOVERY → QA → MANIFEST)"
+acceptance_criteria:
+  - "WS_READY, STRUCTURE_OK, DEPLOY_OK, VERIFY_OK tokens emitted"
+  - "coverage >= 80%; no asyncio loop warnings; STRICT echo retain=false; LED discovery unique_id stable; qa_report PASS"
+risk_assessment:
+  - "If wrappers remain addon-scoped, governance/tokens will continue to fail"
+  - "If pytest-asyncio absent, async tests keep failing"
+trace_refs:
+  - "ADR-0001 workspace topology"  # addon/ not a repo; subtree publish
+  - "ADR-0002 dependency policy"   # paho >=2,<3 with VERSION1 callbacks

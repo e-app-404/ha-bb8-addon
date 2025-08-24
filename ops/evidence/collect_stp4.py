@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from paho.mqtt.enums import CallbackAPIVersion
-
+from datetime import UTC, datetime
+from typing import Any
 """
 Collect STP4 MQTT/HA roundtrip evidence.
 
@@ -12,16 +13,12 @@ Outputs:
 Exit code:
   0 on PASS (all checks ok), 1 on FAIL (any roundtrip or schema check failed)
 """
-
 import argparse
 import json
 import os
 import sys
 import threading
 import time
-from datetime import UTC, datetime
-from typing import Any
-
 # Use shared config
 try:
     from bb8_core.addon_config import load_config
@@ -30,6 +27,12 @@ except ImportError:
     # This allows the script to run outside the package context where
     # bb8_core may not be available.
     load_config = None
+    import logging
+    logging.basicConfig(level=logging.WARNING)
+    logging.warning(
+        "[CONFIG] bb8_core.addon_config not found. "
+        "Proceeding without shared config. Please ensure PYTHONPATH includes bb8_core if needed."
+    )
 
 try:
     import paho.mqtt.client as mqtt
@@ -48,7 +51,6 @@ except Exception as e:
     raise
 
 # ----- config / args -----
-
 
 def get_shared_config():
     import logging

@@ -1,5 +1,7 @@
 import time
+
 from bb8_core import ble_link
+
 
 def test_ble_loop_thread_bootstrap_idempotent():
     # starting twice should not crash or spawn multiple threads

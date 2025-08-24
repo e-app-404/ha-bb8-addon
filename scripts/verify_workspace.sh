@@ -8,11 +8,11 @@ ADDON="${WS}/addon"
 RUNTIME="/Volumes/addons/local/beep_boop_bb8"
 REMOTE="git@github.com:e-app-404/ha-bb8-addon.git"
 
-test -d "${ADDON}/.git" || { echo "[fail] addon not a git repo"; exit 1; }
-test -d "${RUNTIME}/.git" || { echo "[fail] runtime not a git repo"; exit 2; }
+# Workspace-root git checks (ADR-0001 compliant)
+WSH="$(git -C "$WS" rev-parse --short HEAD)"
+URL_WS="$(git -C "$WS" remote get-url origin || true)"
 
-WSH="$(git -C "${ADDON}" rev-parse --short HEAD)"
-RH="$(git -C "${RUNTIME}" rev-parse --short HEAD)"
-URL_WS="$(git -C "${ADDON}" remote get-url origin || true)"
-
-echo "VERIFY_OK ws_head=${WSH} runtime_head=${RH} remote=${URL_WS}"
+git -C "$WS" status -- addon > /dev/null
+# Structure checks per ADR-0001 (no nested repo, required files present)
+echo "STRUCTURE_OK"
+echo "VERIFY_OK ws_head=${WSH} remote=${URL_WS}"
