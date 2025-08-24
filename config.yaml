@@ -1,14 +1,17 @@
-name: "HA-BB-8"
+name: "HA-BB8"
 description: "Homeassistant Sphero BB-8 bluetooth integration using MQTT discovery"
-version: "2025.08.21"
 slug: "beep_boop_bb8"
-startup: application
+version: "2025.8.21.2"
+arch: ["aarch64"]
+image: "local/{arch}-addon-beep_boop_bb8"
+url: "https://github.com/e-app-404/ha-bb8-addon"
+build:
+  dockerfile: Dockerfile
+  args:
+    BUILD_FROM: "ghcr.io/home-assistant/{arch}-base-debian:bookworm"
+startup: services
 init: false
-arch:
-  - aarch64
-  - amd64
-  - armhf
-  - armv7
+
 boot: auto
 host_dbus: true
 udev: true

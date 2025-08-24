@@ -2,7 +2,7 @@
 <!-- markdownlint-disable MD022 MD032 MD024 -->
 <!-- Refer to meta schema section at the end of this document for changelog entry format guidance -->
 # Changelog
-<!-- Version [2025.08.22] - 2025-08-16 for updating starts here -->
+<!-- Version [2025.8.21.1] for updating starts here -->
 
 <!-- Current version for updating ends here -->
 ## [2025.8.21] — 2025-08-21
