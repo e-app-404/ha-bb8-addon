@@ -722,8 +722,7 @@ def ensure_dispatcher_started(*args: Any, **kwargs: Any) -> bool:
             kwargs.get("client_id") or CONFIG.get("MQTT_CLIENT_ID") or "bb8-addon"
         )
         logger.info(
-            "Dispatcher config (resolved): host=%s port=%s user=%s topic=%s "
-            "client_id=%s source=%s",
+            "Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s",
             host,
             port,
             user_flag,

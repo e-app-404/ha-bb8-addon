@@ -1,0 +1,41 @@
+# 20250824-PATCH-addon-advanced-config.patch
+# TODO: Enable advanced config and file-based output for Home Assistant add-on
+#
+# 1. Document advanced config support via /config/config.yaml
+# 2. Add addon_config:rw to config.yaml to allow writing to /config
+# 3. Update code to write logs/output to /config for user access
+#
+# --- PATCH STEPS ---
+
+--- Step 1: Update config.yaml to allow read/write access to /config
+
+# Add the following under your config.yaml root keys:
+addon_config: rw
+
+--- Step 2: Document advanced config usage for users
+
+# In README.md, add a section:
+
+## Advanced Configuration
+
+You can provide a custom configuration file for the add-on by placing it at:
+
+    /addon_configs/local_beep_boop_bb8/config.yaml
+
+This folder is mounted at /config inside the add-on container. The add-on will automatically load /config/config.yaml if present.
+
+To enable file-based output or debugging, the add-on now writes logs and output files to /config for user access.
+
+--- Step 3: Update code to write logs/output to /config
+
+# In bb8_core/logging_setup.py (or wherever logs/output are written), update file paths to use /config, e.g.:
+
+LOG_PATH = os.environ.get("BB8_LOG_PATH", "/config/ha_bb8_addon.log")
+
+# In any output/dump/save logic, use /config as the base directory for user-accessible files.
+
+--- Step 4: (Optional) Document live reload support if implemented
+
+# If you add live reload logic, document in README.md how users can trigger config reloads by updating /config/config.yaml.
+
+# --- END PATCH ---

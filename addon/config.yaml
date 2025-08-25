@@ -3,7 +3,6 @@ description: "Homeassistant Sphero BB-8 bluetooth integration using MQTT discove
 slug: "beep_boop_bb8"
 version: "2025.8.21.2"
 arch: ["aarch64"]
-image: "local/{arch}-addon-beep_boop_bb8"
 url: "https://github.com/e-app-404/ha-bb8-addon"
 build:
   dockerfile: Dockerfile
