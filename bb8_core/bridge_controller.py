@@ -13,12 +13,18 @@ from .ble_bridge import BLEBridge
 from .ble_gateway import BleGateway
 from .ble_link import BLELink
 from .common import (
-    CMD_TOPICS,  # noqa: F401  (used via constants)
     STATE_TOPICS,
     publish_device_echo,
 )
+
+# Foreground controller signal handling
+import signal
+_stop_evt = threading.Event()
+def _on_signal(signum, frame):
+    logger.info("controller_signal_received signum=%s", signum)
+    _stop_evt.set()
+
 from .evidence_capture import EvidenceRecorder
-from .facade import BB8Facade
 from .logging_setup import logger
 from .mqtt_dispatcher import (
     ensure_dispatcher_started,
@@ -378,6 +384,8 @@ def _start_dispatcher_compat(func, supplied: dict[str, Any]) -> Any:
 
 # -------- Core orchestration --------
 # Canonical entry point for controller startup
+from .facade import BB8Facade
+
 def start_bridge_controller(
     config: dict[str, Any] | None = None,
 ) -> BB8Facade | None:
@@ -390,7 +398,6 @@ def start_bridge_controller(
     from .auto_detect import resolve_bb8_mac
     from .ble_bridge import BLEBridge
     from .ble_gateway import BleGateway
-    from .facade import BB8Facade
     from .logging_setup import logger
     from .mqtt_dispatcher import ensure_dispatcher_started
 
@@ -458,8 +465,21 @@ def start_bridge_controller(
 
 
 def _wait_forever(client, bridge, ble=None) -> None:
+
     """Block the main thread until SIGTERM/SIGINT; then shutdown cleanly."""
-    pass
+    signal.signal(signal.SIGTERM, _on_signal)
+    signal.signal(signal.SIGINT, _on_signal)
+    logger.info("controller_ready")
+    try:
+        while not _stop_evt.wait(1.0):
+            pass
+    finally:
+        try:
+            if ble:
+                ble.stop()
+                ble.join()
+        finally:
+            logger.info("controller_stopped")
 
     # Example config loading (replace with actual config logic)
     cfg, _ = load_config() if "load_config" in globals() else ({}, None)
