@@ -1,13 +1,18 @@
 name: "HA-BB8"
 description: "Homeassistant Sphero BB-8 bluetooth integration using MQTT discovery"
 slug: "beep_boop_bb8"
-version: "2025.8.21.2"
+version: "2025.8.21.4"
 arch: ["aarch64"]
 url: "https://github.com/e-app-404/ha-bb8-addon"
+# LOCAL_DEV: comment out image: to force Supervisor to build locally from Dockerfile/build.yaml
+# - PUBLISH:   use the same 'image:' and push a matching tag to your registry.
+image: "local/{arch}-addon-beep_boop_bb8"
+
 build:
   dockerfile: Dockerfile
   args:
     BUILD_FROM: "ghcr.io/home-assistant/{arch}-base-debian:bookworm"
+
 startup: services
 init: false
 
@@ -20,62 +25,67 @@ privileged:
 uart: true
 devices:
   - /dev/hci0
+# ---------- Runtime Options (defaults) ----------
 options:
   # --- Telemetry & Logging ---
   enable_bridge_telemetry: false
+  log_path: "/data/reports/ha_bb8_addon.log"
+  report_root: "/data/reports"
+  telemetry_interval_s: 20
+
+  # --- Discovery / Publishing policy ---
+  dispatcher_discovery_enabled: true   # <-- LED discovery ON by default
+  discovery_retain: false
+
+  # --- Caching & scan cadence ---
   cache_path: "/data/bb8_mac_cache.json"
   cache_default_ttl_hours: 24
+  cache_ttl_hours: 24
+  bb8_scan_interval: 10
+  scan_seconds: 5
+  rescan_on_fail: true
+
+  # --- MQTT ---
   mqtt_client_id: "bb8_presence_scanner"
   keepalive: 60
   qos: 1
-  telemetry_interval_s: 20
-  bb8_scan_interval: 10
-  dispatcher_discovery_enabled: false
-  discovery_retain: false
-  log_path: "/data/reports/ha_bb8_addon.log"
-  report_root: "/data/reports"
+  mqtt_broker: 192.168.0.129
+  mqtt_port: 1883
+  mqtt_username: "mqtt_bb8"
+  mqtt_password: "mqtt_bb8"
+  mqtt_topic_prefix: "bb8"
+  ha_discovery_topic: "homeassistant"
+  mqtt_tls: false
 
   # --- Device Identification ---
   bb8_mac: "ED:ED:87:D7:27:50"
   bb8_name: "S33 BB84 LE"
-  scan_seconds: 5
-  rescan_on_fail: true
-  cache_ttl_hours: 24
-  ble_adapter: hci0
+  ble_adapter: "hci0"
 
-  # --- MQTT Configuration ---
-  mqtt_broker: 192.168.0.129
-  mqtt_port: 1883
-  mqtt_username: mqtt_bb8
-  mqtt_password: mqtt_bb8
-  mqtt_topic_prefix: bb8
-  ha_discovery_topic: homeassistant
-  mqtt_tls: false
-
+# ---------- Option Schema (validation) ----------
 schema:
   # --- Telemetry & Logging ---
   enable_bridge_telemetry: "bool?"
+  log_path: "str?"
+  report_root: "str?"
+  telemetry_interval_s: "int?"
+
+  # --- Discovery / Publishing policy ---
+  dispatcher_discovery_enabled: "bool?"
+  discovery_retain: "bool?"
+
+  # --- Caching & scan cadence ---
   cache_path: "str"
   cache_default_ttl_hours: "int?"
+  cache_ttl_hours: "int?"
+  bb8_scan_interval: "int?"
+  scan_seconds: "int?"
+  rescan_on_fail: "bool?"
+
+  # --- MQTT ---
   mqtt_client_id: "str"
   keepalive: "int?"
   qos: "int?"
-  telemetry_interval_s: "int?"
-  bb8_scan_interval: "int?"
-  dispatcher_discovery_enabled: "bool?"
-  discovery_retain: "bool?"
-  log_path: "str?"
-  report_root: "str?"
-
-  # --- Device Identification ---
-  bb8_mac: "str"
-  bb8_name: "str?"
-  scan_seconds: "int?"
-  rescan_on_fail: "bool?"
-  cache_ttl_hours: "int?"
-  ble_adapter: "str?"
-
-  # --- MQTT Configuration ---
   mqtt_broker: "str"
   mqtt_port: "int?"
   mqtt_username: "str?"
@@ -83,3 +93,8 @@ schema:
   mqtt_topic_prefix: "str"
   ha_discovery_topic: "str"
   mqtt_tls: "bool?"
+
+  # --- Device Identification ---
+  bb8_mac: "str"
+  bb8_name: "str?"
+  ble_adapter: "str?"

@@ -1,4 +1,24 @@
-# ADR: Home Assistant Add-on Local Build & Slug Management
+---
+title: ADR-0003: Home Assistant Add-on Local Build & Slug Management
+date: 2025-08-24
+status: Approved
+---
+
+# ADR-0003: Home Assistant Add-on Local Build & Slug Management
+
+## Table of Contents
+1. Context
+2. Rules & Patterns
+   - Add-on Folder Naming
+   - Slug Field in config.yaml
+   - Supervisor Slug Resolution
+   - Required Files
+   - config.yaml: Required Keys
+   - Image Tagging
+   - Add-on Lifecycle Commands
+   - Troubleshooting
+3. Expectations
+4. Last updated
 
 ## Context
 Home Assistant Supervisor manages local add-ons using a combination of folder names and `config.yaml` fields. Correct configuration is essential for local builds, image tagging, and add-on lifecycle management.
@@ -6,15 +26,15 @@ Home Assistant Supervisor manages local add-ons using a combination of folder na
 ## Rules & Patterns
 
 ### 1. Add-on Folder Naming
-- Local add-ons must reside in `/addons/local/<slug>`.
-- The folder name should match the intended add-on slug, typically prefixed with `local_`.
-- Example: `/addons/local/local_beep_boop_bb8` for slug `local_beep_boop_bb8`.
+- Local add-ons reside in `/addons/local/<slug>`.
+- The folder basename equals the `slug:` in `config.yaml`.  
+  Example: folder `/addons/local/beep_boop_bb8` with `slug: "beep_boop_bb8"`.
+  Supervisor addresses it as `local_beep_boop_bb8` in CLI commands.
 
 ### 2. Slug Field in config.yaml
-- The `slug:` field in `config.yaml` must match the folder name.
-- Example:
+- The `slug:` field matches the folder name **without** the `local_` prefix.
   ```yaml
-  slug: "local_beep_boop_bb8"
+  slug: "beep_boop_bb8"
   ```
 
 ### 3. Supervisor Slug Resolution
@@ -29,10 +49,10 @@ Home Assistant Supervisor manages local add-ons using a combination of folder na
   - Entry script (e.g., `run.sh`)
   - App source files
 
-### 5. config.yaml: Required Keys
-- Must include:
-  - `name`, `slug`, `version`, `arch`, `image`, `build:`
-- `build:` must specify the Dockerfile and any build args.
+### 5. config.yaml: Required Keys (mode-aware)
+- Always: `name`, `slug`, `version`, `arch`, `init`.
+- **LOCAL_DEV**: `image:` **absent** (commented); `Dockerfile` present.
+- **PUBLISH**: `image:` **present** and `version:` equals the published tag.
 - Example:
   ```yaml
   build:
@@ -42,14 +62,11 @@ Home Assistant Supervisor manages local add-ons using a combination of folder na
   ```
 
 ### 6. Image Tagging
-- The `image:` field should use the pattern:
-  ```yaml
-  image: "local/{arch}-addon-<slug>"
-  ```
-- Supervisor tags the built image as `local/{arch}-addon-<slug>:<version>`.
+- **LOCAL_DEV**: `image:` absent; Supervisor builds locally from `Dockerfile`.
+- **PUBLISH**: `image:` set to your registry reference (e.g., `ghcr.io/<org>/ha-bb8-{arch}`) and `version:` equals the pushed tag.
 
 ### 7. Add-on Lifecycle Commands
-- Use the resolved slug for all Supervisor commands:
+- Use the **resolved local slug** in Supervisor commands (prefix `local_`):
   ```bash
   ha addons reload
   ha addons rebuild local_beep_boop_bb8
@@ -69,6 +86,6 @@ Home Assistant Supervisor manages local add-ons using a combination of folder na
 - Always reload add-ons after changes to local add-on folders or config.
 - Use the exact slug shown in `ha addons list` for all commands.
 
----
+## Last updated
 
 _Last updated: 2025-08-24_

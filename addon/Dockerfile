@@ -1,53 +1,62 @@
+ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base-debian:bookworm
+FROM ${BUILD_FROM}
 
-# Home Assistant Add-on Dockerfile for BB-8 BLE/MQTT Bridge
+ENV PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-ARG BUILD_FROM
-FROM $BUILD_FROM
+WORKDIR /usr/src/app
+# Copy application (narrowed; DO NOT use COPY .)
+COPY bb8_core/     /usr/src/app/bb8_core/
+COPY app/          /usr/src/app/app/
+COPY services.d/   /etc/services.d/
+COPY run.sh        /usr/src/app/run.sh
+# Optional: dependency manifests if used
+COPY requirements.txt* /usr/src/app/
+RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build context' >&2; exit 53)
+RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build context' >&2; exit 53)
 
-# Home Assistant metadata labels
-LABEL io.hass.arch="aarch64"
-LABEL io.hass.type="addon"
+# Base deps (Debian BUILD_FROM) — Alpine is NOT supported here
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+   python3 python3-venv python3-pip ca-certificates bash \
+ && rm -rf /var/lib/apt/lists/*
 
-# Install system dependencies for BLE
-RUN apk add --no-cache bluez dbus glib-dev
+# Create venv and install deps into venv
+RUN python3 -m venv "/opt/venv" \
+ && /opt/venv/bin/pip install --no-cache-dir -U pip setuptools wheel \
+ && if [ -f /usr/src/app/requirements.txt ]; then \
+   /opt/venv/bin/pip install --no-cache-dir -r /usr/src/app/requirements.txt ; \
+    fi \
+ && chmod +x /usr/src/app/run.sh \
+ && rm -rf /usr/src/app/tests /usr/src/app/__pycache__ /usr/src/app/.pytest_cache || true
 
-# --- TEMP: MQTT CLI tools for broker/credential testing ---
-RUN apk add --no-cache mosquitto-clients
+# Ensure interactive shells see the venv first (affects docker exec bash -lc)
+RUN printf '%s\n' \
+    'export VIRTUAL_ENV=/opt/venv' \
+    'export PATH="/opt/venv/bin:$PATH"' \
+    > /etc/profile.d/venv_path.sh
+  RUN chmod 0644 /etc/profile.d/venv_path.sh
 
-
-# --- App files ---
-COPY run.sh /app/run.sh
-COPY services.d/ble_bridge/run /etc/services.d/ble_bridge/run
-COPY app/test_ble_adapter.py /app/test_ble_adapter.py
-COPY bb8_core /app/bb8_core
-COPY requirements.in /app/requirements.in
-COPY requirements.txt /app/requirements.txt
-
-RUN chmod +x /etc/services.d/ble_bridge/run && chmod +x /app/run.sh
-
-WORKDIR /app
-ENV PYTHONPATH=/app
-
-
-
-# System pip (only to make sure ensurepip/venv behaves nicely)
-RUN apk add --no-cache py3-pip
-
-# ✅ Create an isolated virtualenv and install deps there
-ENV VIRTUAL_ENV=/opt/venv
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
-# venv + wheels; installs go into /opt/venv and will not trigger PEP 668
-RUN python3 -m venv "$VIRTUAL_ENV" \
-  && python3 -m pip install --upgrade pip setuptools wheel \
-  && python3 -m pip install -r /app/requirements.txt
+# (Optional) also export venv PATH early for s6 services that don’t source profile
+# This is safe even if your service uses run.sh (which already prefers the venv).
+  RUN mkdir -p /etc/cont-init.d \
+    && printf '%s\n' \
+    '#!/usr/bin/with-contenv sh' \
+    'export VIRTUAL_ENV=/opt/venv' \
+    'export PATH="/opt/venv/bin:$PATH"' \
+    > /etc/cont-init.d/10-venv-path \
+    && chmod +x /etc/cont-init.d/10-venv-path
+    # NOTE: This script is now a shell script, not execline, for Alpine/s6 compatibility.
 
 # Build-time version injection
 ARG BUILD_VERSION
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
 ENV ADDON_VERSION=${BUILD_VERSION}
-RUN echo "2025.08.21" > /app/VERSION
+RUN echo "2025.08.21" > /usr/src/app/VERSION
 
 # S6 Entrypoint
 ENTRYPOINT [ "/init" ]
+# (removed stray trailing ENV continuation; PYTHONUNBUFFERED is already set above)

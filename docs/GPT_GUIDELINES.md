@@ -1,5 +1,22 @@
+---
+title: BB-8 Patch Etiquette & Session Guidelines
+date: 2025-08-13
+status: Informational
+---
+
 # BB-8 Patch Etiquette & Session Guidelines
 
+## Table of Contents
+1. Contract
+2. Deltas
+3. Topics & Entities
+4. Telemetry & Looping
+5. Logging
+6. Evidence Runbook
+7. Redaction & Retention
+8. Decision Checkpoints
+9. Release Quickstart
+10. Last updated
 
 ## Contract
 
@@ -46,8 +63,6 @@
 - Namespace changes require PO sign-off.
 - Discovery ownership changes require Strategos sign-off.
 
-*Last updated:* 2025-08-13 • Anchor STRAT-f8202ca110cc
-
 ## Release Quickstart (Workspace → GitHub → HA runtime)
 
 1. Dev & test locally (`make dev`).
@@ -64,3 +79,22 @@
 Acceptance tokens you should see: SUBTREE_PUBLISH_OK, DEPLOY_OK, VERIFY_OK, RUNTIME_TOPOLOGY_OK.
 
 This doesn’t change policy; it consolidates the release path already defined in ADR-0001 addenda. :contentReference[oaicite:9]{index=9}
+
+## Last updated
+2025-08-13
+
+## Workspace Structure & Tokens
+See **ADR-0001 — Dual-Clone Topology** for canonical layout & token catalog.
+See **ADR-0004 — CRTP** for tools/scripts allowance and CRTP tokens.
+
+## Release & Deployment (quickstart)
+Use the concise steps below, then consult **OPERATIONS_OVERVIEW.md** for full details and evidence handling:
+1) Local dev/test → `pytest -W error` (no failures; coverage ≥ 80%).  
+2) Publish `addon/` via `git subtree split -P addon` + push.  
+3) Deploy to HA runtime (rsync or runtime clone reset) → rebuild → start.  
+4) Run strict attestation → collect `qa_report_contract_v1.json` + `evidence_manifest.json`.  
+Tokens are defined in ADR-0001; CRTP tokens defined in ADR-0004.
+
+## Evidence, Redaction, Retention
+**Single source:** `docs/OPERATIONS_OVERVIEW.md` (Contracts §4).  
+That doc defines required artifacts, hashing, and submission notes.

@@ -1,0 +1,7 @@
+session_recap:
+  anchor: "SESS-8F2C7C94"
+  latest_version: "2025.8.21.4"
+  mode: "PUBLISH"
+  tokens: ["STRUCTURE_OK","DEPLOY_OK","VERIFY_OK","WS_READY"]
+  unresolved_blockers: []
+  open_actions: ["STP5 telemetry attestation (≥10s)"]

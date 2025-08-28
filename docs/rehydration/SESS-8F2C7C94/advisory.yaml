@@ -1,0 +1,10 @@
+advisory:
+  etiquette:
+    - "No piecemeal patching; binary necessity only"
+    - "Write artifacts to /config/reports"
+    - "Reject PASS without device-originated evidence"
+  risks:
+    - "Broker creds mismatch"
+    - "No echo activity during window"
+  mitigations:
+    - "Send one echo cmd to nudge traffic"

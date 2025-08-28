@@ -12,14 +12,16 @@ WRAP="${WS}/scripts"
 fail=0
 note(){ echo "$@"; }
 
-[ -d "${ADDON}/.git" ] || { note "[fail] addon/ not a git repo"; fail=1; }
-[ ! -L "${ADDON}" ] || { note "[fail] addon/ is a symlink"; fail=1; }
 
-if [ -d "${RUNTIME}/.git" ]; then
-  url="$(git -C "${RUNTIME}" remote get-url origin || true)"
-  [ "$url" = "$REMOTE" ] || { note "[fail] runtime origin mismatch: $url"; fail=1; }
+# Correct logic: addon/ and runtime must NOT be git repos
+test -d "${ADDON}" || { note "DRIFT:addon_missing"; fail=1; }
+test -d "${ADDON}/.git" && { note "DRIFT:addon_nested_git"; fail=1; }
+
+if [ -n "${RUNTIME}" ] && [ -d "${RUNTIME}" ]; then
+  test -d "${RUNTIME}/.git" && { note "DRIFT:runtime_nested_git:${RUNTIME}"; fail=1; }
+  note "TOKEN: RUNTIME_SCAN_OK"
 else
-  note "[fail] runtime is not a git repo: ${RUNTIME}"; fail=1
+  note "INFO: runtime mount not present; skipping runtime git checks"
 fi
 
 [ ! -d "${ADDON}/ops" ] || { note "[fail] addon/ops must not exist"; fail=1; }

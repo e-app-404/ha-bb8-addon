@@ -32,6 +32,10 @@ EXCLUDES=(
   --exclude='addon/.vscode'
   --exclude='addon/.DS_Store'
   --exclude='_backup*/'
+  --exclude='_bundles/'
+  --exclude='*.tar.gz'
+  --exclude='*.zip'
+  --exclude='*ops/evidence_tarballs/'
 )
 
 cd "$WS"

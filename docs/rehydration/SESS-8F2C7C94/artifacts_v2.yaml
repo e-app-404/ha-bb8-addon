@@ -1,0 +1,13 @@
+artifacts:
+  report_sink: "/config/reports"
+  required:
+    - path: "/config/reports/stp5/telemetry_snapshot.jsonl"
+      role: "raw_telemetry"
+    - path: "/config/reports/stp5/metrics_summary.json"
+      role: "metrics"
+    - path: "/config/reports/qa_contract_telemetry_STP5.json"
+      role: "qa_contract"
+  tokens_on_pass:
+    - "TELEMETRY_ATTEST_OK"
+    - "ECHO_WINDOW_10S_OK"
+    - "TELEMETRY_ARTIFACTS_EMITTED"

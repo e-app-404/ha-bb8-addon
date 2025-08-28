@@ -1,7 +1,17 @@
+---
+title: ADR-0002: Dependency & Runtime Compatibility Policy
+date: 2025-08-22
+status: Approved
+---
+
 # ADR-0002: Dependency & Runtime Compatibility Policy
 
-**Date:** 2025-08-22  
-**Status:** Approved
+## Table of Contents
+1. Decision
+2. Rationale
+3. Consequences
+4. Acceptance
+5. Last updated
 
 ## Decision
 - Pin **paho-mqtt** to **>= 2.0, < 3.0**. Code MUST pass `callback_api_version=CallbackAPIVersion.VERSION1`
@@ -21,3 +31,7 @@
 ## Acceptance
 - `addon/requirements.txt` contains `paho-mqtt>=2.0,<3.0` and `PyYAML>=6.0.1`.
 - Grep of code shows `callback_api_version=CallbackAPIVersion.VERSION1` wherever `mqtt.Client(...)` is constructed.
+
+## Last updated
+
+_Last updated: 2025-08-22_

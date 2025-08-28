@@ -1,8 +1,8 @@
 #!/usr/bin/with-contenv bash
 set -euo pipefail
 export PYTHONUNBUFFERED=1
-export PYTHONPATH=/app:${PYTHONPATH:-}
-cd /app
+export PYTHONPATH=/usr/src/app:${PYTHONPATH:-}
+cd /usr/src/app
 
 # Load HA add-on options
 OPTIONS=/data/options.json
@@ -34,4 +34,11 @@ if command -v jq >/dev/null 2>&1; then
 fi
 
 echo "$(date -Is) [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=${ENABLE_BRIDGE_TELEMETRY})"
-exec /opt/venv/bin/python3 -m bb8_core.bridge_controller
+
+VIRTUAL_ENV="${VIRTUAL_ENV:-/opt/venv}"
+PY="${VIRTUAL_ENV}/bin/python"
+if [ ! -x "$PY" ]; then PY="$(command -v python3 || command -v python)"; fi
+export PATH="${VIRTUAL_ENV}/bin:${PATH}"
+# Optional probe for receipts
+if [ "${PRINT_INTERP:-0}" = "1" ]; then echo "$PY"; exit 0; fi
+exec "$PY" -m bb8_core.main

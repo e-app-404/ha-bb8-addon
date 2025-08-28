@@ -1,5 +1,15 @@
+---
+title: ADR-0005 Development Setup (legacy)
+date: 2025-08-26
+status: Informational
+---
+
 # Development Setup
 
+## Table of Contents
+1. Editable Install & Test/Coverage Setup
+2. Editable install
+3. Last updated
 
 ## Editable Install & Test/Coverage Setup
 
@@ -28,3 +38,7 @@ pip install -r addon/requirements-dev.txt
 ```
 
 After this, you can remove the PYTHONPATH line from your `.env` file, as the editable install handles import paths automatically.
+
+## Last updated
+
+_Last updated: 2025-08-26_

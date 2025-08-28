@@ -38,17 +38,31 @@ jobs:
           done
 
           echo "== Add-on MUST-HAVE =="
-          for p in addon/bb8_core addon/tools addon/tests addon/services.d addon/app \
+          for p in addon/bb8_core addon/services.d addon/app \
                    addon/config.yaml addon/Dockerfile addon/Makefile addon/README.md addon/VERSION addon/apparmor.txt \
                    addon/.devcontainer; do
             [ -e "$p" ] || { echo "::error::addon missing: $p"; FAIL=1; }
           done
 
-          echo "== Add-on MUST-NOT =="
+          echo "== Add-on MUST-NOT (always) =="
           for p in addon/scripts addon/reports addon/docs addon/_backup addon/_backups \
                    addon/.venv addon/.pytest_cache addon/.ruff_cache addon/.mypy_cache; do
             [ -e "$p" ] && { echo "::error::addon must NOT contain: $p"; FAIL=1; }
           done
+
+          echo "== CRTP (Conditional allowance) =="
+          if [ -d addon/tools ]; then
+            if ! grep -Ei '(COPY|ADD|RUN|ENTRYPOINT|CMD).*tools/' addon/Dockerfile >/dev/null 2>&1 \
+               && [ ! -f addon/.allow_runtime_tools ]; then
+              echo "::error::CRTP violation: addon/tools present but unreferenced and no marker"; FAIL=1;
+            fi
+          fi
+          if [ -d addon/scripts ]; then
+            if ! grep -Ei '(COPY|ADD|RUN|ENTRYPOINT|CMD).*scripts/' addon/Dockerfile >/dev/null 2>&1 \
+               && [ ! -f addon/.allow_runtime_scripts ]; then
+              echo "::error::CRTP violation: addon/scripts present but unreferenced and no marker"; FAIL=1;
+            fi
+          fi
 
           echo "== No symlink/submodule/nested repo traps =="
           [ -L addon ] && { echo "::error::'addon' must not be a symlink"; FAIL=1; }

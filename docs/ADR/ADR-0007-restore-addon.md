@@ -1,4 +1,20 @@
+---
+title: ADR-0007 Restore add-on working tree into ./addon (Canonical) (legacy)
+date: 2025-08-26
+status: Informational
+---
+
 # Restore add-on working tree into ./addon (Canonical)
+
+## Table of Contents
+1. Source of truth
+2. Preferred restore (from GitHub)
+3. Emergency restore (from HA runtime clone)
+4. Hard rules
+5. Rationale
+6. Last updated
+
+## Source of truth
 
 **Source of truth:** the GitHub add-on repo (`e-app-404/ha-bb8-addon`, branch `main`) published via `git subtree split -P addon` from the workspace. The workspace `addon/` is **not** a git repo (no `.git`), per ADR-0001.
 
@@ -11,7 +27,7 @@ git fetch origin
 git subtree pull --prefix addon https://github.com/e-app-404/ha-bb8-addon.git main --squash
 ```
 
-Emergency restore (from HA runtime clone)
+## Emergency restore (from HA runtime clone)
 
 Use only if GitHub is temporarily unavailable.
 
@@ -21,7 +37,7 @@ rsync -avz --delete --exclude='.git' \
 	babylon-babes@home-assistant:/addons/local/beep_boop_bb8/ \
 	addon/
 
-Hard rules
+## Hard rules
 
 Do not git init inside addon/ (no nested repos).
 
@@ -29,5 +45,10 @@ All git commands run from the workspace root; addon/ is a normal tracked dir.
 
 After emergency restore, commit from the workspace root and re-publish via subtree.
 
+## Rationale
 
-> Rationale: aligns with ADR-0001 (no nested `.git` in `addon/`, subtree publish) and current runtime path `/addons/local/beep_boop_bb8`. :contentReference[oaicite:8]{index=8}
+> Rationale: aligns with ADR-0001 (no nested `.git` in `addon/`, subtree publish) and current runtime path `/addons/local/beep_boop_bb8`.
+
+## Last updated
+
+_Last updated: 2025-08-26_

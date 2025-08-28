@@ -1,0 +1,7 @@
+reports/
+coverage.json
+pytest-report.xml
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
