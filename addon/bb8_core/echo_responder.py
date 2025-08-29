@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import threading
+from typing import Optional
 import time
 
 import paho.mqtt.client as mqtt
@@ -27,8 +28,16 @@ BLE_TOUCH_CHAR = os.environ.get("BLE_TOUCH_CHAR", None)
 BLE_TOUCH_VALUE = os.environ.get("BLE_TOUCH_VALUE", "01")
 
 LOG = logging.getLogger("echo_responder")
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+# NOTE: Logging configuration is now set only when running as a script, not on import.
 
+# -------- Concurrency guard (bounded inflight) --------
+MAX_INFLIGHT = int(os.environ.get("ECHO_MAX_INFLIGHT", "16"))
+_inflight = threading.BoundedSemaphore(MAX_INFLIGHT)
+
+# Optional micro-rate limit (disabled by default)
+_last_ts_lock = threading.Lock()
+_last_ts: float = 0.0
+MIN_INTERVAL_MS = float(os.environ.get("ECHO_MIN_INTERVAL_MS", "0"))  # 0 = off
 
 def pub(client, topic, payload, retain=False):
     LOG.info(f"Publishing to {topic}: {payload}")
@@ -44,17 +53,40 @@ def on_connect(client, userdata, flags, rc, properties=None):
 def on_message(client, userdata, msg):
     LOG.info(f"Received message on {msg.topic}: {msg.payload}")
     try:
-        payload = json.loads(msg.payload)
+        payload = json.loads(msg.payload.decode("utf-8"))
     except Exception:
         payload = {"raw": msg.payload.decode("utf-8", errors="replace")}
-    threading.Thread(target=handle_echo, args=(client, payload)).start()
+
+    # Optional rate limit
+    if MIN_INTERVAL_MS > 0:
+        global _last_ts
+        now = time.time()
+        with _last_ts_lock:
+            if (now - _last_ts) < (MIN_INTERVAL_MS / 1000.0):
+                LOG.warning("Echo throttled by MIN_INTERVAL_MS; dropping")
+                return
+            _last_ts = now
+
+    # Bounded inflight protection
+    acquired = _inflight.acquire(blocking=False)
+    if not acquired:
+        LOG.warning("Echo backlog full (MAX_INFLIGHT=%d); dropping", MAX_INFLIGHT)
+        return
+
+    def _task():
+        try:
+            handle_echo(client, payload)
+        finally:
+            _inflight.release()
+
+    threading.Thread(target=_task, daemon=True).start()
 
 
 def handle_echo(client, payload):
     t0 = time.time()
-    ack = {"ts": int(t0), "value": payload.get("value", None)}
+    ack = {"ts": round(t0, 3), "value": payload.get("value", None)}
     pub(client, MQTT_ECHO_ACK, ack)
-    state = {"ts": int(time.time()), "state": "touched"}
+    state = {"ts": round(time.time(), 3), "state": "touched"}
     pub(client, MQTT_ECHO_STATE, state)
     ble_ok = False
     ble_latency = None
@@ -63,9 +95,10 @@ def handle_echo(client, payload):
             ble_ok, ble_latency = BleTouch().touch()
         except Exception as e:
             LOG.error(f"BLE touch failed: {e}")
+    t1 = time.time()
     telemetry = {
-        "ts": int(time.time()),
-        "rtt_ms": int((time.time() - t0) * 1000),
+        "ts": int(t1),
+        "rtt_ms": int((t1 - t0) * 1000),
         "ble_ok": ble_ok,
         "ble_latency_ms": ble_latency,
     }
@@ -76,25 +109,37 @@ class BleTouch:
     def __init__(self):
         self.addr = BLE_ADDR
         self.char = BLE_TOUCH_CHAR
-        self.value = bytes.fromhex(BLE_TOUCH_VALUE)
+        try:
+            self.value = bytes.fromhex(BLE_TOUCH_VALUE)
+        except ValueError:
+            # Fallback to b"\x01" if BLE_TOUCH_VALUE is not a valid hex string.
+            # Ensure this fallback value is compatible with your BLE device's expected input.
+            LOG.warning(f"Invalid BLE_TOUCH_VALUE hex string: {BLE_TOUCH_VALUE}, defaulting to b'\\x01'")
+            self.value = b"\x01"
 
     def touch(self):
-        if not BleakClient:
-            LOG.warning("bleak not available")
-            return False, None
-        t0 = time.time()
-        try:
-            with BleakClient(self.addr) as client:
-                client.write_gatt_char(self.char, self.value)
-            latency = int((time.time() - t0) * 1000)
-            LOG.info(f"BLE touch success, latency={latency}ms")
-            return True, latency
-        except Exception as e:
-            LOG.error(f"BLE touch error: {e}")
-            return False, None
+        import asyncio
 
+        async def _ble_touch():
+            t0 = time.time()
+            if not self.char:
+                LOG.warning("BLE_TOUCH_CHAR not set; cannot perform BLE touch")
+                return False, None
+            try:
+                client = BleakClient(self.addr)
+                await client.connect()
+                await client.write_gatt_char(self.char, self.value)
+                await client.disconnect()
+                latency = int((time.time() - t0) * 1000)
+                LOG.info(f"BLE touch success, latency={latency}ms")
+                return True, latency
+            except Exception as e:
+                LOG.error(f"BLE touch error: {e}")
+                return False, None
 
+        return asyncio.run(_ble_touch())
 def main():
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
     client.on_connect = on_connect
     client.on_message = on_message
@@ -106,6 +151,8 @@ def main():
     if mqtt_user and mqtt_pass:
         client.username_pw_set(mqtt_user, mqtt_pass)
     client.connect(mqtt_host, mqtt_port, 60)
+    LOG.info("Starting MQTT loop")
+    client.loop_forever()
     LOG.info("Starting MQTT loop")
     client.loop_forever()
 

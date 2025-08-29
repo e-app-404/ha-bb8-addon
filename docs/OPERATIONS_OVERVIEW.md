@@ -519,8 +519,57 @@ def led_discovery(mqtt, unique_id, duplicates):
 
 ## 8. Troubleshooting Playbook
 
-**Gotcha:** If `image:` is present in LOCAL_DEV, Supervisor will try to **pull** → 404. For LOCAL_DEV, **comment out `image:`**; let Supervisor build locally.
 
+### Issue: File transfer to HA runtime fails (rsync/scp permission or temp-file errors)
+
+**Symptom:**  
+File (e.g., `bb8_core/echo_responder.py`) missing from `/addons/local/<slug>/` after sync.  
+`rsync` or `scp` fails with permission or temp-file errors.
+
+**Checklist:**
+
+1. **Confirm mode:**
+   - LOCAL_DEV: `image:` absent in `config.yaml` → direct file placement and rebuild allowed.
+   - PUBLISH: `image:` present → must build/push new image; local file placement is ignored.
+
+2. **If LOCAL_DEV:**
+   - If `rsync` fails with `mkstemp` or permission errors:
+     - Use direct file creation:
+       ```sh
+       cat > /addons/local/<slug>/bb8_core/echo_responder.py <<'PY'
+       # Paste file contents here
+       PY
+       ```
+     - Or use tar over ssh:
+       ```sh
+       tar -C addon -cf - bb8_core/echo_responder.py | ssh <user>@<HA_IP> 'tar -C /addons/local/<slug> -xf -'
+       ```
+     - Or use the File Editor/Samba share.
+
+   - Rebuild and start:
+     ```sh
+     ha addons rebuild local_<slug>
+     ha addons start local_<slug>
+     ```
+
+3. **If PUBLISH:**
+   - Add file to source, commit, tag, build, and push new image.
+   - Update `config.yaml` with new `version:` and `image:`.
+   - Reload and restart add-on.
+
+4. **Verify:**
+   - File exists:
+     ```sh
+     test -f /addons/local/<slug>/bb8_core/echo_responder.py && echo OK:host
+     ```
+   - In-container import:
+     ```sh
+     CID=$(docker ps --filter name=addon_local_<slug> -q)
+     docker exec "$CID" python -c "import bb8_core.echo_responder as m; print(m.__file__)"
+     ```
+
+**Note:**  
+If standard tools fail, fallback methods (cat, tar, File Editor) bypass temp-file creation and work reliably on restrictive filesystems.
 
 ### Issue: Add‑on restarts every ~1–2s
 
@@ -535,6 +584,7 @@ def led_discovery(mqtt, unique_id, duplicates):
 ### Issue: `git pull` fails under `/addons/local/...`
 
 **Detect:** `fatal: not a git repository`
+
 **Fix:** correct — runtime folder is a **plain directory**. Sync from workspace via rsync or use runtime clone path.
 
 ### Issue: BLE event loop warnings / unawaited coroutines
@@ -549,6 +599,38 @@ def led_discovery(mqtt, unique_id, duplicates):
 
 **Fix:** discovery ON by default; unique_id stable; validate via discovery dump.
 
+### Quick Mode & Build Context Checks
+
+**On the HA box:**
+```sh
+CFG=/addons/local/beep_boop_bb8/config.yaml
+if sed 's/#.*$//' "$CFG" | grep -Eq '^[[:space:]]*image:[[:space:]]*'; then
+  echo "MODE: PUBLISH"
+else
+  echo "MODE: LOCAL_DEV"
+fi
+```
+
+**In your local workspace (VS Code):**
+```sh
+CFG=addon/config.yaml
+if sed 's/#.*$//' "$CFG" | grep -Eq '^[[:space:]]*image:[[:space:]]*'; then
+  echo "MODE: PUBLISH"
+else
+  echo "MODE: LOCAL_DEV"
+fi
+```
+
+**Quick “behavior” check (HA):**
+```sh
+ha addons rebuild local_beep_boop_bb8 >/dev/null 2>&1 && echo "LOCAL_DEV" || echo "PUBLISH"
+# If it prints "PUBLISH", Supervisor refused because image: is set.
+```
+
+**Tip:** In LOCAL_DEV, also confirm build context is valid:
+```sh
+test -f /addons/local/beep_boop_bb8/Dockerfile && echo "BUILDABLE: yes" || echo "BUILDABLE: no"
+```
 ---
 
 ## 9. Operational Checklists

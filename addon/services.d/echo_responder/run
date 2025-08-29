@@ -1,6 +1,19 @@
 #!/usr/bin/with-contenv bash
 set -euo pipefail
-OPT=/data/options.json
+JQ=/usr/bin/jq
+OPTS=/data/options.json
 VENV="${VIRTUAL_ENV:-/opt/venv}"
+export ECHO_MAX_INFLIGHT="$( $JQ -r '.echo_max_inflight // 8' "$OPTS" )"
+export ECHO_MIN_INTERVAL_MS="$( $JQ -r '.echo_min_interval_ms // 0' "$OPTS" )"
+
+# Respect options.json toggle (defaults to true in your config)
+if [ -f "$OPTS" ]; then
+	EN="$( $JQ -r '.enable_echo // true' "$OPTS" 2>/dev/null || echo true )"
+	if [ "$EN" != "true" ]; then
+		echo "[echo_responder] disabled by options.json (enable_echo=false)"
+		exec sleep infinity
+	fi
+fi
+
 cd /usr/src/app
 exec "$VENV/bin/python" -m bb8_core.echo_responder
