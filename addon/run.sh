@@ -16,26 +16,25 @@ else
   export ENABLE_BRIDGE_TELEMETRY=0
 fi
 
-##
-# Common MQTT options (read both from env and options.json; export dual names)
-##
-# host/port
-export MQTT_HOST=${MQTT_HOST:-$($JQ -r '.mqtt_host // empty' "$OPTIONS" 2>/dev/null || true)}
-export MQTT_PORT=${MQTT_PORT:-$($JQ -r '.mqtt_port // empty' "$OPTIONS" 2>/dev/null || true)}
-
-# username/password (export both styles)
-_U=${MQTT_USERNAME:-$($JQ -r '.mqtt_user // empty' "$OPTIONS" 2>/dev/null || true)}
-_P=${MQTT_PASSWORD:-$($JQ -r '.mqtt_password // empty' "$OPTIONS" 2>/dev/null || true)}
-if [ -n "${_U:-}" ]; then export MQTT_USERNAME="$_U"; export MQTT_USER="$_U"; fi
-if [ -n "${_P:-}" ]; then export MQTT_PASSWORD="$_P"; export MQTT_PASS="$_P"; fi
-
-# namespace/base
-_BASE=${MQTT_BASE:-$($JQ -r '.mqtt_base // empty' "$OPTIONS" 2>/dev/null || true)}
-if [ -n "${_BASE:-}" ]; then export MQTT_BASE="$_BASE"; fi
-
-# device hints
-export BB8_NAME=${BB8_NAME:-$($JQ -r '.bb8_name // empty' "$OPTIONS" 2>/dev/null || true)}
-export BB8_MAC=${BB8_MAC:-$($JQ -r '.bb8_mac // empty' "$OPTIONS" 2>/dev/null || true)}
+getopt_opt() { "$JQ" -r "$1 // empty" "$OPTIONS" 2>/dev/null || true; }
+# Accept both legacy and canonical option names
+H=$(getopt_opt '.mqtt_host // .mqtt_broker')
+U=$(getopt_opt '.mqtt_user // .mqtt_username')
+P=$(getopt_opt '.mqtt_password // .mqtt_pass')
+B=$(getopt_opt '.mqtt_base // .mqtt_topic_prefix')
+PORT=$(getopt_opt '.mqtt_port // .mqtt_broker_port')
+[ -z "$PORT" ] && PORT=1883
+[ -z "$B" ] && B=bb8
+export MQTT_HOST="${MQTT_HOST:-$H}"
+export MQTT_PORT="${MQTT_PORT:-$PORT}"
+export MQTT_USERNAME="${MQTT_USERNAME:-$U}"
+export MQTT_PASSWORD="${MQTT_PASSWORD:-$P}"
+export MQTT_BASE="${MQTT_BASE:-$B}"
+# Also export the alternative var names used by some modules
+export MQTT_USER="${MQTT_USER:-$MQTT_USERNAME}"
+export MQTT_PASS="${MQTT_PASS:-$MQTT_PASSWORD}"
+export BB8_NAME=${BB8_NAME:-$(getopt_opt '.bb8_name')}
+export BB8_MAC=${BB8_MAC:-$(getopt_opt '.bb8_mac')}
 
 # Add-on version (best-effort)
 export ADDON_VERSION="${BUILD_VERSION:-$(cat /etc/BB8_ADDON_VERSION 2>/dev/null || echo unknown)}"

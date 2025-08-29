@@ -1,9 +1,6 @@
 #!/usr/bin/with-contenv bash
 set -euo pipefail
 OPT=/data/options.json
-export MQTT_BASE="$(jq -r '.mqtt_topic_prefix // "bb8"' "$OPT")"
-export MQTT_HOST="$(jq -r '.mqtt_broker // "127.0.0.1"' "$OPT")"
-export MQTT_PORT="$(jq -r '.mqtt_port // 1883' "$OPT")"
-export MQTT_USER="$(jq -r '.mqtt_username // empty' "$OPT")"
-export MQTT_PASS="$(jq -r '.mqtt_password // empty' "$OPT")"
-exec /opt/venv/bin/python -m bb8_core.echo_responder
+VENV="${VIRTUAL_ENV:-/opt/venv}"
+cd /usr/src/app
+exec "$VENV/bin/python" -m bb8_core.echo_responder

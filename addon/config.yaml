@@ -6,7 +6,7 @@ arch: ["aarch64"]
 url: "https://github.com/e-app-404/ha-bb8-addon"
 # LOCAL_DEV: comment out image: to force Supervisor to build locally from Dockerfile/build.yaml
 # - PUBLISH:   use the same 'image:' and push a matching tag to your registry.
-image: "local/{arch}-addon-beep_boop_bb8"
+# image: "local/{arch}-addon-beep_boop_bb8"
 
 build:
   dockerfile: Dockerfile
@@ -46,14 +46,14 @@ options:
   rescan_on_fail: true
 
   # --- MQTT ---
+  mqtt_host: "192.168.0.129"
+  mqtt_port: 1883
+  mqtt_user: "mqtt_bb8"
+  mqtt_password: "mqtt_bb8"
+  mqtt_base: "bb8"
   mqtt_client_id: "bb8_presence_scanner"
   keepalive: 60
   qos: 1
-  mqtt_broker: 192.168.0.129
-  mqtt_port: 1883
-  mqtt_username: "mqtt_bb8"
-  mqtt_password: "mqtt_bb8"
-  mqtt_topic_prefix: "bb8"
   ha_discovery_topic: "homeassistant"
   mqtt_tls: false
 
@@ -61,6 +61,9 @@ options:
   bb8_mac: "ED:ED:87:D7:27:50"
   bb8_name: "S33 BB84 LE"
   ble_adapter: "hci0"
+
+  # --- Echo responder ---
+  enable_echo: true
 
 # ---------- Option Schema (validation) ----------
 schema:
@@ -86,15 +89,23 @@ schema:
   mqtt_client_id: "str"
   keepalive: "int?"
   qos: "int?"
-  mqtt_broker: "str"
+  mqtt_host: "str?"
   mqtt_port: "int?"
-  mqtt_username: "str?"
+  mqtt_user: "str?"
   mqtt_password: "str?"
-  mqtt_topic_prefix: "str"
+  mqtt_base: "str?"
   ha_discovery_topic: "str"
   mqtt_tls: "bool?"
+  # Back-compat aliases accepted (optional)
+  mqtt_broker: "str?"
+  mqtt_broker_port: "int?"
+  mqtt_username: "str?"
+  mqtt_topic_prefix: "str?"
 
   # --- Device Identification ---
   bb8_mac: "str"
   bb8_name: "str?"
   ble_adapter: "str?"
+
+  # --- Echo responder ---
+  enable_echo: "bool?"
