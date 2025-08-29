@@ -1,9 +1,8 @@
-import os
-import sys
-import time
 import json
 import logging
+import os
 import threading
+import time
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
@@ -13,7 +12,11 @@ try:
 except ImportError:
     BleakClient = None
 
-MQTT_BASE = os.environ.get("MQTT_BASE", "bb8")
+MQTT_BASE = (
+    os.environ.get("MQTT_BASE")
+    or os.environ.get("MQTT_NAMESPACE")
+    or "bb8"
+)
 MQTT_ECHO_CMD = f"{MQTT_BASE}/echo/cmd"
 MQTT_ECHO_ACK = f"{MQTT_BASE}/echo/ack"
 MQTT_ECHO_STATE = f"{MQTT_BASE}/echo/state"
@@ -26,14 +29,17 @@ BLE_TOUCH_VALUE = os.environ.get("BLE_TOUCH_VALUE", "01")
 LOG = logging.getLogger("echo_responder")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
+
 def pub(client, topic, payload, retain=False):
     LOG.info(f"Publishing to {topic}: {payload}")
     client.publish(topic, json.dumps(payload), qos=0, retain=retain)
+
 
 def on_connect(client, userdata, flags, rc, properties=None):
     LOG.info(f"Connected to MQTT broker with rc={rc}")
     client.subscribe(MQTT_ECHO_CMD)
     LOG.info(f"Subscribed to {MQTT_ECHO_CMD}")
+
 
 def on_message(client, userdata, msg):
     LOG.info(f"Received message on {msg.topic}: {msg.payload}")
@@ -42,6 +48,7 @@ def on_message(client, userdata, msg):
     except Exception:
         payload = {"raw": msg.payload.decode("utf-8", errors="replace")}
     threading.Thread(target=handle_echo, args=(client, payload)).start()
+
 
 def handle_echo(client, payload):
     t0 = time.time()
@@ -64,6 +71,7 @@ def handle_echo(client, payload):
     }
     pub(client, MQTT_TELEMETRY, telemetry)
 
+
 class BleTouch:
     def __init__(self):
         self.addr = BLE_ADDR
@@ -85,19 +93,22 @@ class BleTouch:
             LOG.error(f"BLE touch error: {e}")
             return False, None
 
+
 def main():
     client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
     client.on_connect = on_connect
     client.on_message = on_message
-    mqtt_host = os.environ.get("MQTT_HOST", "localhost")
-    mqtt_port = int(os.environ.get("MQTT_PORT", "1883"))
-    mqtt_user = os.environ.get("MQTT_USER", None)
-    mqtt_pass = os.environ.get("MQTT_PASS", None)
+    mqtt_host = os.environ.get("MQTT_HOST") or os.environ.get("MQTT_SERVER") or "localhost"
+    mqtt_port = int(os.environ.get("MQTT_PORT") or 1883)
+    # Accept either MQTT_USERNAME/PASSWORD or MQTT_USER/PASS
+    mqtt_user = os.environ.get("MQTT_USERNAME") or os.environ.get("MQTT_USER")
+    mqtt_pass = os.environ.get("MQTT_PASSWORD") or os.environ.get("MQTT_PASS")
     if mqtt_user and mqtt_pass:
         client.username_pw_set(mqtt_user, mqtt_pass)
     client.connect(mqtt_host, mqtt_port, 60)
     LOG.info("Starting MQTT loop")
     client.loop_forever()
+
 
 if __name__ == "__main__":
     main()
