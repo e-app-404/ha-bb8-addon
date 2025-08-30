@@ -4,6 +4,7 @@ import time
 from unittest.mock import patch
 
 import paho.mqtt.client as mqtt  # pyright: ignore[reportMissingImports]
+
 from bb8_core.logging_setup import logger
 
 # Test parameters
@@ -16,13 +17,11 @@ STATUS_TOPIC = "bb8/test/status"
 # Mock BLEBridge and its controller
 class MockController:
     def handle_command(self, command, payload):
-        logger.info(
-            {
-                "event": "test_mock_handle_command",
-                "command": command,
-                "payload": payload,
-            }
-        )
+        logger.info({
+            "event": "test_mock_handle_command",
+            "command": command,
+            "payload": payload,
+        })
         return "mock-dispatched"
 
 
@@ -58,12 +57,10 @@ def publish_test_messages():
     time.sleep(1)
     # Publish malformed payload
     client.publish(MQTT_TOPIC, "{invalid_json")
-    logger.info(
-        {
-            "event": "test_publish_malformed_payload",
-            "payload": "{invalid_json",
-        }
-    )
+    logger.info({
+        "event": "test_publish_malformed_payload",
+        "payload": "{invalid_json",
+    })
     time.sleep(1)
     client.loop_stop()
     client.disconnect()
@@ -77,7 +74,9 @@ def main():
     publish_test_messages()
     logger.info({"event": "test_waiting_for_dispatcher"})
     time.sleep(5)
-    logger.info("[TEST] Test complete. Check logs for BLE dispatch and error handling.")
+    logger.info(
+        "[TEST] Test complete. Check logs for BLE dispatch and error handling."
+    )
 
 
 if __name__ == "__main__":

@@ -30,9 +30,7 @@ def collect_files(base: Path) -> list[Path]:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true", help="perform moves")
-    ap.add_argument(
-        "--check-only", action="store_true", help="verify post-state"
-    )
+    ap.add_argument("--check-only", action="store_true", help="verify post-state")
     args = ap.parse_args()
 
     ts = datetime.utcnow().strftime("%Y%m%d_%H%M%SZ")
@@ -52,11 +50,13 @@ def main():
                 # collision: keep root test; stash addon copy
                 # under tests/_from_addon/
                 stash = ROOT / "tests/_from_addon" / rel
-                plan["collisions"].append({
-                    "src": str(f),
-                    "dst": str(dst),
-                    "stash": str(stash),
-                })
+                plan["collisions"].append(
+                    {
+                        "src": str(f),
+                        "dst": str(dst),
+                        "stash": str(stash),
+                    }
+                )
                 if args.apply:
                     stash.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(str(f), str(stash))
@@ -72,11 +72,13 @@ def main():
             dst = ROOT / "tools" / rel
             if dst.exists() and dst.read_bytes() != f.read_bytes():
                 stash = ROOT / "tools/legacy" / rel
-                plan["collisions"].append({
-                    "src": str(f),
-                    "dst": str(dst),
-                    "stash": str(stash),
-                })
+                plan["collisions"].append(
+                    {
+                        "src": str(f),
+                        "dst": str(dst),
+                        "stash": str(stash),
+                    }
+                )
                 if args.apply:
                     stash.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(str(f), str(stash))
@@ -123,9 +125,7 @@ def main():
     plan["removed_empty"] = removed
 
     REPORTS.mkdir(exist_ok=True, parents=True)
-    (REPORTS / f"consolidation_plan_{ts}.json").write_text(
-        json.dumps(plan, indent=2)
-    )
+    (REPORTS / f"consolidation_plan_{ts}.json").write_text(json.dumps(plan, indent=2))
     if args.check_only:
         # Post conditions
         ok = True
@@ -135,15 +135,11 @@ def main():
         if (DOCS / "reports").exists():
             ok = False
         status = "CONSOLIDATION: PASS" if ok else "CONSOLIDATION: FAIL"
-        (REPORTS / f"consolidation_receipt_{ts}.status").write_text(
-            status + "\n"
-        )
+        (REPORTS / f"consolidation_receipt_{ts}.status").write_text(status + "\n")
         print(status)
         sys.exit(0 if ok else 1)
 
-    (REPORTS / f"consolidation_receipt_{ts}.status").write_text(
-        "CONSOLIDATION: PASS\n"
-    )
+    (REPORTS / f"consolidation_receipt_{ts}.status").write_text("CONSOLIDATION: PASS\n")
     print("CONSOLIDATION: PASS")
 
 

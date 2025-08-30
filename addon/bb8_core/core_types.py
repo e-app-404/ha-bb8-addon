@@ -1,4 +1,4 @@
-# bb8_core/types.py
+# bb8_core/core_types.py
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -8,9 +8,8 @@ from typing import Any, Protocol, runtime_checkable
 # Simple aliases (stable)
 # ---------------------------
 RGB = tuple[int, int, int]
-Scalar = (
-    "Scalar"  # alias for readable callbacks below (string-based to avoid 3.8 | syntax)
-)
+# Scalar: alias for readable callbacks below (bool|int|float|str)
+# Used for type hinting; not a runtime value.
 
 # NB: Avoid importing any local modules at runtime to prevent cycles.
 # If you must reference concrete classes for typing only, do:
@@ -24,8 +23,10 @@ Scalar = (
 BoolCallback = Callable[[bool], None]
 IntCallback = Callable[[int], None]
 OptIntCallback = Callable[[int | None], None]
-RGBCallback = Callable[[int, int, int], None]
-ScalarCallback = Callable[[Any], None]  # Scalar echo: bool|int|float|str
+OptIntCallback = Callable[[int | None], None]
+ScalarCallback = Callable[
+    [bool | int | float | str], None
+]  # Scalar echo: bool|int|float|str
 
 
 # ---------------------------
@@ -52,9 +53,12 @@ class BLELink(Protocol):
 @runtime_checkable
 class BridgeController(Protocol):
     base_topic: str
+    # Base MQTT topic for device communication.
+    base_topic: str
     mqtt: MqttClient
 
     # Command handlers (examples; keep surface minimal and stable)
+    def on_power(self, value: bool) -> None: ...
     def on_power(self, value: bool) -> None: ...
     def on_stop(self) -> None: ...
     def on_sleep(self) -> None: ...

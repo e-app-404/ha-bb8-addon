@@ -62,8 +62,7 @@ def main():
 
         if host is None:
             raise SystemExit(
-                "[trace] MQTT_HOST environment variable is required and "
-                "missing."
+                "[trace] MQTT_HOST environment variable is required and " "missing."
             )
 
         client.connect(host, port, keepalive=10)

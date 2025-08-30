@@ -1,6 +1,0 @@
-# Human-edited pins (compile to requirements.txt with hashes via pip-compile)
-# Adjust versions to your known-good set after resolver sanity.
-bleak==0.22.3
-paho-mqtt==2.1.0
-spherov2==0.12.1
-PyYAML==6.0.2

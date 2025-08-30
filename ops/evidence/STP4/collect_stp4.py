@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-from paho.mqtt.enums import CallbackAPIVersion
 from datetime import UTC, datetime
 from typing import Any
+
+from paho.mqtt.enums import CallbackAPIVersion
+
 """
 Collect STP4 MQTT/HA roundtrip evidence.
 
@@ -19,6 +21,7 @@ import os
 import sys
 import threading
 import time
+
 # Use shared config
 try:
     from bb8_core.addon_config import load_config
@@ -28,6 +31,7 @@ except ImportError:
     # bb8_core may not be available.
     load_config = None
     import logging
+
     logging.basicConfig(level=logging.WARNING)
     logging.warning(
         "[CONFIG] bb8_core.addon_config not found. "
@@ -45,12 +49,11 @@ except Exception as e:
         f"[DEPENDENCY] paho-mqtt not installed or import failed: {e}. "
         f"Usually means inactive virtual environment or missing dependencies."
     )
-    print(
-        "ERR: paho-mqtt not installed. pip install paho-mqtt", file=sys.stderr
-    )
+    print("ERR: paho-mqtt not installed. pip install paho-mqtt", file=sys.stderr)
     raise
 
 # ----- config / args -----
+
 
 def get_shared_config():
     import logging
@@ -100,9 +103,7 @@ def parse_args():
         sys.exit(2)
 
     p = argparse.ArgumentParser()
-    p.add_argument(
-        "--host", default=cfg.get("MQTT_HOST", os.environ.get("MQTT_HOST"))
-    )
+    p.add_argument("--host", default=cfg.get("MQTT_HOST", os.environ.get("MQTT_HOST")))
     p.add_argument(
         "--port",
         type=int,
@@ -187,37 +188,40 @@ def validate_discovery(configs, device_identifiers, base_topic=None):
         req = ["unique_id", "name", "state_topic", "device"]
         missing = [k for k in req if k not in o]
         if missing:
-            results.append({
-                "topic": topic,
-                "valid": False,
-                "reason": f"missing:{missing}",
-            })
+            results.append(
+                {
+                    "topic": topic,
+                    "valid": False,
+                    "reason": f"missing:{missing}",
+                }
+            )
             ok = False
             continue
         if o["device"].get("identifiers") in (
             None,
             [],
         ):
-            results.append({
-                "topic": topic,
-                "valid": False,
-                "reason": "device.identifiers missing",
-            })
+            results.append(
+                {
+                    "topic": topic,
+                    "valid": False,
+                    "reason": "device.identifiers missing",
+                }
+            )
             ok = False
             continue
         # commandables need command_topic
         if (
-            any(
-                x in topic
-                for x in ("/light/", "/switch/", "/button/", "/number/")
-            )
+            any(x in topic for x in ("/light/", "/switch/", "/button/", "/number/"))
             and "command_topic" not in o
         ):
-            results.append({
-                "topic": topic,
-                "valid": False,
-                "reason": "command_topic missing",
-            })
+            results.append(
+                {
+                    "topic": topic,
+                    "valid": False,
+                    "reason": "command_topic missing",
+                }
+            )
             ok = False
             continue
         results.append({"topic": topic, "valid": True})
@@ -427,9 +431,7 @@ class Collector:
                     try:
                         return datetime.fromisoformat(ts)
                     except Exception:
-                        return datetime.strptime(
-                            ts[:26], "%Y-%m-%dT%H:%M:%S.%f"
-                        )
+                        return datetime.strptime(ts[:26], "%Y-%m-%dT%H:%M:%S.%f")
 
                 if echo.get("state_ts"):
                     state_dt = parse_time(echo["state_ts"])
@@ -493,11 +495,7 @@ class Collector:
                     f"is_commandable={is_commandable}, "
                     f"echo_source={echo.get('source')}"
                 )
-                if (
-                    require_device
-                    and is_commandable
-                    and echo.get("source") != "device"
-                ):
+                if require_device and is_commandable and echo.get("source") != "device":
                     passed, note_val = False, "facade_only"
 
             res = {
@@ -553,9 +551,7 @@ class Collector:
             m1,
             cmd_ts=_ts,
         )
-        m2 = self.wait_for_topic(
-            f"{base}/stop/state", val_pred("idle"), to + 1.0
-        )
+        m2 = self.wait_for_topic(f"{base}/stop/state", val_pred("idle"), to + 1.0)
         record(
             "stop_idle",
             f"{base}/stop/press",
@@ -597,12 +593,14 @@ class Collector:
             and str(x["payload_raw"]).strip() != "",
             to,
         )
-        traces.append({
-            "entity": "presence_state",
-            "state_topic": f"{base}/presence/state",
-            "state_payload": pres.get("payload_raw") if pres else None,
-            "pass": bool(pres),
-        })
+        traces.append(
+            {
+                "entity": "presence_state",
+                "state_topic": f"{base}/presence/state",
+                "state_payload": pres.get("payload_raw") if pres else None,
+                "pass": bool(pres),
+            }
+        )
         if not pres:
             failures.append("presence:no_state")
         rssi = self.wait_for_topic(
@@ -611,12 +609,14 @@ class Collector:
             and str(x["payload_raw"]).strip() != "",
             to,
         )
-        traces.append({
-            "entity": "rssi_state",
-            "state_topic": f"{base}/rssi/state",
-            "state_payload": rssi.get("payload_raw") if rssi else None,
-            "pass": bool(rssi),
-        })
+        traces.append(
+            {
+                "entity": "rssi_state",
+                "state_topic": f"{base}/rssi/state",
+                "state_payload": rssi.get("payload_raw") if rssi else None,
+                "pass": bool(rssi),
+            }
+        )
         if not rssi:
             failures.append("rssi:no_state")
 
@@ -633,9 +633,7 @@ class Collector:
             m1,
             cmd_ts=_ts,
         )
-        m2 = self.wait_for_topic(
-            f"{base}/sleep/state", val_pred("idle"), to + 1.0
-        )
+        m2 = self.wait_for_topic(f"{base}/sleep/state", val_pred("idle"), to + 1.0)
         record(
             "sleep_idle",
             f"{base}/sleep/press",
@@ -688,9 +686,7 @@ class Collector:
             m1,
             cmd_ts=_ts,
         )
-        m2 = self.wait_for_topic(
-            f"{base}/drive/state", val_pred("idle"), to + 1.0
-        )
+        m2 = self.wait_for_topic(f"{base}/drive/state", val_pred("idle"), to + 1.0)
         record(
             "drive_idle",
             f"{base}/drive/press",
@@ -707,9 +703,7 @@ class Collector:
             os.path.join(self.outdir, "ha_discovery_dump.json"),
             self.discovery_dump,
         )
-        dump_json(
-            os.path.join(self.outdir, "ha_mqtt_trace_snapshot.json"), traces
-        )
+        dump_json(os.path.join(self.outdir, "ha_mqtt_trace_snapshot.json"), traces)
 
         # schema verdict (scoped)
         # Build identifiers for THIS device only
@@ -723,9 +717,7 @@ class Collector:
         configs = [
             (
                 topic,
-                entry["obj"]
-                if isinstance(entry, dict) and "obj" in entry
-                else "{}",
+                entry["obj"] if isinstance(entry, dict) and "obj" in entry else "{}",
             )
             for topic, entry in self.discovery_dump.items()
         ]

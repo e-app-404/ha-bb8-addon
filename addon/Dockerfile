@@ -8,7 +8,6 @@ ENV PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 WORKDIR /usr/src/app
-# Copy application (narrowed; DO NOT use COPY .)
 COPY bb8_core/     /usr/src/app/bb8_core/
 COPY app/          /usr/src/app/app/
 COPY services.d/   /etc/services.d/
@@ -21,7 +20,7 @@ RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build conte
 # Base deps (Debian BUILD_FROM) — Alpine is NOT supported here
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-   python3 python3-venv python3-pip ca-certificates bash \
+   python3 python3-venv python3-pip ca-certificates bash jq \
  && rm -rf /var/lib/apt/lists/*
 
 # Create venv and install deps into venv

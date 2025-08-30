@@ -99,10 +99,7 @@ class EvidenceRecorder:
                         evt = self._evt_q.get(timeout=deadline - time.time())
                     except queue.Empty:
                         break
-                    if (
-                        evt["topic"].split("/")[-1]
-                        == cmd["topic"].split("/")[-1]
-                    ):
+                    if evt["topic"].split("/")[-1] == cmd["topic"].split("/")[-1]:
                         echo = evt
                         break
                 record = {

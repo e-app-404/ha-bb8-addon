@@ -1,0 +1,31 @@
+planned_change: "Implement minimal MQTT echo responder in HA-BB8 add-on"
+deliverable:
+  - "Subscribe: ${BASE}/echo/cmd (BASE = options.mqtt_topic_prefix)"
+  - "On receive: perform a real BLE device touch against bb8_mac via bleak/spherov2"
+  - "Publish (non-retained, existing QoS): 
+      1) ${BASE}/echo/ack
+      2) ${BASE}/telemetry/echo_roundtrip {\"ms\": <int>, \"ok\": bool}
+      3) ${BASE}/echo/state {\"ok\": bool, ...}"
+  - "Structured log per echo event with RTT ms and outcome (append to /data/reports/ha_bb8_addon.log)"
+rationale: "STP5 requires device-originated echo evidence; current build emits none"
+status: "approved"
+location: "addon_local_beep_boop_bb8 container runtime"
+RACI_matrix:
+  - Responsible: Add-on maintainer
+  - Accountable: Product owner
+  - Consulted: Strategos (governance)
+  - Informed: Operator
+acceptance_criteria:
+  - "On publishing ${BASE}/echo/cmd, device-originated messages appear:
+      ack + state + echo_roundtrip (>=3 msgs within ≥10s window)"
+  - "echo_roundtrip payload contains integer field 'ms'"
+  - "stp5_attest.sh passes unmodified:
+      window_duration_sec ≥ 10, echo_count ≥ 3, echo_rtt_ms_p95 ≤ 250,
+      artifacts present & non-empty, tokens appended"
+risks:
+  - "BLE access via BlueZ/DBus may be missing in container → verify /run/dbus/system_bus_socket"
+  - "Robot asleep/offline → operator must wake BB-8"
+  - "First connect may exceed 250ms → keep connection warm to meet p95"
+rollback:
+  - "Disable feature via options.enable_echo=false (added option) or stop auxiliary process"
+  - "No schema changes to STP5 artifacts; revert clean"

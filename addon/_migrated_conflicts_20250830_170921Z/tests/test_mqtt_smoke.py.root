@@ -3,6 +3,7 @@ import inspect
 import json
 
 import pytest
+
 from bb8_core.bb8_presence_scanner import publish_discovery
 from bb8_core.mqtt_dispatcher import start_mqtt_dispatcher
 
@@ -179,7 +180,9 @@ async def test_discovery_and_dispatcher_smoke(caplog):
         controller=ctrl,
     )
     # Simulate LED set
-    mqtt.trigger(f"bb8/{device_id}/cmd/led/set", json.dumps({"r": 1, "g": 2, "b": 3}))
+    mqtt.trigger(
+        f"bb8/{device_id}/cmd/led/set", json.dumps({"r": 1, "g": 2, "b": 3})
+    )
     # Simulate sleep
     mqtt.trigger(f"bb8/{device_id}/cmd/sleep", json.dumps({"after_ms": 0}))
     # Simulate drive

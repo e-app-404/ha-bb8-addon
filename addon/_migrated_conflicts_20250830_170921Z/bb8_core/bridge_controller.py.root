@@ -4,9 +4,6 @@ import asyncio
 import json
 import logging
 import os
-
-# Foreground controller signal handling
-import signal
 import threading
 from typing import Any
 
@@ -15,20 +12,24 @@ from .auto_detect import resolve_bb8_mac
 from .ble_bridge import BLEBridge
 from .ble_gateway import BleGateway
 from .ble_link import BLELink
-from .common import STATE_TOPICS, publish_device_echo
+from .common import (
+    STATE_TOPICS,
+    publish_device_echo,
+)
 
+# Foreground controller signal handling
+import signal
 _stop_evt = threading.Event()
-
-
 def _on_signal(signum, frame):
     logger.info("controller_signal_received signum=%s", signum)
     _stop_evt.set()
 
-
 from .evidence_capture import EvidenceRecorder
 from .logging_setup import logger
-from .mqtt_dispatcher import register_subscription  # dynamic topic binding
-from .mqtt_dispatcher import ensure_dispatcher_started
+from .mqtt_dispatcher import (
+    ensure_dispatcher_started,
+    register_subscription,  # dynamic topic binding
+)
 
 log = logging.getLogger(__name__)
 
@@ -385,7 +386,6 @@ def _start_dispatcher_compat(func, supplied: dict[str, Any]) -> Any:
 # Canonical entry point for controller startup
 from .facade import BB8Facade
 
-
 def start_bridge_controller(
     config: dict[str, Any] | None = None,
 ) -> BB8Facade | None:
@@ -465,6 +465,7 @@ def start_bridge_controller(
 
 
 def _wait_forever(client, bridge, ble=None) -> None:
+
     """Block the main thread until SIGTERM/SIGINT; then shutdown cleanly."""
     signal.signal(signal.SIGTERM, _on_signal)
     signal.signal(signal.SIGINT, _on_signal)

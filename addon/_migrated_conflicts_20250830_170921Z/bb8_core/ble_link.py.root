@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 import asyncio
@@ -21,13 +22,11 @@ def set_loop(loop: asyncio.AbstractEventLoop) -> None:
     _loop = loop
     log.info("ble_loop_set loop_id=%s", id(loop))
 
-
 def start_loop_thread() -> None:
     """Start BLE event loop in a dedicated thread if not already running."""
     global _loop, _loop_thread
     if _loop_thread and _loop_thread.is_alive():
         return
-
     def _run():
         loop = asyncio.new_event_loop()
         set_loop(loop)
@@ -35,7 +34,6 @@ def start_loop_thread() -> None:
         log.info("ble_loop_thread_started name=BLELoopThread")
         _alive_evt.set()
         loop.run_forever()
-
     _loop_thread = threading.Thread(target=_run, name="BLELoopThread", daemon=True)
     _loop_thread.start()
     log.info("ble_loop_thread_spawned")
@@ -52,7 +50,6 @@ async def _run() -> None:
     backoff = [0.1, 0.2, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0]
     i = 0
     from .telemetry import ble_connect_attempt
-
     try:
         while True:
             # ... BLE connect/IO logic ...
@@ -60,7 +57,7 @@ async def _run() -> None:
             log.info("ble_connect_attempt try=%s backoff=%s", i + 1, delay)
             # Telemetry hook (non-fatal)
             try:
-                ble_connect_attempt(globals().get("mqtt_client"), i + 1, delay)
+                ble_connect_attempt(globals().get('mqtt_client'), i + 1, delay)
             except Exception:
                 pass
             await asyncio.sleep(delay)
@@ -91,9 +88,7 @@ async def _cancel_and_drain() -> int:
     if pending:
         print(f"[BLELink] Awaiting {cancelled_count} tasks...")
         try:
-            results = await asyncio.wait_for(
-                asyncio.gather(*pending, return_exceptions=True), timeout=5.0
-            )
+            results = await asyncio.wait_for(asyncio.gather(*pending, return_exceptions=True), timeout=5.0)
             print(f"[BLELink] Gathered results: {results}")
             excs = [r for r in results if isinstance(r, Exception)]
             if excs:
@@ -127,7 +122,6 @@ def start() -> None:
     _started = True
     log.info("ble_link_runner_started")
 
-
 async def _cancel_and_drain() -> None:
     """
     Run inside BLE loop:
@@ -143,13 +137,11 @@ async def _cancel_and_drain() -> None:
     # yield once to flush any pending callbacks
     await asyncio.sleep(0)
 
-
 def join(timeout: float = 3.0) -> None:
     """Join BLE loop thread if running (idempotent)."""
     global _loop_thread
     if _loop_thread and _loop_thread.is_alive():
         _loop_thread.join(timeout=timeout)
-
 
 def stop(timeout: float = 3.0) -> None:
     """Gracefully stop BLE worker and loop with full async drain, then join thread."""
@@ -163,14 +155,14 @@ def stop(timeout: float = 3.0) -> None:
         # 1) cancel the runner task
         fut.cancel()
         # 2) drain all tasks within the BLE loop
-        asyncio.run_coroutine_threadsafe(_cancel_and_drain(), _loop).result(
-            timeout=timeout
-        )
+        asyncio.run_coroutine_threadsafe(_cancel_and_drain(), _loop).result(timeout=timeout)
         # 3) stop the loop and join the thread
         _loop.call_soon_threadsafe(_loop.stop)
         join(timeout=timeout)
     except Exception as e:
         log.warning("ble_link_stop_exception %s", e)
+
+
 
 
 def run_coro(coro: Coroutine[Any, Any, Any]) -> Future:

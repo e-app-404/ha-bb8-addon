@@ -70,7 +70,11 @@ def main():
     # Telemetry hook (non-fatal)
     try:
         ms = int(args.timeout * 1000)
-        ok = got_echo.is_set() and payload_seen and payload_seen.get("source") == "device"
+        ok = (
+            got_echo.is_set()
+            and payload_seen
+            and payload_seen.get("source") == "device"
+        )
         echo_roundtrip(client, ms, "PASS" if ok else "FAIL")
     except Exception:
         pass

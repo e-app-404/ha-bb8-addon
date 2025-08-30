@@ -26,14 +26,17 @@ log = logging.getLogger(__name__)
 
 SCANNER_PUBLISH_HOOK: Callable[..., None] | None = None
 
-# Idempotency set for scanner discovery publisher (per-entity unique_id)
-_SCANNER_DISCOVERY_PUBLISHED_UIDS: set[str] = set()
+# Idempotency set for direct discovery publisher (per-entity unique_id)
+_DISCOVERY_PUBLISHED_UIDS: set[str] = set()
 
 
 log = logging.getLogger(__name__)
 
 # ---- Seam hook for tests (safe no-op in production) ----
-def _get_scanner_publisher():
+SCANNER_PUBLISH_HOOK: Callable[..., None] | None = None
+
+
+def _get_scanner_publisher() -> Callable[..., None]:
     """Return the callable used to publish scanner discovery.
     Prefer hook on the authoritative module object (resilient to aliasing)
     """
@@ -68,7 +71,6 @@ def _get_scanner_publisher():
             return None
         return result
 
-    return wrapper
     return wrapper
 
 
@@ -238,10 +240,11 @@ def _resolve_mqtt_host() -> tuple[str, str]:
     return "localhost", "default"
 
 
+log = logging.getLogger(__name__)
 _LOOPBACKS = {"localhost", "192.168.0.129"}
 _RESUB_ON_CONNECT_ATTACHED = False
 _DISCOVERY_PUBLISHED = set()
-_DISPATCHER_DISCOVERY_PUBLISHED_UIDS = set()
+
 REASONS = {
     0: "success",
     1: "unacceptable_protocol_version",
@@ -291,6 +294,11 @@ def _device_block() -> dict[str, Any]:
         "mf": "Sphero",
     }
 
+    # Unified gate: if discovery is disabled, skip for both routes
+    if not CONFIG.get("dispatcher_discovery_enabled", False):
+        log.info("discovery_skip reason=gate_disabled")
+        return
+
 
 def publish_bb8_discovery(publish_fn) -> None:
     # Respect gate even when publisher is called directly from tests
@@ -312,14 +320,15 @@ def publish_bb8_discovery(publish_fn) -> None:
 
     def cfg(uid_key: str, topic: str, payload: dict) -> None:
         # skip if already published (idempotent per unique_id)
-        if uid_key in _SCANNER_DISCOVERY_PUBLISHED_UIDS:
+        if uid_key in _DISCOVERY_PUBLISHED_UIDS:
             log.info("discovery_skip reason=already_published uid=%s", uid_key)
             return
         publish_fn(topic, json.dumps(payload), True)
-        _SCANNER_DISCOVERY_PUBLISHED_UIDS.add(uid_key)
+        _DISCOVERY_PUBLISHED_UIDS.add(uid_key)
         # maintain legacy message + add smoke-compatible line
         log.info("Published discovery: %s", topic)
         log.info("discovery: published topic=%s", topic)
+
     # Unique IDs (stable, not name-derived)
     uid = {
         "presence": "bb8_presence",
@@ -636,7 +645,7 @@ def _maybe_publish_bb8_discovery() -> None:
         ),
     ]
     for topic, uniq_id, payload in entities:
-        if uniq_id in _DISPATCHER_DISCOVERY_PUBLISHED_UIDS:
+        if uniq_id in _DISCOVERY_PUBLISHED:
             log.info(f"discovery_skip reason=already_published entity={uniq_id}")
             continue
         keys = sorted(payload.keys())
@@ -654,8 +663,8 @@ def _maybe_publish_bb8_discovery() -> None:
             f"wait_ok={ok}"
         )
         if ok:
-            _DISPATCHER_DISCOVERY_PUBLISHED_UIDS.add(uniq_id)
-            _DISPATCHER_DISCOVERY_PUBLISHED_UIDS.add(uniq_id)
+            _DISCOVERY_PUBLISHED.add(uniq_id)
+
 
 # -----------------------------------------------------------------------------
 # Dispatcher singleton guard
@@ -928,24 +937,19 @@ def get_client() -> Any | None:
 
 
 def _make_cb(handler):
-    """
-    Wraps a handler function to process MQTT message payloads as UTF-8 text.
-    Used as a callback for MQTT topic subscriptions.
-    """
-    def _cb(_client, _userdata, message):
+    def _cb(client, userdata, message):
         payload = message.payload or b""
         try:
             text = payload.decode("utf-8")
         except Exception:
             text = ""
-        handler(text)
-    return _cb
+        try:
+            handler(text)
+        except Exception as exc:
+            log.warning("command dispatch failed for %s: %s", message.topic, exc)
+
+
 def _bind_subscription(topic, handler):
-    """
-    Bind an MQTT topic subscription to a handler function.
-    Adds a message callback for the given topic and subscribes to it if not already bound.
-    Returns True if successful, False otherwise.
-    """
     if CLIENT is None:
         return False
     if topic in _BOUND_TOPICS:
@@ -959,12 +963,9 @@ def _bind_subscription(topic, handler):
     except Exception as exc:
         log.warning("failed to subscribe %s: %s", topic, exc)
         return False
-        return True
+
+
 def _apply_pending_subscriptions():
-    """
-    Attempt to bind all pending MQTT topic subscriptions to the active client.
-    Removes successfully bound subscriptions from the pending list.
-    """
     if CLIENT is None:
         return
     for topic, handler in list(_PENDING_SUBS):
@@ -973,16 +974,7 @@ def _apply_pending_subscriptions():
 
             with contextlib.suppress(ValueError):
                 _PENDING_SUBS.remove((topic, handler))
-        if _bind_subscription(topic, handler):
-            import contextlib
 
-def register_subscription(topic, handler):
-    """
-    Register a handler for an MQTT topic subscription.
-    If the subscription cannot be bound immediately, it is queued for later binding.
-    """
-    if not _bind_subscription(topic, handler):
-        _PENDING_SUBS.append((topic, handler))
 
 def register_subscription(topic, handler):
     if not _bind_subscription(topic, handler):

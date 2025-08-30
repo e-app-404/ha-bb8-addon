@@ -370,27 +370,16 @@ class BB8Facade:
 
 
 def sleep(self) -> None:
-    """
-    Emit 5-step LED pattern for sleep.
-
-    All LED updates during sleep are routed exclusively through the `_emit_led` method,
-    ensuring a single, consistent emission path for maintainability and testability.
-
-    This method is intended to be called on a BB8Facade instance to visually indicate sleep mode
-    by emitting a predefined LED pattern via the `_emit_led` method. It is test-friendly and
-    logs the emission count. Side effects: emits LED updates and logs the action.
-
-    Usage:
-        facade.sleep()
+    """Emit 5-step LED pattern for sleep; SINGLE emission path via
+    `_emit_led`.
     """
     import contextlib
 
     pattern = _sleep_led_pattern()
-    sleep_ms = max(int(os.getenv("BB8_LED_FADE_MS", "25")), 0)
     for r, g, b in pattern:
         self._emit_led(r, g, b)
         with contextlib.suppress(Exception):
-            time.sleep(sleep_ms / 1000.0)
+            time.sleep(max(int(os.getenv("BB8_LED_FADE_MS", "25")), 0) / 1000.0)
     with contextlib.suppress(Exception):
         logging.getLogger(__name__).info(
             "facade_sleep_to_led=true count=%d", len(pattern)
