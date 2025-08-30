@@ -12,7 +12,6 @@ COPY bb8_core/     /usr/src/app/bb8_core/
 COPY app/          /usr/src/app/app/
 COPY services.d/   /etc/services.d/
 COPY run.sh        /usr/src/app/run.sh
-# Optional: dependency manifests if used
 COPY requirements.txt* /usr/src/app/
 RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build context' >&2; exit 53)
 RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build context' >&2; exit 53)
