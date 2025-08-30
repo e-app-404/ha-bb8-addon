@@ -17,7 +17,6 @@ references:
 
 > Canonical, **machine‑friendly** procedure to take a change from the developer workspace to a running Home Assistant add‑on container, and to publish/tag when ready. This ADR binds **what** to **how** (commands, tokens, receipts).
 
----
 
 ## 1) Context
 
@@ -193,6 +192,37 @@ echo 'TOKEN: SUBTREE_PUBLISH_OK' | tee -a reports/publish_receipt.txt
 * **Supervisor tries to pull**: missing `build:` block → add it, then `ha addons reload && rebuild`.
 * **`run.sh` missing in container**: confirm `addon/run.sh` exists and is **copied** by Dockerfile (`COPY run.sh /usr/src/app/run.sh`) and service executes it.
 * **Permission denied on rsync**: prefer the mount owned by your user (SMB with `uid/gid` mapping) or use SSH rsync.
+
+### P5-Footnote: Telemetry hardening (MQTT backoff, duplicate loop cleanup)
+
+**Problem**  
+When the broker rejects connections (auth/ACL) or is unavailable, the responder can reconnect rapidly, causing CPU/memory churn and masking root-cause telemetry failures.
+
+**Decision**  
+Introduce **bounded MQTT reconnect backoff** and ensure a single loop entrypoint:
+
+```python
+# echo_responder.py (after client init + handlers)
+try:
+  client.reconnect_delay_set(min_delay=1, max_delay=5)
+except Exception:
+  pass
+LOG.info("Starting MQTT loop")
+client.loop_forever()
+```
+
+**Optional configuration**  
+Expose `echo_max_inflight`, `echo_min_interval_ms` in `options:`; export in the echo responder s6 `run` script.
+
+**Consequences**  
+* Stabilises behaviour during broker outages; prevents tight retry storms.  
+* Keeps attestation windows reliable (no artificial CPU/memory pressure).  
+* No change in nominal latency; optional knobs allow controlled throughput under test.
+
+**Verification**  
+* Broker/auth OK markers present in logs: _Connected_ / _Subscribed_ lines.  
+* STP5 artifacts show `window_ge_10s=true`, `min_echoes_ge_3=true`, `rtt_p95_le_250ms=true`, `verdict=true`.  
+* Under induced broker outage, CPU/memory remain stable; responder retries with backoff (1–5s).
 
 ---
 

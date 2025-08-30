@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import signal
 import threading
 from typing import Optional
 import time
@@ -12,6 +13,7 @@ try:
     from bleak import BleakClient
 except ImportError:
     BleakClient = None
+    LOG.warning("bleak library not found; BLE functionality will be disabled.")
 
 MQTT_BASE = (
     os.environ.get("MQTT_BASE")
@@ -35,12 +37,13 @@ MAX_INFLIGHT = int(os.environ.get("ECHO_MAX_INFLIGHT", "16"))
 _inflight = threading.BoundedSemaphore(MAX_INFLIGHT)
 
 # Optional micro-rate limit (disabled by default)
-_last_ts_lock = threading.Lock()
+_last_ts = 0.0
 _last_ts: float = 0.0
 MIN_INTERVAL_MS = float(os.environ.get("ECHO_MIN_INTERVAL_MS", "0"))  # 0 = off
 
+
 def pub(client, topic, payload, retain=False):
-    LOG.info(f"Publishing to {topic}: {payload}")
+    LOG.debug(f"Publishing to {topic}: {payload}")
     client.publish(topic, json.dumps(payload), qos=0, retain=retain)
 
 
@@ -137,12 +140,28 @@ class BleTouch:
                 LOG.error(f"BLE touch error: {e}")
                 return False, None
 
-        return asyncio.run(_ble_touch())
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # No running loop, safe to use asyncio.run()
+            return asyncio.run(_ble_touch())
+        else:
+            # Running inside an existing event loop (e.g., in a thread or async context)
+            future = asyncio.run_coroutine_threadsafe(_ble_touch(), loop)
+            return future.result()
 def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
     client.on_connect = on_connect
     client.on_message = on_message
+
+    # Backoff to prevent tight reconnect storms under broker/auth failures
+    # (keeps CPU/memory stable if broker is down or credentials invalid)
+    try:
+        client.reconnect_delay_set(min_delay=1, max_delay=5)
+    except Exception:
+        pass
+
     mqtt_host = os.environ.get("MQTT_HOST") or os.environ.get("MQTT_SERVER") or "localhost"
     mqtt_port = int(os.environ.get("MQTT_PORT") or 1883)
     # Accept either MQTT_USERNAME/PASSWORD or MQTT_USER/PASS
@@ -150,10 +169,9 @@ def main():
     mqtt_pass = os.environ.get("MQTT_PASSWORD") or os.environ.get("MQTT_PASS")
     if mqtt_user and mqtt_pass:
         client.username_pw_set(mqtt_user, mqtt_pass)
+    # Note: client.connect() is non-blocking; loop_forever() starts the network loop and blocks the main thread.
     client.connect(mqtt_host, mqtt_port, 60)
-    LOG.info("Starting MQTT loop")
-    client.loop_forever()
-    LOG.info("Starting MQTT loop")
+    LOG.info(f"Starting MQTT loop on {mqtt_host}:{mqtt_port}")
     client.loop_forever()
 
 

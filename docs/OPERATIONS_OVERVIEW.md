@@ -459,7 +459,7 @@ exec /usr/bin/env bash /usr/src/app/run.sh
 
 ---
 
-## 7. Telemetry (STP5)
+## 8. Telemetry (STP5)
 
 **Module:** `addon/bb8_core/telemetry.py`
 
@@ -514,6 +514,70 @@ def led_discovery(mqtt, unique_id, duplicates):
 * `echo_roundtrip_ms_p95 ≤ 500`
 * `ble_connect_attempts_per_hour ≤ 6`
 * `discovery_dupe_count == 0`
+
+### 8.1 Telemetry hardening (MQTT backoff + tidy)
+
+**Why**  
+Under broker outages or auth errors, the responder can enter rapid reconnect cycles. Add a bounded **MQTT reconnect backoff** and remove a duplicate loop call to keep CPU/memory stable and startup clean.
+
+**Change (Python, `addon/bb8_core/echo_responder.py`)**
+
+```python
+# ... after client = mqtt.Client(...), handlers assigned
+try:
+    client.reconnect_delay_set(min_delay=1, max_delay=5)
+except Exception:
+    pass
+
+LOG.info("Starting MQTT loop")
+client.loop_forever()  # (ensure this appears only once)
+```
+
+**Optional responder knobs (rate/concurrency)**  
+Expose and export from options → env for controlled throughput during attestation bursts:
+
+```yaml
+# addon/config.yaml
+options:
+  enable_echo: true
+  echo_max_inflight: 8
+  echo_min_interval_ms: 5
+schema:
+  enable_echo: bool
+  echo_max_inflight: int?
+  echo_min_interval_ms: int?
+```
+
+```bash
+# addon/services.d/echo_responder/run (snippet)
+JQ=/usr/bin/jq; OPTS=/data/options.json
+[ -f "$OPTS" ] || exec sleep infinity
+E_MAX="$($JQ -r '.echo_max_inflight // empty' "$OPTS" 2>/dev/null || true)"
+E_MIN="$($JQ -r '.echo_min_interval_ms // empty' "$OPTS" 2>/dev/null || true)"
+[ -n "$E_MAX" ] && export ECHO_MAX_INFLIGHT="$E_MAX"
+[ -n "$E_MIN" ] && export ECHO_MIN_INTERVAL_MS="$E_MIN"
+exec /usr/bin/env bash /usr/src/app/run.sh
+```
+
+**Validation (quick)**
+
+```bash
+# MQTT connectivity markers
+ha addons logs local_beep_boop_bb8 | grep -E "Connected to MQTT broker|Subscribed to .*echo/cmd" \
+  && echo "TOKEN: ADDON_MQTT_OK" || echo "FAIL: ADDON_MQTT"
+
+# Attestation (example)
+export MQTT_HOST=127.0.0.1 MQTT_PORT=1883 MQTT_USERNAME=mqtt_bb8 MQTT_PASSWORD=mqtt_bb8 MQTT_BASE=bb8
+export WINDOW=15 COUNT=30
+/config/domain/shell_commands/attest/attest_stp5_telemetry.sh
+# Expect: TOKEN: TELEMETRY_ATTEST_OK
+```
+
+**Failure modes → remedies**
+
+* `Connection Refused: not authorised` → fix broker creds/ACL; retry with backoff active.  
+* No echoes observed (`echo_count=0`) → ensure responder service enabled, topics/prefix match, and broker reachable.  
+* High CPU / memory spikes under outage → confirm `reconnect_delay_set(1,5)` present and only one `loop_forever()`. 
 
 ---
 
