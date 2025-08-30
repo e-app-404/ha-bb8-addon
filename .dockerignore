@@ -1,0 +1,20 @@
+# Build context minimization for HA add-on
+.git
+.gitignore
+.venv
+.tox
+__pycache__/
+reports/
+tests/
+docs/
+tools/
+../reports
+*.md
+*.toml
+*.ini
+*.log
+*.tar.gz
+*.zip
+.editorconfig
+.ruff_cache/
+.pytest_cache/

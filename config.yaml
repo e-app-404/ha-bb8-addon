@@ -1,0 +1,85 @@
+name: "HA-BB8"
+description: "Homeassistant Sphero BB-8 bluetooth integration using MQTT discovery"
+slug: "beep_boop_bb8"
+version: "2025.8.21.2"
+arch: ["aarch64"]
+url: "https://github.com/e-app-404/ha-bb8-addon"
+build:
+  dockerfile: Dockerfile
+  args:
+    BUILD_FROM: "ghcr.io/home-assistant/{arch}-base-debian:bookworm"
+startup: services
+init: false
+
+boot: auto
+host_dbus: true
+udev: true
+apparmor: false
+privileged:
+  - NET_ADMIN
+uart: true
+devices:
+  - /dev/hci0
+options:
+  # --- Telemetry & Logging ---
+  enable_bridge_telemetry: false
+  cache_path: "/data/bb8_mac_cache.json"
+  cache_default_ttl_hours: 24
+  mqtt_client_id: "bb8_presence_scanner"
+  keepalive: 60
+  qos: 1
+  telemetry_interval_s: 20
+  bb8_scan_interval: 10
+  dispatcher_discovery_enabled: false
+  discovery_retain: false
+  log_path: "/data/reports/ha_bb8_addon.log"
+  report_root: "/data/reports"
+
+  # --- Device Identification ---
+  bb8_mac: "ED:ED:87:D7:27:50"
+  bb8_name: "S33 BB84 LE"
+  scan_seconds: 5
+  rescan_on_fail: true
+  cache_ttl_hours: 24
+  ble_adapter: hci0
+
+  # --- MQTT Configuration ---
+  mqtt_broker: 192.168.0.129
+  mqtt_port: 1883
+  mqtt_username: mqtt_bb8
+  mqtt_password: mqtt_bb8
+  mqtt_topic_prefix: bb8
+  ha_discovery_topic: homeassistant
+  mqtt_tls: false
+
+schema:
+  # --- Telemetry & Logging ---
+  enable_bridge_telemetry: "bool?"
+  cache_path: "str"
+  cache_default_ttl_hours: "int?"
+  mqtt_client_id: "str"
+  keepalive: "int?"
+  qos: "int?"
+  telemetry_interval_s: "int?"
+  bb8_scan_interval: "int?"
+  dispatcher_discovery_enabled: "bool?"
+  discovery_retain: "bool?"
+  log_path: "str?"
+  report_root: "str?"
+
+  # --- Device Identification ---
+  bb8_mac: "str"
+  bb8_name: "str?"
+  scan_seconds: "int?"
+  rescan_on_fail: "bool?"
+  cache_ttl_hours: "int?"
+  ble_adapter: "str?"
+
+  # --- MQTT Configuration ---
+  mqtt_broker: "str"
+  mqtt_port: "int?"
+  mqtt_username: "str?"
+  mqtt_password: "str?"
+  mqtt_topic_prefix: "str"
+  ha_discovery_topic: "str"
+  mqtt_tls: "bool?"
