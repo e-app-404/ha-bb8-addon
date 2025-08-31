@@ -1,4 +1,6 @@
 from __future__ import annotations
+import warnings
+warnings.filterwarnings("ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho")
 
 import importlib
 import sys

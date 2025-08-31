@@ -1,3 +1,4 @@
+from paho.mqtt.client import CallbackAPIVersion
 #!/usr/bin/env python3
 import json
 import os
@@ -44,7 +45,7 @@ def main(timeout=4.0):
         if msg.topic == topic and pl == "online":
             seen_online.set()
 
-    client = mqtt.Client(client_id=f"precheck-{int(time.time())}", protocol=mqtt.MQTTv5)
+    client = mqtt.Client(client_id=f"precheck-{int(time.time())}", protocol=mqtt.MQTTv5, callback_api_version=CallbackAPIVersion.VERSION1)
     if user:
         client.username_pw_set(user, pwd)
     client.on_connect = on_connect

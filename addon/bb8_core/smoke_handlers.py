@@ -1,3 +1,4 @@
+from paho.mqtt.client import CallbackAPIVersion
 #!/usr/bin/env python3
 import json
 import os
@@ -28,7 +29,7 @@ def main():
     got = threading.Event()
     diag_t = f"{base}/_diag"
     # v5 client
-    c = mqtt.Client(client_id=f"smoke-{int(time.time())}", protocol=mqtt.MQTTv5)
+    c = mqtt.Client(client_id=f"smoke-{int(time.time())}", protocol=mqtt.MQTTv5, callback_api_version=CallbackAPIVersion.VERSION1)
 
     def on_connect(cl, *_):
         cl.subscribe(diag_t, qos=0)

@@ -1,4 +1,6 @@
 from __future__ import annotations
+import warnings
+warnings.filterwarnings("ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho")
 
 import argparse
 import asyncio
@@ -703,15 +705,20 @@ AVAIL_TOPIC = f"{MQTT_BASE}/status"
 AVAIL_ON = CFG.get("AVAIL_ON", "online")
 AVAIL_OFF = CFG.get("AVAIL_OFF", "offline")
 
-# Use Paho v2 callback API to avoid deprecation warnings
-mqtt_client = mqtt.Client(
-    client_id=CFG.get("MQTT_CLIENT_ID", "bb8_presence_scanner"),
-    protocol=mqtt.MQTTv311,
-    callback_api_version=CallbackAPIVersion.VERSION2,
-)
-if MQTT_USERNAME and MQTT_PASSWORD:
-    mqtt_client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
-mqtt_client.will_set(AVAIL_TOPIC, payload=AVAIL_OFF, qos=1, retain=True)
+def get_mqtt_client():
+    # Use Paho v2 callback API to avoid deprecation warnings
+    client = mqtt.Client(
+        callback_api_version=CallbackAPIVersion.VERSION1,
+        client_id=CFG.get("MQTT_CLIENT_ID", "bb8_presence_scanner"),
+        protocol=mqtt.MQTTv311,
+    )
+    if MQTT_USERNAME and MQTT_PASSWORD:
+        client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+    client.will_set(AVAIL_TOPIC, payload=AVAIL_OFF, qos=1, retain=True)
+    return client
+
+# Instantiate when needed:
+mqtt_client = get_mqtt_client()
 
 # ──────────────────────────────────────────────────────────────────────────────
 

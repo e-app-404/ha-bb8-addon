@@ -1,3 +1,4 @@
+from paho.mqtt.client import CallbackAPIVersion
 #!/usr/bin/env python
 import argparse
 import json
@@ -29,7 +30,7 @@ def main():
     pwd = env("MQTT_PASSWORD")
     base = env("MQTT_BASE", "bb8")
 
-    client = mqtt.Client(client_id=f"probe-{int(time.time())}")
+    client = mqtt.Client(client_id=f"probe-{int(time.time())}", callback_api_version=CallbackAPIVersion.VERSION1)
     if user:
         client.username_pw_set(user, pwd or None)
     res = {"connected": False, "roundtrip": "FAIL", "schema": "UNKNOWN"}

@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho")
 import time
 
 from bb8_core import ble_link

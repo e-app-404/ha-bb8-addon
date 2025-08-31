@@ -1,3 +1,4 @@
+from paho.mqtt.client import CallbackAPIVersion
 from __future__ import annotations
 
 import json
@@ -82,7 +83,7 @@ def main() -> int:
         "device": dev,
         "dev": dev,
     }
-    c = mqtt.Client()
+    c = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
     if user:
         c.username_pw_set(user, pw or "")
     c.connect(host, port, keepalive=10)

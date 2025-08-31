@@ -1,4 +1,7 @@
 from __future__ import annotations
+import warnings
+warnings.filterwarnings("ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho")
+from paho.mqtt.client import CallbackAPIVersion
 
 import asyncio
 import inspect
@@ -820,6 +823,7 @@ def start_mqtt_dispatcher(
 
     # Paho v2 API (compatible with our version); v311 is fine for HA
     client = mqtt.Client(
+        callback_api_version=CallbackAPIVersion.VERSION1,
         client_id=client_id, protocol=mqtt.MQTTv311, clean_session=True
     )
 

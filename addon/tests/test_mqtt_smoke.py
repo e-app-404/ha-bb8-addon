@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho")
 import asyncio
 import inspect
 import json

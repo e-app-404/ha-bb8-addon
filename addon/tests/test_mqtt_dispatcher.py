@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho")
+from paho.mqtt.client import CallbackAPIVersion
 import json
 import threading
 import time
@@ -47,7 +50,7 @@ def run_dispatcher():
 
 
 def publish_test_messages():
-    client = mqtt.Client()
+    client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
     client.connect(MQTT_HOST, MQTT_PORT, 60)
     client.loop_start()
     time.sleep(2)  # Wait for connection

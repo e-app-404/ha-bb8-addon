@@ -1,3 +1,4 @@
+from paho.mqtt.client import CallbackAPIVersion
 # --- PATCHED: Accept both short and long key styles ---
 import json
 import os
@@ -101,7 +102,7 @@ def main():
     port = int(os.getenv("MQTT_PORT", "1883"))
     user = os.getenv("MQTT_USERNAME")
     pw = os.getenv("MQTT_PASSWORD")
-    client = mqtt.Client()
+    client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
     if user:
         client.username_pw_set(user, pw or "")
     client.connect(host, port, keepalive=10)
