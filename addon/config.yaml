@@ -27,9 +27,9 @@ devices:
   - /dev/hci0
 # ---------- Runtime Options (defaults) ----------
 options:
-  enable_echo: false
-  echo_max_inflight: 8
-  echo_min_interval_ms: 5
+  enable_echo: false            # default OFF; enable only for STP5 windows
+  echo_max_inflight: 4          # hard cap on concurrent echo jobs
+  echo_min_interval_ms: 50      # throttle per message
   # --- Telemetry & Logging ---
   enable_bridge_telemetry: false
   log_path: "/data/reports/ha_bb8_addon.log"
