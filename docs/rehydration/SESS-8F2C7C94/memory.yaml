@@ -1,0 +1,7 @@
+memory:
+  last_valid_patch: "2025.8.21.4"
+  echoes_required: true
+  discovery_led_default: true
+  assumptions_to_verify:
+    - "Mode=PUBLISH or LOCAL_DEV; both accepted"
+    - "MQTT broker reachable from HA host"

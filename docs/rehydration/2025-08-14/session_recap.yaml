@@ -1,0 +1,29 @@
+session_recap:
+  label: "BB-8 Bridge • STP4 strict + device-echo graduation"
+  trace_id: "STRAT-f8202ca110cc" # anchor derived from bb8_snapshot_2025.8.15.tar.gz
+  active_personas:
+    - id: "strategos_v1.3_20250618"
+      role: "Executive Project Strategist & Integration Delivery Manager"
+      mode: "governance-only (contracts, acceptance gates)"
+    - id: "pythagoras_v3_refactored"
+      role: "Code Implementer & QA Engineer"
+      mode: "execution + QA (Copilot-facing)"
+  operational_mode: "Oversight + Intervention"
+  escalation_context: "None active; strict STP4 attestation pending"
+  last_validated_checkpoint:
+    phase_id: "P1-STP4"
+    decision: "PASS with shim (facade echoes) — strict attestation pending"
+    evidence:
+      roundtrip: "PASS"
+      schema: "PASS"
+      timeouts_sec: 3.0
+  governance_traits:
+    empirical_validation: true
+    binary_acceptance: true
+    evidence_tolerance_level: 0
+    confidence_minimum: 0.85
+    drift_score: "low"
+  unresolved_blockers: [] # code-side prerequisites landed; only strict evidence run remains
+  strategic_posture:
+    intent: "Graduate to strict STP4 with device-originated scalars; retire shim during tests"
+    next_gate: "Run strict evidence with REQUIRE_DEVICE_ECHO=1; verify device echoes and LED RGB JSON"

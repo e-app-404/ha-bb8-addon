@@ -1,0 +1,71 @@
+*** Begin Patch
+*** Update File: bb8_core/mqtt_echo.py
+@@
+-import json
++import json, time, sys
++def _log(msg):  # lightweight, avoids logging import churn in addon
++    print(f"echo_log ts={int(time.time())} {msg}", file=sys.stderr)
+@@
+-def echo_scalar(mqtt, base, topic, value, *, source="device"):
+-    payload = json.dumps({"value": value, "source": source})
+-    mqtt.publish(f"{base}/{topic}/state", payload, qos=0, retain=False)
++def echo_scalar(mqtt, base, topic, value, *, source="device"):
++    """Publish device-originated scalar echo with retain=false (STP4 requires source=device)."""
++    payload = json.dumps({"value": value, "source": source})
++    path = f"{base}/{topic}/state"
++    _log(f"echo_publish path={path} retain=false source={source}")
++    mqtt.publish(path, payload, qos=0, retain=False)
++
++# Optional diagnostic publisher to help during BLE outages
++def echo_diag(mqtt, base, msg, *, level="warn"):
++    payload = json.dumps({"msg": msg, "level": level, "ts": int(time.time())})
++    path = f"{base}/echo/diag"
++    _log(f"echo_diag path={path} level={level}")
++    mqtt.publish(path, payload, qos=0, retain=False)
+*** End Patch
+
+*** Begin Patch
+*** Update File: bb8_core/addon_config.py
+@@
++import os, json, sys
++def _slog(k, v): print(f"config_resolved {k}={v}", file=sys.stderr)
++
++def load_config_resolved(cfg):
++    """
++    Normalize and log effective MQTT/BLE settings once at startup to avoid drift.
++    Minimal to keep blast radius low.
++    """
++    eff = {
++        "mqtt_host": os.environ.get("MQTT_HOST", cfg.get("mqtt_host")),
++        "mqtt_port": int(os.environ.get("MQTT_PORT", cfg.get("mqtt_port", 1883))),
++        "mqtt_user": os.environ.get("MQTT_USER", cfg.get("mqtt_user")),
++        "mqtt_pass": os.environ.get("MQTT_PASS", cfg.get("mqtt_pass")),
++        "mqtt_base": os.environ.get("MQTT_BASE", cfg.get("mqtt_base", "bb8")),
++        "bb8_mac":  os.environ.get("BB8_MAC",  cfg.get("bb8_mac")),
++        "ble_adapter": os.environ.get("BLE_ADAPTER", cfg.get("ble_adapter"))
++    }
++    for k, v in eff.items(): _slog(k, v if k != "mqtt_pass" else "***")
++    return eff
+*** End Patch
+
+*** Begin Patch
+*** Update File: bb8_core/bridge_controller.py
+@@
++def _top_level_guard(main_fn):
++    try:
++        return main_fn()
++    except SystemExit as e:
++        print(f"controller_exit code={getattr(e,'code',None)}", file=sys.stderr)
++        raise
++    except Exception as e:
++        import traceback, sys
++        print("controller_unhandled_exception", file=sys.stderr)
++        traceback.print_exc()
++        # Prefer nonzero exit but with explicit reason to aid supervisor diagnostics
++        raise SystemExit(11)
+@@
+-if __name__ == "__main__":
+-    main()
++if __name__ == "__main__":
++    _top_level_guard(main)
+*** End Patch

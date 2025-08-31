@@ -1,0 +1,200 @@
+You are GitHub Copilot assisting on a Python async + BLE + MQTT project.
+
+**Repo (relative paths):**
+
+* `bb8_core/bb8_presence_scanner.py`
+* `bb8_core/bridge_controller.py`
+* `bb8_core/facade.py`
+* `bb8_core/common.py`
+* `bb8_core/ble_link.py`
+
+**Policy:** flat MQTT → `bb8/<signal>/{set|state}`; scanner is the **only** discovery publisher.
+
+---
+
+## GOAL
+
+Eliminate circular imports around `bb8_core.bb8_presence_scanner`, harden asyncio/BLE lifecycle, and ensure MQTT discovery publishes the **flat** topics and a single coherent device block.
+
+---
+
+## STRICT TASKS
+
+### 1) Kill circular imports (DI + lazy imports)
+
+* Identify cycles among: `bb8_presence_scanner`, `bridge_controller`, `facade`, `ble_link`.
+* Break cycles by:
+
+  * Moving peer imports **inside** functions that use them (lazy import).
+  * Accepting dependencies via constructor args (DI) instead of importing peer singletons.
+  * Extracting only **type Protocols** to a new `bb8_core/ports.py` (no runtime imports).
+
+### 2) Ports layer (no side effects)
+
+Create `bb8_core/ports.py`:
+
+```python
+from __future__ import annotations
+from typing import Protocol, Awaitable, Optional, Callable, Any
+
+class MqttBus(Protocol):
+    async def publish(self, topic: str, payload: Any, retain: bool = False, qos: int = 0) -> None: ...
+    async def subscribe(self, topic: str, cb: Callable[[str, bytes, bool], Awaitable[None]]) -> None: ...
+    async def close(self) -> None: ...
+
+class BleTransport(Protocol):
+    async def start(self) -> None: ...
+    async def stop(self) -> None: ...
+    def on_event(self, cb: Callable[[str, dict], None]) -> None: ...
+
+class Clock(Protocol):
+    def monotonic(self) -> float: ...
+    async def sleep(self, seconds: float) -> None: ...
+
+class Logger(Protocol):
+    def debug(self, *a, **k): ...
+    def info(self, *a, **k): ...
+    def warning(self, *a, **k): ...
+    def error(self, *a, **k): ...
+    def exception(self, *a, **k): ...
+```
+
+> Do **not** import `bleak`/`paho` here.
+
+### 3) Scanner refactor (discovery owner)
+
+Refactor `bb8_core/bb8_presence_scanner.py`:
+
+* Constructor: `Scanner(mqtt: MqttBus, ble: BleTransport, clock: Clock, log: Logger, mac_upper: str)`
+* **No** imports of `bridge_controller`, `facade`, or `ble_link` at module import time.
+* Add:
+
+```python
+def read_version_or_default() -> str:
+    try:
+        from pathlib import Path
+        v = (Path(__file__).resolve().parents[2] / "addon" / "VERSION").read_text().strip()
+        return f"addon:{v}"
+    except Exception:
+        return "addon:dev"
+```
+
+* **Device block** (use everywhere in discovery):
+
+```python
+dev = {
+  "identifiers": ["bb8", f"mac:{mac_upper}"],
+  "connections": [["mac", mac_upper]],
+  "manufacturer": "Sphero",
+  "model": "S33 BB84 LE",
+  "name": "BB-8",
+  "sw_version": read_version_or_default(),
+}
+```
+
+* **Discovery payloads** (flat topics + retains):
+
+  * Presence (binary\_sensor):
+
+    * `topic = "homeassistant/binary_sensor/bb8_presence/config"`
+    * `config.stat_t = "bb8/presence/state"` ; `config.pl_on="online"`, `config.pl_off="offline"`
+    * `config.avty_t = "bb8/status"`
+    * publish with `retain=True`
+  * RSSI (sensor):
+
+    * `topic = "homeassistant/sensor/bb8_rssi/config"`
+    * `config.stat_t = "bb8/rssi/state"` ; `config.dev_cla="signal_strength"`, `config.unit_of_meas="dBm"`
+    * `config.avty_t = "bb8/status"`
+    * publish with `retain=True`
+* Ensure state publishers actually emit:
+
+  * `bb8/presence/state` → `"online"/"offline"` (retain **true**)
+  * `bb8/rssi/state` → integer dBm (retain **true**)
+
+### 4) Bridge/controller/facade hygiene
+
+* Move any imports of `bb8_presence_scanner` **inside** factory functions (e.g., `make_scanner(...)`) or pass instances via DI.
+* Ensure module top-level has **no** I/O (no client creation, no event loop creation).
+* If the shim/facade remains for dev, gate all of it on `REQUIRE_DEVICE_ECHO==0` at **runtime**, not import time.
+
+### 5) Async correctness
+
+* Use `asyncio.get_running_loop()` inside coroutines.
+* Provide `async def main()` in `bridge_controller.py`; `if __name__ == "__main__": asyncio.run(main())`.
+* For BLE-on-thread: create loop with `asyncio.new_event_loop()` in that thread; use `run_coroutine_threadsafe` with that loop; ensure `stop()` cancels tasks and closes the loop.
+* Wrap long-lived tasks in `asyncio.TaskGroup` (py3.11+) or equivalent try/finally cancel logic.
+* No “There is no current event loop” / old `get_event_loop` usage.
+
+### 6) Verification assets
+
+Create `tools/verify_discovery.py`:
+
+* Connect via `paho.mqtt.client` using env `MQTT_HOST`, `MQTT_PORT`, `MQTT_USERNAME`, `MQTT_PASSWORD`.
+* Subscribe to:
+
+  * `homeassistant/binary_sensor/bb8_presence/config`
+  * `homeassistant/sensor/bb8_rssi/config`
+* Assert the retained flag is set on both config messages and that:
+
+  * `stat_t` equals `"bb8/presence/state"` and `"bb8/rssi/state"`
+  * `avty_t` equals `"bb8/status"`
+  * `dev.sw_version` starts with `"addon:"`
+  * device.identifiers == `["bb8", f"mac:{MAC}"]` (case-insensitive compare)
+* Exit nonzero on violations; print a small table.
+
+### 7) Minimal import-cycle test
+
+Create `tests/test_imports_no_cycles.py`:
+
+```python
+def test_imports_clean():
+    import importlib
+    import bb8_core.bb8_presence_scanner as s
+    import bb8_core.bridge_controller as bc
+    importlib.reload(s)
+    importlib.reload(bc)
+```
+
+---
+
+## DELIVERABLES
+
+1. Unified diffs for:
+
+   * `bb8_core/ports.py` (new)
+   * `bb8_core/bb8_presence_scanner.py` (refactored to DI + discovery as above)
+   * `bb8_core/bridge_controller.py` (async entrypoint + factories/lazy imports)
+   * `bb8_core/facade.py` (no scanner import at module import time; fully gated)
+   * `bb8_core/ble_link.py` (lazy bleak imports; no import-time side effects)
+   * `bb8_core/common.py` (move constants/helpers only; no side effects)
+   * `tools/verify_discovery.py` (new)
+   * `tests/test_imports_no_cycles.py` (new)
+2. PR description with:
+
+   * checklist,
+   * how to run `tools/verify_discovery.py`,
+   * acceptance criteria below.
+
+---
+
+## ACCEPTANCE CRITERIA (binary)
+
+* Discovery publishes **exactly two** config topics (presence, rssi) with the **flat** `stat_t` and **retained** flag.
+* HA shows **one** “BB-8” device; Presence/RSSI available.
+* No circular-import errors when importing modules individually.
+* No `get_event_loop`/“There is no current event loop” warnings in logs.
+* STP4 strict remains **PASS** (no LED `source` key; scalars include `"source":"device"`).
+
+---
+
+## PR CHECKLIST (include in description)
+
+* [ ] `python -c "import bb8_core.bb8_presence_scanner; import bb8_core.bridge_controller"` exits 0
+* [ ] `tools/verify_discovery.py` passes (prints both configs; retained=true; topics correct)
+* [ ] Presence/RSSI retained; commandable echoes non-retained
+* [ ] `pytest -q` green; `ruff`/`mypy` clean
+* [ ] STP4 strict rerun: PASS/PASS
+
+---
+
+**End of prompt.**

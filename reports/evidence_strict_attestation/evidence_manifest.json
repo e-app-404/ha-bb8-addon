@@ -1,0 +1,35 @@
+{
+  "artifacts": [
+    "deploy_receipt.txt",
+    "verify_receipt.txt",
+    "tokens.json",
+    "patch_bundle_contract_v1.json",
+    "qa_report_contract_v1.json",
+    "coverage.json",
+    "pytest-report.xml",
+    "ha_mqtt_trace_snapshot.json",
+    "ha_discovery_dump.json",
+    "telemetry_snapshot.jsonl",
+    "metrics_summary.json",
+    "telemetry_snapshot.jsonl",
+    "metrics_summary.json",
+    "telemetry_snapshot.jsonl",
+    "metrics_summary.json"
+  ],
+  "sha256": {
+    "deploy_receipt.txt": "<sha256>",
+    "verify_receipt.txt": "<sha256>",
+    "tokens.json": "<sha256>",
+    "patch_bundle_contract_v1.json": "<sha256>",
+    "qa_report_contract_v1.json": "<sha256>",
+    "coverage.json": "<sha256>",
+    "pytest-report.xml": "<sha256>",
+    "ha_mqtt_trace_snapshot.json": "<sha256>",
+    "ha_discovery_dump.json": "<sha256>",
+    "telemetry_snapshot.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "metrics_summary.json": "88fb8d202d128f38bd280a98d41939d33143c65c64c6d35aed01c8ff13f871b5"
+  },
+  "head": "b189f8f8",
+  "tag": "v2025.8.21.1",
+  "trace": "STRAT-CP-2025-08-23T04:30:00Z-UK-EUROPE/LONDON"
+}

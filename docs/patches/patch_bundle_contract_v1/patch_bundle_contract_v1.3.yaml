@@ -1,0 +1,38 @@
+planned_change: "Complete STRICT STP4 on baseline b189f8f8 with LED discovery ON; adopt evidence-driven hardening"
+deliverable:
+  [
+    patch_bundle_contract_v1 (rev),
+    qa_report_contract_v1,
+    updated evidence_manifest.json,
+  ]
+action_needed:
+  - "Apply supplemental patch (config logging, echo diagnostics, top-level guard)"
+  - "Redeploy, reacquire tokens, re-run STRICT evidence (retain=false)"
+  - "Attach MQTT trace + discovery (LED entity present, unique_id stable) + coverage + junit"
+rationale: "Addresses root causes: BLE loop/threading, aggressive backoff, echo gating after BLE connect, probe exits"
+status: ready
+acceptance_criteria:
+  tokens_seen: [STRUCTURE_OK, DEPLOY_OK, VERIFY_OK, WS_READY]
+  must_meet:
+    - "pytest suite green; coverage >= 80%"
+    - "Strict device-originated echoes for scalar topics (retain=false)"
+    - "No asyncio event-loop warnings"
+    - "qa_report.verdict == PASS"
+artifacts_expected:
+  - patch_bundle_contract_v1.json
+  - qa_report_contract_v1.json
+  - coverage.json / junit xml
+  - ha_mqtt_trace_snapshot.json
+  - ha_discovery_dump.json
+risk_assessment:
+  risks:
+    - "BLE still fails to connect in environment -> no echo"
+    - "LED unique_id duplication risk when discovery ON"
+  mitigations:
+    - "Backoff + dedicated loop + high-signal logs to pinpoint failures" # evidence-backed
+    - "Discovery validator checks unique_id stability and duplicates"
+trace:
+  evidence_sources:
+    - "20250821_root_cause_dossier.md"
+    - "20250821_root_cause_general.md"
+    - "20250821_topic_publishing.md"

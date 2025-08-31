@@ -1,5 +1,52 @@
-.ruff_cache/
+build/
+dist/
+# --- OS/IDE ---
+.DS_Store
+.idea/
+.vscode/
+
+# --- Python env & caches ---
+.venv/
+.env
+.env.*
+!.evidence.env
 __pycache__/
+*.py[cod]
 *.pyc
 *.pyo
 *.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Node ---
+node_modules/
+
+# --- Build artifacts ---
+.build/
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# --- Backups (keep dir, ignore tarballs) ---
+_backups/*.tar.gz
+_backups/*.tgz
+
+# --- Reports (track dir and .gitkeep; ignore contents) ---
+reports/*
+!reports/.gitkeep
+
+# --- Add-on template-only report dirs (if they ever reappear) ---
+addon/docs/reports/*
+!addon/docs/reports/.gitkeep
+
+# --- Explicitly DO NOT ignore these (must be tracked per ADR-0001) ---
+# (We don't add ignore rules for them at all)
+# ops/
+# docs/
+# scripts/
+# addon/
+# .github/

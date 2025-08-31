@@ -1,0 +1,89 @@
+rehydration_seed:
+  trace:
+    label: "WS-RESTORE-ADDON-DUAL-CLONE"
+    id: "SESS-8F2C7C94-S2"
+    release: "2025.8.21.4"
+    head_current: "to_verify"         # successor must confirm
+    tag_latest:
+      name: "v2025.8.21.4"
+      commit: "to_verify"
+
+  personas:
+    strategos:
+      id: "strategos_v1.4_20250813"
+      role: "Executive Project Strategist & Integration Delivery Manager"
+      files:
+        system_instruction: "/mnt/data/system_instruction.yaml"
+        core_persona: "/mnt/data/20250813_strategos_v1.4.yaml"
+        expansion_pack: "/mnt/data/20250803_xp_strategos_v1.6.yaml"
+        dual_mode: "/mnt/data/dual_mode_xp_v1_250813.yaml"
+      outputs_emit: ["execution_mandate","delta_contract","strategic_assessment"]
+      inputs_accept: ["qa_report_contract_v1","patch_bundle_contract_v1"]
+      routing:
+        handoff_to: ["pythagoras"]
+        execution_chat: "copilot_only"
+
+    pythagoras:
+      id: "pythagoras_v3"
+      role: "Code Implementer & QA (Copilot-facing)"
+      integration_targets: ["Copilot"]
+      enforced_outputs: ["patch_bundle_contract_v1","qa_report_contract_v1"]
+      callback_to: "strategos"
+
+  project:
+    label: "BB-8 Bridge (HA-BB8)"
+    repository:
+      remote: "git@github.com:e-app-404/ha-bb8-addon.git"
+      primary_branch: "main"
+    paths:
+      runtime_ha: "/addons/local/beep_boop_bb8"
+      report_sink: "/config/reports"
+    acceptance_tokens_expected:
+      - "STRUCTURE_OK"
+      - "DEPLOY_OK"
+      - "VERIFY_OK"
+      - "WS_READY"
+
+  governance:
+    empirical_validation: true
+    binary_acceptance: true
+    evidence_tolerance_level: 0
+    confidence_minimum: 0.85
+    enforcement:
+      no_symlinks: true
+      no_submodules: true
+      single_report_sink: true
+      gitignore_guards_active: true
+
+  next_checkpoint:
+    id: "STP5-TELEMETRY"
+    must_meet:
+      - "window_duration >= 10s"
+      - "echo_count >= 3"
+      - "p95 echo RTT <= 250ms"
+      - "qa_report.verdict == PASS"
+    artifacts_expected:
+      - "telemetry_snapshot.jsonl"
+      - "metrics_summary.json"
+      - "qa_contract_telemetry_STP5.json"
+
+  status_summary:
+    tokens_latest: ["STRUCTURE_OK","DEPLOY_OK","VERIFY_OK","WS_READY"]
+    mode: "PUBLISH"          # LOCAL_DEV acceptable; successor must confirm
+    version: "2025.8.21.4"
+
+  memory_snapshot:
+    last_valid_patch: "2025.8.21.4"
+    last_decision_checkpoint:
+      id: "ADR-0001 + runtime deploy verified"
+      tokens: ["STRUCTURE_OK","DEPLOY_OK","VERIFY_OK","WS_READY"]
+    clustered_entities_and_aliases:
+      entities: ["Strategos","Pythagoras","Copilot","HA Supervisor","MQTT Broker"]
+      aliases:
+        - "runtime == /addons/local/beep_boop_bb8"
+    inclusion_coverage:
+      adr0001_scope: "100%"
+      report_sink_unification: "100%"
+    semantic_summary: >
+      Runtime add-on is installed and started. Mode-aware guards are in place.
+      Proceed with STP5 telemetry attestation using device-originated evidence only.

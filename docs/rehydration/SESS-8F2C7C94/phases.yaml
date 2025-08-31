@@ -1,0 +1,10 @@
+phases:
+  - id: "P4-STRICT"
+    status: "completed"
+  - id: "P5-TELEMETRY"
+    status: "pending"
+    acceptance:
+      - "window >= 10s"
+      - "echo_count >= 3"
+      - "p95 <= 250ms"
+      - "artifacts present"

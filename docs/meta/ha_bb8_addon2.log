@@ -1,0 +1,406 @@
+s6-rc: info: service fix-attrs: starting
+s6-rc: info: service fix-attrs successfully started
+s6-rc: info: service legacy-cont-init: starting
+s6-rc: info: service legacy-cont-init successfully started
+s6-rc: info: service legacy-services: starting
+services-up: info: copying legacy longrun ble_bridge (no readiness notification)
+s6-rc: info: service legacy-services successfully started
+2025-08-26T02:19:30+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:30,944 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:31,012 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:32+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:32,563 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:32,632 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:33+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:34,146 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:34,213 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:35+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-26 02:19:35,733 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:35,800 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:36+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-26 02:19:37,317 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:37,394 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:38+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:38,919 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:38,986 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:40+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:40,540 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:40,613 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:41+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:42,160 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:42,228 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:43+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:43,755 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:43,823 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:44+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:45,327 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:45,393 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:46+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-26 02:19:46,955 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:47,024 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:48+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:48,540 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:48,606 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:49+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:50,124 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:50,189 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:51+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:51,679 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:51,742 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:52+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:53,262 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:53,330 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:54+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:54,822 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:54,892 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:56+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:56,409 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:56,476 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:57+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:58,035 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:58,107 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:19:59+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:19:59,634 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:19:59,702 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:00+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:01,217 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:01,287 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:02+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:02,778 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-26 02:20:02,842 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26T02:20:03+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:04,384 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:04,450 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:05+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:05,939 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:06,003 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:07+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:07,516 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:07,581 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:08+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:09,105 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:09,173 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:10+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:10,718 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:10,793 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:11+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:12,303 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:12,385 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:13+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:13,899 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:13,967 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:15+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:15,525 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:15,592 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:16+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:17,073 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-26 02:20:17,136 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26T02:20:18+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:18,631 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:18,695 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:19+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:20,179 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:20,247 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:21+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-26 02:20:21,764 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:21,830 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26T02:20:22+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:23,350 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:23,418 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:24+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:24,942 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:25,008 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:26+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:26,523 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:26,594 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:27+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:28,122 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:28,188 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:29+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:29,694 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:29,760 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:30+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:31,298 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:31,368 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:32+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:32,965 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:33,035 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:34+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:34,556 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:34,623 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:35+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:36,151 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:36,219 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:37+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:37,730 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:37,798 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:38+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-08-26 02:20:39,330 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:39,396 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:40+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:40,912 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:40,978 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:42+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:42,504 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:42,571 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:43+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:44,128 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:44,206 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:45+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:45,748 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:45,815 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:46+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:47,325 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:47,401 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:48+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:48,923 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:48,993 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:50+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:50,524 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-26 02:20:50,591 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26T02:20:51+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:52,099 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-26 02:20:52,168 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26T02:20:53+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:53,702 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-26 02:20:53,770 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26T02:20:54+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:55,293 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-08-26 02:20:55,364 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26T02:20:56+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:56,899 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:56,966 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:58+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:20:58,474 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:20:58,541 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+2025-08-26T02:20:59+01:00 [BB-8] Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=0)
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /data/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-08-26 02:21:00,066 INFO:bb8_addon: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-08-26 02:21:00,134 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json

@@ -1,0 +1,112 @@
+{
+  "required": {
+    "name":        { "type": "string", "description": "The name of the add-on." },
+    "version":     { "type": "string", "description": "Version of the add-on. Must match Docker image tag if using 'image'." },
+    "slug":        { "type": "string", "description": "Unique, URI-friendly slug for the add-on." },
+    "description": { "type": "string", "description": "Description of the add-on." },
+    "arch":        { "type": "list",   "description": "Supported architectures: armhf, armv7, aarch64, amd64, i386." }
+  },
+  "optional": {
+    "machine":         { "type": "list",    "default": null, "description": "Restrict to specific machine types." },
+    "url":             { "type": "url",     "default": null, "description": "Homepage of the add-on." },
+    "startup":         { "type": "string",  "default": "application", "description": "Startup type: application, system, services, once." },
+    "webui":           { "type": "string",  "default": null, "description": "Web UI URL template." },
+    "boot":            { "type": "string",  "default": "auto", "description": "Startup at boot: auto, manual, manual_only." },
+    "ports":           { "type": "dict",    "default": null, "description": "Container-to-host port mappings." },
+    "ports_description": { "type": "dict",  "default": null, "description": "Descriptions for each port." },
+    "host_network":    { "type": "bool",    "default": false, "description": "Run on host network." },
+    "host_ipc":        { "type": "bool",    "default": false, "description": "Share IPC namespace." },
+    "host_dbus":       { "type": "bool",    "default": false, "description": "Map host D-Bus service." },
+    "host_pid":        { "type": "bool",    "default": false, "description": "Run on host PID namespace." },
+    "host_uts":        { "type": "bool",    "default": false, "description": "Use host UTS namespace." },
+    "devices":         { "type": "list",    "default": null, "description": "Devices to map into the add-on." },
+    "homeassistant":   { "type": "string",  "default": null, "description": "Minimum required Home Assistant Core version." },
+    "hassio_role":     { "type": "string",  "default": "default", "description": "Supervisor API role." },
+    "hassio_api":      { "type": "bool",    "default": false, "description": "Access Supervisor REST API." },
+    "homeassistant_api": { "type": "bool",  "default": false, "description": "Access Home Assistant REST API proxy." },
+    "docker_api":      { "type": "bool",    "default": false, "description": "Read-only Docker API access." },
+    "privileged":      { "type": "list",    "default": null, "description": "System privileges for the add-on." },
+    "full_access":     { "type": "bool",    "default": false, "description": "Full hardware access." },
+    "apparmor":        { "type": ["bool", "string"], "default": true, "description": "AppArmor support or custom profile." },
+    "map":             { "type": "list",    "default": null, "description": "Bind-mount Home Assistant directories." },
+    "environment":     { "type": "dict",    "default": null, "description": "Environment variables for the add-on." },
+    "audio":           { "type": "bool",    "default": false, "description": "Enable internal audio system." },
+    "video":           { "type": "bool",    "default": false, "description": "Enable internal video system." },
+    "gpio":            { "type": "bool",    "default": false, "description": "Enable GPIO access." },
+    "usb":             { "type": "bool",    "default": false, "description": "Enable raw USB access." },
+    "uart":            { "type": "bool",    "default": false, "description": "Auto-map UART/serial devices." },
+    "udev":            { "type": "bool",    "default": false, "description": "Mount host udev database." },
+    "devicetree":      { "type": "bool",    "default": false, "description": "Map /device-tree into the add-on." },
+    "kernel_modules":  { "type": "bool",    "default": false, "description": "Map host kernel modules/config." },
+    "stdin":           { "type": "bool",    "default": false, "description": "Enable STDIN with Home Assistant API." },
+    "legacy":          { "type": "bool",    "default": false, "description": "Enable legacy mode for Docker images without hass.io labels." },
+    "options":         { "type": "dict",    "default": null, "description": "Default options for the add-on." },
+    "schema":          { "type": ["dict", "bool"], "default": null, "description": "Schema for options validation." },
+    "image":           { "type": "string",  "default": null, "description": "Docker image name (if used)." },
+    "codenotary":      { "type": "string",  "default": null, "description": "Codenotary CAS email for image verification." },
+    "timeout":         { "type": "integer", "default": 10, "description": "Timeout for Docker daemon (seconds)." },
+    "tmpfs":           { "type": "bool",    "default": false, "description": "Use tmpfs for /tmp in the container." },
+    "discovery":       { "type": "list",    "default": null, "description": "Services provided for Home Assistant discovery." },
+    "services":        { "type": "list",    "default": null, "description": "Services provided/consumed by the add-on." },
+    "auth_api":        { "type": "bool",    "default": false, "description": "Access Home Assistant user backend." },
+    "ingress":         { "type": "bool",    "default": false, "description": "Enable ingress feature." },
+    "ingress_port":    { "type": "integer", "default": 8099, "description": "Ingress port (host network: use 0)." },
+    "ingress_entry":   { "type": "string",  "default": "/", "description": "Ingress URL entry point." },
+    "ingress_stream":  { "type": "bool",    "default": false, "description": "Enable ingress streaming." },
+    "panel_icon":      { "type": "string",  "default": "mdi:puzzle", "description": "Panel icon for menu." },
+    "panel_title":     { "type": "string",  "default": null, "description": "Panel title (defaults to add-on name)." },
+    "panel_admin":     { "type": "bool",    "default": true, "description": "Menu entry only for admin users." },
+    "backup":          { "type": "string",  "default": "hot", "description": "Backup mode: hot or cold." },
+    "backup_pre":      { "type": "string",  "default": null, "description": "Command before backup." },
+    "backup_post":     { "type": "string",  "default": null, "description": "Command after backup." },
+    "backup_exclude":  { "type": "list",    "default": null, "description": "Files/paths to exclude from backup." },
+    "advanced":        { "type": "bool",    "default": false, "description": "Require 'Advanced' mode to show add-on." },
+    "stage":           { "type": "string",  "default": "stable", "description": "Add-on stage: stable, experimental, deprecated." },
+    "init":            { "type": "bool",    "default": true, "description": "Disable Docker default system init if false." },
+    "watchdog":        { "type": "string",  "default": null, "description": "Health monitoring URL." },
+    "realtime":        { "type": "bool",    "default": false, "description": "Access to host schedule (SYS_NICE)." },
+    "journald":        { "type": "bool",    "default": false, "description": "Map host's system journal." },
+    "breaking_versions": { "type": "list",  "default": null, "description": "List of breaking versions." }
+  },
+  "options_schema": {
+    "description": "The 'options' dictionary contains all available options and their default values. The 'schema' dictionary describes how to validate user input for each option. To make an option required, omit the default value in 'options' and define the type in 'schema'. To make an option optional, use a '?' at the end of the type in 'schema' and do not set a default in 'options'.",
+    "details": {
+      "option_removal": "If you remove a configuration option from an add-on already deployed, delete the option using the Supervisor add-ons API to avoid warnings. Example: bashio::addon.option '<options_key>' (without argument) deletes the option. Typically used inside an if block checking if the option exists: bashio::config.exists '<options_key>'.",
+      "nested_structures": "Nested arrays and dictionaries are supported in options and schema up to a maximum depth of two.",
+      "supported_types": [
+        "str", "str(min,)", "str(,max)", "str(min,max)",
+        "bool",
+        "int", "int(min,)", "int(,max)", "int(min,max)",
+        "float", "float(min,)", "float(,max)", "float(min,max)",
+        "email", "url", "password", "port",
+        "match(REGEX)",
+        "list(val1|val2|...)",
+        "device", "device(filter)"
+      ],
+      "map_option": "The map option allows binding Home Assistant directories into the add-on container. Possible values: homeassistant_config, addon_config, ssl, addons, backup, share, media, all_addon_configs, data. Defaults to read-only; can be changed with read_only: false. The path property can be set for custom mount points (must be unique and not root).",
+      "build_yaml": "Additional build options can be specified in build.yaml: build_from (dict of architectures to base images), args (additional Docker build arguments), labels (additional Docker labels), codenotary (container signature options).",
+      "translations": "Add-ons can provide translation files for configuration options and network ports. Example path: addon/translations/{language_code}.yaml. Keys: configuration (for options), network (for ports).",
+      "advanced_options": "For complex or file-based configuration, use addon_config in map and instruct users to place files in /addon_configs/{REPO}_{slug}. For file-based output or debugging, use addon_config:rw and write files to /config inside the container.",
+      "special_flags": "stage: Can be stable, experimental, or deprecated. Experimental/deprecated add-ons only show if 'Advanced' mode is enabled. init: Set to false to disable Docker's default system init (required for some base images like s6-overlay v3). backup: Can be hot or cold. If cold, Supervisor stops the add-on before backup.",
+      "ingress_webui": "webui: URL template for the add-on's web interface. ingress, ingress_port, ingress_entry, ingress_stream: Control ingress feature and its endpoints.",
+      "panel_ui": "panel_icon, panel_title, panel_admin: Control appearance and access of the add-on in the Home Assistant sidebar."
+    }
+  },
+  "schema_format": {
+    "example": {
+      "options": {
+        "bb8_mac": "",
+        "scan_seconds": 5,
+        "rescan_on_fail": true,
+        "cache_ttl_hours": 720
+      },
+      "schema": {
+        "bb8_mac": "str?",
+        "scan_seconds": "int?",
+        "rescan_on_fail": "bool?",
+        "cache_ttl_hours": "int?"
+      }
+    },
+    "description": "Schema entries should use the flat string format: <option>: '<type>?' for optional, e.g. 'bb8_mac: \"str?\"'. Defaults are set in the options section, not in schema."
+  }
+}

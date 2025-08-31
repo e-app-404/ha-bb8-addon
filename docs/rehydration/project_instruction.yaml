@@ -1,0 +1,135 @@
+title: "BB-8 Home Assistant Add-on – BLE/MQTT Integration & Runtime Packaging"
+description: >
+  This project implements a Home Assistant-compatible add-on for controlling a Sphero BB-8 robot over BLE,
+  using MQTT as the command/event bus. It is not a standalone application, but a packaged, privileged
+  HA add-on container adhering to Home Assistant's add-on dev standards and ecosystem tooling.
+
+phases:
+  - name: "Container Runtime & BLE Integration (STP1)"
+    objective: "Create a secure, HA-compliant add-on container that runs BB-8 control logic and BLE/MQTT bridges."
+    required_behaviors:
+      - "All BLE operations must work within Home Assistant’s supervisor-managed container model."
+      - "Strictly follow HA add-on privilege declarations (e.g., host_dbus, bluetooth, uart)."
+      - "Implement and verify `/app/run.sh` as the lifecycle orchestrator for the add-on."
+      - "Use `test_ble_adapter.py` or equivalent to validate access to `/run/dbus` and `hci0`."
+      - "Provide logs and recovery paths for failed BLE access or container misconfigurations."
+    scoring_anchor: "score:structural=92,operational=91,semantic=93"
+    validation_method: "hardware_backed_test"
+    completion_artifact: "ble_adapter_access_log"
+
+  - name: "Structured Logging, Health, and Security (STP2)"
+    objective: "Expose runtime diagnostics, log levels, and health via logs and optional endpoints."
+    required_behaviors:
+      - "Logs must route to stdout and support runtime verbosity change."
+      - "No MQTT credentials or sensitive values must be logged or leaked."
+      - "BLE and MQTT health must be externally queryable via MQTT or healthcheck endpoint."
+    scoring_anchor: "score:structural=87,operational=90,semantic=92"
+    validation_method: "container_log_review"
+    completion_artifact: "bb8_health_endpoint_log"
+
+  - name: "MQTT & HA Automation Hooks (STP4)"
+    objective: "Bridge BB-8 actions/events into MQTT topics and HA entity models via discovery."
+    required_behaviors:
+      - "Implement MQTT Discovery and test registration inside HA."
+      - "Publish real-time BB-8 state, error, and event data to MQTT topics for HA automations."
+      - "Design a stable MQTT schema for services and events."
+      - "Document all topics, payload schemas, and example automations clearly."
+    scoring_anchor: "score:structural=90,operational=89,semantic=94"
+    validation_method: "mqtt_topic_roundtrip"
+    completion_artifact: "ha_mqtt_trace_snapshot"
+
+project_files_manifest:
+  - config.yaml: Add-on metadata and build configuration
+  - Dockerfile: HA base image and app installation script
+  - run.sh: Orchestrates BLE/MQTT and logs lifecycle output
+  - bb8_core/: Python module for BLE bridge, controller, and MQTT dispatcher
+  - test_ble_adapter.py: Runtime hardware test script
+  - .devcontainer/: Development container definition for VS Code and GitHub Codespaces
+  - beep_boop_bb8_snapshot_*.tar.gz: Snapshots for inspection and diagnostics
+  - Home Assistant Add-on Docs: https://developers.home-assistant.io/docs/add-ons/
+  - MQTT Discovery Docs: https://www.home-assistant.io/docs/mqtt/discovery/
+
+traits:
+  required:
+    - reproducibility_enforced
+    - runtime_sandbox_safe
+    - privileged-aware
+    - HA_supervisor_compliant
+  forbidden:
+    - raw python3 runs outside container context
+    - BLE logic requiring host-only volume mounts
+    - unaudited or speculative runtime entrypoints
+
+response_style:
+  tone: "precise"
+  format: "scored, structured, and minimal"
+  visual_aids: ["headings", "bullets", "code blocks"]
+  principle: "structure before speech"
+
+format: yaml
+version: "2025.08"
+
+meta_system_instruction_PR.md:
+  file: system_instruction.yaml
+  patch:
+    description: >
+      Enforce container and runtime-aware scoring protocol for BB-8 add-on runtime verification
+    target_location: protocols → project_context_overrides
+    insert_block: |
+      - id: protocol_runtime_scoring_ha_addon_v1
+        applies_to_sessions:
+          - bb8_addon_containerization
+        enforced_protocols:
+          - protocol_confidence_scoring_always_on_v1
+          - protocol_empirical_validation_v1
+        output_contract:
+          required_fields:
+            - docker_runtime_access
+            - BLE_interface_verification
+            - supervisor_visibility
+
+patch:
+  target: project_instructions.yaml
+  patch_version: "2025.08.1"
+  rationale: >
+    Improve phase ordering, validation output formalization, traceability of test artifacts,
+    and integrate high-confidence project documentation and repository links.
+
+  additions:
+    phases:
+      - name: "Container Runtime & BLE Integration (STP1)"
+        validation_method: "hardware_backed_test"
+        completion_artifact: "ble_adapter_access_log"
+
+      - name: "Structured Logging, Health, and Security (STP2)"
+        validation_method: "container_log_review"
+        completion_artifact: "bb8_health_endpoint_log"
+
+      - name: "MQTT & HA Automation Hooks (STP4)"
+        validation_method: "mqtt_topic_roundtrip"
+        completion_artifact: "ha_mqtt_trace_snapshot"
+
+    traits_enforced:
+      reproducibility_enforced:
+        enforced_by: "protocol_runtime_scoring_ha_addon_v1"
+      runtime_sandbox_safe:
+        test_script: "test_ble_adapter.py"
+
+    project_files_manifest_updates:
+      test_ble_adapter.py:
+        purpose: "Runtime BLE adapter health and access test"
+        linked_phases: ["STP1", "STP2"]
+
+    information_sources:
+      - name: "HA Add-on Development Docs"
+        url: "https://developers.home-assistant.io/docs/add-ons/"
+        confidence: 0.95
+      - name: "MQTT Discovery Guide"
+        url: "https://www.home-assistant.io/docs/mqtt/discovery/"
+        confidence: 0.94
+      - name: "BLE Integration Reference"
+        url: "https://www.home-assistant.io/integrations/bluetooth/"
+        confidence: 0.91
+      - name: "BB-8 Add-on GitHub Repo"
+        url: "https://github.com/e-app-404/ha-bb8-addon"
+        confidence: 0.98

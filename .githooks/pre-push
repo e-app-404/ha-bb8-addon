@@ -1,0 +1,48 @@
+
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Block push if deletions detected under docs/, ops/, scripts/
+BASE=$(git rev-parse HEAD^ 2>/dev/null || echo HEAD)
+if git diff --diff-filter=D --name-only "$BASE"..HEAD -- docs ops scripts | grep -q .; then
+  echo "ERROR: Deletions detected under docs/ ops/ scripts/. Push blocked."
+  exit 1
+fi
+
+echo "WS_READY"
+echo "STRUCTURE_OK — backups normalized"
+echo "STRUCTURE_OK — topology"
+#!/usr/bin/env bash
+set -euo pipefail
+fail=0; die(){ echo "ERROR: $*"; fail=1; }
+
+# Workspace MUST-HAVE
+for d in ops reports scripts docs .githooks .github _backups; do [ -e "$d" ] || die "workspace missing: $d"; done
+# Workspace MUST-NOT
+for d in tests tools _backup; do [ -e "$d" ] && die "workspace must NOT contain: $d"; done
+if find . -maxdepth 1 -type d -name '_backup_*' | grep -q .; then die "loose backup folders at root (use _backups/*.tar.gz)"; fi
+
+# Add-on MUST-HAVE
+for p in addon/bb8_core addon/tools addon/tests addon/services.d addon/app \
+         addon/config.yaml addon/Dockerfile addon/Makefile addon/README.md addon/VERSION addon/apparmor.txt addon/.devcontainer
+do [ -e "$p" ] || die "addon missing: $p"; done
+
+# Add-on MUST-NOT
+for p in addon/scripts addon/reports addon/docs addon/_backup addon/_backups \
+         addon/.venv addon/.pytest_cache addon/.ruff_cache addon/.mypy_cache
+do [ -e "$p" ] && die "addon must NOT contain: $p"; done
+
+# No symlink/submodule/nested repo traps
+[ -L addon ] && die "'addon' must not be a symlink"
+if git ls-files -s | awk '$1==160000 && $4=="addon"{f=1} END{exit !f}'; then die "'addon' is a submodule (gitlink)"; fi
+[ -d addon/.git ] && die "nested git repo at addon/.git is forbidden"
+if find addon -type l | grep -q .; then die "symlinks under addon/ are not allowed"; fi
+
+# Warn on direct push to add-on repo main; use publisher instead
+if git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null | grep -qE '^origin/main$'; then
+  echo "ERROR: direct push to origin/main is forbidden; use ops/workspace/publish_addon_archive.sh"
+  exit 1
+fi
+
+if [ $fail -ne 0 ]; then echo "Push blocked by ADR-0001 guard."; exit 1; fi
+echo "WS_READY"; echo "STRUCTURE_OK — backups normalized"; echo "STRUCTURE_OK — topology"

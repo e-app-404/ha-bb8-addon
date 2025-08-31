@@ -1,0 +1,37 @@
+phase_registry:
+  - id: "P0-BOOT"
+    summary: "Strategos boot, governance anchoring, snapshot integrity check"
+    outputs: ["session_recap_prior", "artifact_index"]
+    status: "completed"
+
+  - id: "P1-STP4-EVIDENCE (shim)"
+    summary: "Evidence collection with facade echoes accepted"
+    outputs:
+      [
+        "evidence_manifest.json",
+        "ha_mqtt_trace_snapshot.json",
+        "ha_discovery_dump.json",
+      ]
+    status: "completed (PASS)"
+
+  - id: "P5-BLE-EVENT-LOOP"
+    summary: "Dedicated asyncio loop thread; structured logs; no get_event_loop usage"
+    outputs: ["run.log (local)", "ble_link_started markers"]
+    status: "completed"
+
+  - id: "P6-DEVICE-ECHO"
+    summary: "Device-originated scalar echoes via centralized helper; retain=false; LED RGB JSON"
+    outputs: ["code changes in ble_bridge.py / mqtt_echo helper"]
+    status: "completed (awaiting attestation in strict run)"
+
+  - id: "P1b-STP4-EVIDENCE (strict)"
+    summary: "Strict run with shim disabled and device echoes required"
+    outputs_expected:
+      [
+        "evidence_manifest.json (strict)",
+        "ha_mqtt_trace_snapshot.json[l]",
+        "run.log excerpt",
+      ]
+    status: "pending attestation"
+
+pending_copilot_items: []

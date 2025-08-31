@@ -1,0 +1,75 @@
+name: paths-map-guard
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/PATHS_MAP.md'
+      - 'addon/**'
+      - 'ops/validate_paths_and_contract.sh'
+  push:
+    branches: [ fix/**, feature/**, bugfix/** ]
+permissions: { contents: read }
+concurrency:
+  group: paths-map-guard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Surface mode guard in summary
+        if: always()
+        run: |
+          if grep -Eq '^[[:space:]]*image:[[:space:]]*' addon/config.yaml; then
+            echo 'MODE: PUBLISH' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'MODE: LOCAL_DEV' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Make validator executable
+        run: chmod +x ops/validate_paths_and_contract.sh || true
+
+      - name: Validate paths + emit contract
+        env:
+          WS_ROOT: ${{ github.workspace }}
+          ADDON_DIR: ${{ github.workspace }}/addon
+          # RUNTIME_MOUNT intentionally omitted in CI
+        run: |
+          if [ -x ops/workspace/validate_paths_map.sh ]; then
+            ops/workspace/validate_paths_map.sh | tee paths_health_receipt.txt
+          elif [ -x ops/validate_paths_and_contract.sh ]; then
+            ops/validate_paths_and_contract.sh | tee paths_health_receipt.txt
+          else
+            echo "Validator missing; running minimal guards"
+            test -d addon || (echo "DRIFT:addon_missing" && exit 2)
+            test -f addon/config.yaml || (echo "DRIFT:missing_config_yaml" && exit 3)
+            test -f addon/Dockerfile  || (echo "DRIFT:missing_Dockerfile"  && exit 4)
+            echo "TOKEN: PATHS_HEALTH_OK"
+              # Mode detection: LOCAL_DEV (no image) vs PUBLISH (image present)
+              if grep -Eq '^[[:space:]]*image:[[:space:]]*' addon/config.yaml; then
+                echo "MODE: PUBLISH"
+                grep -Eq '^[[:space:]]*version:[[:space:]]*' addon/config.yaml || (echo "DRIFT:version_missing_in_publish_mode" && exit 9)
+              else
+                echo "MODE: LOCAL_DEV"
+                test -f addon/Dockerfile || (echo "DRIFT:dockerfile_missing_in_local_dev" && exit 10)
+                echo "TOKEN: DEV_LOCAL_BUILD_FORCED"
+              fi
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: paths-map-guard
+          path: |
+            reports/paths_map_contract_v1.json
+            paths_health_receipt.txt
+
+      - name: Surface mode guard in summary
+        if: always()
+        run: |
+          if grep -Eq '^[[:space:]]*image:[[:space:]]*' addon/config.yaml; then
+            echo 'MODE: PUBLISH' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'MODE: LOCAL_DEV' >> "$GITHUB_STEP_SUMMARY"
+          fi

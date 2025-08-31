@@ -1,59 +1,21 @@
-#
-# Release Automation & Workspace Commands
+<<<<<<< HEAD
+# HA-BB8 Add-on: Local Build & Supervisor Integration
 
-## Automated Release Workflow
-
-This workspace supports a fully automated release workflow for the Home Assistant BB-8 add-on. The following commands are available from the repo root:
+## Local Add-on Folder Structure
+- Place your add-on in `/addons/local/beep_boop_bb8` on the Home Assistant host.
+- Required files:
+  - `config.yaml` (with `slug: "beep_boop_bb8"`)
 
 ### Patch bump + publish + deploy
 
-```
-make release-patch
-```
-* Increments the patch version in `addon/config.yaml` and `addon/Dockerfile`.
-* Appends a changelog entry to `addon/CHANGELOG.md`.
-* Publishes the `addon/` subtree to the remote repository (idempotent: skips if no changes).
-* Deploys the add-on to Home Assistant via SSH and the Core Services API.
-* Prints tokens: `BUMP_OK:<version>`, `SUBTREE_PUBLISH_OK:main@<sha>`, and HA deploy tokens (`AUTH_OK`, `CLEAN_RUNTIME_OK`, `DEPLOY_OK`, `VERIFY_OK`, `RUNTIME_TOPOLOGY_OK`).
-
-### Minor/major bump + publish + deploy
-
-```
-make release-minor
-make release-major
-```
-* Same as above, but increments the minor or major version.
-
-### Explicit version bump + publish + deploy
-
-```
-make release VERSION=1.4.2
-```
-* Sets the version to `1.4.2` (or any valid semver) and runs the full release workflow.
-
-### Manual steps (if needed)
-
-* You can run the individual scripts directly:
-   - `ops/release/bump_version.sh <patch|minor|major|x.y.z>` — bump version and update changelog/Dockerfile
-   - `ops/workspace/publish_addon_archive.sh` — publish only the `addon/` subtree
-   - `ops/release/deploy_ha_over_ssh.sh` — deploy the add-on to Home Assistant
-
-### Acceptance tokens
-
-* The release workflow prints tokens for CI and manual verification:
-   - `BUMP_OK:<version>` — version bump succeeded
    - `SUBTREE_PUBLISH_OK:main@<sha>` — subtree publish succeeded
    - `AUTH_OK`, `CLEAN_RUNTIME_OK`, `DEPLOY_OK`, `VERIFY_OK`, `RUNTIME_TOPOLOGY_OK` — Home Assistant deploy and verification steps
-
-### Notes
 
 * All release scripts are located in `ops/release/` and `ops/workspace/`.
 * The workflow is idempotent: publishing is skipped if no changes are present in `addon/`.
 * Makefile targets are tab-indented and ready for one-command releases.
 
 ---
-# bb8_core
-
 Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT.
 
 ## Features
@@ -62,34 +24,24 @@ Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT.
 - MQTT command and status integration
 - Home Assistant add-on compliant (configurable via UI)
 - Supports BLE adapter selection and diagnostics
-- MQTT Discovery for the following Home Assistant entities:
   - Presence sensor (`bb8/presence`)
   - RSSI sensor (`bb8/rssi`)
   - Power switch (`bb8/command/power`, `bb8/state/power`)
-
 ## Where do options come from?
 
-- **Origin:** Home Assistant Supervisor generates `/data/options.json` from the add-on’s `config.yaml` schema and the values you set in the Add-on Options UI.
 - **Author:** You (the HA admin) via the UI; Supervisor materializes the file inside the container.
 - **Purpose:** Single source of truth for runtime config (MQTT host/port/creds, topic prefix, BLE adapter, timeouts, TLS).
 - **Do not edit manually** in the container; change options in the UI and restart the add-on.
 
 ## Directory Structure
-
 ```text
 local/
-├─bb8_core/
 │   ├── app/
 │   │   ├── bb8_bletest_diag.sh
 │   │   ├── ble_test_diag.sh
 │   │   └── test_ble_adapter.py
 │   ├── bb8_core/
 │   │   ├── __init__.py
-│   │   ├── addon_config.py
-│   │   ├── auto_detect.py
-│   │   ├── bb8_presence_scanner.py
-│   │   ├── ble_bridge.py
-│   │   ├── ble_gateway.py
 │   │   ├── ble_link.py
 │   │   ├── ble_utils.py
 │   │   ├── bridge_controller.py
@@ -120,9 +72,6 @@ local/
 │   │   ├── intervention_plan.json
 │   │   ├── strategic_assessment.json
 │   │   └── test_facade_attach_mqtt.py
-│   ├── reports/
-│   │   └── (various .json and stp4_* evidence bundles)
-│   ├── services.d/
 │   │   └── ble_bridge/
 │   │       └── run
 │   ├── tests/
@@ -224,3 +173,4 @@ python -m pip install -U pip setuptools wheel
 python -m pip install -r addon/requirements.txt -r addon/requirements-dev.txt
 pytest -q addon/tests
 
+>>>>>>> origin/main

@@ -1,0 +1,81 @@
+artifacts_index:
+  snapshots:
+    - role: "workspace_clean_snapshot"
+      path: "/Users/evertappels/Projects/HA-BB8/HA-BB8_clean_20250821_071841.tar.gz"
+      sha256: null
+      size_bytes: null
+    - role: "stp4_snapshot"
+      path: "/Users/evertappels/Projects/HA-BB8/docs/tarballs/bb8_snapshot_2025.8.15-stp4.tar.gz"
+      sha256: null
+      size_bytes: null
+    - role: "base_snapshot"
+      path: "/Users/evertappels/Projects/HA-BB8/docs/tarballs/bb8_snapshot_2025.8.15.tar.gz"
+      sha256: null
+      size_bytes: null
+
+  governance_personas:
+    - role: "system_instruction"
+      path: "/mnt/data/system_instruction.yaml"
+      sha256: null
+    - role: "strategos_core"
+      path: "/mnt/data/20250813_strategos_v1.4.yaml"
+      sha256: null
+    - role: "strategos_xp"
+      path: "/mnt/data/20250803_xp_strategos_v1.6.yaml"
+      sha256: null
+    - role: "dual_mode_xp"
+      path: "/mnt/data/dual_mode_xp_v1_250813.yaml"
+      sha256: null
+
+  rehydration_docs:
+    - role: "adr_note"
+      path: "/Users/evertappels/Projects/HA-BB8/docs/ADR/ADR-0001-workspace-topology.md"
+      sha256: null
+    - role: "handoff"
+      path: "/mnt/data/handoff.md"
+      sha256: null
+    - role: "desired_workspace_shape"
+      path: "/mnt/data/desired_workspace_shape.md"
+      sha256: null
+    - role: "migration_checklist"
+      path: "/mnt/data/migration_checklist.md"
+      sha256: null
+    - role: "rehydration_seed_prior"
+      path: "/Users/evertappels/Projects/HA-BB8/docs/rehydration/2025-08-20/rehydration_seed.yaml"
+      sha256: null
+    - role: "rehydration_seed_v2"
+      path: "/Users/evertappels/Projects/HA-BB8/docs/rehydration/2025-08-20/rehydration_seed_v2.yaml"
+      sha256: null
+
+  evidence_bundle_latest:
+    - role: "manifest"
+      path: "/Users/evertappels/Projects/HA-BB8/reports/evidence_manifest.json"
+      sha256: null
+    - role: "trace_snapshot"
+      path: "/Users/evertappels/Projects/HA-BB8/reports/ha_mqtt_trace_snapshot.json"
+      sha256: null
+    - role: "discovery_dump"
+      path: "/Users/evertappels/Projects/HA-BB8/reports/ha_discovery_dump_20250818_043251Z.txt"
+      sha256: null
+
+  governance_receipts:
+    - role: "adr_0001_receipt_latest"
+      path: "/Users/evertappels/Projects/HA-BB8/reports/governance/ADR-0001_receipt_20250821_154207Z.status"
+      sha256: null
+    - role: "deployment_tokens_log_sample"
+      path: "/Users/evertappels/Projects/HA-BB8/reports/deploy_workspace_run_20250821_092032.log"
+      sha256: null
+
+  tooling:
+    - role: "evidence_collector"
+      path: "/Users/evertappels/Projects/HA-BB8/ops/evidence/collect_stp4.py"
+      sha256: null
+    - role: "shim_script"
+      path: "/Users/evertappels/Projects/HA-BB8/ops/evidence/shim.sh"
+      sha256: null
+    - role: "structure_check"
+      path: "/Users/evertappels/Projects/HA-BB8/ops/audit/check_structure.sh"
+      sha256: null
+    - role: "verify_workspace_wrapper"
+      path: "/Users/evertappels/Projects/HA-BB8/scripts/verify_workspace.sh"
+      sha256: null
