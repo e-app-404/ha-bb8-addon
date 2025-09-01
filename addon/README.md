@@ -223,4 +223,22 @@ python3 -m venv .venv && source .venv/bin/activate
 python -m pip install -U pip setuptools wheel
 python -m pip install -r addon/requirements.txt -r addon/requirements-dev.txt
 pytest -q addon/tests
+```
+
+## Logging Setup (Centralized)
+
+- All logging configuration and file handler setup is centralized in `bb8_core/logging_setup.py`.
+- The logger (`logger`) from `logging_setup.py` is used throughout all modules, including `main.py` and service entrypoints.
+- Only one file handler writes to the log file, as specified by the `log_path` option in `config.yaml` (default: `/data/reports/ha_bb8_addon.log`).
+- To log from any module, import the shared logger:
+
+```python
+from bb8_core.logging_setup import logger
+logger.info("your message")
+```
+- Do not set up additional file handlers or use `logging.basicConfig` elsewhere; this avoids duplicate log entries and handler conflicts.
+- The log file path can be customized via the `log_path` option in `config.yaml`.
+- All logs are structured and redact sensitive fields automatically.
+
+---
 
