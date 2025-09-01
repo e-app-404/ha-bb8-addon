@@ -43,14 +43,23 @@ logger = logging.getLogger("bb8_addon")
 bridge_logger = logging.getLogger("bb8.bridge")
 ble_logger = logging.getLogger("bb8.ble")
 
-# Attach redacting handler to all loggers
+import atexit
+# Attach redacting handler to all loggers, deduplicate handlers
 handler = JsonRedactingHandler()
 handler.setLevel(LOG_LEVEL)
 for log in (logger, bridge_logger, ble_logger):
     log.setLevel(LOG_LEVEL)
-    log.handlers.clear()
+    log.handlers.clear()  # Deduplicate handlers on restart
     log.addHandler(handler)
     log.propagate = False
+
+# Ensure all log handlers are flushed on exit
+def _flush_all_log_handlers():
+    for log in (logger, bridge_logger, ble_logger):
+        for h in log.handlers:
+            if hasattr(h, 'flush'):
+                h.flush()
+atexit.register(_flush_all_log_handlers)
 
 
 # Structured event emitters
@@ -135,8 +144,11 @@ def init_file_handler(
                 "target": candidate or "stderr",
             }
         )
+        # Log explicit fallback
+        print(f"[LOGGING WARNING] Log file not writable, using fallback: {candidate or 'stderr'}")
     if candidate:
         return logging.FileHandler(candidate)
+    print("[LOGGING WARNING] No writable log file, using StreamHandler (stderr)")
     return logging.StreamHandler()
 
 

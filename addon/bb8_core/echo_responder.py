@@ -186,4 +186,15 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        import logging
+        import sys
+        logging.basicConfig(level=logging.ERROR)
+        logging.error(f"Echo responder fatal error: {e}", exc_info=True)
+        # Ensure logs are flushed before exit
+        for h in logging.getLogger().handlers:
+            if hasattr(h, 'flush'):
+                h.flush()
+        sys.exit(1)

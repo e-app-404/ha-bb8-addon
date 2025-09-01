@@ -51,8 +51,8 @@ VIRTUAL_ENV="${VIRTUAL_ENV:-/opt/venv}"
 PY="${VIRTUAL_ENV}/bin/python"
 if [ ! -x "$PY" ]; then PY="$(command -v python3 || command -v python)"; fi
 export PATH="${VIRTUAL_ENV}/bin:${PATH}"
-# Optional probe for receipts
-if [ "${PRINT_INTERP:-0}" = "1" ]; then echo "$PY"; exit 0; fi
+# Start main and echo responder in background, block until one exits
 "$PY" -m bb8_core.main &
-"$PY" /usr/src/app/bb8_core/echo_responder.py &
+python3 -u /usr/src/app/echo_responder.py &
+# Block until either process exits (Supervisor will restart on failure)
 wait -n

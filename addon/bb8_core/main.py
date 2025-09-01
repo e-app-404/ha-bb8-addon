@@ -29,5 +29,9 @@ def main():
         logger.info("main exiting after signal")
     except Exception as e:
         logger.exception(f"fatal error in main: {e}")
+        # Ensure logs are flushed before exit
+        for h in logger.handlers:
+            if hasattr(h, 'flush'):
+                h.flush()
         sys.exit(1)
 
