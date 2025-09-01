@@ -17,12 +17,12 @@
 # Stepwise Hardening Checklist
 
 # Stepwise Hardening Checklist (Status: COMPLETE)
-- [x] Environment variable set in shell, CI, Dockerfile
-- [x] pytest.ini updated
-- [x] All code entry points audited for early instantiation
-- [x] Code-level warning filters added
-- [x] Monitoring test added
-- [x] Documentation updated
+- [x] All MQTT callback functions audited and patched for VERSION2 compliance
+- [x] Callback signature matrix maintained and verified
+- [x] Runtime and CI tests added for callback compatibility and resource stability
+- [x] No warning suppression present except where documented and necessary
+- [x] Threading and reconnect logic reviewed for leaks and runaway loops
+- [x] Documentation and troubleshooting recipes updated
 
 # Useful Commands
 - Run all tests with warning suppression and coverage:
@@ -51,20 +51,20 @@
 
 # Status Verification
 - After running tests, verify:
-   - No `DeprecationWarning` for Callback API v1 appears in output or CI logs.
-   - All tests pass (no StopIteration errors).
-   - Coverage for key files (e.g., `telemetry.py`) is above 80%.
-- To check coverage for a specific file:
-   ```sh
-   PYTHONPATH=$(pwd) pytest --disable-warnings --cov=addon/bb8_core/telemetry.py --cov-report=term-missing addon/bb8_core/tests/test_telemetry.py
-   ```
+   - All MQTT callback signatures match VERSION2 requirements (see callback_signature_matrix.md)
+   - No `DeprecationWarning` for Callback API v1 appears in output or CI logs
+   - All tests pass (no StopIteration errors or resource leaks)
+   - Coverage for key files (e.g., `telemetry.py`) is above 80%
+   - Thread and memory usage stable in runtime and CI
+   - Manual functional tests confirm correct MQTT event handling
 
 # Maintenance & Monitoring
 
 
-- Monitor for upstream changes in paho MQTT warning messages.
-- Maintain a test (see `test_warning_monitor.py`) to catch unsuppressed warnings.
-- Periodically audit new entry points and test files for early instantiation and warning filter placement.
+- Monitor for upstream changes in paho MQTT warning messages and callback API requirements
+- Maintain callback signature matrix and runtime tests for compatibility and resource stability
+- Periodically audit new entry points and test files for early instantiation and callback compliance
+- Document and review any warning suppression or fallback to VERSION1, with rationale
 
 # References
    ```sh

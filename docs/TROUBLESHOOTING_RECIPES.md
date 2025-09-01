@@ -1,3 +1,43 @@
+## TR-010 — MQTT Callback Signature Mismatch or Resource Leak
+
+**Fingerprint**
+- Runtime errors: TypeError, missing 'properties' argument in on_connect
+- Rapid reconnects, thread leaks, or OOM errors after paho-mqtt upgrade
+- DeprecationWarning for Callback API version 1
+
+**Root Cause**
+- Callback functions do not match required VERSION2 signatures
+- Threading or reconnect logic creates runaway loops or leaks
+
+**Fix (decisive)**
+1. Audit all MQTT callback functions for correct signatures (see callback_signature_matrix.md)
+2. Patch all non-compliant callbacks to match VERSION2 requirements
+3. Add runtime and CI tests for callback compatibility and resource stability
+4. Refactor threading and reconnect logic to prevent leaks
+5. If stability cannot be achieved, revert to VERSION1 and reinstate warning suppression (document rationale)
+
+**Verify**
+- All tests pass (pytest)
+- No runtime errors, warnings, or resource leaks
+- Callback signature matrix is fully compliant
+- Manual functional tests confirm correct MQTT event handling
+
+## TR-011 — MQTT Test Failure Due to Network
+
+**Fingerprint**
+- pytest fails: OSError: [Errno 65] No route to host
+- Test for MQTT connection and message handling fails
+
+**Root Cause**
+- Test broker (e.g., test.mosquitto.org) is unreachable from test environment
+
+**Fix (decisive)**
+- Use a local MQTT broker for tests, or ensure network access to public broker
+- Patch test to skip or mark as expected failure if broker is unreachable
+
+**Verify**
+- Test passes when broker is reachable
+- All other tests pass and confirm callback compliance
 ---
 title: "HA-BB8 — Troubleshooting Recipes"
 status: "Operational"

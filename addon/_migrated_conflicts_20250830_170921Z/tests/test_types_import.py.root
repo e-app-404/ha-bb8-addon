@@ -3,6 +3,6 @@ def test_import_types_has_no_side_effects():
     # (We assert that 'types' defines symbols but doesn't pull in heavy modules)
     import importlib
 
-    mod = importlib.import_module("bb8_core.types")
+    mod = importlib.import_module("bb8_core.core_types")
     for name in ("BridgeController", "BLELink", "MqttClient", "RGBCallback"):
         assert hasattr(mod, name)

@@ -1,8 +1,4 @@
-import warnings
-
-warnings.filterwarnings(
-    "ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho"
-)
+import warnings  # Retain import for other warning handling if needed
 import json
 import logging
 import os
@@ -155,15 +151,7 @@ class BleTouch:
 
 
 def get_mqtt_client():
-    import warnings
-
-    warnings.filterwarnings(
-        "ignore",
-        "Callback API version 1 is deprecated",
-        DeprecationWarning,
-        "paho.mqtt.client",
-    )
-    client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
+    client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION2)
     return client  # pragma: no cover
 
 

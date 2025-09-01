@@ -18,9 +18,9 @@ RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build conte
 
 # Base deps (Debian BUILD_FROM) — Alpine is NOT supported here
 RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-   python3 python3-venv python3-pip ca-certificates bash jq \
- && rm -rf /var/lib/apt/lists/*
+  && apt-get install -y --no-install-recommends \
+    python3 python3-venv python3-pip ca-certificates bash jq --fix-missing \
+  && rm -rf /var/lib/apt/lists/*
 
 # Create venv and install deps into venv
 RUN python3 -m venv "/opt/venv" \

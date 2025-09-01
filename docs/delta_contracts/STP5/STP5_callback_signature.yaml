@@ -1,0 +1,32 @@
+planned_change: "Audit and patch MQTT callback signatures, restore stable memory usage, and future-proof against OOM errors after CallbackAPIVersion.VERSION2 migration"
+deliverable:
+  - Audit all files instantiating mqtt.Client for callback signature compliance
+  - Patch all MQTT callback functions to match VERSION2 requirements (add 'properties' argument, etc.)
+  - Add runtime checks/tests for callback compatibility and thread/memory leaks
+  - Refactor reconnect/threading logic to prevent runaway loops and resource exhaustion
+  - Revert to VERSION1 and reinstate warning suppression only if stability cannot be achieved with VERSION2
+  - Update documentation and add checklist for future upgrades
+rationale: "Prevent OOM errors and thread/memory leaks caused by callback signature mismatches and unstable reconnect logic after API version upgrade. Ensure robust, maintainable operation and compliance with paho-mqtt requirements."
+status: ready
+branch: "harden/echo_limits_default_off"
+RACI_matrix:
+  Strategos: Accountable
+  Copilot: Responsible
+  Evert: Informed
+acceptance_criteria:
+  - "All MQTT callback functions match required API version signatures (VERSION2 preferred)"
+  - "No OOM errors or thread/memory leaks in runtime or CI"
+  - "Tests verify callback compatibility and resource stability"
+  - "Warning suppression only present if absolutely required for stability"
+  - "Documentation and upgrade checklist updated"
+risks:
+  - "Callback signature mismatches may persist in rarely used entry points"
+  - "Reverting to VERSION1 may reintroduce deprecated usage warnings"
+  - "Thread/memory leaks may be hard to detect in short CI runs"
+mitigations:
+  - "Automated audit and runtime tests for callback signatures and resource usage"
+  - "Strict review of all entry points and reconnect logic"
+  - "Document all changes and add future-proofing checklist"
+trace:
+  baseline_tag: "v2025.8.21.1"
+  head_branch: "harden/echo_limits_default_off"

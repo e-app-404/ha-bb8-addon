@@ -709,7 +709,22 @@ test -f /addons/local/beep_boop_bb8/Dockerfile && echo "BUILDABLE: yes" || echo 
 ---
 
 ## 9. Operational Checklists
+### MQTT Callback Compliance & Stability Checklist
 
+1. Audit all files for MQTT callback signature compliance (see reports/callback_signature_matrix.md)
+2. Patch all callback functions to match VERSION2 requirements (add 'properties' argument, etc.)
+3. Add runtime and CI tests for callback compatibility and resource stability
+4. Review and refactor threading, reconnect, and semaphore logic to prevent leaks and runaway loops
+5. If stability cannot be achieved with VERSION2, revert to VERSION1 and reinstate warning suppression (document rationale)
+6. Update documentation and callback signature matrix after every migration or audit
+7. Confirm all acceptance criteria in STP5_callback_signature.yaml are met
+
+#### Verification Steps
+- Run all unit and integration tests (pytest)
+- Check for runtime errors, warnings, and resource usage in logs and CI
+- Perform manual functional tests for MQTT event handling
+- Review callback signature matrix for compliance
+- Audit for warning suppression and document exceptions
 ### 9.1 Pre‑Publish
 
 * [ ] `addon/` contains only shippable files (no `.git`, no workspace dirs)
@@ -743,6 +758,28 @@ test -f /addons/local/beep_boop_bb8/Dockerfile && echo "BUILDABLE: yes" || echo 
 ---
 
 ## 10. POSIX‑only Helpers (HA‑OS compatible)
+---
+
+## Canonical Sync Procedure (ADR-0001 / ops/release)
+
+
+> **COMMAND_BLOCK: SYNC_LOCAL_DEV_ADDON**
+> To sync the updated add-on to the LOCAL_DEV runtime (machine-friendly):
+>
+> ```sh
+> rsync -av --delete --rsync-path="sudo rsync" addon/ <user>@<host>:/addons/local/beep_boop_bb8/
+> ```
+>
+> # If you need to exclude forbidden files per ADR-0001:
+> ```sh
+> rsync -av --delete --exclude='tests' --exclude='__pycache__' addon/ <user>@<host>:/addons/local/beep_boop_bb8/
+> ```
+>
+> # Ensure the target path is `/addons/local/beep_boop_bb8/` for local development.
+
+**Notes:**
+- This method is robust, idempotent, and matches ADR-0001 and operational best practices.
+- Always verify permissions and workspace hygiene before syncing.
 
 # Regex helpers for workspace (developer use only)
 rg -n '^TOKEN:[[:space:]]*(WS_READY|STRUCTURE_OK|SUBTREE_PUBLISH_OK|CLEAN_RUNTIME_OK|DEPLOY_OK|VERIFY_OK|RUNTIME_TOPOLOGY_OK|TOOLS_ALLOWED|SCRIPTS_ALLOWED)' reports/

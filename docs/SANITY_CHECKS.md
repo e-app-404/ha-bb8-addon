@@ -1,3 +1,15 @@
+# 6) MQTT Callback Compliance
+grep -E '\[ \]' /addons/local/beep_boop_bb8/reports/callback_signature_matrix.md && echo "DRIFT: CALLBACK_SIGNATURE_MISMATCH" || echo "TOKEN: CALLBACK_SIGNATURE_OK"
+
+# 7) Test Suite Health
+cd /addons/local/beep_boop_bb8
+pytest --maxfail=1 --disable-warnings -q && echo "TOKEN: TESTS_OK" || echo "DRIFT: TEST_FAILURE"
+
+# 8) Resource Stability
+grep -E 'Out of memory|DeprecationWarning|thread leak' /config/reports/ha_bb8_addon.log && echo "DRIFT: RESOURCE_ISSUE" || echo "TOKEN: RESOURCE_OK"
+
+# 9) Warning Suppression Audit
+grep -E 'filterwarnings|PYTHONWARNINGS' /addons/local/beep_boop_bb8/addon/bb8_core/*.py && echo "TOKEN: WARNING_SUPPRESSION_PRESENT"
 
 # Add-on Health: Operational Sanity Checks
 

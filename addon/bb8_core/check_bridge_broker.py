@@ -46,18 +46,10 @@ def main(timeout=4.0):
             seen_online.set()
 
     def get_mqtt_client():
-        import warnings
-
-        warnings.filterwarnings(
-            "ignore",
-            "Callback API version 1 is deprecated",
-            DeprecationWarning,
-            "paho.mqtt.client",
-        )
         return mqtt.Client(
             client_id=f"precheck-{int(time.time())}",
             protocol=mqtt.MQTTv5,
-            callback_api_version=CallbackAPIVersion.VERSION1,
+            callback_api_version=CallbackAPIVersion.VERSION2,
         )
 
     client = get_mqtt_client()

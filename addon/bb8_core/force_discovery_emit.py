@@ -85,15 +85,7 @@ def main() -> int:
     }
 
     def get_mqtt_client():
-        import warnings
-
-        warnings.filterwarnings(
-            "ignore",
-            "Callback API version 1 is deprecated",
-            DeprecationWarning,
-            "paho.mqtt.client",
-        )
-        return mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
+        return mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION2)
 
     c = get_mqtt_client()
     if user:

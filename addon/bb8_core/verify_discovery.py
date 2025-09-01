@@ -22,7 +22,7 @@ CFG_TOPICS = [
 ]
 
 
-def on_message(_, _unused, msg):
+def on_message(client, userdata, msg):
     # payload is not used, remove assignment
     pass
 
@@ -58,7 +58,7 @@ def verify_configs_and_states(
     retained: dict[str, bool] = {}
     done = {t: False for t, _ in CFG_TOPICS}
 
-    def on_message(_c, _u, msg):
+    def on_message(client, userdata, msg):
         if msg.topic in (t for t, _ in CFG_TOPICS):
             retained[msg.topic] = bool(msg.retain)
             results[msg.topic] = extract_cfg(msg.payload.decode("utf-8", "ignore"))
@@ -98,15 +98,7 @@ def verify_configs_and_states(
 
 
 def get_mqtt_client():
-    import warnings
-
-    warnings.filterwarnings(
-        "ignore",
-        "Callback API version 1 is deprecated",
-        DeprecationWarning,
-        "paho.mqtt.client",
-    )
-    return mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
+    return mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION2)
 
 
 def main():

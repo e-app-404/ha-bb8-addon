@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import warnings
 
-warnings.filterwarnings(
-    "ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho"
-)
 
 import argparse
 import asyncio
@@ -719,16 +716,8 @@ AVAIL_OFF = CFG.get("AVAIL_OFF", "offline")
 
 
 def get_mqtt_client():
-    import warnings
-
-    warnings.filterwarnings(
-        "ignore",
-        "Callback API version 1 is deprecated",
-        DeprecationWarning,
-        "paho.mqtt.client",
-    )
     client = mqtt.Client(
-        callback_api_version=CallbackAPIVersion.VERSION1,
+        callback_api_version=CallbackAPIVersion.VERSION2,
         client_id=CFG.get("MQTT_CLIENT_ID", "bb8_presence_scanner"),
         protocol=mqtt.MQTTv311,
     )

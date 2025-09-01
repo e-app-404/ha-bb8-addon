@@ -1,0 +1,15 @@
+**Prompt:**
+
+Audit and patch the Home Assistant BB-8 add-on codebase for MQTT callback signature compliance and resource stability.
+
+1. Use the checklist in callback_signature_matrix.md to verify all MQTT callback functions (e.g., `on_connect`, `on_message`) match the required VERSION2 signatures.
+2. For any non-compliant callback, update its signature to match VERSION2 requirements (e.g., add `properties=None` to `on_connect`).
+3. Add runtime checks or tests to verify callback compatibility and detect thread/memory leaks.
+4. Review and refactor any reconnect, threading, or semaphore logic to prevent runaway loops and resource exhaustion.
+5. If stability cannot be achieved with VERSION2, revert to VERSION1 and reinstate warning suppression as a temporary measure, documenting the rationale.
+6. Update documentation and the callback signature matrix to reflect all changes.
+7. Ensure all acceptance criteria in STP5_callback_signature.yaml are met.
+
+Proceed step-by-step, providing reasoning and code changes for each patch. Confirm compliance and stability before concluding.
+
+---

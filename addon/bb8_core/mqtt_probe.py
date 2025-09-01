@@ -31,17 +31,9 @@ def main():
     base = env("MQTT_BASE", "bb8")
 
     def get_mqtt_client():
-        import warnings
-
-        warnings.filterwarnings(
-            "ignore",
-            "Callback API version 1 is deprecated",
-            DeprecationWarning,
-            "paho.mqtt.client",
-        )
         return mqtt.Client(
             client_id=f"probe-{int(time.time())}",
-            callback_api_version=CallbackAPIVersion.VERSION1,
+            callback_api_version=CallbackAPIVersion.VERSION2,
         )
 
     client = get_mqtt_client()  # pragma: no cover
@@ -52,7 +44,7 @@ def main():
     payload_seen: dict | None = None
     from .telemetry import echo_roundtrip
 
-    def on_message(c, ud, msg):
+    def on_message(client, userdata, msg):
         nonlocal payload_seen
         try:
             payload = json.loads(msg.payload.decode("utf-8"))
@@ -62,8 +54,8 @@ def main():
             payload_seen = payload
             got_echo.set()
 
-    def on_connect(c, ud, flags, rc, props=None):
-        cid = getattr(c, "_client_id", b"")
+    def on_connect(client, userdata, flags, rc, properties=None):
+        cid = getattr(client, "_client_id", b"")
         try:
             cid = cid.decode() if hasattr(cid, "decode") else str(cid)
         except Exception:
@@ -71,9 +63,9 @@ def main():
         print(f"mqtt_on_connect rc={rc} client_id={cid}")  # pragma: no cover
         if rc == 0:
             res["connected"] = True
-            c.subscribe([(f"{base}/#", 0)])  # pragma: no cover
+            client.subscribe([(f"{base}/#", 0)])  # pragma: no cover
             cmd = {"value": 1, "ts": int(time.time())}
-            c.publish(
+            client.publish(
                 f"{base}/echo/cmd", json.dumps(cmd), qos=0, retain=False
             )  # pragma: no cover
 

@@ -31,30 +31,23 @@ def main():
 
     # v5 client
     def get_mqtt_client():
-        import warnings
-
-        warnings.filterwarnings(
-            "ignore",
-            "Callback API version 1 is deprecated",
-            DeprecationWarning,
-            "paho.mqtt.client",
-        )
         return mqtt.Client(
             client_id=f"smoke-{int(time.time())}",
             protocol=mqtt.MQTTv5,
-            callback_api_version=CallbackAPIVersion.VERSION1,
+            callback_api_version=CallbackAPIVersion.VERSION2,
         )
 
     c = get_mqtt_client()
 
-    def on_connect(cl, *_):
-        cl.subscribe(diag_t, qos=0)
-        # trigger one command the handlers subscribe to
-        cl.publish(f"{base}/stop/press", "", qos=0, retain=False)
 
-    def on_message(_, __, msg):
+    def on_connect(client, userdata, flags, rc, properties=None):
+        client.subscribe(diag_t, qos=0)
+        # trigger one command the handlers subscribe to
+        client.publish(f"{base}/stop/press", "", qos=0, retain=False)
+
+    def on_message(client, userdata, msg):
         try:
-            ev = json.loads((msg.payload or b"{}").decode("utf-8", "ignore"))
+            ev = json.loads((msg.payload or b"{}" ).decode("utf-8", "ignore"))
         except Exception:
             ev = {}
         if ev.get("event", "") in (

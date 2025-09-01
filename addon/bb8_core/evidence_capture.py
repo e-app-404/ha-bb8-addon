@@ -56,7 +56,7 @@ class EvidenceRecorder:
         self.client.subscribe(cmd_topic, qos=1)  # pragma: no cover
         self.client.subscribe(state_topic, qos=1)  # pragma: no cover
 
-        def on_message(_c, _u, msg):
+        def on_message(client, userdata, msg):
             now = time.time()
             try:
                 payload = msg.payload.decode("utf-8", "ignore")
