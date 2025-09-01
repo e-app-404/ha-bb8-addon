@@ -958,3 +958,7 @@ Before publishing a changelog entry:
 - deps: ensure **PyYAML >= 6.0.1** present.
 - docs: add MQTT Version Policy to README.
 - ADR: add **ADR-0002** for dependency & runtime compatibility.
+
+## 2025-09-01 — 2025.8.21.7
+- bump: add-on version to 2025.8.21.7
+- chore: synchronized config.yaml and Dockerfile
