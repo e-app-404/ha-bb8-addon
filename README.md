@@ -1,10 +1,21 @@
+## Warning Suppression Strategy
+
+We suppress the paho MQTT Callback API v1 DeprecationWarning using:
+* PYTHONWARNINGS environment variable
+* pytest.ini filterwarnings
+* Code-level warning filters
+* Refactored instantiation patterns
+
+This ensures robust, maintainable suppression in all environments. See CALLBACK_API_v1.md for details.
 <<<<<<< HEAD
 # HA-BB8 Add-on: Local Build & Supervisor Integration
 
 ## Local Add-on Folder Structure
 - Place your add-on in `/addons/local/beep_boop_bb8` on the Home Assistant host.
 - Required files:
-  - `config.yaml` (with `slug: "beep_boop_bb8"`)
+   - `config.yaml` (with `slug: "beep_boop_bb8"`)
+   - `Dockerfile` (Debian base, see TROUBLESHOOTING_RECIPES.md for skeleton)
+   - `run.sh` (entrypoint wrapper)
 
 ### Patch bump + publish + deploy
 
@@ -14,6 +25,7 @@
 * All release scripts are located in `ops/release/` and `ops/workspace/`.
 * The workflow is idempotent: publishing is skipped if no changes are present in `addon/`.
 * Makefile targets are tab-indented and ready for one-command releases.
+* CI/CD coverage threshold enforced in repo-guards.yml (see .github/workflows/repo-guards.yml).
 
 ---
 Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT.
@@ -160,17 +172,14 @@ action:
    - All actions and errors are logged with structured JSON lines.
 
 ## MQTT Library Version Policy
-- Runtime dependency: **paho-mqtt >= 2.0, < 3.0** (pinned in `requirements.txt`).
-- The code explicitly selects `CallbackAPIVersion.VERSION1` when creating `mqtt.Client(...)`
-  to preserve v1 callback signatures while running on paho-mqtt v2.
-- If migrating to v2 callbacks later, switch to `CallbackAPIVersion.VERSION2` and update callback
-  signatures accordingly.
+* Runtime dependency: **paho-mqtt >= 2.0, < 3.0** (pinned in `requirements.txt`).
+* All `mqtt.Client` instantiations use `callback_api_version=CallbackAPIVersion.VERSION1` for v1 callback signatures (see CALLBACK_API_v1.md).
+* If migrating to v2 callbacks later, switch to `CallbackAPIVersion.VERSION2` and update callback signatures accordingly.
 
 ### Local development quickstart
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 python -m pip install -U pip setuptools wheel
 python -m pip install -r addon/requirements.txt -r addon/requirements-dev.txt
-pytest -q addon/tests
-
->>>>>>> origin/main
+pytest --disable-warnings --cov=addon/bb8_core --cov-report=term-missing
+```

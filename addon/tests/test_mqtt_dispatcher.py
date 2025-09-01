@@ -1,6 +1,8 @@
 import warnings
-warnings.filterwarnings("ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho")
-from paho.mqtt.client import CallbackAPIVersion
+
+warnings.filterwarnings(
+    "ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho"
+)
 import json
 import threading
 import time
@@ -8,6 +10,7 @@ from unittest.mock import patch
 
 import paho.mqtt.client as mqtt  # pyright: ignore[reportMissingImports]
 from bb8_core.logging_setup import logger
+from paho.mqtt.client import CallbackAPIVersion
 
 # Test parameters
 MQTT_HOST = "test.mosquitto.org"

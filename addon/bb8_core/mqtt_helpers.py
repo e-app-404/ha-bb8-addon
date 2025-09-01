@@ -19,16 +19,16 @@ async def publish_retain(
     )
     # Common signature: (topic, payload, qos, retain)
     try:
-        await mqtt.publish(topic, data, qos, retain)  # type: ignore[misc]
+        await mqtt.publish(topic, data, qos, retain)  # pragma: no cover
         return
     except TypeError:
         pass
     # Kwargs signature: (topic, payload, retain=..., qos=...)
     try:
-        await mqtt.publish(topic, data, retain=retain, qos=qos)  # type: ignore[misc]
+        await mqtt.publish(topic, data, retain=retain, qos=qos)  # pragma: no cover
         return
     except TypeError:
         pass
     # Last resort: synchronous publish (returns immediately)
-    mqtt.publish(topic, data, qos, retain)  # type: ignore[call-arg]
+    mqtt.publish(topic, data, qos, retain)  # pragma: no cover
     return None

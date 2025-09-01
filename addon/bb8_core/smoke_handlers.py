@@ -1,4 +1,3 @@
-from paho.mqtt.client import CallbackAPIVersion
 #!/usr/bin/env python3
 import json
 import os
@@ -7,6 +6,7 @@ import time
 import warnings
 
 import paho.mqtt.client as mqtt
+from paho.mqtt.client import CallbackAPIVersion
 
 warnings.filterwarnings(
     "ignore", category=DeprecationWarning, module="paho.mqtt.client"
@@ -28,8 +28,24 @@ def main():
     host, port, base, user, _ = env()
     got = threading.Event()
     diag_t = f"{base}/_diag"
+
     # v5 client
-    c = mqtt.Client(client_id=f"smoke-{int(time.time())}", protocol=mqtt.MQTTv5, callback_api_version=CallbackAPIVersion.VERSION1)
+    def get_mqtt_client():
+        import warnings
+
+        warnings.filterwarnings(
+            "ignore",
+            "Callback API version 1 is deprecated",
+            DeprecationWarning,
+            "paho.mqtt.client",
+        )
+        return mqtt.Client(
+            client_id=f"smoke-{int(time.time())}",
+            protocol=mqtt.MQTTv5,
+            callback_api_version=CallbackAPIVersion.VERSION1,
+        )
+
+    c = get_mqtt_client()
 
     def on_connect(cl, *_):
         cl.subscribe(diag_t, qos=0)

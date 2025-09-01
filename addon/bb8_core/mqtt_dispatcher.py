@@ -1,8 +1,10 @@
 from __future__ import annotations
-import warnings
-warnings.filterwarnings("ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho")
-from paho.mqtt.client import CallbackAPIVersion
 
+import warnings
+
+warnings.filterwarnings(
+    "ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho"
+)
 import asyncio
 import inspect
 import json
@@ -13,6 +15,7 @@ from collections.abc import Callable
 from typing import Any
 
 import paho.mqtt.client as mqtt
+from paho.mqtt.client import CallbackAPIVersion
 
 from .addon_config import CONFIG, CONFIG_SOURCE, init_config
 from .bb8_presence_scanner import publish_discovery as _publish_discovery_async
@@ -34,6 +37,7 @@ _SCANNER_DISCOVERY_PUBLISHED_UIDS: set[str] = set()
 
 
 log = logging.getLogger(__name__)
+
 
 # ---- Seam hook for tests (safe no-op in production) ----
 def _get_scanner_publisher():
@@ -323,6 +327,7 @@ def publish_bb8_discovery(publish_fn) -> None:
         # maintain legacy message + add smoke-compatible line
         log.info("Published discovery: %s", topic)
         log.info("discovery: published topic=%s", topic)
+
     # Unique IDs (stable, not name-derived)
     uid = {
         "presence": "bb8_presence",
@@ -660,6 +665,7 @@ def _maybe_publish_bb8_discovery() -> None:
             _DISPATCHER_DISCOVERY_PUBLISHED_UIDS.add(uniq_id)
             _DISPATCHER_DISCOVERY_PUBLISHED_UIDS.add(uniq_id)
 
+
 # -----------------------------------------------------------------------------
 # Dispatcher singleton guard
 # -----------------------------------------------------------------------------
@@ -822,10 +828,23 @@ def start_mqtt_dispatcher(
     )
 
     # Paho v2 API (compatible with our version); v311 is fine for HA
-    client = mqtt.Client(
-        callback_api_version=CallbackAPIVersion.VERSION1,
-        client_id=client_id, protocol=mqtt.MQTTv311, clean_session=True
-    )
+    def get_mqtt_client():
+        import warnings
+
+        warnings.filterwarnings(
+            "ignore",
+            "Callback API version 1 is deprecated",
+            DeprecationWarning,
+            "paho.mqtt.client",
+        )
+        return mqtt.Client(
+            callback_api_version=CallbackAPIVersion.VERSION1,
+            client_id=client_id,
+            protocol=mqtt.MQTTv311,
+            clean_session=True,
+        )
+
+    client = get_mqtt_client()
 
     # Auth
     if username is not None:
@@ -936,6 +955,7 @@ def _make_cb(handler):
     Wraps a handler function to process MQTT message payloads as UTF-8 text.
     Used as a callback for MQTT topic subscriptions.
     """
+
     def _cb(_client, _userdata, message):
         payload = message.payload or b""
         try:
@@ -943,7 +963,10 @@ def _make_cb(handler):
         except Exception:
             text = ""
         handler(text)
+
     return _cb
+
+
 def _bind_subscription(topic, handler):
     """
     Bind an MQTT topic subscription to a handler function.
@@ -964,6 +987,8 @@ def _bind_subscription(topic, handler):
         log.warning("failed to subscribe %s: %s", topic, exc)
         return False
         return True
+
+
 def _apply_pending_subscriptions():
     """
     Attempt to bind all pending MQTT topic subscriptions to the active client.
@@ -980,6 +1005,7 @@ def _apply_pending_subscriptions():
         if _bind_subscription(topic, handler):
             import contextlib
 
+
 def register_subscription(topic, handler):
     """
     Register a handler for an MQTT topic subscription.
@@ -987,6 +1013,7 @@ def register_subscription(topic, handler):
     """
     if not _bind_subscription(topic, handler):
         _PENDING_SUBS.append((topic, handler))
+
 
 def register_subscription(topic, handler):
     if not _bind_subscription(topic, handler):

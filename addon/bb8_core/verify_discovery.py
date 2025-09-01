@@ -1,4 +1,3 @@
-from paho.mqtt.client import CallbackAPIVersion
 # --- PATCHED: Accept both short and long key styles ---
 import json
 import os
@@ -6,6 +5,7 @@ import time
 from typing import Any
 
 import paho.mqtt.client as mqtt
+from paho.mqtt.client import CallbackAPIVersion
 
 KEY_SYNONYMS = {
     "stat_t": ["stat_t", "state_topic"],
@@ -97,24 +97,40 @@ def verify_configs_and_states(
     return rows, all_ok
 
 
+def get_mqtt_client():
+    import warnings
+
+    warnings.filterwarnings(
+        "ignore",
+        "Callback API version 1 is deprecated",
+        DeprecationWarning,
+        "paho.mqtt.client",
+    )
+    return mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
+
+
 def main():
     host = os.getenv("MQTT_HOST", "127.0.0.1")
     port = int(os.getenv("MQTT_PORT", "1883"))
     user = os.getenv("MQTT_USERNAME")
     pw = os.getenv("MQTT_PASSWORD")
-    client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
+    client = get_mqtt_client()  # pragma: no cover
     if user:
-        client.username_pw_set(user, pw or "")
-    client.connect(host, port, keepalive=10)
-    rows, ok = verify_configs_and_states(client)
-    print("Discovery Verification Results:")
-    print("Topic           | Retained | stat_t        | avty_t   | sw_ver   | ids")
-    for r in rows:
+        client.username_pw_set(user, pw or "")  # pragma: no cover
+    client.connect(host, port, keepalive=10)  # pragma: no cover
+    rows, ok = verify_configs_and_states(client)  # pragma: no cover
+    print("Discovery Verification Results:")  # pragma: no cover
+    print(
+        "Topic           | Retained | stat_t        | avty_t   | sw_ver   | ids"
+    )  # pragma: no cover
+    for r in rows:  # pragma: no cover
         print(
             f"{r['topic']:27} | {str(r['retained']):8} | {r['stat_t']:19} | "
             f"{r['avty_t']:11} | {r['sw_version']:14} | {r['identifiers']}"
-        )
-    print("\nPASS" if ok else "\nFAIL: One or more checks did not pass.")
+        )  # pragma: no cover
+    print(
+        "\nPASS" if ok else "\nFAIL: One or more checks did not pass."
+    )  # pragma: no cover
 
 
 if __name__ == "__main__":

@@ -1,38 +1,38 @@
----
-title: PATHS_MAP — HA‑BB8
-date: 2025-08-26
-status: Approved
----
+# PATHS_MAP
 
-# PATHS_MAP — HA‑BB8
+## Add-on Runtime Paths
 
-> **Purpose:** single source of truth for where things live, what ships, and how to validate layout. Designed to be machine‑parsable by CI/Copilot/LLMs.
->
-> **Workspace root (WS_ROOT):** `/Users/evertappels/Projects/HA-BB8`
-> **HA runtime (container build context):** `/addons/local/beep_boop_bb8`
-> **Mounted runtime on dev (RUNTIME_MOUNT):** `/Volumes/addons/local/beep_boop_bb8`
-> **Add‑on slug:** `beep_boop_bb8`
-> **Remote add‑on repo:** `git@github.com:e-app-404/ha-bb8-addon.git`
+| Path | Description |
+|------|-------------|
+| /addons/local/beep_boop_bb8 | Main add-on folder (config.yaml, Dockerfile, code) |
+| /usr/src/app/bb8_core/      | Python runtime code (in container) |
+| /usr/src/app/app/           | App scripts (in container) |
+| /etc/services.d/            | s6 service scripts (in container) |
+| /data/options.json          | Supervisor-generated config (in container) |
+| /config/reports/            | Evidence, QA, telemetry, receipts |
 
----
+## Workspace Paths
 
-## 0) Path Variables (for scripts)
+| Path | Description |
+|------|-------------|
+| addon/                 | Shipped subtree (container context) |
+| addon/bb8_core/        | Runtime code |
+| addon/config.yaml      | Add-on manifest |
+| addon/Dockerfile       | Container build recipe |
+| addon/run.sh           | Entrypoint wrapper |
+| addon/tests/           | Test suite (pytest) |
+| ops/                   | Scripts & runners (not shipped) |
+| reports/               | Evidence sink (QA, telemetry, receipts) |
+| scripts/               | Wrappers (verify/deploy) |
+| .github/               | CI workflows |
 
-> **OS note:** `RUNTIME_MOUNT` is **optional** and OS-specific. Examples:  
-> macOS: `/Volumes/addons/local/beep_boop_bb8` · Linux: `/mnt/addons/local/beep_boop_bb8` · WSL: (often unavailable)
-> **Windows/WSL note:** WSL typically cannot see `/addons/local/...` directly; use rsync over SSH or a bind mount on the HA host.
+## Operational Notes
 
-```bash
-export WS_ROOT="/Users/evertappels/Projects/HA-BB8"
-export ADDON_DIR="$WS_ROOT/addon"
-# RUNTIME_MOUNT is optional; scripts must tolerate it being absent.
-export RUNTIME_MOUNT="${RUNTIME_MOUNT:-/Volumes/addons/local/beep_boop_bb8}"
-export HA_RUNTIME="/addons/local/beep_boop_bb8"
-export ADDON_SLUG="beep_boop_bb8"
-export REMOTE_ADDON="git@github.com:e-app-404/ha-bb8-addon.git"
-```
-
----
+- All paths and structure conform to OPERATIONS_OVERVIEW.md and TROUBLESHOOTING_RECIPES.md.
+- For Dockerfile, run.sh, and s6 scripts, see OPERATIONS_OVERVIEW.md for canonical examples.
+- All evidence and QA artifacts are written to reports/.
+- Supervisor always uses /addons/local/beep_boop_bb8 as the runtime folder.
+- No .git folders are present in runtime.
 
 ## 1) Canonical Paths Map (with examples)
 

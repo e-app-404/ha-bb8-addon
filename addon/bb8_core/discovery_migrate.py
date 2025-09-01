@@ -1,4 +1,3 @@
-from paho.mqtt.client import CallbackAPIVersion
 from __future__ import annotations
 
 import json
@@ -6,6 +5,7 @@ import os
 import sys
 
 import paho.mqtt.client as mqtt
+from paho.mqtt.client import CallbackAPIVersion
 
 REQ_TOPICS = [
     "homeassistant/binary_sensor/bb8_presence/config",
@@ -85,7 +85,19 @@ def main() -> int:
         led_discovery(c, led["unique_id"], duplicates_count)
     except Exception:
         pass
-    c = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
+
+    def get_mqtt_client():
+        import warnings
+
+        warnings.filterwarnings(
+            "ignore",
+            "Callback API version 1 is deprecated",
+            DeprecationWarning,
+            "paho.mqtt.client",
+        )
+        return mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
+
+    c = get_mqtt_client()
     if user:
         c.username_pw_set(user, pw or "")
     c.connect(host, port, 10)

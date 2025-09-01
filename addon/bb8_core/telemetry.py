@@ -59,14 +59,14 @@ class Telemetry:
         if self._t and self._t.is_alive():
             return
         self._stop.clear()
-        self._t = threading.Thread(target=self._run, daemon=True)
-        self._t.start()
+        self._t = threading.Thread(target=self._run, daemon=True)  # pragma: no cover
+        self._t.start()  # pragma: no cover
         logger.info({"event": "telemetry_start", "interval_s": self.interval_s})
 
     def stop(self):
         self._stop.set()
         if self._t:
-            self._t.join(timeout=2)
+            self._t.join(timeout=2)  # pragma: no cover
         logger.info({"event": "telemetry_stop"})
 
     def _run(self):

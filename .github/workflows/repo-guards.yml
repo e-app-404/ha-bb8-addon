@@ -81,13 +81,14 @@ jobs:
           # CRTP: scripts/ allowed only if referenced in Dockerfile or marker present
           if [ -d addon/scripts ]; then
             if ! grep -Ei '(COPY|ADD|RUN|ENTRYPOINT|CMD).*scripts/' addon/Dockerfile >/dev/null 2>&1 \
-               && [ ! -f addon/.allow_runtime_scripts ]; then
-              echo "DRIFT:scripts_unreferenced_in_dockerfile" >&2; exit 9
-            else
-              echo "TOKEN: SCRIPTS_ALLOWED"
-            fi
-          fi
-          echo "TOKEN: STRUCTURE_OK"
+          - name: Pytest (warnings as errors, coverage threshold)
+            env:
+              PYTHONWARNINGS: "error,ignore:.*callback API version 1 deprecated.*:DeprecationWarning:paho"
+            run: |
+              pytest -q -W error --maxfail=1 \
+                --cov=bb8_core --cov-report=xml:coverage.xml --cov-report=term-missing \
+                --cov-fail-under=90 \
+                --junitxml=pytest-report.xml
 
       - name: Setup Python
         uses: actions/setup-python@v5

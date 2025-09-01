@@ -1,4 +1,3 @@
-from paho.mqtt.client import CallbackAPIVersion
 #!/usr/bin/env python3
 import json
 import os
@@ -8,6 +7,7 @@ import time
 import warnings
 
 import paho.mqtt.client as mqtt
+from paho.mqtt.client import CallbackAPIVersion
 
 warnings.filterwarnings(
     "ignore", category=DeprecationWarning, module="paho.mqtt.client"
@@ -45,7 +45,22 @@ def main(timeout=4.0):
         if msg.topic == topic and pl == "online":
             seen_online.set()
 
-    client = mqtt.Client(client_id=f"precheck-{int(time.time())}", protocol=mqtt.MQTTv5, callback_api_version=CallbackAPIVersion.VERSION1)
+    def get_mqtt_client():
+        import warnings
+
+        warnings.filterwarnings(
+            "ignore",
+            "Callback API version 1 is deprecated",
+            DeprecationWarning,
+            "paho.mqtt.client",
+        )
+        return mqtt.Client(
+            client_id=f"precheck-{int(time.time())}",
+            protocol=mqtt.MQTTv5,
+            callback_api_version=CallbackAPIVersion.VERSION1,
+        )
+
+    client = get_mqtt_client()
     if user:
         client.username_pw_set(user, pwd)
     client.on_connect = on_connect

@@ -187,14 +187,7 @@ exec "$PY" -m bb8_core.echo_responder
 # In container
 docker exec "$CID" bash -lc 'test -x /etc/services.d/echo_responder/run && echo TOKEN:ECHO_SERVICE_OK'
 # Attest (≥10s window)
-bash ops/attest/attest_stp5_telemetry.sh
-# Expect: TELEMETRY_ATTEST_OK, echo_count >= 3, p95 RTT <= 250ms
-```
-
-## TR-007 — Quick MODE check (LOCAL_DEV vs PUBLISH)
-
-**Detector**
-
+See OPERATIONS_OVERVIEW.md for the canonical Dockerfile skeleton. Use apt-get, not apk.
 ```bash
 CFG=/addons/local/beep_boop_bb8/config.yaml
 sed 's/#.*$//' "$CFG" | grep -Eq '^[[:space:]]*image:[[:space:]]*' && echo "MODE:PUBLISH" || echo "MODE:LOCAL_DEV"

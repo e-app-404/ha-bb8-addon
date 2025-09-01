@@ -114,13 +114,13 @@ TOKEN: RUNTIME_TOPOLOGY_OK
 ```
 
 ---
-
+ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base-debian:bookworm
 ## 4. Output Contracts (JSON)
 
 > Contracts are machine‑readable summaries placed under `reports/`.
 
 ### 4.1 QA Report
-
+  # ...other required packages... \
 ```json
 {
   "contract": "qa_report_contract_v1",
@@ -655,9 +655,20 @@ If standard tools fail, fallback methods (cat, tar, File Editor) bypass temp-fil
 
 **Fix:** dedicated BLE loop thread; `_cancel_and_drain()`; graceful `stop()+join()`.
 
+
 ### Issue: MQTT callback deprecation
 
-**Fix:** pin `paho-mqtt` policy; pass `CallbackAPIVersion.VERSION1`; suppress only that warning in pytest.
+**Fix:**
+- Pin `paho-mqtt` policy; pass `CallbackAPIVersion.VERSION1`.
+- Refactored all code to instantiate `mqtt.Client` only inside functions or classes, never at module level. This ensures warning filters can be set before any client is created, fully suppressing import-time DeprecationWarnings.
+- All functions and event loops now accept a `client` argument, and the main entrypoint creates, configures, and passes the client instance explicitly.
+- Callback assignments (e.g., `on_connect`) are now performed via a dedicated setup function after client instantiation.
+- No global side effects or warnings during import; code is more testable and maintainable.
+
+**Operational impact:**
+- No import-time warnings; pytest and CI can reliably filter/suppress deprecation warnings.
+- Improved code hygiene and explicit dependency management.
+- All entrypoints (CLI, service, tests) must instantiate and pass the client instance.
 
 ### Issue: LED discovery dupes/missing
 

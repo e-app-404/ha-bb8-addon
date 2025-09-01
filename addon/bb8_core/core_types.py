@@ -23,7 +23,7 @@ RGB = tuple[int, int, int]
 BoolCallback = Callable[[bool], None]
 IntCallback = Callable[[int], None]
 OptIntCallback = Callable[[int | None], None]
-OptIntCallback = Callable[[int | None], None]
+RGBCallback = Callable[[int, int, int], None]
 ScalarCallback = Callable[
     [bool | int | float | str], None
 ]  # Scalar echo: bool|int|float|str

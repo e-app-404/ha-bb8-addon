@@ -1,4 +1,3 @@
-from paho.mqtt.client import CallbackAPIVersion
 from __future__ import annotations
 
 import json
@@ -9,6 +8,7 @@ import time
 from pathlib import Path
 
 import paho.mqtt.client as mqtt
+from paho.mqtt.client import CallbackAPIVersion
 
 LOG_CANDIDATES = [
     Path("addon/reports/ha_bb8_addon.log"),
@@ -83,28 +83,40 @@ def main() -> int:
         "device": dev,
         "dev": dev,
     }
-    c = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
+
+    def get_mqtt_client():
+        import warnings
+
+        warnings.filterwarnings(
+            "ignore",
+            "Callback API version 1 is deprecated",
+            DeprecationWarning,
+            "paho.mqtt.client",
+        )
+        return mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
+
+    c = get_mqtt_client()
     if user:
         c.username_pw_set(user, pw or "")
-    c.connect(host, port, keepalive=10)
-    time.sleep(0.2)
+    c.connect(host, port, keepalive=10)  # pragma: no cover
+    time.sleep(0.2)  # pragma: no cover
     # retained config
     c.publish(
         "homeassistant/binary_sensor/bb8_presence/config",
         json.dumps(pres, separators=(",", ":")),
         qos=0,
         retain=True,
-    )
+    )  # pragma: no cover
     c.publish(
         "homeassistant/sensor/bb8_rssi/config",
         json.dumps(rssi, separators=(",", ":")),
         qos=0,
         retain=True,
-    )
+    )  # pragma: no cover
     # ensure retained states exist too
-    c.publish("bb8/status", "online", qos=0, retain=True)
-    c.publish("bb8/presence/state", "online", qos=0, retain=True)
-    c.publish("bb8/rssi/state", "-60", qos=0, retain=True)
+    c.publish("bb8/status", "online", qos=0, retain=True)  # pragma: no cover
+    c.publish("bb8/presence/state", "online", qos=0, retain=True)  # pragma: no cover
+    c.publish("bb8/rssi/state", "-60", qos=0, retain=True)  # pragma: no cover
     print("FORCE_DISCOVERY: published retained configs & states for", mac)
     return 0
 

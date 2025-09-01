@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+import argparse
+import json
+import os
+import sys
+import threading
+import time
 from datetime import UTC, datetime
 from typing import Any
 
@@ -15,17 +21,11 @@ Outputs:
 Exit code:
   0 on PASS (all checks ok), 1 on FAIL (any roundtrip or schema check failed)
 """
-import argparse
-import json
-import os
-import sys
-import threading
-import time
 
 # Use shared config
 try:
     from bb8_core.addon_config import load_config
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     # Fallback assignment: If the import fails, set load_config to None.
     # This allows the script to run outside the package context where
     # bb8_core may not be available.
@@ -61,6 +61,7 @@ def get_shared_config():
     if load_config:
         try:
             cfg, src = load_config()
+            cfg, _ = load_config()
             return cfg
         except Exception as e:
             logging.basicConfig(level=logging.WARNING)
@@ -153,7 +154,6 @@ def validate_discovery_obj(obj: dict[str, Any]) -> tuple[bool, str]:
     return True, "ok"
 
 
-# Aggregator: filter and validate only relevant discovery configs for this device
 def validate_discovery(configs, device_identifiers, base_topic=None):
     """
     Validate only discovery payloads that belong to this device.
@@ -164,7 +164,7 @@ def validate_discovery(configs, device_identifiers, base_topic=None):
     """
     relevant = []
     for item in configs:
-        if isinstance(item, list | tuple) and len(item) >= 2:
+        if isinstance(item, (list, tuple)) and len(item) >= 2:
             topic, payload = item[0], item[1]
         elif isinstance(item, dict):
             topic, payload = item.get("topic"), item.get("payload")
@@ -226,6 +226,7 @@ def validate_discovery(configs, device_identifiers, base_topic=None):
             continue
         results.append({"topic": topic, "valid": True})
     return {"valid": ok, "count": len(relevant), "details": results}
+    return {"valid": ok, "count": len(relevant), "details": results}
 
 
 # ----- collector -----
@@ -272,16 +273,16 @@ class Collector:
         ]
 
     # MQTT callbacks
-    def on_connect(self, c, u, flags, rc, properties=None):
+    def on_connect(self, client, *_):
         self.connected.set()
         # Discovery retained topics
         disc_prefix = "homeassistant/"
-        c.subscribe(f"{disc_prefix}#")
+        client.subscribe(f"{disc_prefix}#")
         # State topics
         for t in self.state_topics:
-            c.subscribe(t, qos=1)
+            client.subscribe(t, qos=1)
 
-    def on_message(self, c, u, msg):
+    def on_message(self, _client, _userdata, msg):
         ts = utc_now_iso()
         entry = {
             "ts": ts,
