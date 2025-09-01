@@ -1,7 +1,7 @@
 name: "HA-BB8"
 description: "Homeassistant Sphero BB-8 bluetooth integration using MQTT discovery"
 slug: "beep_boop_bb8"
-version: 2025.8.21.7
+version: 2025.8.21.8
 arch: ["aarch64"]
 url: "https://github.com/e-app-404/ha-bb8-addon"
 # LOCAL_DEV: comment out image: to force Supervisor to build locally from Dockerfile/build.yaml
@@ -32,8 +32,8 @@ options:
   echo_min_interval_ms: 50      # throttle per message
   # --- Telemetry & Logging ---
   enable_bridge_telemetry: false
-  log_path: "/data/reports/ha_bb8_addon.log"
-  report_root: "/data/reports"
+  log_path: "/addons/local/beep_boop_bb8/ha_bb8_addon.log"
+  report_root: "/addons/local/beep_boop_bb8/reports"
   telemetry_interval_s: 20
 
   # --- Discovery / Publishing policy ---
@@ -41,7 +41,7 @@ options:
   discovery_retain: false
 
   # --- Caching & scan cadence ---
-  cache_path: "/data/bb8_mac_cache.json"
+  cache_path: "/addons/local/beep_boop_bb8/bb8_mac_cache.json"
   cache_default_ttl_hours: 24
   cache_ttl_hours: 24
   bb8_scan_interval: 10
