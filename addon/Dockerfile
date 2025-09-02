@@ -8,10 +8,9 @@ ENV PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 WORKDIR /usr/src/app
-COPY bb8_core/     /usr/src/app/bb8_core/
-COPY app/          /usr/src/app/app/
-COPY services.d/   /etc/services.d/
-COPY run.sh        /usr/src/app/run.sh
+COPY addon/bb8_core /usr/src/app/bb8_core
+COPY addon/config.yaml /usr/src/app/config.yaml
+COPY addon/run.sh /run.sh
 COPY requirements.txt* /usr/src/app/
 RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build context' >&2; exit 53)
 RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build context' >&2; exit 53)
@@ -53,6 +52,7 @@ RUN printf '%s\n' \
 ARG BUILD_VERSION
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV ADDON_VERSION=${BUILD_VERSION}
+ENV PYTHONPATH="/usr/src/app:${PYTHONPATH}"
 RUN echo "2025.08.21" > /usr/src/app/VERSION
 
 # S6 Entrypoint
