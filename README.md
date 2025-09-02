@@ -25,8 +25,6 @@ This ensures robust, maintainable suppression in all environments. See CALLBACK_
 * All release scripts are located in `ops/release/` and `ops/workspace/`.
 * The workflow is idempotent: publishing is skipped if no changes are present in `addon/`.
 * Makefile targets are tab-indented and ready for one-command releases.
-* CI/CD coverage threshold enforced in repo-guards.yml (see .github/workflows/repo-guards.yml).
-
 ---
 Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT.
 
@@ -41,30 +39,36 @@ Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT.
   - Power switch (`bb8/command/power`, `bb8/state/power`)
 ## Where do options come from?
 
-- **Author:** You (the HA admin) via the UI; Supervisor materializes the file inside the container.
 - **Purpose:** Single source of truth for runtime config (MQTT host/port/creds, topic prefix, BLE adapter, timeouts, TLS).
 - **Do not edit manually** in the container; change options in the UI and restart the add-on.
 
+ Add-on runtime path: `/addons/local/beep_boop_bb8` (Home Assistant OS)
+ Required files:
+    - `config.yaml` (with `slug: "beep_boop_bb8"`)
+    - `Dockerfile` (Debian base, see TROUBLESHOOTING_RECIPES.md for skeleton)
+    - `run.sh` (entrypoint wrapper)
 ## Directory Structure
 ```text
+ All deployment is performed via SSH and rsync (no git required on runtime).
+ Machine-readable governance tokens are emitted in operational receipts:
+    - `SUBTREE_PUBLISH_OK`, `CLEAN_RUNTIME_OK`, `DEPLOY_OK`, `VERIFY_OK`, `RUNTIME_TOPOLOGY_OK` (see `reports/deploy_receipt.txt`)
+ Release scripts: `ops/release/deploy_ha_over_ssh.sh` (rsync + Supervisor API restart)
+ Idempotent workflow: publishing is skipped if no changes in `addon/`.
+ Makefile targets: tab-indented, one-command release and deploy.
+ CI/CD coverage threshold enforced in `.github/workflows/repo-guards.yml`.
 local/
 │   ├── app/
+ All operational steps emit tokens for CI and governance validation.
+ See `docs/OPERATIONS_OVERVIEW.md` for full token contract and operational flow.
 │   │   ├── bb8_bletest_diag.sh
 │   │   ├── ble_test_diag.sh
 │   │   └── test_ble_adapter.py
-│   ├── bb8_core/
-│   │   ├── __init__.py
-│   │   ├── ble_link.py
-│   │   ├── ble_utils.py
 │   │   ├── bridge_controller.py
 │   │   ├── controller.py
 │   │   ├── core.py
 │   │   ├── discovery.py
 │   │   ├── discovery_publish.py
 │   │   ├── evidence_capture.py
-│   │   ├── facade.py
-│   │   ├── logging_setup.py
-│   │   ├── mqtt_dispatcher.py
 │   │   ├── telemetry.py
 │   │   ├── test_mqtt_dispatcher.py
 │   │   ├── util.py
@@ -128,25 +132,19 @@ local/
 3. Start the add-on and control BB-8 from Home Assistant automations or MQTT.
 
 ### Example Home Assistant Automation (2024.8+ syntax)
-
-```yaml
-action:
    - action: mqtt.publish
       data:
          topic: bb8/command/power
-         payload: "ON"
-```
 
 ## BB-8 Add-on End-to-End Startup Flow
 
-1. **Container Startup**
-   - S6 supervisor starts the add-on container.
    - `run.sh` is executed as the entrypoint.
 
 2. **Shell Entrypoint (`run.sh`)**
    - Loads config from `/data/options.json`.
    - Exports environment variables for all options (including `BB8_MAC_OVERRIDE`).
    - Prints startup diagnostics and environment.
+4. Deploy updated code using `make release-patch` or `ops/release/deploy_ha_over_ssh.sh` (rsync-based, no git required on runtime).
    - Runs BLE adapter check.
    - Starts the main Python service:
      - `python -m bb8_core.bridge_controller --bb8-mac "$BB8_MAC_OVERRIDE" --scan-seconds "$BB8_SCAN_SECONDS" --rescan-on-fail "$BB8_RESCAN_ON_FAIL" --cache-ttl-hours "$BB8_CACHE_TTL_HOURS"`

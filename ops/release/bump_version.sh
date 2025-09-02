@@ -16,20 +16,42 @@ CH="addon/CHANGELOG.md"
 [ -f "$CFG" ] || { echo "ERROR: $CFG not found"; exit 2; }
 
 # Current version from config.yaml (simple parse; expects a 'version: x.y.z' line)
-CUR="$(awk -F': *' '/^version:/ {print $2; exit}' "$CFG")"
-[[ "$CUR" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "ERROR: bad current version '$CUR'"; exit 3; }
 
+CUR="$(awk -F': *' '/^version:/ {print $2; exit}' "$CFG")"
+# Accept either 3 or 4 segment version numbers
+if [[ "$CUR" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  SEGMENTS=4
+elif [[ "$CUR" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  SEGMENTS=3
+else
+  echo "ERROR: bad current version '$CUR'"; exit 3;
+fi
+
+
+# Bump function for 3 or 4 segment versions
 bump_semver() {
   local v="$1" kind="$2"
-  IFS=. read -r MA MI PA <<< "$v"
-  case "$kind" in
-    patch) PA=$((PA+1));;
-    minor) MI=$((MI+1)); PA=0;;
-    major) MA=$((MA+1)); MI=0; PA=0;;
-    *) echo "$kind"; return 0;;
-  esac
-  echo "${MA}.${MI}.${PA}"
+  if [[ $SEGMENTS -eq 4 ]]; then
+    IFS=. read -r Y M D P <<< "$v"
+    case "$kind" in
+      patch) P=$((P+1));;
+      minor) M=$((M+1)); D=0; P=0;;
+      major) Y=$((Y+1)); M=0; D=0; P=0;;
+      *) echo "$kind"; return 0;;
+    esac
+    echo "${Y}.${M}.${D}.${P}"
+  else
+    IFS=. read -r MA MI PA <<< "$v"
+    case "$kind" in
+      patch) PA=$((PA+1));;
+      minor) MI=$((MI+1)); PA=0;;
+      major) MA=$((MA+1)); MI=0; PA=0;;
+      *) echo "$kind"; return 0;;
+    esac
+    echo "${MA}.${MI}.${PA}"
+  fi
 }
+
 
 REQ="${1:-patch}"
 if [[ "$REQ" =~ ^(patch|minor|major)$ ]]; then
@@ -37,7 +59,12 @@ if [[ "$REQ" =~ ^(patch|minor|major)$ ]]; then
 else
   NEW="$REQ"
 fi
-[[ "$NEW" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "ERROR: target version '$NEW' invalid"; exit 4; }
+# Accept either 3 or 4 segment version numbers for NEW
+if [[ "$NEW" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ || "$NEW" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  :
+else
+  echo "ERROR: target version '$NEW' invalid"; exit 4;
+fi
 
 # 1) Update config.yaml: version: NEW
 perl -0777 -pe "s/^version:\s*.*/version: ${NEW}/m" -i "$CFG"

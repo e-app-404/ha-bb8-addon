@@ -13,7 +13,7 @@
    - Check for all expected `TOKEN:` lines in `reports/paths_health_receipt.txt`.
 
 2. **Sync add-on subtree to HA runtime (prefer SMB mount):**
-   - `rsync -av --inplace --delete --exclude '.DS_Store' --exclude-from ops/rsync_runtime.exclude addon/ /Volumes/addons/local/beep_boop_bb8/`
+   - `rsync -av --inplace --delete --exclude '.DS_Store' --exclude-from ops/rsync_runtime.exclude addon/ babylon-babes@homeassistant:/data/addons/local/beep_boop_bb8/`
    - Emit: `TOKEN: SYNC_OK`
 
    **Gate A:**
@@ -27,19 +27,19 @@
 ## B) HA Box (Runtime) Setup
 
 3. **Ensure report sink exists:**
-   - `mkdir -p /config/reports && echo "TOKEN: REPORT_SINK_OK" | tee -a /config/reports/deploy_receipt.txt`
+   - `ssh babylon-babes@homeassistant 'mkdir -p /config/reports && echo "TOKEN: REPORT_SINK_OK" | tee -a /config/reports/deploy_receipt.txt'`
 
 4. **Verify LOCAL_DEV mode in config:**
-   - `sed -n '1,60p' /addons/local/beep_boop_bb8/config.yaml | grep -E '^(version:|image:|build:)'`
+   - `ssh babylon-babes@homeassistant "sed -n '1,60p' /addons/local/beep_boop_bb8/config.yaml | grep -E '^(version:|image:|build:)'"`
    - Expect: `version:` and `build:` present, no uncommented `image:`.
 
 5. **Reload and rebuild add-on:**
-   - `ha addons reload`
-   - `ha addons rebuild local_beep_boop_bb8`
-   - `ha addons start local_beep_boop_bb8 || true`
+   - `ssh babylon-babes@homeassistant "ssh babylon-babes@homeassistant "ha addons reload""`
+   - `ssh babylon-babes@homeassistant "ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8""`
+   - `ssh babylon-babes@homeassistant "ssh babylon-babes@homeassistant "ha addons start local_beep_boop_bb8" || true"`
 
 6. **Check add-on state and version:**
-   - `ha addons info local_beep_boop_bb8 | grep -E 'state:|version:'`
+   - `ssh babylon-babes@homeassistant "ssh babylon-babes@homeassistant "ha addons info local_beep_boop_bb8 | grep -E 'state:|version:'""`
 
    **Gate B:**
    - Pass if `state: started`, correct `version`, and no "not available inside store" message.
@@ -52,13 +52,13 @@
 ## C) Container & Runtime Verification
 
 7. **Verify container and entrypoint:**
-   - `CID=$(docker ps --filter name=addon_local_beep_boop_bb8 --format '{{.ID}}')`
-   - `docker exec "$CID" bash -lc 'test -f /usr/src/app/run.sh && echo TOKEN: RUNTIME_RUN_SH_PRESENT || echo FAIL: RUN_SH_MISSING'`
-   - `docker exec "$CID" bash -lc 'echo "PY=$(command -v python)"; python -c "import sys; print(sys.executable)"'`
-   - `docker exec "$CID" bash -lc '/opt/venv/bin/python -c "import bb8_core.main as m; print(\"TOKEN: MODULE_OK\")"'`
+   - `CID=$(ssh babylon-babes@homeassistant "docker ps --filter name=addon_local_beep_boop_bb8 --format '{{.ID}}'")`
+   - `ssh babylon-babes@homeassistant "docker exec $CID bash -lc 'test -f /usr/src/app/run.sh && echo TOKEN: RUNTIME_RUN_SH_PRESENT || echo FAIL: RUN_SH_MISSING'"`
+   - `ssh babylon-babes@homeassistant "docker exec $CID bash -lc 'echo \"PY=$(command -v python)\"; python -c \"import sys; print(sys.executable)\"'"`
+   - `ssh babylon-babes@homeassistant "docker exec $CID bash -lc '/opt/venv/bin/python -c \"import bb8_core.main as m; print(\\\"TOKEN: MODULE_OK\\\")\"'"`
 
 8. **Check add-on logs for expected lines:**
-   - `ha addons logs local_beep_boop_bb8 --lines 100 | grep -E 'version_probe|Starting bridge controller' || true`
+   - `ssh babylon-babes@homeassistant "ha addons logs local_beep_boop_bb8 --lines 100 | grep -E 'version_probe|Starting bridge controller' || true"`
 
 9. **Record runtime receipts:**
    - `echo "TOKEN: CLEAN_RUNTIME_OK"`
@@ -76,11 +76,11 @@
 ## D) Minimal Function Checks (Optional, Soft Gate)
 
 10. **Discovery topic existence:**
-    - `mosquitto_sub -h 127.0.0.1 -p 1883 -v -t 'homeassistant/#' -C 1 -W 3 || echo "INFO: no discovery in 3s window"`
+   - `ssh babylon-babes@homeassistant "mosquitto_sub -h 127.0.0.1 -p 1883 -v -t 'homeassistant/#' -C 1 -W 3 || echo 'INFO: no discovery in 3s window'"`
 
 11. **Echo scalar roundtrip:**
-    - `mosquitto_pub -h 127.0.0.1 -p 1883 -t 'bb8/echo/cmd' -m '{"value":1,"ts":'$(date +%s)'}'`
-    - `mosquitto_sub -h 127.0.0.1 -p 1883 -v -t 'bb8/echo/#' -C 1 -W 3 || echo "INFO: no echo observed in 3s"`
+   - `ssh babylon-babes@homeassistant "mosquitto_pub -h 127.0.0.1 -p 1883 -t 'bb8/echo/cmd' -m '{\"value\":1,\"ts\":'\$(date +%s)'}'"`
+   - `ssh babylon-babes@homeassistant "mosquitto_sub -h 127.0.0.1 -p 1883 -v -t 'bb8/echo/#' -C 1 -W 3 || echo 'INFO: no echo observed in 3s'"`
 
     **Gate D:**
     - Pass if any discovery or echo line observed (does not block closure).

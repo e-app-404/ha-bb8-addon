@@ -43,12 +43,12 @@ if ! echo "$MODE_CHECK" | grep -q '^version:' || ! echo "$MODE_CHECK" | grep -q 
 fi
 
 echo "[B-5] Reloading and rebuilding add-on..."
-ha addons reload
-ha addons rebuild local_beep_boop_bb8
-ha addons start local_beep_boop_bb8 || true
+ssh babylon-babes@homeassistant "ha addons reload"
+ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8"
+ssh babylon-babes@homeassistant "ha addons start local_beep_boop_bb8" || true
 
 echo "[B-6] Checking add-on state and version..."
-INFO_OUT=$(ha addons info local_beep_boop_bb8 | grep -E 'state:|version:')
+INFO_OUT=$(ssh babylon-babes@homeassistant "ha addons info local_beep_boop_bb8 | grep -E 'state:|version:'")
 if ! echo "$INFO_OUT" | grep -q 'state: started'; then
   echo "FAIL: Add-on not started. Use HA UI to reload store, then re-run steps B-4 to B-6." >&2
   exit 15
@@ -57,25 +57,25 @@ fi
 # --- C) Container & Runtime Verification ---
 
 echo "[C-7] Verifying container and entrypoint..."
-CID=$(docker ps --filter name=addon_local_beep_boop_bb8 --format '{{.ID}}')
+CID=$(ssh babylon-babes@homeassistant "docker ps --filter name=addon_local_beep_boop_bb8 --format '{{.ID}}'")
 if [ -z "$CID" ]; then
   echo "FAIL: container not running. Rebuild and start add-on, then re-run." >&2
   exit 16
 fi
 
-docker exec "$CID" bash -lc 'test -f /usr/src/app/run.sh && echo TOKEN: RUNTIME_RUN_SH_PRESENT || echo FAIL: RUN_SH_MISSING' > reports/container_receipt.txt
+ssh babylon-babes@homeassistant "docker exec $CID bash -lc 'test -f /usr/src/app/run.sh && echo TOKEN: RUNTIME_RUN_SH_PRESENT || echo FAIL: RUN_SH_MISSING'" > reports/container_receipt.txt
 if ! grep -q 'TOKEN: RUNTIME_RUN_SH_PRESENT' reports/container_receipt.txt; then
   echo "FAIL: run.sh missing in container. Check Dockerfile COPY and rebuild (B-5, B-6)." >&2
   exit 17
 fi
 
-docker exec "$CID" bash -lc 'echo "PY=$(command -v python)"; python -c "import sys; print(sys.executable)"' > reports/python_receipt.txt
+ssh babylon-babes@homeassistant "docker exec $CID bash -lc 'echo \"PY=$(command -v python)\"; python -c \"import sys; print(sys.executable)\"'" > reports/python_receipt.txt
 if ! grep -q '/opt/venv/bin/python' reports/python_receipt.txt; then
   echo "FAIL: Python venv not present. Check Dockerfile venv section and rebuild (B-5, B-6)." >&2
   exit 18
 fi
 
-docker exec "$CID" bash -lc '/opt/venv/bin/python -c "import bb8_core.main as m; print(\"TOKEN: MODULE_OK\")"' > reports/module_receipt.txt
+ssh babylon-babes@homeassistant "docker exec $CID bash -lc '/opt/venv/bin/python -c \\\"import bb8_core.main as m; print(\\\\\\\"TOKEN: MODULE_OK\\\\\\\")\\\"'" > reports/module_receipt.txt
 if ! grep -q 'TOKEN: MODULE_OK' reports/module_receipt.txt; then
   echo "FAIL: bb8_core.main import failed. Check Python install and rebuild (B-5, B-6)." >&2
   exit 19
@@ -92,8 +92,8 @@ ha addons logs local_beep_boop_bb8 --lines 100 | grep -E 'version_probe|Starting
 
 # --- D) Minimal Function Checks (Optional, Soft Gate) ---
 
-mosquitto_sub -h 127.0.0.1 -p 1883 -v -t 'homeassistant/#' -C 1 -W 3 || echo "INFO: no discovery in 3s window"
-mosquitto_pub -h 127.0.0.1 -p 1883 -t 'bb8/echo/cmd' -m '{"value":1,"ts":'$(date +%s)'}'
+ssh babylon-babes@homeassistant \"mosquitto_sub -h 127.0.0.1 -p 1883 -v -t 'homeassistant/#' -C 1 -W 3 || echo 'INFO: no discovery in 3s window'\"
+ssh babylon-babes@homeassistant \"mosquitto_pub -h 127.0.0.1 -p 1883 -t 'bb8/echo/cmd' -m '{\\\"value\\\":1,\\\"ts\\\":'\\$(date +%s)'}'\"
 mosquitto_sub -h 127.0.0.1 -p 1883 -v -t 'bb8/echo/#' -C 1 -W 3 || echo "INFO: no echo observed in 3s"
 
 # --- E) Final Acceptance ---

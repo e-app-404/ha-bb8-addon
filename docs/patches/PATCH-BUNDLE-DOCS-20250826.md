@@ -87,10 +87,10 @@
 @@
 -### Issue: Supervisor tries to **pull** `local/…` image (404)
 -**Detect:** `pull access denied for local/aarch64-addon-beep_boop_bb8`
--**Fix:** ensure `config.yaml` has `build:` and a present `Dockerfile`; then `ha addons reload && rebuild`.
+-**Fix:** ensure `config.yaml` has `build:` and a present `Dockerfile`; then `ssh babylon-babes@homeassistant "ha addons reload" && rebuild`.
 +### Issue: Supervisor tries to **pull** an image (404)
 +**Detect:** `pull access denied ...`
-+**Fix:** for LOCAL_DEV, **comment out `image:`** in `config.yaml` so Supervisor builds locally from `Dockerfile`; then `ha addons reload && rebuild`.
++**Fix:** for LOCAL_DEV, **comment out `image:`** in `config.yaml` so Supervisor builds locally from `Dockerfile`; then `ssh babylon-babes@homeassistant "ha addons reload" && rebuild`.
 ```
 
 ---

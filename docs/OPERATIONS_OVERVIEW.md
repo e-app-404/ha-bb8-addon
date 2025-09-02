@@ -46,48 +46,135 @@ HA RUNTIME (Home Assistant OS)
 └─ /addons/local/beep_boop_bb8/   # plain folder (config.yaml + Dockerfile + code), no .git
 ```
 
+# 12. End-to-End Operational Workflow (Machine-Friendly)
+
+## Canonical Deployment & Governance (2025.8.21+)
+
+- **Deployment is performed via SSH and rsync only.** No git required on runtime; all git operations are workspace-only.
+- **Canonical runtime path:** `/addons/local/beep_boop_bb8` (Home Assistant OS)
+- **Governance tokens** are emitted in operational receipts for CI and attestation:
+  - `SUBTREE_PUBLISH_OK`, `CLEAN_RUNTIME_OK`, `DEPLOY_OK`, `VERIFY_OK`, `RUNTIME_TOPOLOGY_OK` (see `reports/deploy_receipt.txt`)
+- **Release workflow:**
+  - Build and publish from workspace (subtree split/push)
+  - Rsync to runtime (no .git, no workspace-only dirs)
+  - Supervisor API restart and health check
+  - All steps emit machine-readable tokens for governance and CI
+
+## Operational Health & Attestation
+
+- All operational steps are validated by emitted tokens and receipts.
+- Health checks and attestation scripts (`ops/run_strict_attestation.sh`) produce machine-readable evidence and contracts.
+- See `reports/qa_report_contract_v1.json`, `reports/patch_bundle_contract_v1.json`, and `reports/evidence_manifest.json` for attestation outputs.
+
+## Troubleshooting & Remediation
+
+- All errors and status are logged with explicit tokens and receipts for CI/governance parsing.
+- See `reports/deploy_receipt.txt` and `reports/qa_report_contract_v1.json` for step-by-step status and health.
+
+# ENV: LOCAL_DEV (workspace)
 **Key rules**
 
-* `addon/` is **not** a git repo; publish to a separate add‑on repository via **`git subtree`**.
-  * _(Enforced by CI guard — see [Flow E: Structure guard](#flow-e--ci-token-gate-pr-time))_
+* addon/ is **not** a git repo; publish to a separate add‑on repository via **`git subtree`**.
+* _(Enforced by CI guard — see [Flow E: Structure guard](#flow-e--ci-token-gate-pr-time))_
+```
+## Step 1: Workspace Hygiene & Commit
+**Key rules:**
+* addon/ is **not** a git repo; publish to a separate add‑on repository via **`git subtree`**.
+* _(Enforced by CI guard — see [Flow E: Structure guard](#flow-e--ci-token-gate-pr-time))_
+```sh
+# ENV: LOCAL_DEV (workspace)
+find addon/ -type d -name .git && echo "ERROR: .git found in addon/" || echo "OK: no .git in addon/"
+pytest -q -W error --maxfail=1 --cov=bb8_core --cov-report=term:skip-covered
+```
+
+## Step 2: Subtree Publish (ADR-0001)
+# ENV: LOCAL_DEV (workspace)
 * **Canonical run chain:** `s6` → `/etc/services.d/ble_bridge/run` → `/usr/src/app/run.sh` → `python -m bb8_core.main`.
   - The Dockerfile copies the entire `services.d/` directory, which must contain the `ble_bridge` subdirectory and its `run` file (`services.d/ble_bridge/run`), ensuring `/etc/services.d/ble_bridge/run` exists in the container.
 * **Canonical run chain:** `s6` → `/etc/services.d/ble_bridge/run` → `/usr/src/app/run.sh` → `python -m bb8_core.main`.
+```
+**Canonical run chain:** `s6` → `/etc/services.d/ble_bridge/run` → `/usr/src/app/run.sh` → `python -m bb8_core.main`.
+The Dockerfile copies the entire `services.d/` directory, which must contain the `ble_bridge` subdirectory and its `run` file (`services.d/ble_bridge/run`), ensuring `/etc/services.d/ble_bridge/run` exists in the container.
+```sh
+# ENV: LOCAL_DEV (workspace)
+ORG=<your-org>
+git subtree split -P addon -b __addon_pub_tmp
+git push -f git@github.com:$ORG/ha-bb8-addon.git __addon_pub_tmp:refs/heads/main
+git branch -D __addon_pub_tmp
+echo 'TOKEN: SUBTREE_PUBLISH_OK' >> reports/publish_receipt.txt
+```
 
----
+## Step 3: Sync to HA Runtime (LOCAL_DEV)
+# ENV: LOCAL_DEV (workspace)
+```sh
+rsync -av --delete addon/ babylon-babes@homeassistant:/data/addons/local/beep_boop_bb8/
+```
+
+## Step 4: Build Context & .git Status
+# ENV: HA Runtime
+```sh
+ssh babylon-babes@homeassistant "ls -lah /addons/local/beep_boop_bb8"
+ssh babylon-babes@homeassistant "(test -f /addons/local/beep_boop_bb8/config.yaml && echo OK) || echo MISSING-config"
+(test -f /addons/local/beep_boop_bb8/Dockerfile && echo OK) || echo MISSING-dockerfile
+find /addons/local/beep_boop_bb8 -type d -name .git && echo "ERROR: .git found in runtime" || echo "OK: no .git in runtime"
+```
+
+## Step 5: Rebuild & Start Add-on
+# ENV: HA Runtime
+```sh
+ssh babylon-babes@homeassistant "ha addons reload"
+ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8"
+ssh babylon-babes@homeassistant "ha addons start local_beep_boop_bb8"
+```
+
+## Step 6: Sanity Checks (Operational Health)
+
+# ENV: HA Runtime
+```sh
+grep -E '^TOKEN:' /config/reports/deploy_receipt.txt
+```
 
 ## 2. Roles & Originators
 
-| Role           | Scope                           | Primary Outputs                               |
 | -------------- | ------------------------------- | --------------------------------------------- |
 | **Strategos**  | Governance & acceptance gates   | Delta contracts; binary acceptance; CI policy |
 | **Pythagoras** | Code & QA execution             | Patch bundles; tests; QA/evidence contracts   |
 | **Copilot**    | Implementation surface (assist) | Applied diffs; scripted runs                  |
 | **Supervisor** | Runtime container lifecycle     | Build logs; start/stop; error diagnostics     |
-
 **Machine tags**: `ORIGINATOR: Strategos` / `ORIGINATOR: Pythagoras` appear in receipts for attribution.
-
----
 
 ## 3. Governance Tokens
 
+## Step 7: Manual Functional Test (MQTT Event Handling)
+
 > Tokens are single‑line markers emitted in receipts/logs for **binary** step validation.
+
+**Machine tags:** `ORIGINATOR: Strategos` / `ORIGINATOR: Pythagoras` appear in receipts for attribution.
+
+
+## Step 8: Monitor Resource Usage
 
 * `WS_READY` — workspace prepared (structure, tools, wrappers)
 * `STRUCTURE_OK` — ADR‑0001 layout valid; add‑on subtree clean
 * `SUBTREE_PUBLISH_OK` — add‑on subtree pushed to remote
+
+## Step 9: Attestation & Evidence
+
 * `CLEAN_RUNTIME_OK` — runtime folder synchronized (no stray files, no .git)
 * `DEPLOY_OK` — Supervisor rebuilt image successfully
+
+
+## Step 10: Troubleshooting & Remediation
+
 * `VERIFY_OK` — runtime health checks passed
 * `RUNTIME_TOPOLOGY_OK` — runtime path & image/tag aligned
 
----
 
-### Governance Token–Section Mapping Table
+## Step 11: Final Verification
 
+```
 | Token/Gate              | Meaning/Trigger                                 | Section/Flow(s) Emitted/Validated                |
 |-------------------------|-------------------------------------------------|--------------------------------------------------|
-| WS_READY                | Workspace prepared, dev toolchain validated     | Flow A (Local Dev & Testing), Checklist 9.1      |
 | STRUCTURE_OK            | ADR-0001 layout valid, add-on subtree clean     | Flow E (CI Token Gate), Checklist 9.5            |
 | SUBTREE_PUBLISH_OK      | Add-on subtree pushed to remote                 | Flow B (Publish Subtree), Checklist 9.2          |
 | CLEAN_RUNTIME_OK        | Runtime folder synchronized, no stray files     | Flow C (Deploy), Checklist 9.3                   |
@@ -96,7 +183,7 @@ HA RUNTIME (Home Assistant OS)
 | RUNTIME_TOPOLOGY_OK     | Runtime path & image/tag aligned                | Flow C (Deploy), Section 6 (Versioning)          |
 | TOOLS_ALLOWED           | tools/ allowed in add-on (CRTP)                 | Flow E (CI Token Gate)                           |
 | SCRIPTS_ALLOWED         | scripts/ allowed in add-on (CRTP)               | Flow E (CI Token Gate)                           |
-
+```
 * `RUNTIME_TOPOLOGY_OK` — runtime path & image/tag aligned
 
 ---
@@ -115,17 +202,19 @@ TOKEN: RUNTIME_TOPOLOGY_OK
 
 ---
 ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base-debian:bookworm
+
 ## 4. Output Contracts (JSON)
 
 > Contracts are machine‑readable summaries placed under `reports/`.
 
 ### 4.1 QA Report
-  # ...other required packages... \
+..other required packages... \
+
 ```json
 {
-  "contract": "qa_report_contract_v1",
   "verdict": "PASS",
   "coverage": 82.0,
+
   "tests": {"total": 54, "failures": 0, "errors": 0, "skipped": 0},
   "tokens": ["WS_READY","STRUCTURE_OK","DEPLOY_OK","VERIFY_OK"],
   "echoes": {"strict_scalar_retain_false": true, "evidence_file": "ha_mqtt_trace_snapshot.json", "present": true},
@@ -146,12 +235,14 @@ ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base-debian:bookworm
 
 ### 4.2 Patch Bundle
 
+Minimal example; additional files may be present
+
 ```json
 {
   "contract": "patch_bundle_contract_v1",
   "head_target": "<gitsha>",
   "tag": "v2025.8.21.1",
-  "target_files": ["addon/bb8_core/ble_link.py","addon/bb8_core/mqtt_probe.py"], // Minimal example; additional files may be present
+  "target_files": ["addon/bb8_core/ble_link.py","addon/bb8_core/mqtt_probe.py"], 
   "diffs_applied": ["BLE loop thread + exponential backoff","Probe instrumentation"],
   "tests_affected": ["addon/tests"],
   "coverage_delta": 0.3,
@@ -182,8 +273,9 @@ ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base-debian:bookworm
     {"path": "reports/patch_bundle_contract_v1.json", "sha256": "<…>"}
   ]
 }
-> **Note:** The `"sha256"` values in the `"artifacts"` array above are placeholders (`"<…>"`). In actual evidence manifests, these should be replaced with the real SHA-256 hashes of each artifact file.
 ```
+> **Note:** The `"sha256"` values in the `"artifacts"` array above are placeholders (`"<…>"`). In actual evidence manifests, these should be replaced with the real SHA-256 hashes of each artifact file.
+
 
 ---
 
@@ -234,8 +326,8 @@ echo 'TOKEN: SUBTREE_PUBLISH_OK' | tee -a reports/publish_receipt.txt
 rsync -av --delete --exclude '.DS_Store' addon/ /Volumes/addons/local/beep_boop_bb8/
 
 # On HA box
-ha addons reload
-ha addons rebuild local_beep_boop_bb8
+ssh babylon-babes@homeassistant "ha addons reload"
+ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8"
 # See [Versioning & Publish/Deploy](#6-versioning--publishdeploy) for details on correct usage of `image:` and `build:` in `config.yaml`.
 ha addons start  local_beep_boop_bb8
 
@@ -254,7 +346,7 @@ echo 'TOKEN: VERIFY_OK'         >> /config/reports/deploy_receipt.txt
 git fetch --all --prune
 git checkout -B main origin/main
 git reset --hard origin/main
-ha addons rebuild local_beep_boop_bb8
+ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8"
 ```
 
 **Gate (mode‑aware):** `config.yaml` has `build:`; `image:` is either `local/{arch}-addon-beep_boop_bb8` (LOCAL_DEV) **or** a registry URL with a published tag (PUBLISH).
@@ -351,8 +443,8 @@ bash ops/run_strict_attestation.sh
 ```bash
 # Edit runtime file on HA box
 sed -i 's/^version:.*/version: "2025.8.21.4"/' /addons/local/beep_boop_bb8/config.yaml
-ha addons reload
-ha addons rebuild local_beep_boop_bb8
+ssh babylon-babes@homeassistant "ha addons reload"
+ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8"
 ha addons info local_beep_boop_bb8 | grep -E 'version:|version_latest:'
 ```
 
@@ -643,7 +735,7 @@ If standard tools fail, fallback methods (cat, tar, File Editor) bypass temp-fil
 ### Issue: Supervisor tries to **pull** `local/…` image (404)
 
 **Detect:** `pull access denied for local/aarch64-addon-beep_boop_bb8`
-**Fix:** ensure `config.yaml` has `build:` and a present `Dockerfile`; then `ha addons reload && rebuild`.
+**Fix:** ensure `config.yaml` has `build:` and a present `Dockerfile`; then `ssh babylon-babes@homeassistant "ha addons reload" && rebuild`.
 
 ### Issue: `git pull` fails under `/addons/local/...`
 
@@ -698,7 +790,7 @@ fi
 
 **Quick “behavior” check (HA):**
 ```sh
-ha addons rebuild local_beep_boop_bb8 >/dev/null 2>&1 && echo "LOCAL_DEV" || echo "PUBLISH"
+ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8" >/dev/null 2>&1 && echo "LOCAL_DEV" || echo "PUBLISH"
 # If it prints "PUBLISH", Supervisor refused because image: is set.
 ```
 
@@ -740,7 +832,7 @@ test -f /addons/local/beep_boop_bb8/Dockerfile && echo "BUILDABLE: yes" || echo 
 
 * [ ] `/addons/local/beep_boop_bb8/` contains `config.yaml` + `Dockerfile`
 * [ ] `config.yaml` contains `build:` and no `image:` (LOCAL_DEV)
-* [ ] `ha addons reload && ha addons rebuild` succeed
+* [ ] `ssh babylon-babes@homeassistant "ha addons reload" && ha addons rebuild` succeed
 * [ ] Receipt contains `TOKEN: CLEAN_RUNTIME_OK`, `TOKEN: DEPLOY_OK`, `TOKEN: VERIFY_OK`
 
 ### 9.4 Attestation (STP4)
@@ -767,12 +859,12 @@ test -f /addons/local/beep_boop_bb8/Dockerfile && echo "BUILDABLE: yes" || echo 
 > To sync the updated add-on to the LOCAL_DEV runtime (machine-friendly):
 >
 > ```sh
-> rsync -av --delete --rsync-path="sudo rsync" addon/ <user>@<host>:/addons/local/beep_boop_bb8/
+> rsync -av --delete addon/ babylon-babes@homeassistant:/data/addons/local/beep_boop_bb8/
 > ```
 >
 > # If you need to exclude forbidden files per ADR-0001:
 > ```sh
-> rsync -av --delete --exclude='tests' --exclude='__pycache__' addon/ <user>@<host>:/addons/local/beep_boop_bb8/
+> rsync -av --delete addon/ babylon-babes@homeassistant:/data/addons/local/beep_boop_bb8/
 > ```
 >
 > # Ensure the target path is `/addons/local/beep_boop_bb8/` for local development.
@@ -803,8 +895,8 @@ sed -n '1,40p' /addons/local/beep_boop_bb8/config.yaml | grep -E '^version:'
 ha addons info local_beep_boop_bb8 | grep -E 'version'
 
 # Supervisor build-context sanity
-ls -lah /addons/local/beep_boop_bb8
-(test -f /addons/local/beep_boop_bb8/config.yaml && echo OK) || echo MISSING-config
+ssh babylon-babes@homeassistant "ls -lah /addons/local/beep_boop_bb8"
+ssh babylon-babes@homeassistant "(test -f /addons/local/beep_boop_bb8/config.yaml && echo OK) || echo MISSING-config"
 (test -f /addons/local/beep_boop_bb8/Dockerfile && echo OK) || echo MISSING-dockerfile
 
 # Telemetry capture (best‑effort)

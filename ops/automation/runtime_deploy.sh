@@ -12,8 +12,8 @@ test -d "$RUNTIME" || { echo "FAIL: runtime folder missing: $RUNTIME"; exit 2; }
 test -f "$RUNTIME/config.yaml" || { echo "FAIL: runtime config missing"; exit 3; }
 
 # Reload + rebuild + start
-ha addons reload >/dev/null
-ha addons rebuild local_beep_boop_bb8 >/dev/null
+ssh babylon-babes@homeassistant "ha addons reload" >/dev/null
+ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8" >/dev/null
 ha addons start  local_beep_boop_bb8 >/dev/null || true
 
 # Verify running & run.sh in container

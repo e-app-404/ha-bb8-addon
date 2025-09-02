@@ -4,6 +4,7 @@ import logging
 import os
 import threading
 import time
+import atexit
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
@@ -15,6 +16,42 @@ try:
 except ImportError:
     BleakClient = None
     LOG.warning("bleak library not found; BLE functionality will be disabled.")
+
+# DIAG-BEGIN ECHO-STARTUP
+LOG.info(f"echo_responder.py started (PID={os.getpid()})")
+
+def _flush_logs_echo():
+    """Flush all logger handlers at process exit; resilient to handler errors."""
+    try:
+        LOG.info("echo_responder.py atexit: flushing logs before exit")
+        for h in getattr(LOG, "handlers", []):
+            if hasattr(h, "flush"):
+                try:
+                    h.flush()
+                except Exception:
+                    pass
+    except Exception:
+        # Last-gasp safety; avoid raising during interpreter shutdown
+        pass
+
+atexit.register(_flush_logs_echo)
+# DIAG-END ECHO-STARTUP
+
+# DIAG-BEGIN HEALTH-ECHO
+ENABLE_HEALTH_CHECKS = bool(int(os.environ.get("ENABLE_HEALTH_CHECKS", "0")))
+def _heartbeat_echo():
+    while True:
+        try:
+            with open("/tmp/bb8_heartbeat_echo", "w") as f:
+                f.write(f"{time.time()}\n")
+        except Exception:
+            # Don't crash the process if /tmp is unavailable; just retry next tick
+            pass
+        time.sleep(5)
+if ENABLE_HEALTH_CHECKS:
+    LOG.info("echo_responder.py health check enabled: /tmp/bb8_heartbeat_echo")
+    threading.Thread(target=_heartbeat_echo, daemon=True).start()
+# DIAG-END HEALTH-ECHO
 
 MQTT_BASE = os.environ.get("MQTT_BASE") or os.environ.get("MQTT_NAMESPACE") or "bb8"
 MQTT_ECHO_CMD = f"{MQTT_BASE}/echo/cmd"

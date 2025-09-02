@@ -1,0 +1,45 @@
+# 🔍 Issue Investigation: Dual-Probe on Add-on Path Handling and Restart Loops
+
+This is a structured audit request across **two joint issues**:
+
+## 🧩 Issue A: Path Resolution and Logging Behavior
+- Confirm how logging paths are resolved across `config.yaml`, `main.py`, and `logging_setup.py`.
+- Detect if volume mapping (`/data`, `/config`, etc.) introduces inconsistency during container runtime.
+- Trace fallback behavior if path is non-writable (e.g., switch to `/tmp`, use of `StreamHandler`, etc.).
+- Validate that logger flushing and handler deduplication are enforced during rapid init/exit cycles.
+
+## 🔁 Issue B: Add-on Restart Loop with No Error Output
+- The container shows clean MQTT connects and then **immediate exit** (no traceback or error).
+- Investigate if `main()` is exiting early—e.g., missing `loop_forever()`, `join()`, or async block.
+- Confirm presence of blocking runtime in main thread (no silent thread or event loop shutdown).
+- If logging file not created: validate that log handler was attached and flush occurred before exit.
+
+## 📂 Instructions
+- Cross-reference `config.yaml`, `main.py`, `logging_setup.py`, and any MQTT or BLE entrypoints.
+- Validate assumptions: Are paths normalized for HA runtime? Are exits handled correctly?
+- Surface any **implicit logic** that breaks under container restarts or volume overlay.
+- Use `logging.debug/info` calls as breadcrumbs to reconstruct runtime exit path.
+
+## 📌 Output Format
+* [ ] **Path Validation Report**: Explicit mapping from config → runtime path → final log destination
+* [ ] **Exit Trace Reconstruction**: Annotated trace of what code executes before exit
+* [ ] **Assumption Surfacing**: List any assumptions (e.g., always writable path, MQTT never fails) that require hardening
+* [ ] **Fix Candidates**: For each issue, suggest code-level patches to harden logic
+
+Include file/line references and call out any Copilot code suggestions that could silently fail under HA add-on context.
+
+---
+
+Extend the previous analysis with two missing components:
+
+1. **Echo Responder Path**  
+   - Does the subprocess `echo_responder.py` use a blocking pattern (`loop_forever()` or equivalent)?  
+   - Could BLE socket absence cause an exception and premature exit?  
+   - Validate whether this subprocess could cause the add-on to terminate silently.
+
+2. **Add-on Lifecycle & Supervisor Hooks**  
+   - Analyze whether `s6-overlay` or HA Supervisor restarts the container on clean exit (no error).
+   - Validate whether exit codes are being correctly surfaced from subprocesses or child threads.
+   - Should the main script `wait` on child threads (e.g., `join()` or `waitpid()`)?
+
+Return findings as an additional audit block to the previous trace.

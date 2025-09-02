@@ -389,9 +389,9 @@ MQTT_USERNAME = CFG.get("MQTT_USERNAME", None)
 MQTT_PASSWORD = CFG.get("MQTT_PASSWORD", None)
 
 
-def _connect_mqtt():
-    mqtt_client.connect(MQTT_HOST, MQTT_PORT, keepalive=60)
-    mqtt_client.loop_start()
+def _connect_mqtt(client):
+    client.connect(MQTT_HOST, MQTT_PORT, keepalive=60)
+    client.loop_start()
 
 
 # -----------------------------------------------------------------------------
@@ -583,7 +583,8 @@ if __name__ == "__main__":
         # ...existing CLI setup...
         if args.print:
             # Discovery is emitted lazily after MAC/DBus are known;
-            # nothing to print upfront
+            # Discovery payloads require a successful scan to determine MAC/DBus,
+            # so nothing can be printed upfront.
             print(
                 "# discovery will be published after a successful scan "
                 "when MAC/DBus are known"
@@ -593,6 +594,7 @@ if __name__ == "__main__":
         if args.once:
 
             async def _once():
+                """Perform a single BLE scan for BB-8 and print or emit results."""
                 devices = await BleakScanner.discover()
                 res = {
                     "found": False,
@@ -727,7 +729,7 @@ def get_mqtt_client():
     return client
 
 
-mqtt_client = None  # Initialize mqtt_client as None
+# Remove global mqtt_client variable to avoid confusion
 
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -1077,8 +1079,8 @@ def publish_discovery_old(
     )
     logger.info("Published HA discovery for MAC=%s", mac)
 
-    mqtt_client = get_mqtt_client()  # Get the mqtt_client instance
-    _connect_mqtt(mqtt_client)  # Pass the client to the connect function
+    client = get_mqtt_client()  # Get the mqtt client instance
+    _connect_mqtt(client)  # Pass the client to the connect function
 
 
 # Logging helpers

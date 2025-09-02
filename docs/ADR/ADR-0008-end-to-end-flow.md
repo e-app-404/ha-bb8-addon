@@ -141,16 +141,16 @@ mkdir -p /config/reports && echo 'TOKEN: CLEAN_RUNTIME_OK' | tee -a /config/repo
 
 ```bash
 # 6.1 Register changes with Supervisor
-ha addons reload
+ssh babylon-babes@homeassistant "ha addons reload"
 
 # 6.2 Rebuild local image from runtime folder
-ha addons rebuild local_beep_boop_bb8
+ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8"
 
 # 6.3 Start (idempotent)
-ha addons start local_beep_boop_bb8 || true
+ssh babylon-babes@homeassistant "ha addons start local_beep_boop_bb8" || true
 
 # 6.4 Verify state & invariants
-ha addons info local_beep_boop_bb8 | grep -E 'state:|version:'
+ssh babylon-babes@homeassistant "ha addons info local_beep_boop_bb8 | grep -E 'state:|version:'"
 
 CID=$(docker ps --filter name=addon_local_beep_boop_bb8 --format '{{.ID}}' || true)
 [ -n "$CID" ] && docker exec "$CID" bash -lc 'test -x /usr/src/app/run.sh && echo TOKEN: RUN_SH_PRESENT'
@@ -188,8 +188,8 @@ echo 'TOKEN: SUBTREE_PUBLISH_OK' | tee -a reports/publish_receipt.txt
 
 ## 8) Troubleshooting (canonical)
 
-* **“Add‑on not available inside store”**: ensure `/addons/local/beep_boop_bb8/config.yaml` exists, then UI → *Add‑on Store → HA‑BB8 (local)* → **Install**; or run `ha addons reload`.
-* **Supervisor tries to pull**: missing `build:` block → add it, then `ha addons reload && rebuild`.
+* **“Add‑on not available inside store”**: ensure `/addons/local/beep_boop_bb8/config.yaml` exists, then UI → *Add‑on Store → HA‑BB8 (local)* → **Install**; or run `ssh babylon-babes@homeassistant "ha addons reload"`.
+* **Supervisor tries to pull**: missing `build:` block → add it, then `ssh babylon-babes@homeassistant "ha addons reload" && rebuild`.
 * **`run.sh` missing in container**: confirm `addon/run.sh` exists and is **copied** by Dockerfile (`COPY run.sh /usr/src/app/run.sh`) and service executes it.
 * **Permission denied on rsync**: prefer the mount owned by your user (SMB with `uid/gid` mapping) or use SSH rsync.
 

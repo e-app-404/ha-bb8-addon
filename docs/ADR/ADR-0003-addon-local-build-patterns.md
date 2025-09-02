@@ -68,9 +68,9 @@ Home Assistant Supervisor manages local add-ons using a combination of folder na
 ### 7. Add-on Lifecycle Commands
 - Use the **resolved local slug** in Supervisor commands (prefix `local_`):
   ```bash
-  ha addons reload
-  ha addons rebuild local_beep_boop_bb8
-  ha addons start local_beep_boop_bb8
+  ssh babylon-babes@homeassistant "ha addons reload"
+  ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8"
+  ssh babylon-babes@homeassistant "ha addons start local_beep_boop_bb8"
   ha addons logs local_beep_boop_bb8
   ```
 
@@ -78,7 +78,7 @@ Home Assistant Supervisor manages local add-ons using a combination of folder na
 - If Supervisor cannot find the add-on, check:
   - Folder name matches `slug:`
   - All required files exist
-  - Run `ha addons reload` after changes
+  - Run `ssh babylon-babes@homeassistant "ha addons reload"` after changes
   - Use `ha addons list` to confirm slug
 
 ## Expectations

@@ -52,8 +52,8 @@ grep -F "TOKEN: TELEMETRY_ARTIFACTS_EMITTED" "$REPORTS_DIR/deploy_receipt.txt" |
 
 # --- D-5) Optional: Minimal function checks (soft gate) ---
 echo "[D-5] Optional: Minimal function checks (soft gate)..."
-mosquitto_sub -h 127.0.0.1 -p 1883 -v -t 'homeassistant/#' -C 1 -W 3 || echo "INFO: no discovery in 3s window"
-mosquitto_pub -h 127.0.0.1 -p 1883 -t 'bb8/echo/cmd' -m '{"value":1,"ts":'$(date +%s)'}'
+ssh babylon-babes@homeassistant \"mosquitto_sub -h 127.0.0.1 -p 1883 -v -t 'homeassistant/#' -C 1 -W 3 || echo 'INFO: no discovery in 3s window'\"
+ssh babylon-babes@homeassistant \"mosquitto_pub -h 127.0.0.1 -p 1883 -t 'bb8/echo/cmd' -m '{\\\"value\\\":1,\\\"ts\\\":'\\$(date +%s)'}'\"
 mosquitto_sub -h 127.0.0.1 -p 1883 -v -t 'bb8/echo/#' -C 1 -W 3 || echo "INFO: no echo observed in 3s"
 
 # --- E) Phase Update (On PASS) ---

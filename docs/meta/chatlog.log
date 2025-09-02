@@ -19433,8 +19433,8 @@ GitHub Copilot: Here are the most likely causes and solutions for your Home Assi
 
 5. **Rebuild the Add-on**
    - After fixing any issues, use the UI to rebuild the add-on or run:
-     `ha addons reload`
-     `ha addons rebuild local_beep_boop_bb8` (or your slug)
+     `ssh babylon-babes@homeassistant "ha addons reload"`
+     `ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8"` (or your slug)
 
 6. **Check Add-on Store Settings**
    - Ensure "Show Advanced" and "Show local add-ons" are enabled in the add-on store UI.

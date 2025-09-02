@@ -225,8 +225,8 @@ rsync -av --delete \
   addon/ /Volumes/addons/local/beep_boop_bb8/
 
 # On HA box
-ha addons reload
-ha addons rebuild local_beep_boop_bb8
+ssh babylon-babes@homeassistant "ha addons reload"
+ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8"
 ha addons start  local_beep_boop_bb8
 
 echo 'TOKEN: CLEAN_RUNTIME_OK' >> /config/reports/deploy_receipt.txt || true
@@ -241,7 +241,7 @@ echo 'TOKEN: VERIFY_OK'         >> /config/reports/deploy_receipt.txt || true
 git fetch --all --prune
 git checkout -B main origin/main
 git reset --hard origin/main
-ha addons rebuild local_beep_boop_bb8
+ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8"
 ```
 
 **Gate (mode-aware):**
@@ -342,8 +342,8 @@ This workflow enforces ADR-0001 structure + ADR-0004 CRTP rules, runs pytest (wa
 ```bash
 # Edit runtime file on HA box
 sed -i 's/^version:.*/version: "2025.8.21.3"/' /addons/local/beep_boop_bb8/config.yaml
-ha addons reload
-ha addons rebuild local_beep_boop_bb8
+ssh babylon-babes@homeassistant "ha addons reload"
+ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8"
 ha addons info local_beep_boop_bb8 | grep -E 'version:|version_latest:'
 ```
 
@@ -444,7 +444,7 @@ def led_discovery(mqtt, unique_id, duplicates): publish(mqtt, "led_discovery", {
 ### Issue: Supervisor tries to **pull** `local/…` image (404)
 
 **Detect:** `pull access denied for local/aarch64-addon-beep_boop_bb8`
-**Fix:** ensure `config.yaml` has `build:` and a present `Dockerfile`; then `ha addons reload && rebuild`.
+**Fix:** ensure `config.yaml` has `build:` and a present `Dockerfile`; then `ssh babylon-babes@homeassistant "ha addons reload" && rebuild`.
 
 ### Issue: `git pull` fails under `/addons/local/...`
 
@@ -482,7 +482,7 @@ def led_discovery(mqtt, unique_id, duplicates): publish(mqtt, "led_discovery", {
 * [ ] `/addons/local/beep_boop_bb8/` contains `config.yaml` + `Dockerfile`
 * [ ] **LOCAL_DEV:** `image:` commented out; `Dockerfile` present  
 * [ ] **PUBLISH:** `image:` present, tag exists; `version:` equals tag
-* [ ] `ha addons reload && ha addons rebuild` succeed
+* [ ] `ssh babylon-babes@homeassistant "ha addons reload" && ha addons rebuild` succeed
 * [ ] Receipt contains `TOKEN: CLEAN_RUNTIME_OK`, `TOKEN: DEPLOY_OK`, `TOKEN: VERIFY_OK`
 * [ ] **CRTP:** if `addon/tools/` or `addon/scripts/` exist → ensure Dockerfile references them or markers are present.
 
@@ -507,7 +507,7 @@ def led_discovery(mqtt, unique_id, duplicates): publish(mqtt, "led_discovery", {
 ### POSIX Shell Helpers
 ```sh
 # Check for required files
-(test -f /addons/local/beep_boop_bb8/config.yaml && echo OK) || echo MISSING-config
+ssh babylon-babes@homeassistant "(test -f /addons/local/beep_boop_bb8/config.yaml && echo OK) || echo MISSING-config"
 (test -f /addons/local/beep_boop_bb8/Dockerfile && echo OK) || echo MISSING-dockerfile
 
 # Version desync check

@@ -79,7 +79,7 @@ If absent, drift checks MUST skip runtime diffs and still pass structure validat
 **S4. Runtime path**
 
 * HA runtime path is `/addons/local/beep_boop_bb8`. **Do not** run `git` there.
-* Rebuild sequence on HA: `ha addons reload && ha addons rebuild local_beep_boop_bb8`.
+* Rebuild sequence on HA: `ssh babylon-babes@homeassistant "ha addons reload" && ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8"`.
 
 **S5. Evidence location**
 
@@ -136,8 +136,8 @@ diff -ruN --exclude='__pycache__' --exclude='*.pyc'
 **Build context sanity (HA box)**
 
 ```bash
-ls -lah /addons/local/beep_boop_bb8
-(test -f /addons/local/beep_boop_bb8/config.yaml && echo OK) || echo MISSING-config
+ssh babylon-babes@homeassistant "ls -lah /addons/local/beep_boop_bb8"
+ssh babylon-babes@homeassistant "(test -f /addons/local/beep_boop_bb8/config.yaml && echo OK) || echo MISSING-config"
 (test -f /addons/local/beep_boop_bb8/Dockerfile && echo OK) || echo MISSING-dockerfile
 ```
 

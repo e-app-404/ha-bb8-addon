@@ -69,7 +69,7 @@ contract: "recipes_v1"
 # On HA host
 CFG=/addons/local/beep_boop_bb8/config.yaml
 sed -i 's/^[[:space:]]*image:[[:space:]].*/# image: disabled for LOCAL_DEV/' "$CFG"
-ha addons reload && ha addons rebuild local_beep_boop_bb8 && ha addons start local_beep_boop_bb8
+ssh babylon-babes@homeassistant "ha addons reload" && ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8" && ssh babylon-babes@homeassistant "ha addons start local_beep_boop_bb8"
 ```
 
 ## TR-002 — “apk: command not found” during build
@@ -315,7 +315,7 @@ CFG=/addons/local/beep_boop_bb8/config.yaml
 sed 's/#.*$//' "$CFG" | grep -Eq '^[[:space:]]*image:[[:space:]]*' && echo "MODE:PUBLISH" || echo "MODE:LOCAL_DEV"
 
 # Rebuild + Start
-ha addons reload && ha addons rebuild local_beep_boop_bb8 && ha addons start local_beep_boop_bb8
+ssh babylon-babes@homeassistant "ha addons reload" && ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8" && ssh babylon-babes@homeassistant "ha addons start local_beep_boop_bb8"
 
 # Container health
 CID="$(docker ps --filter name=addon_local_beep_boop_bb8 --format '{{.ID}}')"
@@ -405,7 +405,7 @@ git push origin fix/docs-troubleshooting
 # 5) After merge: sync to HA runtime (LOCAL_DEV)
 rsync -av --delete --exclude-from ops/rsync_runtime.exclude addon/ /Volumes/addons/local/beep_boop_bb8/
 # Rebuild + start
-ssh homeassistant 'ha addons reload && ha addons rebuild local_beep_boop_bb8 && ha addons start local_beep_boop_bb8'
+ssh homeassistant 'ssh babylon-babes@homeassistant "ha addons reload" && ssh babylon-babes@homeassistant "ha addons rebuild local_beep_boop_bb8" && ssh babylon-babes@homeassistant "ha addons start local_beep_boop_bb8"'
 ```
 
 ---

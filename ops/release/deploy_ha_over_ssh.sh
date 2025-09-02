@@ -4,12 +4,18 @@ set -euo pipefail
 
 REMOTE_HOST_ALIAS="${REMOTE_HOST_ALIAS:-home-assistant}"
 RUNTIME="/addons/local/beep_boop_bb8"
+export GIT_DISCOVERY_ACROSS_FILESYSTEM=1
 
 # 1) SSH reachability
 ssh -o BatchMode=yes "$REMOTE_HOST_ALIAS" 'echo SSH_HA_OK' 2>/dev/null
 
-# 2) Hard reset runtime to origin/main
-ssh "$REMOTE_HOST_ALIAS" "set -euo pipefail; git -C '$RUNTIME' fetch origin; git -C '$RUNTIME' reset --hard origin/main; echo 'DEPLOY_OK — runtime hard-reset to origin/main'"
+# 2) Rsync deployment: copy local addon files to remote runtime
+echo "[INFO] Syncing addon files to $REMOTE_HOST_ALIAS:$RUNTIME via rsync..."
+rsync -avz --delete ./addon/ "$REMOTE_HOST_ALIAS:$RUNTIME/" && \
+  ssh "$REMOTE_HOST_ALIAS" "echo 'DEPLOY_OK — runtime rsync complete'" || {
+    echo "ERROR: rsync to $REMOTE_HOST_ALIAS:$RUNTIME failed" >&2
+    exit 2
+  }
 
 # 3) Restart add-on via HA Core Services API using LLAT from /config/secrets.yaml (never prints token)
 ssh "$REMOTE_HOST_ALIAS" 'bash -se' <<'RS'

@@ -92,7 +92,7 @@ echo "AUTH: ${AUTH[@]}"
 echo "AUTH (safe): ${AUTH[*]}"
 
 
-CID=$(docker ps --filter name=addon_local_beep_boop_bb8 --format '{{.ID}}')
+CID=$(ssh babylon-babes@homeassistant "docker ps --filter name=addon_local_beep_boop_bb8 --format '{{.ID}}'")
 if [ -z "$CID" ]; then
 # Try to send echo command, retry up to 3 times if needed
 MOSQUITTO_PUB_ERR_LOG="$OUT_DIR/mosquitto_pub_error.log"

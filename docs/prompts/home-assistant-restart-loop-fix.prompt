@@ -1,0 +1,22 @@
+**Prompt for GitHub Copilot:**
+
+> The Home Assistant BB-8 add-on is stuck in a rapid restart loop. The logs show repeated successful MQTT connections and immediate exits, with no error messages or tracebacks. The log file `/data/reports/ha_bb8_addon.log` is resolved and writable, but is not being created—likely because the process exits before any log is flushed or the logger is not set to write to file.
+>
+> Please review the entire codebase for all relevant touchpoints that could cause the main process to exit prematurely, including but not limited to:
+> - The main entrypoint (`bb8_core.main`): Ensure it ends with a blocking call (e.g., `client.loop_forever()`), and that no code after this causes the process to exit.
+> - All service entrypoints, CLI scripts, and s6 run scripts: Confirm they keep the process in the foreground and do not exit early.
+> - Threading and async logic: Ensure the main thread does not exit while background threads are running; join threads or block as needed.
+> - Exception handling: Add explicit logging at the start and end of `main()`, and log any exceptions or signals that could cause early exit.
+> - Logging configuration: Make sure the logger is initialized before any exit, and that logs are flushed to `/data/reports/ha_bb8_addon.log`.
+> - Configuration and runtime file checks: Ensure all required files (e.g., options.json, config.yaml) are present and valid, and missing files do not cause silent exit.
+> - Resource limits and OOM handling: Check for any code that could trigger OOM or resource exhaustion, and add logging or throttling as needed.
+>
+> Patch any uncovered issues so that:
+> - The main process blocks and stays alive as expected.
+> - All exceptions and exit conditions are logged.
+> - The log file is reliably created and flushed.
+> - The add-on does not restart unless explicitly requested or on fatal error.
+>
+> Broaden the review to include any other potential sources of silent exit or restart, such as signal handling, subprocess management, or s6 configuration. Emit actionable code changes and comments for each fix.
+
+---

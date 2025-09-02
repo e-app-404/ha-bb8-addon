@@ -71,7 +71,7 @@ docker run --name addon_local_beep_boop_bb8 -d beep_boop_bb8
 ## 4. Get the Container ID
 
 ```sh
-CID=$(docker ps --filter name=addon_local_beep_boop_bb8 --format '{{.ID}}')
+CID=$(ssh babylon-babes@homeassistant "docker ps --filter name=addon_local_beep_boop_bb8 --format '{{.ID}}'")
 echo $CID  # Should print the container ID
 ```
 - **Purpose:** Sets the `$CID` variable for use in subsequent commands.
@@ -136,13 +136,13 @@ These commands confirm that `main.py` and `__init__.py` exist and that the Pytho
     docker build --build-arg BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest -t beep_boop_bb8 addon/
     docker rm -f addon_local_beep_boop_bb8
     docker run --name addon_local_beep_boop_bb8 -d beep_boop_bb8
-    CID=$(docker ps --filter name=addon_local_beep_boop_bb8 --format '{{.ID}}')
+    CID=$(ssh babylon-babes@homeassistant "docker ps --filter name=addon_local_beep_boop_bb8 --format '{{.ID}}'")
     ```
   - Validate with the commands above to confirm the module is present and importable.
 
 - **$CID is Empty:**
   - Always set `$CID` after starting a new container.
-  - Run: `CID=$(docker ps --filter name=addon_local_beep_boop_bb8 --format '{{.ID}}')`
+  - Run: `CID=$(ssh babylon-babes@homeassistant "docker ps --filter name=addon_local_beep_boop_bb8 --format '{{.ID}}'")`
 
 - **Script or Permission Errors:**
   - Check permissions: `docker exec "$CID" ls -l /etc/cont-init.d`
