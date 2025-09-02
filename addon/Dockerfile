@@ -55,6 +55,11 @@ ENV ADDON_VERSION=${BUILD_VERSION}
 ENV PYTHONPATH="/usr/src/app:${PYTHONPATH}"
 RUN echo "2025.08.21" > /usr/src/app/VERSION
 
+
+# Wire S6 services from repo root into image
+COPY ../../services.d /etc/services.d
+RUN chmod +x /etc/services.d/*/run || true
+
 # S6 Entrypoint
 ENTRYPOINT [ "/init" ]
 # (removed stray trailing ENV continuation; PYTHONUNBUFFERED is already set above)
