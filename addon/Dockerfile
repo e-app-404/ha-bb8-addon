@@ -8,9 +8,9 @@ ENV PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 WORKDIR /usr/src/app
-COPY addon/bb8_core /usr/src/app/bb8_core
-COPY addon/config.yaml /usr/src/app/config.yaml
-COPY addon/run.sh /run.sh
+COPY bb8_core /usr/src/app/bb8_core
+COPY config.yaml /usr/src/app/config.yaml
+COPY run.sh /run.sh
 COPY requirements.txt* /usr/src/app/
 RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build context' >&2; exit 53)
 RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build context' >&2; exit 53)
