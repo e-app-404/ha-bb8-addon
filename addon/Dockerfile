@@ -57,7 +57,9 @@ RUN echo "2025.08.21" > /usr/src/app/VERSION
 
 
 # Wire S6 services from repo root into image
-COPY ../../services.d /etc/services.d
+# Install s6 services for HA add-on (root-level services.d)
+# Includes echo_responder/down to prevent dual supervision.
+COPY services.d /etc/services.d
 RUN chmod +x /etc/services.d/*/run || true
 
 # S6 Entrypoint
