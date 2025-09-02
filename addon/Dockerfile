@@ -10,7 +10,7 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /usr/src/app
 COPY bb8_core /usr/src/app/bb8_core
 COPY config.yaml /usr/src/app/config.yaml
-COPY run.sh /run.sh
+COPY run.sh /usr/src/app/run.sh
 COPY requirements.txt* /usr/src/app/
 RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build context' >&2; exit 53)
 RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build context' >&2; exit 53)
