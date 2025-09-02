@@ -38,6 +38,9 @@ fi
   echo "ERROR: Export seems empty or wrong. Check that addon/ contains add-on files."; exit 4;
 }
 
+# Assert the source config.yaml contains the expected option
+grep -q 'enable_health_checks' "$TMPDIR/config.yaml" || { echo "FATAL: enable_health_checks missing in source addon/config.yaml"; exit 1; }
+
 # Idempotency: skip publish if no changes in addon/
 if git diff --quiet HEAD^ HEAD -- addon; then
   echo "No changes in addon/. Skipping publish."

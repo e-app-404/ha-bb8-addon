@@ -1,3 +1,10 @@
+.PHONY: diag-health
+diag-health:
+	@bash ops/diag/ha_bb8_health.sh
+
+.PHONY: diag-respawn
+diag-respawn:
+	@bash ops/diag/ha_bb8_respawn_drill.sh
 guard:
 	@bash ops/workspace/validate_paths_map.sh | tee reports/paths_health_receipt.txt
 	@grep -q '^TOKEN: PATHS_MAP_OK' reports/paths_health_receipt.txt
@@ -22,8 +29,14 @@ all: guard test publish
 # --- Strategos release shortcuts ---
 .PHONY: release-patch release-minor release-major release VERSION
 
-release-patch:
-	VERSION_KIND=patch ops/release/bump_version.sh patch && ops/workspace/publish_addon_archive.sh && ops/release/deploy_ha_over_ssh.sh
+verify-config-src:
+	@grep -q 'enable_health_checks' addon/config.yaml || (echo "FATAL: enable_health_checks missing in addon/config.yaml"; exit 1)
+	@echo "VERIFY_OK: source config.yaml contains enable_health_checks"
+
+release-patch: verify-config-src
+	VERSION_KIND=patch ops/release/bump_version.sh patch && \
+	ops/workspace/publish_addon_archive.sh && \
+	ops/release/deploy_ha_over_ssh.sh
 
 release-minor:
 	VERSION_KIND=minor ops/release/bump_version.sh minor && ops/workspace/publish_addon_archive.sh && ops/release/deploy_ha_over_ssh.sh

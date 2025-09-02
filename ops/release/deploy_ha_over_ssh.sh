@@ -17,6 +17,18 @@ rsync -avz --delete ./addon/ "$REMOTE_HOST_ALIAS:$RUNTIME/" && \
     exit 2
   }
 
+# Compute local checksum
+LOCAL_SHA=$(sha256sum ./addon/config.yaml | awk '{print $1}')
+echo "LOCAL config.yaml sha256=${LOCAL_SHA}"
+
+# Verify remote config.yaml
+REMOTE_SHA=$(ssh "$REMOTE_HOST_ALIAS" "sha256sum $RUNTIME/config.yaml 2>/dev/null | awk '{print \$1}' || true")
+echo "REMOTE config.yaml sha256=${REMOTE_SHA}"
+[ "${LOCAL_SHA}" = "${REMOTE_SHA}" ] || { echo 'FATAL: config.yaml checksum mismatch after deploy'; exit 1; }
+
+# Assert option is present remotely
+ssh "$REMOTE_HOST_ALIAS" "grep -q 'enable_health_checks' $RUNTIME/config.yaml || { echo 'FATAL: enable_health_checks missing in remote config.yaml'; exit 1; }"
+
 # 3) Restart add-on via HA Core Services API using LLAT from /config/secrets.yaml (never prints token)
 ssh "$REMOTE_HOST_ALIAS" 'bash -se' <<'RS'
 set -euo pipefail
