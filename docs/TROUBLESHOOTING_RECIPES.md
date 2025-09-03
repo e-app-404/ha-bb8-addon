@@ -1,3 +1,14 @@
+## Supervisor-only Recipes
+- No DIAG in logs → run.sh must print DIAG to stdout (hard-wired). Restart add-on and recheck logs.
+- Heartbeat ages “na” for >30s → ensure `enable_health_checks: true` in Options UI; restart add-on.
+- MQTT connectivity:
+  ```bash
+  ha service call mqtt.publish -d '{"topic":"bb8/echo/cmd","payload":"{\"value\":\"ping\"}"}'
+  ha addons logs local_beep_boop_bb8 --lines 200 | grep -E 'Connected to MQTT|Subscribed to bb8/echo/cmd'
+  ```
+- Controlled respawn drill:
+  - Set `enable_echo: false` in Options UI, restart → main runs, echo disabled; HEALTH_SUMMARY shows only main.
+  - Re-enable `enable_echo: true`, restart → echo resumes; HEALTH_SUMMARY shows both ages.
 # Troubleshooting Recipes — HA-BB8
 
 ## TR-01: Simulate echo_responder failure and confirm respawn

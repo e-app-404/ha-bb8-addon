@@ -1,3 +1,23 @@
+## Supervisor-only Sanity Checks
+1. Add-on state/version
+	```bash
+	ha addons info local_beep_boop_bb8 | jq -r '.state+" @ "+.version'
+	```
+2. Options materialized
+	```bash
+	ha addons options local_beep_boop_bb8 | jq -c '{enable_echo,enable_health_checks,log_path,mqtt_host,mqtt_port}'
+	```
+3. DIAG lines present
+	```bash
+	ha addons logs local_beep_boop_bb8 --lines 400 \
+	  | grep -E 'run\.sh entry|RUNLOOP attempt|Started bb8_core\.(main|echo_responder) PID|Child exited|HEALTH_SUMMARY'
+	```
+4. Heartbeats ticking (ages must change ~15s apart)
+	```bash
+	echo '--- A ---'; ha addons logs local_beep_boop_bb8 --lines 200 | grep HEALTH_SUMMARY | tail -n 3
+	sleep 15
+	echo '--- B ---'; ha addons logs local_beep_boop_bb8 --lines 200 | grep HEALTH_SUMMARY | tail -n 3
+	```
 # Sanity Checks — HA-BB8
 
 ## SC-01: DIAG lineage visible

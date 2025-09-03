@@ -1,3 +1,8 @@
+## Supervisor-only Operations
+- Control plane: single (run.sh). `s6` echo_responder is DOWN by design.
+- Observability: Supervisor logs only (`ha addons logs`). No docker exec required.
+- Heartbeats: Python writes `/tmp/bb8_heartbeat_main|echo`; run.sh prints `HEALTH_SUMMARY` with ages every 15s.
+- Restart policy: supervised in run.sh; `RESTART_LIMIT=0` (unlimited). Creating `/tmp/bb8_restart_disabled` halts restarts (requires container shell; not used in Supervisor-only ops).
 # Operations Overview — HA-BB8 Add-on
 
 ## Runtime supervision & DIAG
