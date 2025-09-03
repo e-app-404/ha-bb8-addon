@@ -67,6 +67,40 @@ trap 'diag_emit "RUNLOOP EXIT trap"' EXIT
 
 diag_emit "run.sh entry (version=${ADDON_VERSION}) wd=$(pwd) LOG=${BB8_LOG_PATH} HEALTH=${ENABLE_HEALTH_CHECKS} ECHO=${ENABLE_ECHO_RAW}"
 
+# ---------- Background health summary (log-only; no docker exec required) ----------
+HEARTBEAT_STATUS_INTERVAL=${HEARTBEAT_STATUS_INTERVAL:-60}
+HB_MON_PID=""
+if [ "${ENABLE_HEALTH_CHECKS:-0}" = "1" ]; then
+  hb_age() {
+    # args: file_path -> prints age in seconds (float) or "na"
+    local f="$1"
+    [ -f "$f" ] || { printf "na"; return; }
+    local now ts age
+    now="$(date +%s)"
+    ts="$(tail -n1 "$f" 2>/dev/null || echo 0)"
+    # allow float timestamps in file; compute age with awk
+    age="$(awk -v n="$now" -v t="$ts" 'BEGIN{printf "%.1f", (n - t)}')"
+    printf "%s" "$age"
+  }
+  hb_monitor() {
+    # first emit quickly, then settle into interval cadence
+    while true; do
+      local a b
+      a="$(hb_age /tmp/bb8_heartbeat_main)"
+      b="$(hb_age /tmp/bb8_heartbeat_echo)"
+      diag_emit "HEALTH_SUMMARY main_age=${a}s echo_age=${b}s interval=${HEARTBEAT_STATUS_INTERVAL}s"
+      sleep "${HEARTBEAT_STATUS_INTERVAL}"
+    done
+  }
+  hb_monitor & HB_MON_PID=$!
+fi
+
+# ensure background monitor gets cleaned up on exit
+cleanup_hb() { [ -n "$HB_MON_PID" ] && kill -TERM "$HB_MON_PID" 2>/dev/null || true; }
+trap 'diag_emit "RUNLOOP received SIGTERM"; cleanup_hb; exit 143' SIGTERM
+trap 'diag_emit "RUNLOOP received SIGINT";  cleanup_hb; exit 130'  SIGINT
+trap 'diag_emit "RUNLOOP EXIT trap";        cleanup_hb'            EXIT
+
 # ---------- Python selection ----------
 VIRTUAL_ENV="${VIRTUAL_ENV:-/opt/venv}"
 PY="${VIRTUAL_ENV}/bin/python"
