@@ -90,20 +90,6 @@ def main():
         _flush_logs()
         sys.exit(1)
 
-# DIAG-BEGIN HEALTH-MAIN
-ENABLE_HEALTH_CHECKS = bool(int(os.environ.get("ENABLE_HEALTH_CHECKS", "0")))
-def _heartbeat_main():
-    while True:
-        try:
-            with open("/tmp/bb8_heartbeat_main", "w") as f:
-                f.write(f"{time.time()}\n")
-        except Exception:
-            pass
-        time.sleep(5)
-if ENABLE_HEALTH_CHECKS:
-    logger.info("main.py health check enabled: /tmp/bb8_heartbeat_main")
-    threading.Thread(target=_heartbeat_main, daemon=True).start()
-# DIAG-END HEALTH-MAIN
 
 if __name__ == "__main__":
     try:
