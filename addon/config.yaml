@@ -62,6 +62,13 @@ options:
   qos: 1
   ha_discovery_topic: "homeassistant"
   mqtt_tls: false
+  # --- Optional MQTT topic overrides (leave blank to use defaults from mqtt_base) ---
+  mqtt_echo_cmd_topic: ""
+  mqtt_echo_ack_topic: ""
+  mqtt_echo_state_topic: ""
+  mqtt_telemetry_echo_roundtrip_topic: ""
+  mqtt_ble_ready_cmd_topic: ""
+  mqtt_ble_ready_summary_topic: ""
 
   # --- Device Identification ---
   bb8_mac: "ED:ED:87:D7:27:50"
@@ -112,6 +119,12 @@ schema:
   mqtt_broker_port: "int?"
   mqtt_username: "str?"
   mqtt_topic_prefix: "str?"
+  mqtt_echo_cmd_topic: "str?"
+  mqtt_echo_ack_topic: "str?"
+  mqtt_echo_state_topic: "str?"
+  mqtt_telemetry_echo_roundtrip_topic: "str?"
+  mqtt_ble_ready_cmd_topic: "str?"
+  mqtt_ble_ready_summary_topic: "str?"
 
   # --- Device Identification ---
   bb8_mac: "str"

@@ -1,4 +1,51 @@
 import warnings  # Retain import for other warning handling if needed
+import json, os, time
+from pathlib import Path
+import logging
+LOG = logging.getLogger(__name__)
+
+OPTIONS_PATH = os.environ.get("OPTIONS_PATH", "/data/options.json")
+def _load_opts(path=OPTIONS_PATH):
+    try:
+        with open(path, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        LOG.warning("Failed to read %s: %s — using defaults", path, e)
+        return {}
+
+_opts = _load_opts()
+_base = _opts.get("mqtt_base") or _opts.get("mqtt_topic_prefix") or "bb8"
+def _resolve_topic(opt_key: str, default_suffix: str, env_key: str = None) -> str:
+    """
+    Order of precedence:
+      1) ENV override (if provided)
+      2) /data/options.json value (opt_key)
+      3) default: f"{_base}/{default_suffix}"
+    Sanitizes leading/trailing slashes. Warn if wildcard topics accidentally set.
+    """
+    if env_key is None:
+        env_key = opt_key.upper()
+    raw = os.environ.get(env_key) or _opts.get(opt_key) or ""
+    raw = str(raw).strip()
+    if not raw:
+        topic = f"{_base}/{default_suffix}"
+    else:
+        topic = raw.lstrip("/")  # absolute -> relative
+    if "#" in topic or "+" in topic:
+        LOG.warning("Wildcard detected in %s='%s' — this is unsafe for pub/sub", opt_key, topic)
+    LOG.info("Resolved topic %s => %s", opt_key, topic)
+    return topic
+
+# --- Resolved topics (single source of truth) ---
+MQTT_ECHO_CMD  = _resolve_topic("mqtt_echo_cmd_topic", "echo/cmd", "MQTT_ECHO_CMD_TOPIC")
+MQTT_ECHO_ACK  = _resolve_topic("mqtt_echo_ack_topic", "echo/ack", "MQTT_ECHO_ACK_TOPIC")
+MQTT_ECHO_STATE= _resolve_topic("mqtt_echo_state_topic", "echo/state", "MQTT_ECHO_STATE_TOPIC")
+MQTT_ECHO_RTT  = _resolve_topic("mqtt_telemetry_echo_roundtrip_topic", "telemetry/echo_roundtrip",
+                                "MQTT_TELEMETRY_ECHO_ROUNDTRIP_TOPIC")
+MQTT_BLE_READY_CMD     = _resolve_topic("mqtt_ble_ready_cmd_topic", "ble_ready/cmd",
+                                        "MQTT_BLE_READY_CMD_TOPIC")
+MQTT_BLE_READY_SUMMARY = _resolve_topic("mqtt_ble_ready_summary_topic", "ble_ready/summary",
+                                        "MQTT_BLE_READY_SUMMARY_TOPIC")
 import json
 import asyncio
 import logging
@@ -127,20 +174,33 @@ def pub(client, topic, payload, retain=False):
 
 
 def on_connect(client, userdata, flags, rc, properties=None):
-    LOG.info(f"Connected to MQTT broker with rc={rc}")
-    client.subscribe(MQTT_ECHO_CMD)  # pragma: no cover
-    LOG.info(f"Subscribed to {MQTT_ECHO_CMD}")
+    LOG.info("Connected to MQTT broker with rc=%s", getattr(rc, "name", rc))
+    client.subscribe(MQTT_ECHO_CMD, qos=0)
+    LOG.info("Subscribed to %s", MQTT_ECHO_CMD)
+    client.subscribe(MQTT_BLE_READY_CMD, qos=0)
+    LOG.info("Subscribed to %s", MQTT_BLE_READY_CMD)
 
 
 def on_message(client, userdata, msg):
-    # BLE readiness contract handler
-    if msg.topic == f"{MQTT_BASE}/ble_ready/cmd":
+    LOG.info("Received message on %s: %s", msg.topic, msg.payload)
+    if msg.topic == MQTT_ECHO_CMD:
+        now = time.time()
         try:
-            payload = json.loads(msg.payload.decode("utf-8") or "{}")
-        except Exception:
-            payload = {}
-        _spawn_ble_ready(client, MQTT_BASE, BLE_ADDR, payload)
-        return
+            client.publish(MQTT_ECHO_ACK, json.dumps({"ts": now, "value": 1}), qos=1, retain=False)
+            client.publish(MQTT_ECHO_STATE, json.dumps({"ts": now, "state": "touched"}), qos=1, retain=False)
+            client.publish(MQTT_ECHO_RTT, json.dumps({"ts": int(now), "rtt_ms": 0,
+                                                      "ble_ok": False, "ble_latency_ms": None}),
+                           qos=1, retain=False)
+        except Exception as e:
+            LOG.exception("Echo publish failed: %s", e)
+    elif msg.topic == MQTT_BLE_READY_CMD:
+        now = time.time()
+        # minimal readiness reply; fill with actual probe if/when implemented
+        summary = {"ts": now, "detected": False, "attempts": 0, "source": "echo_responder"}
+        try:
+            client.publish(MQTT_BLE_READY_SUMMARY, json.dumps(summary), qos=1, retain=False)
+        except Exception as e:
+            LOG.exception("BLE-ready summary publish failed: %s", e)
 def _spawn_ble_ready(client, base, mac, cfg):
     def worker():
         res = asyncio.run(_ble_ready_probe(mac, cfg))
