@@ -1,7 +1,7 @@
 name: "HA-BB8"
 description: "Homeassistant Sphero BB-8 bluetooth integration using MQTT discovery"
 slug: "beep_boop_bb8"
-version: 2025.8.21.41
+version: 2025.8.21.42
 arch: ["aarch64"]
 url: "https://github.com/e-app-404/ha-bb8-addon"
 # LOCAL_DEV: comment out image: to force Supervisor to build locally from Dockerfile/build.yaml
