@@ -8,6 +8,7 @@ import time
 
 import paho.mqtt.client as mqtt
 import yaml
+from paho.mqtt.enums import CallbackAPIVersion
 
 
 def env(name, default=None, required=False):
@@ -50,7 +51,10 @@ def main():
     pwd = env("MQTT_PASSWORD")
     base = env("MQTT_BASE", "bb8")
 
-    client = mqtt.Client(client_id=f"probe-{int(time.time())}")
+    client = mqtt.Client(
+        client_id=f"probe-{int(time.time())}",
+        callback_api_version=CallbackAPIVersion.VERSION2,
+    )
     if user:
         client.username_pw_set(user, pwd or None)
     res = {"connected": False, "roundtrip": "FAIL", "schema": "UNKNOWN"}

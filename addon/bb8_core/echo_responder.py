@@ -1,20 +1,26 @@
-import warnings  # Retain import for other warning handling if needed
-import json, os, time
-from pathlib import Path
+import json
 import logging
+import os
+import time
+
 LOG = logging.getLogger(__name__)
 
 OPTIONS_PATH = os.environ.get("OPTIONS_PATH", "/data/options.json")
+
+
 def _load_opts(path=OPTIONS_PATH):
     try:
-        with open(path, "r") as f:
+        with open(path) as f:
             return json.load(f)
     except Exception as e:
         LOG.warning("Failed to read %s: %s — using defaults", path, e)
         return {}
 
+
 _opts = _load_opts()
 _base = _opts.get("mqtt_base") or _opts.get("mqtt_topic_prefix") or "bb8"
+
+
 def _resolve_topic(opt_key: str, default_suffix: str, env_key: str = None) -> str:
     """
     Order of precedence:
@@ -32,37 +38,46 @@ def _resolve_topic(opt_key: str, default_suffix: str, env_key: str = None) -> st
     else:
         topic = raw.lstrip("/")  # absolute -> relative
     if "#" in topic or "+" in topic:
-        LOG.warning("Wildcard detected in %s='%s' — this is unsafe for pub/sub", opt_key, topic)
+        LOG.warning(
+            "Wildcard detected in %s='%s' — this is unsafe for pub/sub", opt_key, topic
+        )
     LOG.info("Resolved topic %s => %s", opt_key, topic)
     return topic
 
+
 # --- Resolved topics (single source of truth) ---
-MQTT_ECHO_CMD  = _resolve_topic("mqtt_echo_cmd_topic", "echo/cmd", "MQTT_ECHO_CMD_TOPIC")
-MQTT_ECHO_ACK  = _resolve_topic("mqtt_echo_ack_topic", "echo/ack", "MQTT_ECHO_ACK_TOPIC")
-MQTT_ECHO_STATE= _resolve_topic("mqtt_echo_state_topic", "echo/state", "MQTT_ECHO_STATE_TOPIC")
-MQTT_ECHO_RTT  = _resolve_topic("mqtt_telemetry_echo_roundtrip_topic", "telemetry/echo_roundtrip",
-                                "MQTT_TELEMETRY_ECHO_ROUNDTRIP_TOPIC")
-MQTT_BLE_READY_CMD     = _resolve_topic("mqtt_ble_ready_cmd_topic", "ble_ready/cmd",
-                                        "MQTT_BLE_READY_CMD_TOPIC")
-MQTT_BLE_READY_SUMMARY = _resolve_topic("mqtt_ble_ready_summary_topic", "ble_ready/summary",
-                                        "MQTT_BLE_READY_SUMMARY_TOPIC")
-import json
+MQTT_ECHO_CMD = _resolve_topic("mqtt_echo_cmd_topic", "echo/cmd", "MQTT_ECHO_CMD_TOPIC")
+MQTT_ECHO_ACK = _resolve_topic("mqtt_echo_ack_topic", "echo/ack", "MQTT_ECHO_ACK_TOPIC")
+MQTT_ECHO_STATE = _resolve_topic(
+    "mqtt_echo_state_topic", "echo/state", "MQTT_ECHO_STATE_TOPIC"
+)
+MQTT_ECHO_RTT = _resolve_topic(
+    "mqtt_telemetry_echo_roundtrip_topic",
+    "telemetry/echo_roundtrip",
+    "MQTT_TELEMETRY_ECHO_ROUNDTRIP_TOPIC",
+)
+MQTT_BLE_READY_CMD = _resolve_topic(
+    "mqtt_ble_ready_cmd_topic", "ble_ready/cmd", "MQTT_BLE_READY_CMD_TOPIC"
+)
+MQTT_BLE_READY_SUMMARY = _resolve_topic(
+    "mqtt_ble_ready_summary_topic", "ble_ready/summary", "MQTT_BLE_READY_SUMMARY_TOPIC"
+)
 import asyncio
+import atexit
 import logging
 import os
 import threading
-import time
-import atexit
-import atexit
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
 
 LOG = logging.getLogger("echo_responder")
 
+
 # --- Robust health heartbeat (atomic writes + fsync) ---
 def _env_truthy(val: str) -> bool:
     return str(val).strip().lower() in {"1", "true", "yes", "on"}
+
 
 def _write_atomic(path: str, content: str) -> None:
     tmp = f"{path}.tmp"
@@ -72,8 +87,10 @@ def _write_atomic(path: str, content: str) -> None:
         os.fsync(f.fileno())
     os.replace(tmp, path)
 
+
 def _start_heartbeat(path: str, interval: int) -> None:
     interval = 2 if interval < 2 else interval  # lower bound
+
     def _hb():
         # write immediately, then tick
         try:
@@ -86,15 +103,22 @@ def _start_heartbeat(path: str, interval: int) -> None:
             except Exception as e:
                 LOG.debug("heartbeat write failed: %s", e)
             time.sleep(interval)
+
     t = threading.Thread(target=_hb, daemon=True)
     t.start()
+
 
 ENABLE_HEALTH_CHECKS = _env_truthy(os.environ.get("ENABLE_HEALTH_CHECKS", "0"))
 HB_INTERVAL = int(os.environ.get("HEARTBEAT_INTERVAL_SEC", "5"))
 HB_PATH_ECHO = "/tmp/bb8_heartbeat_echo"
 if ENABLE_HEALTH_CHECKS:
-    LOG.info("echo_responder.py health check enabled: %s interval=%ss", HB_PATH_ECHO, HB_INTERVAL)
+    LOG.info(
+        "echo_responder.py health check enabled: %s interval=%ss",
+        HB_PATH_ECHO,
+        HB_INTERVAL,
+    )
     _start_heartbeat(HB_PATH_ECHO, HB_INTERVAL)
+
 
 @atexit.register
 def _hb_exit():
@@ -102,6 +126,7 @@ def _hb_exit():
         _write_atomic(HB_PATH_ECHO, f"{time.time()}\n")
     except Exception:
         pass
+
 
 try:
     from bleak import BleakClient
@@ -111,6 +136,7 @@ except ImportError:
 
 # DIAG-BEGIN ECHO-STARTUP
 LOG.info(f"echo_responder.py started (PID={os.getpid()})")
+
 
 def _flush_logs_echo():
     """Flush all logger handlers at process exit; resilient to handler errors."""
@@ -126,11 +152,14 @@ def _flush_logs_echo():
         # Last-gasp safety; avoid raising during interpreter shutdown
         pass
 
+
 atexit.register(_flush_logs_echo)
 # DIAG-END ECHO-STARTUP
 
 # DIAG-BEGIN HEALTH-ECHO
 ENABLE_HEALTH_CHECKS = bool(int(os.environ.get("ENABLE_HEALTH_CHECKS", "0")))
+
+
 def _heartbeat_echo():
     while True:
         try:
@@ -140,6 +169,8 @@ def _heartbeat_echo():
             # Don't crash the process if /tmp is unavailable; just retry next tick
             pass
         time.sleep(5)
+
+
 if ENABLE_HEALTH_CHECKS:
     LOG.info("echo_responder.py health check enabled: /tmp/bb8_heartbeat_echo")
     threading.Thread(target=_heartbeat_echo, daemon=True).start()
@@ -186,37 +217,68 @@ def on_message(client, userdata, msg):
     if msg.topic == MQTT_ECHO_CMD:
         now = time.time()
         try:
-            client.publish(MQTT_ECHO_ACK, json.dumps({"ts": now, "value": 1}), qos=1, retain=False)
-            client.publish(MQTT_ECHO_STATE, json.dumps({"ts": now, "state": "touched"}), qos=1, retain=False)
-            client.publish(MQTT_ECHO_RTT, json.dumps({"ts": int(now), "rtt_ms": 0,
-                                                      "ble_ok": False, "ble_latency_ms": None}),
-                           qos=1, retain=False)
+            client.publish(
+                MQTT_ECHO_ACK, json.dumps({"ts": now, "value": 1}), qos=1, retain=False
+            )
+            client.publish(
+                MQTT_ECHO_STATE,
+                json.dumps({"ts": now, "state": "touched"}),
+                qos=1,
+                retain=False,
+            )
+            client.publish(
+                MQTT_ECHO_RTT,
+                json.dumps(
+                    {
+                        "ts": int(now),
+                        "rtt_ms": 0,
+                        "ble_ok": False,
+                        "ble_latency_ms": None,
+                    }
+                ),
+                qos=1,
+                retain=False,
+            )
         except Exception as e:
             LOG.exception("Echo publish failed: %s", e)
     elif msg.topic == MQTT_BLE_READY_CMD:
         now = time.time()
         # minimal readiness reply; fill with actual probe if/when implemented
-        summary = {"ts": now, "detected": False, "attempts": 0, "source": "echo_responder"}
+        summary = {
+            "ts": now,
+            "detected": False,
+            "attempts": 0,
+            "source": "echo_responder",
+        }
         try:
-            client.publish(MQTT_BLE_READY_SUMMARY, json.dumps(summary), qos=1, retain=False)
+            client.publish(
+                MQTT_BLE_READY_SUMMARY, json.dumps(summary), qos=1, retain=False
+            )
         except Exception as e:
             LOG.exception("BLE-ready summary publish failed: %s", e)
+
+
 def _spawn_ble_ready(client, base, mac, cfg):
     def worker():
         res = asyncio.run(_ble_ready_probe(mac, cfg))
         try:
-            client.publish(f"{base}/ble_ready/summary", json.dumps(res), qos=1, retain=False)
+            client.publish(
+                f"{base}/ble_ready/summary", json.dumps(res), qos=1, retain=False
+            )
         except Exception as e:
             print(f"[BB-8] BLE_READY publish error: {e}", flush=True)
+
     threading.Thread(target=worker, daemon=True).start()
+
 
 async def _ble_ready_probe(bb8_mac, cfg):
     from bleak import BleakScanner
+
     mac_norm = (bb8_mac or "").upper()
     timeout_s = max(1, int(cfg.get("timeout_s", 12)))
-    retry_s   = max(0.2, float(cfg.get("retry_interval_s", 1.5)))
-    max_tries = max(1, int(cfg.get("max_attempts", max(1, int(timeout_s/retry_s)))));
-    nonce     = cfg.get("nonce")
+    retry_s = max(0.2, float(cfg.get("retry_interval_s", 1.5)))
+    max_tries = max(1, int(cfg.get("max_attempts", max(1, int(timeout_s / retry_s)))))
+    nonce = cfg.get("nonce")
     attempts, detected, rssi, name = 0, False, None, None
     t0 = time.time()
     while attempts < max_tries and (time.time() - t0) < timeout_s:
@@ -234,8 +296,15 @@ async def _ble_ready_probe(bb8_mac, cfg):
         except Exception as e:
             print(f"[BB-8] BLE_READY probe error: {e}", flush=True)
         await asyncio.sleep(0)
-    return {"ts": time.time(), "nonce": nonce, "detected": detected,
-            "attempts": attempts, "mac": mac_norm, "rssi": rssi, "name": name}
+    return {
+        "ts": time.time(),
+        "nonce": nonce,
+        "detected": detected,
+        "attempts": attempts,
+        "mac": mac_norm,
+        "rssi": rssi,
+        "name": name,
+    }
     LOG.info(f"Received message on {msg.topic}: {msg.payload}")
     try:
         payload = json.loads(msg.payload.decode("utf-8"))
@@ -376,10 +445,11 @@ if __name__ == "__main__":
     except Exception as e:
         import logging
         import sys
+
         logging.basicConfig(level=logging.ERROR)
         logging.error(f"Echo responder fatal error: {e}", exc_info=True)
         # Ensure logs are flushed before exit
         for h in logging.getLogger().handlers:
-            if hasattr(h, 'flush'):
+            if hasattr(h, "flush"):
                 h.flush()
         sys.exit(1)

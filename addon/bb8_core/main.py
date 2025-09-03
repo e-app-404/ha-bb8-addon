@@ -1,19 +1,21 @@
 # DIAG-BEGIN IMPORTS
-import os
+import atexit
 import os
 import sys
-import time
-import atexit
 import threading
+import time
+
 from bb8_core.logging_setup import logger
-from bb8_core.logging_setup import logger
+
 # DIAG-END IMPORTS
 
 # DIAG-BEGIN STARTUP-AND-FLUSH
 
+
 # --- Robust health heartbeat (atomic writes + fsync) ---
 def _env_truthy(val: str) -> bool:
     return str(val).strip().lower() in {"1", "true", "yes", "on"}
+
 
 def _write_atomic(path: str, content: str) -> None:
     tmp = f"{path}.tmp"
@@ -23,8 +25,10 @@ def _write_atomic(path: str, content: str) -> None:
         os.fsync(f.fileno())
     os.replace(tmp, path)
 
+
 def _start_heartbeat(path: str, interval: int) -> None:
     interval = 2 if interval < 2 else interval  # lower bound
+
     def _hb():
         # write immediately, then tick
         try:
@@ -37,15 +41,20 @@ def _start_heartbeat(path: str, interval: int) -> None:
             except Exception as e:
                 logger.debug("heartbeat write failed: %s", e)
             time.sleep(interval)
+
     t = threading.Thread(target=_hb, daemon=True)
     t.start()
+
 
 ENABLE_HEALTH_CHECKS = _env_truthy(os.environ.get("ENABLE_HEALTH_CHECKS", "0"))
 HB_INTERVAL = int(os.environ.get("HEARTBEAT_INTERVAL_SEC", "5"))
 HB_PATH_MAIN = "/tmp/bb8_heartbeat_main"
 if ENABLE_HEALTH_CHECKS:
-    logger.info("main.py health check enabled: %s interval=%ss", HB_PATH_MAIN, HB_INTERVAL)
+    logger.info(
+        "main.py health check enabled: %s interval=%ss", HB_PATH_MAIN, HB_INTERVAL
+    )
     _start_heartbeat(HB_PATH_MAIN, HB_INTERVAL)
+
 
 @atexit.register
 def _hb_exit():
@@ -53,7 +62,10 @@ def _hb_exit():
         _write_atomic(HB_PATH_MAIN, f"{time.time()}\n")
     except Exception:
         pass
+
+
 logger.info(f"bb8_core.main started (PID={os.getpid()})")
+
 
 def _flush_logs():
     logger.info("main.py atexit: flushing logs before exit")
@@ -64,22 +76,28 @@ def _flush_logs():
             except Exception:
                 pass
 
+
 atexit.register(_flush_logs)
 # DIAG-END STARTUP-AND-FLUSH
+
 
 def main():
     logger.info("bb8_core.main started")
     try:
         from bb8_core.bridge_controller import start_bridge_controller
+
         facade = start_bridge_controller()
         logger.info("bridge_controller started; entering run loop")
         # Block main thread until SIGTERM/SIGINT
         import signal
+
         stop_evt = False
+
         def _on_signal(signum, frame):
             logger.info(f"signal_received signum={signum}")
             nonlocal stop_evt
             stop_evt = True
+
         signal.signal(signal.SIGTERM, _on_signal)
         signal.signal(signal.SIGINT, _on_signal)
         while not stop_evt:
@@ -99,4 +117,3 @@ if __name__ == "__main__":
         logger.exception(f"main.py top-level exception: {e}")
         _flush_logs()
         sys.exit(1)
-

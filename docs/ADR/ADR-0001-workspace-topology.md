@@ -60,13 +60,16 @@ status: Approved
 - The deploy step includes `git clean -fdx` on the runtime clone prior to reset to guarantee a clean runtime.
 - Acceptance tokens now include `CLEAN_RUNTIME_OK` preceding `DEPLOY_OK`.
 
-**Addendum v2 (2025-08-22): Canonical Paths & Directory Rules (reconciled with ADR-0004)**
 
-- **Workspace**: keep `ops/`, `reports/`, `scripts/`, `docs/`, `.github/`, `_backups/`.  
-- **Add-on minimal set**: `addon/config.yaml`, `addon/Dockerfile`, `addon/bb8_core/` (+ `addon/tests/` optional).  
-- **CRTP (see ADR-0004)**: `addon/tools/` and `addon/scripts/` are **conditionally allowed** when referenced by Dockerfile/entry or whitelisted via markers; otherwise they belong in the workspace.  
-- **Always forbidden in `addon/`**: nested `.git`, nested `addon/`, `docs/`, `ops/`, `reports/`.
-- Runtime artifacts remain in container: `/data/...` (host: `/data/addons/data/<slug>/...`)
+**Test Directory Canonicalization (2025-09-03):**
+
+- The only supported and canonical test directory is `addon/tests/`. All test files must reside here. Any duplicate or legacy test folders (e.g., `addon/bb8_core/tests/`) must be removed and consolidated into `addon/tests/`.
+
+**Workspace**: keep `ops/`, `reports/`, `scripts/`, `docs/`, `.github/`, `_backups/`.  
+**Add-on minimal set**: `addon/config.yaml`, `addon/Dockerfile`, `addon/bb8_core/`, `addon/tests/`.  
+**CRTP (see ADR-0004)**: `addon/tools/` and `addon/scripts/` are **conditionally allowed** when referenced by Dockerfile/entry or whitelisted via markers; otherwise they belong in the workspace.  
+**Always forbidden in `addon/`**: nested `.git`, nested `addon/`, `docs/`, `ops/`, `reports/`.
+Runtime artifacts remain in container: `/data/...` (host: `/data/addons/data/<slug>/...`)
 
 ## Governance Tokens — Canonical Catalog
 ## Build Mode Semantics (informative)

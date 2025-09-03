@@ -1,7 +1,21 @@
-#
-# Release Automation & Workspace Commands
+# bb8_core
 
-## Automated Release Workflow
+Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT.
+
+## Features
+
+- BLE (Bluetooth Low Energy) control of Sphero BB-8
+- MQTT command and status integration
+- Home Assistant add-on compliant (configurable via UI)
+- Supports BLE adapter selection and diagnostics
+- MQTT Discovery for the following Home Assistant entities:
+  - Presence sensor (`bb8/presence`)
+  - RSSI sensor (`bb8/rssi`)
+  - Power switch (`bb8/command/power`, `bb8/state/power`)
+
+## Release Automation & Workspace Commands
+
+### Automated Release Workflow
 
 This workspace supports a fully automated release workflow for the Home Assistant BB-8 add-on. The following commands are available from the repo root:
 
@@ -50,99 +64,6 @@ make release VERSION=1.4.2
 * All release scripts are located in `ops/release/` and `ops/workspace/`.
 * The workflow is idempotent: publishing is skipped if no changes are present in `addon/`.
 * Makefile targets are tab-indented and ready for one-command releases.
-
----
-# bb8_core
-
-Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT.
-
-## Features
-
-- BLE (Bluetooth Low Energy) control of Sphero BB-8
-- MQTT command and status integration
-- Home Assistant add-on compliant (configurable via UI)
-- Supports BLE adapter selection and diagnostics
-- MQTT Discovery for the following Home Assistant entities:
-  - Presence sensor (`bb8/presence`)
-  - RSSI sensor (`bb8/rssi`)
-  - Power switch (`bb8/command/power`, `bb8/state/power`)
-
-## Where do options come from?
-
-- **Origin:** Home Assistant Supervisor generates `/data/options.json` from the add-on’s `config.yaml` schema and the values you set in the Add-on Options UI.
-- **Author:** You (the HA admin) via the UI; Supervisor materializes the file inside the container.
-- **Purpose:** Single source of truth for runtime config (MQTT host/port/creds, topic prefix, BLE adapter, timeouts, TLS).
-- **Do not edit manually** in the container; change options in the UI and restart the add-on.
-
-## Directory Structure
-
-```text
-local/
-├─bb8_core/
-│   ├── app/
-│   │   ├── bb8_bletest_diag.sh
-│   │   ├── ble_test_diag.sh
-│   │   └── test_ble_adapter.py
-│   ├── bb8_core/
-│   │   ├── __init__.py
-│   │   ├── addon_config.py
-│   │   ├── auto_detect.py
-│   │   ├── bb8_presence_scanner.py
-│   │   ├── ble_bridge.py
-│   │   ├── ble_gateway.py
-│   │   ├── ble_link.py
-│   │   ├── ble_utils.py
-│   │   ├── bridge_controller.py
-│   │   ├── controller.py
-│   │   ├── core.py
-│   │   ├── discovery.py
-│   │   ├── discovery_publish.py
-│   │   ├── evidence_capture.py
-│   │   ├── facade.py
-│   │   ├── logging_setup.py
-│   │   ├── mqtt_dispatcher.py
-│   │   ├── telemetry.py
-│   │   ├── test_mqtt_dispatcher.py
-│   │   ├── util.py
-│   │   └── version_probe.py
-│   ├── .devcontainer/
-│   │   ├── Dockerfile
-│   │   └── devcontainer.json
-│   ├── ops/
-│   │   ├── blebridge_handler_surface_check.py
-│   │   ├── delta_contract.yaml
-│   │   ├── entity_set.json
-│   │   ├── entity_set_extended.json
-│   │   ├── evidence/
-│   │   │   ├── collect_stp4.py
-│   │   │   └── evidence_capture.py
-│   │   ├── facade_mapping_table.json
-│   │   ├── intervention_plan.json
-│   │   ├── strategic_assessment.json
-│   │   └── test_facade_attach_mqtt.py
-│   ├── reports/
-│   │   └── (various .json and stp4_* evidence bundles)
-│   ├── services.d/
-│   │   └── ble_bridge/
-│   │       └── run
-│   ├── tests/
-│   │   ├── test_facade.py
-│   │   └── test_mqtt_smoke.py
-│   ├── CHANGELOG.md
-│   ├── Dockerfile
-│   ├── Makefile
-│   ├── README.md
-│   ├── apparor.txt
-│   ├── config.yaml
-│   ├── copilot_patch_overview.log
-│   ├── pyproject.toml
-│   ├── requirements-dev.txt
-│   ├── requirements.in
-│   ├── requirements.txt
-│   ├── run.sh
-│   ├── scan_bb8_gatt.py
-│   ├── tox.ini
-```
 
 ## Configuration System
 

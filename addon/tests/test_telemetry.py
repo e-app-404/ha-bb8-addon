@@ -1,9 +1,8 @@
 import threading
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 import addon.bb8_core.telemetry as telemetry
+import pytest
 
 
 class DummyMQTT:

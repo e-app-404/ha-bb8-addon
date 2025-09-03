@@ -1,7 +1,6 @@
 # bb8_core/version_probe.py
 
-from importlib.metadata import PackageNotFoundError as E
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError as E, version
 
 
 def probe():

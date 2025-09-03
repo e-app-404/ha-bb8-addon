@@ -39,7 +39,6 @@ def main():
 
     c = get_mqtt_client()
 
-
     def on_connect(client, userdata, flags, rc, properties=None):
         client.subscribe(diag_t, qos=0)
         # trigger one command the handlers subscribe to
@@ -47,7 +46,7 @@ def main():
 
     def on_message(client, userdata, msg):
         try:
-            ev = json.loads((msg.payload or b"{}" ).decode("utf-8", "ignore"))
+            ev = json.loads((msg.payload or b"{}").decode("utf-8", "ignore"))
         except Exception:
             ev = {}
         if ev.get("event", "") in (

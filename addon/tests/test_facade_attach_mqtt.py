@@ -7,6 +7,7 @@ import asyncio
 from types import SimpleNamespace
 
 import pytest
+
 from bb8_core.facade import BB8Facade
 
 

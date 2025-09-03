@@ -50,3 +50,5 @@ addon/docs/reports/*
 # scripts/
 # addon/
 # .github/
+# --- Canonical test directory ---
+# Do not ignore addon/tests/ (all tests must reside here per ADR-0001)

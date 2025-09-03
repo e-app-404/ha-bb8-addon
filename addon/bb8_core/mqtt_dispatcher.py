@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import warnings
-
 import asyncio
 import inspect
 import json

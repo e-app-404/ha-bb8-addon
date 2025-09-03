@@ -14,6 +14,7 @@ import inspect
 import json
 
 import pytest
+
 from bb8_core.bb8_presence_scanner import publish_discovery
 from bb8_core.mqtt_dispatcher import start_mqtt_dispatcher
 

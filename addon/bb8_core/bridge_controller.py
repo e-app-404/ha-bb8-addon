@@ -33,8 +33,10 @@ def _on_signal(signum, frame):
 
 from .evidence_capture import EvidenceRecorder
 from .logging_setup import logger
-from .mqtt_dispatcher import register_subscription  # dynamic topic binding
-from .mqtt_dispatcher import ensure_dispatcher_started
+from .mqtt_dispatcher import (
+    ensure_dispatcher_started,
+    register_subscription,  # dynamic topic binding
+)
 
 log = logging.getLogger(__name__)
 

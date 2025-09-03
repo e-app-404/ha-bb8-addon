@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import warnings
-
-
 import argparse
 import asyncio
 import json
@@ -618,6 +615,21 @@ if __name__ == "__main__":
 
             asyncio.run(_once())
         else:
+            # Ensure get_mqtt_client and setup_callbacks are defined before use
+            def get_mqtt_client():
+                client = mqtt.Client(
+                    callback_api_version=CallbackAPIVersion.VERSION2,
+                    client_id=CFG.get("MQTT_CLIENT_ID", "bb8_presence_scanner"),
+                    protocol=mqtt.MQTTv311,
+                )
+                if MQTT_USERNAME and MQTT_PASSWORD:
+                    client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+                client.will_set(AVAIL_TOPIC, payload=AVAIL_OFF, qos=1, retain=True)
+                return client
+
+            def setup_callbacks(client):
+                client.on_connect = _on_connect
+
             mqtt_client = get_mqtt_client()
             setup_callbacks(mqtt_client)
             _connect_mqtt(mqtt_client)
