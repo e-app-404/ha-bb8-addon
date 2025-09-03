@@ -1,5 +1,6 @@
 import warnings  # Retain import for other warning handling if needed
 import json
+import asyncio
 import logging
 import os
 import threading
@@ -132,6 +133,49 @@ def on_connect(client, userdata, flags, rc, properties=None):
 
 
 def on_message(client, userdata, msg):
+    # BLE readiness contract handler
+    if msg.topic == f"{MQTT_BASE}/ble_ready/cmd":
+        try:
+            payload = json.loads(msg.payload.decode("utf-8") or "{}")
+        except Exception:
+            payload = {}
+        _spawn_ble_ready(client, MQTT_BASE, BLE_ADDR, payload)
+        return
+def _spawn_ble_ready(client, base, mac, cfg):
+    def worker():
+        res = asyncio.run(_ble_ready_probe(mac, cfg))
+        try:
+            client.publish(f"{base}/ble_ready/summary", json.dumps(res), qos=1, retain=False)
+        except Exception as e:
+            print(f"[BB-8] BLE_READY publish error: {e}", flush=True)
+    threading.Thread(target=worker, daemon=True).start()
+
+async def _ble_ready_probe(bb8_mac, cfg):
+    from bleak import BleakScanner
+    mac_norm = (bb8_mac or "").upper()
+    timeout_s = max(1, int(cfg.get("timeout_s", 12)))
+    retry_s   = max(0.2, float(cfg.get("retry_interval_s", 1.5)))
+    max_tries = max(1, int(cfg.get("max_attempts", max(1, int(timeout_s/retry_s)))));
+    nonce     = cfg.get("nonce")
+    attempts, detected, rssi, name = 0, False, None, None
+    t0 = time.time()
+    while attempts < max_tries and (time.time() - t0) < timeout_s:
+        attempts += 1
+        try:
+            devices = await BleakScanner.discover(timeout=retry_s)
+            for d in devices:
+                if d.address.upper() == mac_norm:
+                    detected = True
+                    rssi = getattr(d, "rssi", None)
+                    name = getattr(d, "name", None)
+                    break
+            if detected:
+                break
+        except Exception as e:
+            print(f"[BB-8] BLE_READY probe error: {e}", flush=True)
+        await asyncio.sleep(0)
+    return {"ts": time.time(), "nonce": nonce, "detected": detected,
+            "attempts": attempts, "mac": mac_norm, "rssi": rssi, "name": name}
     LOG.info(f"Received message on {msg.topic}: {msg.payload}")
     try:
         payload = json.loads(msg.payload.decode("utf-8"))

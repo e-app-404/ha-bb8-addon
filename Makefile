@@ -1,17 +1,16 @@
-.PHONY: diag-health
+.PHONY: clean-caches diag-health diag-respawn guard test runtime-deploy attest all release-patch release-minor release-major release VERSION venv testcov evidence-stp4 evidence-clean evidence-validate addon-audit format lint types testcov security qa ci diagnose-ssh deploy-ssh publish attest-supervisor-ssh
+
+# Remove .ruff_cache and __pycache__ directories before deployment
+clean-caches:
+	@find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null
+	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null
+
 diag-health:
 	@bash ops/diag/ha_bb8_health.sh
 
-.PHONY: diag-respawn
 diag-respawn:
 	@bash ops/diag/ha_bb8_respawn_drill.sh
-.PHONY: diag-health
-diag-health:
-	@bash ops/diag/ha_bb8_health.sh
 
-.PHONY: diag-respawn
-diag-respawn:
-	@bash ops/diag/ha_bb8_respawn_drill.sh
 guard:
 	@bash ops/workspace/validate_paths_map.sh | tee reports/paths_health_receipt.txt
 	@grep -q '^TOKEN: PATHS_MAP_OK' reports/paths_health_receipt.txt
@@ -34,8 +33,6 @@ attest:
 all: guard test publish
 
 # --- Strategos release shortcuts ---
-.PHONY: release-patch release-minor release-major release VERSION
-
 verify-config-src:
 	@grep -q 'enable_health_checks' addon/config.yaml || (echo "FATAL: enable_health_checks missing in addon/config.yaml"; exit 1)
 	@echo "VERIFY_OK: source config.yaml contains enable_health_checks"
@@ -58,25 +55,16 @@ VENV := $(CURDIR)/.venv
 PYTHON := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
 
-.PHONY: venv
 venv:
 	@test -x "$(PYTHON)" || (python3 -m venv "$(VENV)" && "$(PIP)" install -U pip)
 
-testcov: venv
-	@mkdir -p reports/qa_$(STAMP)
-	PYTHONPATH=$(PYTHONPATH) "$(PYTHON)" -m pytest -q --maxfail=1 --disable-warnings \
-	--cov=bb8_core --cov-report=term-missing | tee reports/qa_$(STAMP)/pytest.log
-
 STAMP ?= $(shell date +"%Y%m%d_%H%M%S")
-# Consolidated reports directory (root-level); override via env if needed
 REPORTS_DIR ?= ../reports
-
-.PHONY: evidence-stp4 evidence-clean
 
 evidence-stp4:
 	@if [ -z "$$MQTT_HOST" ]; then \
-	echo "ERROR: MQTT_HOST must be set in the environment (e.g., export MQTT_HOST=192.168.0.129)"; \
-	exit 1; \
+		echo "ERROR: MQTT_HOST must be set in the environment (e.g., export MQTT_HOST=192.168.0.129)"; \
+		exit 1; \
 	fi
 	@mkdir -p $(REPORTS_DIR)
 	@echo ">> collecting STP4 evidence to $(REPORTS_DIR)/stp4_$(STAMP)"
@@ -100,15 +88,8 @@ evidence-clean:
 
 PYTHON=python3
 
-# =====================
-# QA & CI Targets
-# =====================
-
-.PHONY: addon-audit
 addon-audit:
 	python tools/audit_addon_tree.py --strict --out reports/addon_audit_ci.json
-
-.PHONY: format lint types testcov security qa ci
 
 format:
 	@mkdir -p $(REPORTS_DIR)/qa_$(STAMP)
@@ -152,8 +133,6 @@ ci:
 	$(MAKE) security STAMP=$$STAMP \
 	| tee $(REPORTS_DIR)/ci_$$STAMP/ci.log
 
-.PHONY: diagnose-ssh deploy-ssh publish
-
 diagnose-ssh:
 	REMOTE_HOST_ALIAS=home-assistant ops/release/deploy_ha_over_ssh.sh diagnose
 
@@ -162,3 +141,6 @@ deploy-ssh:
 
 publish:
 	REMOTE_HOST_ALIAS=home-assistant ops/release/publish_and_deploy.sh
+
+attest-supervisor-ssh:
+	ssh home-assistant 'HOST=192.168.0.129 PORT=1883 USER=mqtt_bb8 PASS=mqtt_bb8 BASE=bb8 REQUIRE_BLE=false bash /config/domain/shell_commands/stp5_supervisor_ble_attest.sh'
