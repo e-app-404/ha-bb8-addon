@@ -5,6 +5,13 @@ diag-health:
 .PHONY: diag-respawn
 diag-respawn:
 	@bash ops/diag/ha_bb8_respawn_drill.sh
+.PHONY: diag-health
+diag-health:
+	@bash ops/diag/ha_bb8_health.sh
+
+.PHONY: diag-respawn
+diag-respawn:
+	@bash ops/diag/ha_bb8_respawn_drill.sh
 guard:
 	@bash ops/workspace/validate_paths_map.sh | tee reports/paths_health_receipt.txt
 	@grep -q '^TOKEN: PATHS_MAP_OK' reports/paths_health_receipt.txt

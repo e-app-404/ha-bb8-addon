@@ -28,6 +28,36 @@ docker exec "$CID" sh -lc '
 - Default `RESTART_BACKOFF=5s`, `RESTART_LIMIT=0` (unlimited).  
 - Set `/tmp/bb8_restart_disabled` to halt auto-respawn for investigations.
 
+# Operations Overview — HA-BB8 Add-on
+
+## Runtime supervision & DIAG
+The add-on is supervised by `run.sh` (single control-plane). It logs:
+- `RUNLOOP attempt #N`
+- `Started bb8_core.main PID=…`
+- `Started bb8_core.echo_responder PID=…`
+- `Child exited: dead=… exit_code=…`
+
+Heartbeats:
+- `/tmp/bb8_heartbeat_main`
+- `/tmp/bb8_heartbeat_echo`
+
+## Daily health check (one-liners)
+```
+CID=$(docker ps --filter "name=addon_local_beep_boop_bb8" --format '{{.ID}}' | head -n1)
+LOGF=/data/reports/ha_bb8_addon.log
+docker exec "$CID" sh -lc '
+  echo "--- DIAG tail ---"; tail -n 200 '"$LOGF"' | sed -n "/RUNLOOP attempt/I p; /Child exited/I p; /Started bb8_core\\./I p" | tail -n 40
+  echo "--- heartbeats ---"
+  for f in /tmp/bb8_heartbeat_main /tmp/bb8_heartbeat_echo; do
+    t1=$(tail -1 "$f"); sleep 6; t2=$(tail -1 "$f"); awk -v n="$f" -v a="$t1" -v b="$t2" '"'"'BEGIN{printf "%s drift=%.2fs\n", n, (b-a)}'"'"'
+  done
+'
+```
+
+## Restart/backoff policy
+- Default `RESTART_BACKOFF=5s`, `RESTART_LIMIT=0` (unlimited).  
+- Set `/tmp/bb8_restart_disabled` to halt auto-respawn for investigations.
+
 # OPERATIONS_OVERVIEW — HA‑BB8 (Hardened)
 
 > **Machine‑friendly handbook** for structure, flows, tokens, and contracts. Optimized for parsing by CI, GitHub Copilot, and LLM assistants.

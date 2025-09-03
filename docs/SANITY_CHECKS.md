@@ -19,6 +19,27 @@ for f in /tmp/bb8_heartbeat_main /tmp/bb8_heartbeat_echo; do t1=$(tail -1 "$f");
 grep -c "Started bb8_core\.echo_responder PID=" /data/reports/ha_bb8_addon.log
 ```
 
+# Sanity Checks — HA-BB8
+
+## SC-01: DIAG lineage visible
+**Pass criteria:** DIAG shows runloop attempts, child starts, and no repeated “Child exited” in steady state.
+```
+tail -n 200 /data/reports/ha_bb8_addon.log | sed -n "/RUNLOOP attempt/I p; /Started bb8_core\\./I p; /Child exited/I p" | tail -n 40
+```
+
+## SC-02: Heartbeats ticking
+**Pass criteria:** both deltas in 5–7s range.
+```
+for f in /tmp/bb8_heartbeat_main /tmp/bb8_heartbeat_echo; do t1=$(tail -1 "$f"); sleep 6; t2=$(tail -1 "$f"); awk -v n="$f" -v a="$t1" -v b="$t2" 'BEGIN{printf "%s delta=%.2fs\n", n, (b-a)}'; done
+```
+
+## SC-03: Single control-plane
+**Pass criteria:** `echo_responder/down` present; grep shows run.sh spawned echo at least once.
+```
+[ -f /etc/services.d/echo_responder/down ] && echo OK || echo FAIL
+grep -c "Started bb8_core\.echo_responder PID=" /data/reports/ha_bb8_addon.log
+```
+
 # 6) MQTT Callback Compliance
 grep -E '\[ \]' /addons/local/beep_boop_bb8/reports/callback_signature_matrix.md && echo "DRIFT: CALLBACK_SIGNATURE_MISMATCH" || echo "TOKEN: CALLBACK_SIGNATURE_OK"
 

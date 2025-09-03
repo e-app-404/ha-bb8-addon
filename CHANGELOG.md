@@ -9,6 +9,17 @@
 ### Security/Robustness
 - Log-path normalization and forced file creation with fallbacks to `/data` then `/tmp`.
 
+## [2025.8.21.x] - Unified Supervision & DIAG Hardening
+### Added
+- Single control-plane supervision via `run.sh` with explicit child start/exit logging and respawn.
+- Health heartbeat instrumentation for `main` and `echo_responder`.
+- Options UI: `enable_health_checks`, `log_path`.
+- Operator runbooks, sanity checks, and troubleshooting recipes.
+### Changed
+- Default restart backoff to 5s for steadier recovery behavior.
+### Security/Robustness
+- Log-path normalization and forced file creation with fallbacks to `/data` then `/tmp`.
+
 
 <!-- markdownlint-disable MD022 MD032 MD024 -->
 <!-- Refer to meta schema section at the end of this document for changelog entry format guidance -->
