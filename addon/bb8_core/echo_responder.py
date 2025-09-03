@@ -5,11 +5,55 @@ import os
 import threading
 import time
 import atexit
+import atexit
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
 
 LOG = logging.getLogger("echo_responder")
+
+# --- Robust health heartbeat (atomic writes + fsync) ---
+def _env_truthy(val: str) -> bool:
+    return str(val).strip().lower() in {"1", "true", "yes", "on"}
+
+def _write_atomic(path: str, content: str) -> None:
+    tmp = f"{path}.tmp"
+    with open(tmp, "w") as f:
+        f.write(content)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+
+def _start_heartbeat(path: str, interval: int) -> None:
+    interval = 2 if interval < 2 else interval  # lower bound
+    def _hb():
+        # write immediately, then tick
+        try:
+            _write_atomic(path, f"{time.time()}\n")
+        except Exception as e:
+            LOG.debug("heartbeat initial write failed: %s", e)
+        while True:
+            try:
+                _write_atomic(path, f"{time.time()}\n")
+            except Exception as e:
+                LOG.debug("heartbeat write failed: %s", e)
+            time.sleep(interval)
+    t = threading.Thread(target=_hb, daemon=True)
+    t.start()
+
+ENABLE_HEALTH_CHECKS = _env_truthy(os.environ.get("ENABLE_HEALTH_CHECKS", "0"))
+HB_INTERVAL = int(os.environ.get("HEARTBEAT_INTERVAL_SEC", "5"))
+HB_PATH_ECHO = "/tmp/bb8_heartbeat_echo"
+if ENABLE_HEALTH_CHECKS:
+    LOG.info("echo_responder.py health check enabled: %s interval=%ss", HB_PATH_ECHO, HB_INTERVAL)
+    _start_heartbeat(HB_PATH_ECHO, HB_INTERVAL)
+
+@atexit.register
+def _hb_exit():
+    try:
+        _write_atomic(HB_PATH_ECHO, f"{time.time()}\n")
+    except Exception:
+        pass
 
 try:
     from bleak import BleakClient

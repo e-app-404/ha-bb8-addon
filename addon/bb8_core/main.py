@@ -1,13 +1,58 @@
 # DIAG-BEGIN IMPORTS
 import os
+import os
 import sys
 import time
 import atexit
 import threading
 from bb8_core.logging_setup import logger
+from bb8_core.logging_setup import logger
 # DIAG-END IMPORTS
 
 # DIAG-BEGIN STARTUP-AND-FLUSH
+
+# --- Robust health heartbeat (atomic writes + fsync) ---
+def _env_truthy(val: str) -> bool:
+    return str(val).strip().lower() in {"1", "true", "yes", "on"}
+
+def _write_atomic(path: str, content: str) -> None:
+    tmp = f"{path}.tmp"
+    with open(tmp, "w") as f:
+        f.write(content)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+
+def _start_heartbeat(path: str, interval: int) -> None:
+    interval = 2 if interval < 2 else interval  # lower bound
+    def _hb():
+        # write immediately, then tick
+        try:
+            _write_atomic(path, f"{time.time()}\n")
+        except Exception as e:
+            logger.debug("heartbeat initial write failed: %s", e)
+        while True:
+            try:
+                _write_atomic(path, f"{time.time()}\n")
+            except Exception as e:
+                logger.debug("heartbeat write failed: %s", e)
+            time.sleep(interval)
+    t = threading.Thread(target=_hb, daemon=True)
+    t.start()
+
+ENABLE_HEALTH_CHECKS = _env_truthy(os.environ.get("ENABLE_HEALTH_CHECKS", "0"))
+HB_INTERVAL = int(os.environ.get("HEARTBEAT_INTERVAL_SEC", "5"))
+HB_PATH_MAIN = "/tmp/bb8_heartbeat_main"
+if ENABLE_HEALTH_CHECKS:
+    logger.info("main.py health check enabled: %s interval=%ss", HB_PATH_MAIN, HB_INTERVAL)
+    _start_heartbeat(HB_PATH_MAIN, HB_INTERVAL)
+
+@atexit.register
+def _hb_exit():
+    try:
+        _write_atomic(HB_PATH_MAIN, f"{time.time()}\n")
+    except Exception:
+        pass
 logger.info(f"bb8_core.main started (PID={os.getpid()})")
 
 def _flush_logs():
