@@ -51,16 +51,19 @@ export BB8_LOG_PATH="$LP"
 
 # ---------- Logging helpers (FD-based; no tee race) ----------
 LOG_FD=""
-# ---------- Logging helpers (tee-append; flush every emit) ----------
-diag_emit() {
-  local ts msg; ts="$(date -Is)"; msg="$*"
-  if [ -n "${BB8_LOG_PATH:-}" ] && [ -w "$(dirname "$BB8_LOG_PATH")" ]; then
-    printf "%s [BB-8] %s\n" "$ts" "$msg" | tee -a "$BB8_LOG_PATH" >/dev/null || printf "%s [BB-8] %s\n" "$ts" "$msg"
-    sync || true
-  else
-    printf "%s [BB-8] %s\n" "$ts" "$msg"
-  fi
-}
+ # ---------- DIAG emitter (ALWAYS stdout + best-effort file) ----------
+ # Always print to stdout (Supervisor reads this) and best-effort append to file
+ diag_emit() {
+   local ts msg line
+   ts="$(date -Is)"
+   msg="$*"
+   line="$ts [BB-8] $msg"
+   printf "%s\n" "$line"
+   if [ -n "${BB8_LOG_PATH:-}" ]; then
+     mkdir -p "$(dirname "$BB8_LOG_PATH")" 2>/dev/null || true
+     printf "%s\n" "$line" >> "$BB8_LOG_PATH" 2>/dev/null || true
+   fi
+ }
 trap 'diag_emit "RUNLOOP received SIGTERM"; exit 143' SIGTERM
 trap 'diag_emit "RUNLOOP received SIGINT";  exit 130' SIGINT
 trap 'diag_emit "RUNLOOP EXIT trap"' EXIT
@@ -68,7 +71,7 @@ trap 'diag_emit "RUNLOOP EXIT trap"' EXIT
 diag_emit "run.sh entry (version=${ADDON_VERSION}) wd=$(pwd) LOG=${BB8_LOG_PATH} HEALTH=${ENABLE_HEALTH_CHECKS} ECHO=${ENABLE_ECHO_RAW}"
 
 # ---------- Background health summary (log-only; no docker exec required) ----------
-HEARTBEAT_STATUS_INTERVAL=${HEARTBEAT_STATUS_INTERVAL:-60}
+HEARTBEAT_STATUS_INTERVAL=${HEARTBEAT_STATUS_INTERVAL:-15}
 HB_MON_PID=""
 if [ "${ENABLE_HEALTH_CHECKS:-0}" = "1" ]; then
   hb_age() {
@@ -95,11 +98,21 @@ if [ "${ENABLE_HEALTH_CHECKS:-0}" = "1" ]; then
   hb_monitor & HB_MON_PID=$!
 fi
 
-# ensure background monitor gets cleaned up on exit
+# Optionally forward the file log to stdout for key patterns (Python logs).
+LOG_FORWARD_STDOUT=${LOG_FORWARD_STDOUT:-1}
+LOG_FWD_PID=""
+if [ "${LOG_FORWARD_STDOUT}" = "1" ] && [ -n "${BB8_LOG_PATH:-}" ]; then
+  stdbuf -oL tail -n0 -F "$BB8_LOG_PATH" \
+    | grep -E --line-buffered 'HEALTH_SUMMARY|bb8_core.main started|echo_responder.py started|bridge_controller ready|Dispatcher config|Connected to MQTT|Subscribed to bb8/echo/cmd' &
+  LOG_FWD_PID=$!
+fi
+
+# ensure background monitors get cleaned up on exit
 cleanup_hb() { [ -n "$HB_MON_PID" ] && kill -TERM "$HB_MON_PID" 2>/dev/null || true; }
-trap 'diag_emit "RUNLOOP received SIGTERM"; cleanup_hb; exit 143' SIGTERM
-trap 'diag_emit "RUNLOOP received SIGINT";  cleanup_hb; exit 130'  SIGINT
-trap 'diag_emit "RUNLOOP EXIT trap";        cleanup_hb'            EXIT
+cleanup_fwd() { [ -n "$LOG_FWD_PID" ] && kill -TERM "$LOG_FWD_PID" 2>/dev/null || true; }
+trap 'diag_emit "RUNLOOP received SIGTERM"; cleanup_hb; cleanup_fwd; exit 143' SIGTERM
+trap 'diag_emit "RUNLOOP received SIGINT";  cleanup_hb; cleanup_fwd; exit 130'  SIGINT
+trap 'diag_emit "RUNLOOP EXIT trap";        cleanup_hb; cleanup_fwd'            EXIT
 
 # ---------- Python selection ----------
 VIRTUAL_ENV="${VIRTUAL_ENV:-/opt/venv}"
