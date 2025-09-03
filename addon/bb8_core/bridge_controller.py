@@ -403,13 +403,23 @@ def start_bridge_controller(
     Accepts optional config dict for testability.
     """
     from .addon_config import load_config
-    from .auto_detect import resolve_bb8_mac
+    from .auto_detect import resolve_bb8_mac, start_presence_monitor
     from .ble_bridge import BLEBridge
     from .ble_gateway import BleGateway
     from .logging_setup import logger
     from .mqtt_dispatcher import ensure_dispatcher_started
 
     cfg = config or (load_config()[0] if "load_config" in globals() else {})
+    # Start passive BLE presence monitor in background thread if enabled
+    enable_presence_monitor = cfg.get("enable_presence_monitor", True)
+    if enable_presence_monitor:
+        try:
+            start_presence_monitor()
+            logger.info(
+                {"event": "bb8_presence_monitor_integration", "status": "started"}
+            )
+        except Exception as e:
+            logger.error({"event": "bb8_presence_monitor_error", "error": repr(e)})
     logger.info(
         {
             "event": "bridge_controller_start",

@@ -124,4 +124,36 @@ All operational parameters are loaded from `config.yaml`:
 
 ---
 
+## 9. Pytest Orchestration & CI Integration
+
+The passive BLE presence monitor is fully testable via pytest, with CI-friendly hooks and mocks for BLE scan, registry write, and MQTT publish. Example tests are provided in `addon/bb8_core/tests/test_presence_monitor.py`:
+
+- **Async Monitor Test:**
+  - Mocks BLE scan to always find the device.
+  - Verifies that presence state is published to MQTT.
+  - Uses asyncio to run and cancel the monitor loop.
+
+- **Absence Detection Test:**
+  - Mocks BLE scan to alternate between found and not found.
+  - Verifies that absence state is published to MQTT after consecutive misses.
+  - Runs the synchronous monitor for a few iterations.
+
+**How to run tests:**
+
+```sh
+pytest -v addon/bb8_core/tests/test_presence_monitor.py
+```
+
+**Best practices:**
+- Use provided test hooks for BLE scan, registry write, and MQTT publish to simulate all edge cases.
+- Validate both presence and absence transitions.
+- Integrate with CI pipelines for continuous validation.
+- Inspect test output for coverage of error handling and state changes.
+
+---
+
+For further details, see the test file and module docstrings. Extend tests as needed for new device types, registry formats, or MQTT topic structures.
+
+---
+
 For further questions or troubleshooting, consult the module docstring in `auto_detect.py` or reach out to the project maintainers.

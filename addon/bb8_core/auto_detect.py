@@ -25,6 +25,7 @@ CACHE_DEFAULT_TTL_HOURS: int = CFG.get("CACHE_DEFAULT_TTL_HOURS", 24)
 REGISTRY_PATH: str = CFG.get("REGISTRY_PATH", "addon/bb8_core/bb8_device_registry.yaml")
 MQTT_PRESENCE_TOPIC_BASE: str = CFG.get("MQTT_PRESENCE_TOPIC_BASE", "bb8/presence")
 
+
 async def async_monitor_bb8_presence(
     scan_interval=SCAN_INTERVAL_SEC,
     absence_timeout=ABSENCE_TIMEOUT_SEC,
@@ -88,14 +89,16 @@ async def async_monitor_bb8_presence(
                     REGISTRY_PATH, registry_data, write_fn=registry_write_fn
                 )
             if present != last_state:
-                logger.info({
-                    "event": "bb8_presence_change",
-                    "state": "present" if present else "absent",
-                    "timestamp": now,
-                    "mac": mac,
-                    "rssi": rssi,
-                    "absence_timeout_sec": absence_duration,
-                })
+                logger.info(
+                    {
+                        "event": "bb8_presence_change",
+                        "state": "present" if present else "absent",
+                        "timestamp": now,
+                        "mac": mac,
+                        "rssi": rssi,
+                        "absence_timeout_sec": absence_duration,
+                    }
+                )
                 publish_presence_mqtt(
                     "present" if present else "absent",
                     mac,
@@ -109,10 +112,12 @@ async def async_monitor_bb8_presence(
             logger.error({"event": "bb8_presence_monitor_error", "error": repr(e)})
         await asyncio.sleep(scan_interval)
 
+
 # Example async BLE scan mock for CI/unit testing
 async def mock_async_ble_scan(scan_seconds=5, adapter=None):
     await asyncio.sleep(0.01)
     return [{"address": "00:11:22:33:44:55", "name": "BB-8", "rssi": -60}]
+
 
 # Usage in async tests:
 # await async_monitor_bb8_presence(
@@ -189,19 +194,9 @@ Usage Example:
 """
 
 # Centralized imports
-import asyncio
 import contextlib
-import json
-import os
-import tempfile
-import threading
-import time
-from typing import Any
-
-import yaml
 
 from .addon_config import load_config
-from .logging_setup import logger
 
 # Centralized config loading
 with contextlib.suppress(ImportError):

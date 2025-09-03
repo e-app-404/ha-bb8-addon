@@ -1,6 +1,6 @@
 import json
-import logging
 import os
+import threading
 import time
 
 LOG = logging.getLogger(__name__)
@@ -19,6 +19,51 @@ def _load_opts(path=OPTIONS_PATH):
 
 _opts = _load_opts()
 _base = _opts.get("mqtt_base") or _opts.get("mqtt_topic_prefix") or "bb8"
+
+# --- BLE probe helpers (minimal; Supervisor-only) ---
+try:
+    from bleak import BleakScanner
+except Exception:  # bleak missing or import error
+    BleakScanner = None
+
+_bb8_mac = (_opts.get("bb8_mac") or "").upper().strip()
+_ble_adapter = (_opts.get("ble_adapter") or "hci0").strip()
+if not _bb8_mac:
+    LOG.warning("No bb8_mac found in options.json; BLE probe will always fail.")
+
+
+def _ble_probe_once(timeout_s: float = 3.0) -> dict:
+    """
+    Minimal device-originated evidence: scan for the target MAC using Bleak.
+    Returns: {"ok": bool, "latency_ms": int|None}
+    """
+    if BleakScanner is None or not _bb8_mac:
+        return {"ok": False, "latency_ms": None}
+    t0 = time.time()
+    try:
+        # Note: BleakScanner.discover supports adapter via kwargs on Linux.
+        devices = BleakScanner.discover(timeout=timeout_s, adapter=_ble_adapter)
+        # BleakScanner.discover may be async in some versions; handle both:
+        if hasattr(devices, "__await__"):
+            devices = __import__("asyncio").get_event_loop().run_until_complete(devices)
+        found = any((d.address or "").upper() == _bb8_mac for d in devices or [])
+        if found:
+            ms = int((time.time() - t0) * 1000)
+            return {"ok": True, "latency_ms": ms}
+        return {"ok": False, "latency_ms": None}
+    except Exception as e:
+        LOG.info("BLE probe error: %s", e)
+        return {"ok": False, "latency_ms": None}
+
+
+def _publish_echo_roundtrip(client, base_ts: float, ble_ok: bool, ble_ms: int | None):
+    payload = {
+        "ts": int(base_ts),
+        "rtt_ms": 0,
+        "ble_ok": bool(ble_ok),
+        "ble_latency_ms": ble_ms if ble_ok else None,
+    }
+    client.publish(MQTT_ECHO_RTT, json.dumps(payload), qos=1, retain=False)
 
 
 def _resolve_topic(opt_key: str, default_suffix: str, env_key: str = None) -> str:
@@ -66,7 +111,6 @@ import asyncio
 import atexit
 import logging
 import os
-import threading
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
@@ -216,6 +260,7 @@ def on_message(client, userdata, msg):
     LOG.info("Received message on %s: %s", msg.topic, msg.payload)
     if msg.topic == MQTT_ECHO_CMD:
         now = time.time()
+        # Ack + state immediately
         try:
             client.publish(
                 MQTT_ECHO_ACK, json.dumps({"ts": now, "value": 1}), qos=1, retain=False
@@ -226,28 +271,31 @@ def on_message(client, userdata, msg):
                 qos=1,
                 retain=False,
             )
-            client.publish(
-                MQTT_ECHO_RTT,
-                json.dumps(
-                    {
-                        "ts": int(now),
-                        "rtt_ms": 0,
-                        "ble_ok": False,
-                        "ble_latency_ms": None,
-                    }
-                ),
-                qos=1,
-                retain=False,
-            )
         except Exception as e:
-            LOG.exception("Echo publish failed: %s", e)
+            LOG.exception("Echo publish failed (ack/state): %s", e)
+
+        # Launch a short BLE probe in a thread; publish echo_roundtrip when done
+        def _probe_and_publish():
+            res = _ble_probe_once(
+                timeout_s=3.0
+            )  # tight probe; attestation drives repetition
+            try:
+                _publish_echo_roundtrip(
+                    client, base_ts=now, ble_ok=res["ok"], ble_ms=res["latency_ms"]
+                )
+            except Exception as e:
+                LOG.exception("Echo publish failed (roundtrip): %s", e)
+
+        threading.Thread(target=_probe_and_publish, daemon=True).start()
     elif msg.topic == MQTT_BLE_READY_CMD:
         now = time.time()
         # minimal readiness reply; fill with actual probe if/when implemented
+        res = _ble_probe_once(timeout_s=5.0)
         summary = {
             "ts": now,
-            "detected": False,
-            "attempts": 0,
+            "detected": bool(res["ok"]),
+            "attempts": 1,
+            "latency_ms": res["latency_ms"],
             "source": "echo_responder",
         }
         try:
