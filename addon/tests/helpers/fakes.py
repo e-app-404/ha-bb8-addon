@@ -1,4 +1,5 @@
 import threading
+import re
 
 class FakeMessage:
     def __init__(self, topic, payload, qos=0, retain=False):
@@ -24,9 +25,15 @@ class FakeMQTT:
     def message_callback_add(self, topic, handler):
         self.callbacks[topic] = handler
     def trigger(self, topic, payload):
-        if topic in self.callbacks:
-            msg = FakeMessage(topic, payload)
-            self.callbacks[topic](None, None, msg)
+        # Support wildcards: + and #
+        for pat, cb in self.callbacks.items():
+            if self._topic_match(pat, topic):
+                msg = FakeMessage(topic, payload)
+                cb(None, None, msg)
+    def _topic_match(self, pat, topic):
+        # Convert MQTT wildcards to regex
+        pat_re = re.escape(pat).replace("\\+", "[^/]+").replace("\\#", ".*")
+        return re.fullmatch(pat_re, topic) is not None
 
 class StubCore:
     calls = []

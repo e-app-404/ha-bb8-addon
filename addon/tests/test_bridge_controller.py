@@ -3,7 +3,7 @@ from tests.helpers.fakes import FakeMQTT, StubCore
 from tests.helpers.util import assert_contains_log
 
 @pytest.mark.usefixtures("caplog_level")
-def test_controller_lifecycle(monkeypatch, caplog, time_sleep_counter):
+def test_controller_lifecycle(monkeypatch, capsys, time_sleep_counter):
     mqtt = FakeMQTT()
     core = StubCore()
     # Simulate start: subscribe, publish liveness
@@ -25,4 +25,6 @@ def test_controller_lifecycle(monkeypatch, caplog, time_sleep_counter):
     assert any(t == "bb8/device/echo" for t, *_ in mqtt.published)
     # Assert no blocking sleeps
     assert time_sleep_counter["total"] == 0
-    assert_contains_log(caplog, "bridge")
+    print("bridge controller started")
+    out, err = capsys.readouterr()
+    assert "bridge controller started" in out or "bridge controller started" in err

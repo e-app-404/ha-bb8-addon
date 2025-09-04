@@ -1,11 +1,9 @@
 import warnings
-
 warnings.filterwarnings(
     "ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho"
 )
 # tests/test_smoke_controller_facade.py
 import unittest
-
 
 class TestSmokeControllerFacade(unittest.TestCase):
     def test_import_and_construct(self):

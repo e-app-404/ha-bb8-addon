@@ -1,6 +1,5 @@
 import threading
 from unittest.mock import MagicMock, patch
-
 import addon.bb8_core.telemetry as telemetry
 import pytest
 

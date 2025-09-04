@@ -25,6 +25,10 @@ class StubCore:
     def set_speed(_toy, s, _proc=None):
         StubCore.calls.append(("speed", s))
 
+    @staticmethod
+    def record(_toy, cmd, _proc=None):
+        StubCore.calls.append((cmd,))
+
 
 def test_sleep_mapping(monkeypatch):
     import bb8_core.facade as facade
@@ -71,3 +75,22 @@ def test_drive_autostop(monkeypatch):
     StubCore.calls.clear()
     monkeypatch.setattr(time, "sleep", lambda _s: None, raising=False)
     # BB8Facade does not have drive method, skip test
+
+
+def test_attach_detach(monkeypatch, caplog):
+    core = StubCore()
+    core.record("attach")
+    core.record("detach")
+    assert ("attach",) in [args for args, _ in core.calls]
+    assert ("detach",) in [args for args, _ in core.calls]
+    assert_contains_log(caplog, "attach")
+    assert_contains_log(caplog, "detach")
+
+
+def test_double_attach(monkeypatch, caplog):
+    core = StubCore()
+    core.record("attach")
+    core.record("attach")
+    attaches = [args for args, _ in core.calls if args == ("attach",)]
+    assert len(attaches) == 2
+    assert_contains_log(caplog, "attach")

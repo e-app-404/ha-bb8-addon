@@ -12,6 +12,9 @@ import paho.mqtt.client as mqtt  # pyright: ignore[reportMissingImports]
 from paho.mqtt.client import CallbackAPIVersion
 
 from bb8_core.logging_setup import logger
+import pytest
+from tests.helpers.fakes import FakeMQTT
+from tests.helpers.util import assert_contains_log
 
 # Test parameters
 MQTT_HOST = "test.mosquitto.org"
@@ -85,6 +88,38 @@ def main():
     logger.info({"event": "test_waiting_for_dispatcher"})
     time.sleep(5)
     logger.info("[TEST] Test complete. Check logs for BLE dispatch and error handling.")
+
+
+@pytest.mark.usefixtures("caplog_level")
+def test_topic_routing(monkeypatch, caplog):
+    mqtt = FakeMQTT()
+    routed = []
+
+    def handler(client, userdata, msg):
+        routed.append(msg.topic)
+        mqtt.publish("bb8/response", "ok")
+
+    mqtt.message_callback_add("bb8/cmd/+", handler)
+    mqtt.trigger("bb8/cmd/drive", b"go")
+    mqtt.trigger("bb8/cmd/led", b"on")
+    assert "bb8/cmd/drive" in routed and "bb8/cmd/led" in routed
+    assert any(t == "bb8/response" for t, *_ in mqtt.published)
+    assert_contains_log(caplog, "cmd")
+
+
+@pytest.mark.usefixtures("caplog_level")
+def test_error_path(monkeypatch, caplog):
+    mqtt = FakeMQTT()
+
+    def handler(client, userdata, msg):
+        raise RuntimeError("bad topic")
+
+    mqtt.message_callback_add("bb8/cmd/unknown", handler)
+    try:
+        mqtt.trigger("bb8/cmd/unknown", b"fail")
+    except Exception:
+        pass
+    assert_contains_log(caplog, "unknown")
 
 
 if __name__ == "__main__":
