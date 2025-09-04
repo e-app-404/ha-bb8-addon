@@ -4,3 +4,4 @@ bleak==0.22.3
 paho-mqtt==2.1.0
 spherov2==0.12.1
 PyYAML==6.0.2
+pyyaml

@@ -10,3 +10,6 @@ black
 pytest-cov
 bandit
 safety
+isort
+PyYAML
+pyyaml

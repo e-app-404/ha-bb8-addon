@@ -77,14 +77,6 @@ def main() -> int:
         "device": dev,
         "dev": dev,
     }
-    # Telemetry hook (non-fatal)
-    try:
-        from .telemetry import led_discovery
-
-        duplicates_count = 0  # If you have a way to count duplicates, set here
-        led_discovery(c, led["unique_id"], duplicates_count)
-    except Exception:
-        pass
 
     def get_mqtt_client():
         return mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION2)
@@ -93,6 +85,14 @@ def main() -> int:
     if user:
         c.username_pw_set(user, pw or "")
     c.connect(host, port, 10)
+    # Telemetry hook (non-fatal)
+    try:
+        from .telemetry import led_discovery
+
+        duplicates_count = 0  # If you have a way to count duplicates, set here
+        led_discovery(c, led["unique_id"], duplicates_count)
+    except Exception:
+        pass
     # prune all existing configs
     for t in REQ_TOPICS + OPT_TOPICS:
         c.publish(t, None, qos=0, retain=True)

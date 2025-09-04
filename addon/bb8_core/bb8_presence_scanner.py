@@ -453,13 +453,13 @@ async def scan_and_publish(client):
                     "avty_t": "bb8/status",
                     "dev": dev,
                 }
-                mqtt_client.publish(
+                client.publish(
                     "homeassistant/binary_sensor/bb8_presence/config",
                     json.dumps(pres_cfg, separators=(",", ":")),
                     qos=1,
                     retain=True,
                 )  # pragma: no cover
-                mqtt_client.publish(
+                client.publish(
                     "homeassistant/sensor/bb8_rssi/config",
                     json.dumps(rssi_cfg, separators=(",", ":")),
                     qos=1,
@@ -469,21 +469,21 @@ async def scan_and_publish(client):
 
             # Presence/RSSI state publishing (flat topics, retain True)
             if found and mac:
-                mqtt_client.publish(
+                client.publish(
                     "bb8/presence/state",
                     "online",
                     qos=1,
                     retain=True,
                 )  # pragma: no cover
                 if rssi is not None:
-                    mqtt_client.publish(
+                    client.publish(
                         "bb8/rssi/state",
                         str(rssi),
                         qos=1,
                         retain=True,
                     )  # pragma: no cover
             else:
-                mqtt_client.publish(
+                client.publish(
                     "bb8/presence/state",
                     "offline",
                     qos=1,
@@ -576,64 +576,63 @@ if __name__ == "__main__":
     # Entrypoint
     # --------------
 
-    if __name__ == "__main__":
-        # ...existing CLI setup...
-        if args.print:
-            # Discovery is emitted lazily after MAC/DBus are known;
-            # Discovery payloads require a successful scan to determine MAC/DBus,
-            # so nothing can be printed upfront.
-            print(
-                "# discovery will be published after a successful scan "
-                "when MAC/DBus are known"
+    # ...existing CLI setup...
+    if args.print:
+        # Discovery is emitted lazily after MAC/DBus are known;
+        # Discovery payloads require a successful scan to determine MAC/DBus,
+        # so nothing can be printed upfront.
+        print(
+            "# discovery will be published after a successful scan "
+            "when MAC/DBus are known"
+        )
+        raise SystemExit(0)
+
+    if args.once:
+
+        async def _once():
+            """Perform a single BLE scan for BB-8 and print or emit results."""
+            devices = await BleakScanner.discover()
+            res = {
+                "found": False,
+                "name": BB8_NAME,
+                "address": None,
+                "rssi": None,
+            }
+            for d in devices:
+                if BB8_NAME.lower() in (d.name or "").lower():
+                    res = {
+                        "found": True,
+                        "name": d.name or BB8_NAME,
+                        "address": getattr(d, "address", None),
+                        "rssi": getattr(d, "rssi", None),
+                    }
+                    break
+            if args.json:
+                print(json.dumps(res))
+            else:
+                tick_log(res["found"], res["name"], res["address"], res["rssi"], args)
+
+        asyncio.run(_once())
+    else:
+        # Ensure get_mqtt_client and setup_callbacks are defined before use
+        def get_mqtt_client():
+            client = mqtt.Client(
+                callback_api_version=CallbackAPIVersion.VERSION2,
+                client_id=CFG.get("MQTT_CLIENT_ID", "bb8_presence_scanner"),
+                protocol=mqtt.MQTTv311,
             )
-            raise SystemExit(0)
+            if MQTT_USERNAME and MQTT_PASSWORD:
+                client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+            client.will_set(AVAIL_TOPIC, payload=AVAIL_OFF, qos=1, retain=True)
+            return client
 
-        if args.once:
+        def setup_callbacks(client):
+            client.on_connect = _on_connect
 
-            async def _once():
-                """Perform a single BLE scan for BB-8 and print or emit results."""
-                devices = await BleakScanner.discover()
-                res = {
-                    "found": False,
-                    "name": BB8_NAME,
-                    "address": None,
-                    "rssi": None,
-                }
-                for d in devices:
-                    if BB8_NAME.lower() in (d.name or "").lower():
-                        res = {
-                            "found": True,
-                            "name": d.name or BB8_NAME,
-                            "address": getattr(d, "address", None),
-                            "rssi": getattr(d, "rssi", None),
-                        }
-                        break
-                if args.json:
-                    print(json.dumps(res))
-                else:
-                    tick_log(res["found"], res["name"], res["address"], res["rssi"])
-
-            asyncio.run(_once())
-        else:
-            # Ensure get_mqtt_client and setup_callbacks are defined before use
-            def get_mqtt_client():
-                client = mqtt.Client(
-                    callback_api_version=CallbackAPIVersion.VERSION2,
-                    client_id=CFG.get("MQTT_CLIENT_ID", "bb8_presence_scanner"),
-                    protocol=mqtt.MQTTv311,
-                )
-                if MQTT_USERNAME and MQTT_PASSWORD:
-                    client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
-                client.will_set(AVAIL_TOPIC, payload=AVAIL_OFF, qos=1, retain=True)
-                return client
-
-            def setup_callbacks(client):
-                client.on_connect = _on_connect
-
-            mqtt_client = get_mqtt_client()
-            setup_callbacks(mqtt_client)
-            _connect_mqtt(mqtt_client)
-            asyncio.run(scan_and_publish(mqtt_client))
+        mqtt_client = get_mqtt_client()
+        setup_callbacks(mqtt_client)
+        _connect_mqtt(mqtt_client)
+        asyncio.run(scan_and_publish(mqtt_client))
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Optional bridge (BB8Facade) adapter
@@ -676,8 +675,9 @@ class _NullBridge:
 
 
 class _NullFacade:
-    pass
     """Safe no-op facade for when bridge is missing."""
+
+    pass
 
     def power(self, on: bool):
         pass
@@ -873,9 +873,7 @@ def _parse_led_payload(raw: bytes | str):
 
 # ──────────────────────────────────────────────────────────────────────────────
 # MQTT connection helper
-def _connect_mqtt(client):
-    client.connect(MQTT_HOST, MQTT_PORT, keepalive=60)
-    client.loop_start()
+# (Removed duplicate definition of _connect_mqtt)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1036,7 +1034,6 @@ def build_device_block(
 
 
 def publish_discovery_old(
-    client: mqtt.Client,
     mac: str,
     dbus_path: str,
     model: str = "",
@@ -1044,9 +1041,8 @@ def publish_discovery_old(
 ):
     """
     Publish Home Assistant discovery for Presence and RSSI with full device block.
+    Uses the existing MQTT client instance.
     """
-    # TODO: Store and map device_defaults from facade_mapping_table.json
-    # to retrievable dynamic variables
     model_hint = model if model else CFG.get("BB8_NAME", "S33 BB84 LE")
     name_hint = name if name else CFG.get("BB8_NAME", "BB-8")
     base = MQTT_BASE
@@ -1077,13 +1073,15 @@ def publish_discovery_old(
         **availability,
         "device": device,
     }
-    client.publish(
+    # Use the global/existing MQTT client instance
+    global mqtt_client
+    mqtt_client.publish(
         f"{HA_DISCOVERY_TOPIC}/binary_sensor/bb8_presence/config",
         json.dumps(presence_disc),
         qos=1,
         retain=True,
     )
-    client.publish(
+    mqtt_client.publish(
         f"{HA_DISCOVERY_TOPIC}/sensor/bb8_rssi/config",
         json.dumps(rssi_disc),
         qos=1,
@@ -1091,17 +1089,14 @@ def publish_discovery_old(
     )
     logger.info("Published HA discovery for MAC=%s", mac)
 
-    client = get_mqtt_client()  # Get the mqtt client instance
-    _connect_mqtt(client)  # Pass the client to the connect function
-
 
 # Logging helpers
 # -----------------------------------------------------------------------------
-def tick_log(found: bool, name: str, addr: str | None, rssi):
+def tick_log(found: bool, name: str, addr: str | None, rssi, args=None):
     ts = time.strftime("%Y-%m-%dT%H:%M:%S%z")
-    if args.quiet:
+    if args is not None and getattr(args, "quiet", False):
         return
-    if args.json:
+    if args is not None and getattr(args, "json", False):
         print(
             json.dumps(
                 {
@@ -1116,5 +1111,5 @@ def tick_log(found: bool, name: str, addr: str | None, rssi):
     else:
         if found:
             print(f"[{ts}] found name={name} addr={addr} rssi={rssi}")
-        elif args.verbose:
+        elif args is not None and getattr(args, "verbose", False):
             print(f"[{ts}] not_found name={name}")

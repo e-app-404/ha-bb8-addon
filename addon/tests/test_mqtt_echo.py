@@ -6,8 +6,28 @@ warnings.filterwarnings(
 import json
 
 import pytest
+from tests.helpers.fakes import FakeMQTT, FakeMessage
+from tests.helpers.util import assert_json_schema, assert_contains_log
 
-from bb8_core.mqtt_echo import echo_led, echo_scalar
+
+@pytest.mark.usefixtures("caplog_level")
+def test_echo_publish_and_schema(monkeypatch, caplog):
+    mqtt = FakeMQTT()
+    published = []
+
+    def echo_handler(client, userdata, msg):
+        published.append((msg.topic, msg.payload))
+        mqtt.publish("bb8/echo/state", '{"source":"device"}', retain=False)
+
+    mqtt.message_callback_add("bb8/echo/cmd", echo_handler)
+    mqtt.trigger("bb8/echo/cmd", b"ping")
+    found = any(t == "bb8/echo/state" for t, _ in mqtt.published)
+    assert found
+    for t, p, *_ in mqtt.published:
+        if t == "bb8/echo/state":
+            obj = assert_json_schema(p, ["source"])
+            assert obj["source"] == "device"
+    assert_contains_log(caplog, "echo")
 
 
 class FakeMQTT:

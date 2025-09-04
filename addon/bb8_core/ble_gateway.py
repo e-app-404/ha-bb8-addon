@@ -32,6 +32,7 @@ class BleGateway:
         self.mode = mode
         self.adapter = adapter
         self.connected: bool = False
+        self.device = None
         logger.info(
             {"event": "ble_gateway_init", "mode": self.mode, "adapter": self.adapter}
         )

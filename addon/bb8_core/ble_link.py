@@ -76,49 +76,7 @@ async def _run() -> None:
         raise
 
 
-async def _cancel_and_drain() -> int:
-    """
-    Cancel and await completion of all pending tasks on the BLE loop.
-    Must be executed *inside* the BLE loop.
-    Returns the number of tasks cancelled.
-    """
-    print("[BLELink] _cancel_and_drain ENTRY")
-    current = asyncio.current_task()
-    pending: list[asyncio.Task[Any]] = [
-        t for t in asyncio.all_tasks() if t is not current and not t.done()
-    ]
-    print(f"[BLELink] Pending tasks before cancel: {[str(t) for t in pending]}")
-    log.info(f"[BLELink] Pending tasks before cancel: {[str(t) for t in pending]}")
-    for t in pending:
-        t.cancel()
-    print(f"[BLELink] Pending tasks after cancel: {[str(t) for t in pending]}")
-    log.info(f"[BLELink] Pending tasks after cancel: {[str(t) for t in pending]}")
-    cancelled_count = len(pending)
-    if pending:
-        print(f"[BLELink] Awaiting {cancelled_count} tasks...")
-        try:
-            results = await asyncio.wait_for(
-                asyncio.gather(*pending, return_exceptions=True), timeout=5.0
-            )
-            print(f"[BLELink] Gathered results: {results}")
-            excs = [r for r in results if isinstance(r, Exception)]
-            if excs:
-                log.debug(
-                    "BLE cleanup gathered %d exception(s): %s",
-                    len(excs),
-                    ", ".join(type(e).__name__ for e in excs),
-                )
-        except TimeoutError:
-            print("[BLELink] Timeout while awaiting cancelled tasks.")
-            log.warning("BLE cleanup timed out while awaiting cancelled tasks.")
-    else:
-        print("[BLELink] No pending tasks to cancel; immediate completion.")
-        log.info("BLE cleanup: no pending tasks; immediate completion.")
-        # Small sleep to ensure coroutine yields control
-        await asyncio.sleep(0.01)
-    print(f"[BLELink] _cancel_and_drain END, cancelled {cancelled_count} tasks.")
-    log.info(f"[BLELink] _cancel_and_drain END, cancelled {cancelled_count} tasks.")
-    return cancelled_count
+# Removed duplicate definition of _cancel_and_drain to avoid errors.
 
 
 def start() -> None:

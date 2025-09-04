@@ -44,6 +44,7 @@ def _load_options_json(
 ) -> tuple[dict[str, Any], Path | None]:
     """
     Load Home Assistant add-on options (JSON). Returns (data, source_path).
+    Catches json.JSONDecodeError and OSError if reading or parsing fails.
     """
     if path.exists():
         try:
@@ -54,7 +55,7 @@ def _load_options_json(
                 return {}, None
             logger.info("[CONFIG] Loaded options from: %s", path)
             return data, path
-        except Exception as exc:  # noqa: BLE001
+        except (json.JSONDecodeError, OSError) as exc:
             logger.warning("[CONFIG] Failed reading options.json %s: %s", path, exc)
             return {}, None
     logger.debug("[CONFIG] options.json not found: %s", path)
@@ -67,6 +68,7 @@ def _load_yaml_cfg(
     """
     Load YAML config from the first available candidate path.
     Returns (data, source_path). Empty dict if none valid.
+    Only yaml.YAMLError and OSError are caught during loading.
     """
     candidates = paths or _candidate_paths()
     for pth in candidates:
@@ -79,7 +81,7 @@ def _load_yaml_cfg(
                     continue
                 logger.info("[CONFIG] Loaded YAML config from: %s", pth)
                 return data, pth
-            except Exception as exc:  # noqa: BLE001
+            except (yaml.YAMLError, OSError) as exc:
                 logger.warning("[CONFIG] Failed to load YAML %s: %s", pth, exc)
         else:
             if "Volumes" in str(pth):
@@ -125,7 +127,7 @@ def load_config() -> tuple[dict[str, Any], Path | None]:
             return default
         try:
             return int(x)
-        except Exception:  # noqa: BLE001
+        except (ValueError, TypeError):
             LOG.warning("[CONFIG] Invalid MQTT port value: %s", x)
             return default
 
@@ -167,13 +169,13 @@ def load_config() -> tuple[dict[str, Any], Path | None]:
         merged["MQTT_PASSWORD"] = final_pass
         merged["mqtt_password"] = final_pass
 
-        # ---- Availability topic (scanner is the single owner) ----
-        # Bridge must NOT advertise availability when
-        # scanner_owns_telemetry is true.
-        avail = f"{merged['MQTT_BASE']}/availability/scanner"
-        merged["availability_topic_scanner"] = avail
-        merged["availability_payload_online"] = "online"
-        merged["availability_payload_offline"] = "offline"
+    # ---- Availability topic (scanner is the single owner) ----
+    # Bridge must NOT advertise availability when
+    # scanner_owns_telemetry is true.
+    avail = f"{merged['MQTT_BASE']}/availability/scanner"
+    merged["availability_topic_scanner"] = avail
+    merged["availability_payload_online"] = "online"
+    merged["availability_payload_offline"] = "offline"
 
     # (Optional) compact debug of resolved endpoints
     logger.debug(
@@ -216,5 +218,7 @@ __all__ = [
     "LOG",
 ]
 
-# Initialize on import; safe for runtime and tests
-init_config()
+# Initialize on import; safe for runtime and tests.
+# To defer initialization (e.g., for testing), set the environment variable 'BB8_CONFIG_DEFER_INIT' to '1'.
+if os.environ.get("BB8_CONFIG_DEFER_INIT", "0") != "1":
+    init_config()

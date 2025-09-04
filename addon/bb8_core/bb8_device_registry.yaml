@@ -1,9 +1,9 @@
 AA:BB:CC:DD:EE:FF:
-  absence_timeout_sec: 112
+  absence_timeout_sec: 186
   advertised_name: BB-8
   bb8_mac: AA:BB:CC:DD:EE:FF
-  last_checked_epoch: 1756928471
-  last_seen_epoch: 1756928357
+  last_checked_epoch: 1756939038
+  last_seen_epoch: 1756938850
   present: false
   rssi: null
   source: presence_monitor

@@ -1,11 +1,11 @@
+import importlib
+import os
+import sys
 import warnings
 
 warnings.filterwarnings(
     "ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho"
 )
-import importlib
-import os
-import sys
 from unittest.mock import MagicMock
 
 

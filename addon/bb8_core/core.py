@@ -27,7 +27,7 @@ class Core:
         self.connect()
         return self
 
-    def __exit__(self, exc_type, _, __) -> None:
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         logger.info(
             {
                 "event": "core_exit",

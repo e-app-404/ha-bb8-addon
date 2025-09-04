@@ -2,6 +2,8 @@ import time
 from unittest.mock import patch
 
 import pytest
+from tests.helpers.fakes import FakeMQTT
+from tests.helpers.util import assert_json_schema, assert_contains_log
 
 
 @pytest.fixture
@@ -52,3 +54,20 @@ def test_error_handling_and_recovery(echo_responder):
             responder.handle_echo("test")
         except Exception as e:
             assert str(e) == "fail"
+
+
+@pytest.mark.usefixtures("caplog_level")
+def test_echo_responder(monkeypatch, caplog):
+    mqtt = FakeMQTT()
+    # Subscribe to echo cmd
+    def handler(client, userdata, msg):
+        mqtt.publish("bb8/echo/state", '{"source":"device"}')
+    mqtt.message_callback_add("bb8/echo/cmd", handler)
+    mqtt.trigger("bb8/echo/cmd", b"ping")
+    found = any(t == "bb8/echo/state" for t, _ in mqtt.published)
+    assert found
+    for t, p, *_ in mqtt.published:
+        if t == "bb8/echo/state":
+            obj = assert_json_schema(p, ["source"])
+            assert obj["source"] == "device"
+    assert_contains_log(caplog, "echo")

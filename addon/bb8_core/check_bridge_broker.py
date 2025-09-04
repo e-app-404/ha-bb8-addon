@@ -34,10 +34,10 @@ def main(timeout=4.0):
     seen_online = threading.Event()
     topic = f"{base}/status"
 
-    def on_connect(client, userdata, flags, reason_code, properties):
+    def on_connect(client, _userdata, _flags, _reason_code, _properties):
         client.subscribe(topic, qos=0)
 
-    def on_message(client, userdata, msg):
+    def on_message(_client, _userdata, msg):
         try:
             pl = (msg.payload or b"").decode("utf-8", "ignore").strip().lower()
         except Exception:

@@ -12,6 +12,10 @@ from .logging_setup import logger
 if TYPE_CHECKING:
     pass
 
+# The environment variable "MQTT_BASE" should be set to the base topic for MQTT telemetry,
+# MQTT retain is set to False by policy: telemetry messages represent transient state and should not be stored by the broker.
+# Consumers will only receive telemetry updates when they are actively subscribed and connected; they will not receive old messages on (re)subscription.
+RET = False
 TELEMETRY_BASE = os.environ.get("MQTT_BASE", "bb8") + "/telemetry"
 RET = False  # retain=false by policy
 
@@ -47,9 +51,11 @@ class Telemetry:
         interval_s: int = 20,
         publish_presence: Callable[[bool], None] | None = None,
         publish_rssi: Callable[[int], None] | None = None,
+        sleep_interval: float = 1.0,
     ):
         self.bridge = bridge
         self.interval_s = interval_s
+        self.sleep_interval = sleep_interval
         self._stop = threading.Event()
         self._t: threading.Thread | None = None
         self._cb_presence = publish_presence
@@ -109,10 +115,19 @@ class Telemetry:
                 cb_rssi = self._cb_rssi
                 if cb_rssi is None:
                     cb_rssi = getattr(self.bridge, "publish_rssi", None)
-                if callable(cb_rssi) and dbm is not None:
+                if callable(cb_rssi):
                     try:
                         if isinstance(dbm, (int, float, str)):
-                            cb_rssi(int(dbm))
+                            try:
+                                cb_rssi(int(dbm))
+                            except (ValueError, TypeError) as e:
+                                logger.warning(
+                                    {
+                                        "event": "telemetry_invalid_rssi_conversion",
+                                        "dbm": repr(dbm),
+                                        "error": repr(e),
+                                    }
+                                )
                         else:
                             logger.warning(
                                 {
@@ -130,7 +145,7 @@ class Telemetry:
             except Exception as e:
                 logger.warning({"event": "telemetry_error", "error": repr(e)})
             finally:
-                sleep_interval = 0.2
+                sleep_interval = self.sleep_interval
                 slept = 0.0
                 while slept < self.interval_s and not self._stop.is_set():
                     time.sleep(sleep_interval)

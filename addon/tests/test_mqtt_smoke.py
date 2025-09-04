@@ -1,22 +1,21 @@
-import warnings
-
-warnings.filterwarnings(
-    "ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho"
-)
-import warnings
-
-warnings.filterwarnings(
-    "ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho"
-)
-
 import asyncio
 import inspect
 import json
+import warnings
 
 import pytest
 
 from bb8_core.bb8_presence_scanner import publish_discovery
 from bb8_core.mqtt_dispatcher import start_mqtt_dispatcher
+
+warnings.filterwarnings(
+    "ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho"
+)
+import warnings
+
+warnings.filterwarnings(
+    "ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho"
+)
 
 
 class FakeMQTT:
