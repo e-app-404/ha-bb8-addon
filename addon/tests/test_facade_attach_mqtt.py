@@ -101,6 +101,8 @@ def make_bridge():
 
 async def test_facade_attach_mqtt():
     bridge = make_bridge()
+    loop = asyncio.get_running_loop()
+    asyncio.set_event_loop(loop)
     BB8Facade(bridge).attach_mqtt(FakeClient(), "bb8", qos=1, retain=True)
     await asyncio.sleep(0)
     print("OK: facade.attach_mqtt bound without exceptions")
