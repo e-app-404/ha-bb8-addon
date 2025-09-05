@@ -1,0 +1,254 @@
+absolutely. you can (and should) lock this down with a couple of lightweight ADRs plus Git hooks. below are copy-pasteable snippets to drop into your repo that formalize:
+
+* the canonical layout & seam policy (ADRs), and
+* automated guardrails (git hooks) to prevent conflict markers, bad imports, duplicate files, and mass deletions.
+
+---
+
+# ADRs (Architecture Decision Records)
+
+## 1) create ADR scaffolding + two core ADRs
+
+```bash
+mkdir -p docs/adr
+
+# ADR-001: Canonical module layout & imports
+cat > docs/adr/001-repo-layout-and-imports.md <<'MD'
+# ADR-001: Canonical module layout & imports
+Date: 2025-09-05
+Status: Accepted
+
+## Context
+The codebase historically used multiple trees (e.g., `bb8_core/*`, `addon/bb8_core/*`, `tools/*`). This caused duplicate modules and broken imports.
+
+## Decision
+- **Canonical path** for production Python is `addon/bb8_core/*`.
+- **Tests** live in `addon/tests/*`.
+- Legacy paths (e.g., `bb8_core/*`, `tools/*.py`) must not contain production modules duplicated under `addon/bb8_core/*`.
+- Imports must use `import addon.bb8_core.<module>` or `from addon.bb8_core import <symbol>`.
+
+## Consequences
+- Git hooks enforce: no conflict markers, no duplicate `verify_discovery.py` (or any module) outside the canonical path, no legacy `tests/*`.
+- CI and local commands use a **single** coverage driver (`pytest-cov`) and a single coverage gate script path.
+
+## Enforcement
+- Git hooks: pre-commit and pre-push (see repo hooks).
+- “Layout guard” test ensures no strays in non-canonical paths.
+MD
+
+# ADR-002: Coverage & seam policy
+cat > docs/adr/002-coverage-and-seam-policy.md <<'MD'
+# ADR-002: Coverage & seam policy
+Date: 2025-09-05
+Status: Accepted
+
+## Context
+We require reliable coverage without real IO/threads/network. Seams were missing in some modules.
+
+## Decision
+- **Coverage**: single driver (`pytest-cov`); repo fail-under ≥70%; high-priority per-file gates ≥90%.
+- **Seams**: Do not change production solely for tests. Use local shims via `monkeypatch`/fakes in tests.
+- **Network**: No real network in CI. Net tests are conditionally xfailed behind `ALLOW_NETWORK_TESTS=1`.
+
+## Consequences
+Deterministic tests; PRs that break gates are rejected.
+
+## Enforcement
+- `.coveragerc` at repo root, coverage gate script (`tools/coverage_gate.py`).
+- GitHub Actions workflow runs tests + gate on every PR.
+MD
+```
+
+> add more ADRs later (branch hygiene/rescue protocol, mass-deletion guard) if you want; the two above capture the main pain points you hit.
+
+---
+
+# Git hooks (lightweight, fast, and practical)
+
+## 2) pre-commit: block conflict markers, duplicate files, legacy imports, and stray legacy test trees
+
+```bash
+HOOK=.git/hooks/pre-commit
+cat > "$HOOK" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+
+# 1) Block unresolved merge conflicts
+if git grep -nE '^(<<<<<<< |=======|>>>>>>> )' -- '*.py' >/dev/null 2>&1; then
+  echo "❌ pre-commit: unresolved merge conflict markers found in Python files."
+  git grep -nE '^(<<<<<<< |=======|>>>>>>> )' -- '*.py' || true
+  exit 1
+fi
+
+# 2) Canonical layout enforcement
+#   - Production modules must live under addon/bb8_core/*
+#   - No duplicate verify_discovery.py or other modules outside canonical tree
+violations=0
+
+# Any Python in legacy bb8_core/* (not under addon/)
+if git ls-files 'bb8_core/*.py' | grep -q .; then
+  echo "❌ pre-commit: legacy path 'bb8_core/*.py' detected. Move to 'addon/bb8_core/'."
+  git ls-files 'bb8_core/*.py'
+  violations=1
+fi
+
+# Legacy tests tree
+if git ls-files 'tests/*' | grep -q .; then
+  echo "❌ pre-commit: legacy 'tests/*' detected. Tests must live in 'addon/tests/*'."
+  git ls-files 'tests/*'
+  violations=1
+fi
+
+# Duplicate verify_discovery.py (canonical = addon/bb8_core/verify_discovery.py)
+V_CANON='addon/bb8_core/verify_discovery.py'
+if [ -f "$V_CANON" ]; then
+  while IFS= read -r p; do
+    [ "$p" = "$V_CANON" ] && continue
+    echo "❌ pre-commit: duplicate '$p' — only '$V_CANON' is allowed."
+    violations=1
+  done < <(git ls-files '*verify_discovery.py' || true)
+fi
+
+# 3) Quick AST check of changed Python files (fast)
+py_changed=$(git diff --cached --name-only --diff-filter=ACMRTUXB -- '*.py' || true)
+if [ -n "$py_changed" ]; then
+  python - <<'PY' || exit 1
+import ast, sys, pathlib
+bad=[]
+for p in sys.stdin.read().splitlines():
+    if not p.endswith(".py"): 
+        continue
+    try:
+        ast.parse(pathlib.Path(p).read_text(encoding="utf-8"))
+    except SyntaxError as e:
+        bad.append(f"{p}: {e}")
+if bad:
+    print("❌ pre-commit: Python syntax errors:")
+    print("\n".join(bad))
+    sys.exit(1)
+PY
+fi
+
+[ "$violations" -eq 0 ] || exit 1
+echo "✅ pre-commit checks passed."
+SH
+chmod +x "$HOOK"
+echo "Installed: $HOOK"
+```
+
+## 3) pre-push: mass-deletion guard + optional fast test shard
+
+```bash
+HOOK=.git/hooks/pre-push
+cat > "$HOOK" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Compare against upstream
+UPSTREAM=$(git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>/dev/null || true)
+[ -z "$UPSTREAM" ] && { echo "No upstream set; skipping pre-push checks."; exit 0; }
+
+# 1) Mass-deletion guard
+ADDS=$(git diff --numstat "$UPSTREAM"...HEAD | awk '{a+=$1} END{print a+0}')
+DELS=$(git diff --numstat "$UPSTREAM"...HEAD | awk '{d+=$2} END{print d+0}')
+TOT=$((ADDS + DELS))
+if [ "$TOT" -gt 0 ]; then
+  PCT=$(( 100 * DELS / TOT ))
+  if [ "$PCT" -gt 30 ]; then
+    echo "❌ pre-push: deletions are ${PCT}% of total (adds=$ADDS, dels=$DELS). Review changes."
+    echo "   Tip: 'git diff \"$UPSTREAM\"...HEAD' and commit intentional deletions explicitly."
+    exit 1
+  fi
+fi
+
+# 2) Optional fast shard (skip if SKIP_FAST_TESTS=1)
+if [ "${SKIP_FAST_TESTS:-0}" != "1" ]; then
+  echo "Running fast sanity tests (no network)…"
+  pytest -q -k "not network and not slow" -rA --disable-warnings --maxfail=1 || {
+    echo "❌ pre-push: fast tests failed."
+    exit 1
+  }
+fi
+
+echo "✅ pre-push checks passed."
+SH
+chmod +x "$HOOK"
+echo "Installed: $HOOK"
+```
+
+## 4) post-merge: scream if conflicts slipped through
+
+```bash
+HOOK=.git/hooks/post-merge
+cat > "$HOOK" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+if git grep -nE '^(<<<<<<< |=======|>>>>>>> )' -- '*.py' >/dev/null 2>&1; then
+  echo "❌ post-merge: conflict markers detected in Python files."
+  git grep -nE '^(<<<<<<< |=======|>>>>>>> )' -- '*.py'
+  exit 1
+fi
+echo "✅ post-merge: no conflict markers."
+SH
+chmod +x "$HOOK"
+echo "Installed: $HOOK"
+```
+
+---
+
+# Optional: guard test (enforces layout in CI too)
+
+Create a tiny test that fails if duplicates creep back in:
+
+```bash
+cat > addon/tests/test_repo_layout_guard.py <<'PY'
+import pathlib, sys
+
+def test_no_legacy_paths():
+    # no legacy tests tree
+    assert not (pathlib.Path("tests").exists()), "Legacy 'tests/' dir found; use 'addon/tests/'."
+
+def test_canonical_verify_discovery():
+    # verify_discovery.py only under addon/bb8_core
+    dupes = [p.as_posix() for p in pathlib.Path(".").rglob("verify_discovery.py")]
+    assert dupes.count("addon/bb8_core/verify_discovery.py") == 1, f"Missing canonical: {dupes}"
+    others = [d for d in dupes if d != "addon/bb8_core/verify_discovery.py"]
+    assert not others, f"Duplicates present: {others}"
+PY
+```
+
+---
+
+# CI nudge (already aligned with ADR-002)
+
+Ensure your workflow (tests.yml) calls the **same** gate path every time:
+
+```yaml
+- run: |
+    python -m compileall -q .
+    pytest -q -rA --disable-warnings --maxfail=1 \
+      --cov=addon --cov=addon/bb8_core \
+      --cov-report=term-missing \
+      --cov-report=xml:coverage.xml \
+      --cov-report=json:coverage.json
+- run: python tools/coverage_gate.py coverage.xml
+```
+
+---
+
+# Bonus: handy rescue aliases (local only)
+
+```bash
+git config alias.rescue-one '!f() { SRC="$1"; DEST="$SRC"; [[ "$SRC" == bb8_core/* ]] && DEST="addon/$SRC"; mkdir -p "$(dirname "$DEST")"; git show origin/main:"$SRC" > "$DEST" && echo "Restored $DEST from origin/main"; }; f'
+git config alias.find-missing '!sh -c '\''git ls-tree -r --name-only origin/main | sort > /tmp/base.lst; git ls-files | sort > /tmp/now.lst; comm -23 /tmp/base.lst /tmp/now.lst'\'''
+```
+
+---
+
+## Recap
+
+* **ADRs** capture the decisions (canonical layout + coverage/seam policy).
+* **Hooks** stop conflicts, duplicates, legacy imports/paths, and accidental mass deletions *before they hit PRs*.
+* **Guard test** makes CI enforce the same rules.
+
+If you want, I can also draft ADR-003 “Branch & Rescue Protocol” (clean branch off `origin/main`, cherry-pick, forbid unrelated histories) in the same format.
