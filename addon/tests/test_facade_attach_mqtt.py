@@ -1,4 +1,16 @@
 import asyncio
+import pytest
+
+# Ensure pytest-asyncio is active for the module
+pytestmark = pytest.mark.asyncio
+
+# Autouse: bind asyncio.create_task to the running pytest-asyncio loop
+@pytest.fixture(autouse=True)
+async def _bind_create_task_loop(monkeypatch):
+    loop = asyncio.get_running_loop()
+    monkeypatch.setattr(asyncio, "create_task", lambda c: loop.create_task(c), raising=False)
+    yield
+import asyncio
 import importlib
 import inspect
 import pytest
@@ -89,7 +101,8 @@ def make_bridge():
 
 async def test_facade_attach_mqtt():
     bridge = make_bridge()
-    await BB8Facade(bridge).attach_mqtt(FakeClient(), "bb8", qos=1, retain=True)
+    BB8Facade(bridge).attach_mqtt(FakeClient(), "bb8", qos=1, retain=True)
+    await asyncio.sleep(0)
     print("OK: facade.attach_mqtt bound without exceptions")
 import asyncio
 import pytest
