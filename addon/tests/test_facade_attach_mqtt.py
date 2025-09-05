@@ -1,3 +1,23 @@
+import asyncio
+import pytest
+
+# Ensure a running event loop for all tests in this module (no-op if one already exists).
+@pytest.fixture(autouse=True)
+def _ensure_running_loop():
+    created = False
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        created = True
+    try:
+        yield
+    finally:
+        # Do not close the loop here to avoid interfering with other tests.
+        # (pytest will handle loop lifecycle across tests if configured.)
+        if created:
+            pass
 import pytest
 # Mark all tests in this module as asyncio to ensure a running loop is available.
 pytestmark = pytest.mark.asyncio
