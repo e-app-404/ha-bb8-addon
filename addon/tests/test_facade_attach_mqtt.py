@@ -76,18 +76,20 @@ class FakeClient:
         self.calls.append(("cb", t))
 
 
-bridge = SimpleNamespace(
-    connect=lambda: None,
-    sleep=lambda _: None,
-    stop=lambda: None,
-    set_led_off=lambda: None,
-    set_led_rgb=lambda r, g, b: None,
-    is_connected=lambda: False,
-    get_rssi=lambda: 0,
-)
+def make_bridge():
+    return SimpleNamespace(
+        connect=lambda: None,
+        sleep=lambda _: None,
+        stop=lambda: None,
+        set_led_off=lambda: None,
+        set_led_rgb=lambda r, g, b: None,
+        is_connected=lambda: False,
+        get_rssi=lambda: 0,
+    )
 
 async def test_facade_attach_mqtt():
-    BB8Facade(bridge).attach_mqtt(FakeClient(), "bb8", qos=1, retain=True)
+    bridge = make_bridge()
+    await BB8Facade(bridge).attach_mqtt(FakeClient(), "bb8", qos=1, retain=True)
     print("OK: facade.attach_mqtt bound without exceptions")
 import asyncio
 import pytest
