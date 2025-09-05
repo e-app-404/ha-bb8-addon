@@ -1,3 +1,6 @@
+import pytest
+# Mark all tests in this module as asyncio to ensure a running loop is available.
+pytestmark = pytest.mark.asyncio
 from types import SimpleNamespace
 
 from bb8_core.facade import BB8Facade

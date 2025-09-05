@@ -1,0 +1,22 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "HA: Deploy over SSH",
+			"type": "shell",
+			"command": "REMOTE_HOST_ALIAS=home-assistant ops/release/deploy_ha_over_ssh.sh",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "STP5 Supervisor BLE Attestation",
+			"type": "shell",
+			"command": "HOST=192.168.0.129 PORT=1883 USER=mqtt_bb8 PASS=mqtt_bb8 BASE=bb8 REQUIRE_BLE=true /Users/evertappels/Projects/HA-BB8/scripts/stp5_supervisor_ble_attest.sh",
+			"args": [],
+			"problemMatcher": [],
+			"group": "test"
+		}
+	]
+}
