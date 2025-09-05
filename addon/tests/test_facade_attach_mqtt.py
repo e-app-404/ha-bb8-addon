@@ -163,14 +163,30 @@ class FakeClient:
         self.calls.append(("cb", t))
 
 
-bridge = SimpleNamespace(
-    connect=lambda: None,
-    sleep=lambda _: None,
-    stop=lambda: None,
-    set_led_off=lambda: None,
-    set_led_rgb=lambda r, g, b: None,
-    is_connected=lambda: False,
-    get_rssi=lambda: 0,
-)
-BB8Facade(bridge).attach_mqtt(FakeClient(), "bb8", qos=1, retain=True)
-print("OK: facade.attach_mqtt bound without exceptions")
+
+# KYB(move-to-test): BB8Facade(bridge).attach_mqtt(FakeClient(), "bb8", qos=1, retain=True)
+
+import asyncio
+import pytest
+pytestmark = pytest.mark.asyncio
+
+@pytest.fixture(autouse=True)
+async def _kyb_bind_create_task(monkeypatch):
+    loop = asyncio.get_running_loop()
+    import asyncio as _asyncio
+    monkeypatch.setattr(_asyncio, "create_task", lambda c: loop.create_task(c), raising=False)
+    yield
+
+async def test_attach_mqtt_invocation_1():
+    bridge = SimpleNamespace(
+        connect=lambda: None,
+        sleep=lambda _: None,
+        stop=lambda: None,
+        set_led_off=lambda: None,
+        set_led_rgb=lambda r, g, b: None,
+        is_connected=lambda: False,
+        get_rssi=lambda: 0,
+    )
+    BB8Facade(bridge).attach_mqtt(FakeClient(), "bb8", qos=1, retain=True)
+    await asyncio.sleep(0)
+    print("OK: facade.attach_mqtt bound without exceptions")
