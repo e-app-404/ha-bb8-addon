@@ -5,7 +5,8 @@ Usage:
   coverage xml -o coverage.xml
   python tools/coverage_gate.py coverage.xml
 """
-import sys, xml.etree.ElementTree as ET
+import sys
+import xml.etree.ElementTree as ET
 
 # Map of file -> required % (floats allowed)
 REQUIRED = {
@@ -20,6 +21,7 @@ REQUIRED = {
     "addon/version_probe.py": 90.0,
     "addon/mqtt_probe.py": 90.0,
 }
+
 
 def main(path):
     tree = ET.parse(path)
@@ -42,6 +44,7 @@ def main(path):
         sys.exit(2)
     print("Per-file coverage gate: OK")
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else "coverage.xml"))

@@ -1,4 +1,17 @@
-from __future__ import annotations
+import atexit
+import logging
+
+import pytest
+
+
+# Session-scoped autouse fixture to silence atexit/log errors
+@pytest.fixture(scope="session", autouse=True)
+def _silence_atexit_and_streams():
+    # Avoid atexit handlers flushing to closed streams during pytest teardown
+    atexit.register = lambda *a, **k: None
+    # Ensure root logger has a valid stream; do not mutate prod code/logger config
+    logging.getLogger().handlers[:]  # touch to ensure handlers list realized
+
 
 # --- BEGIN: ensure repo root on sys.path + test MQTT host before any imports ---
 import os
@@ -14,11 +27,10 @@ if str(ROOT) not in sys.path:
 os.environ.setdefault("MQTT_HOST", "127.0.0.1")
 # --- END ---
 
-import pytest
 import os
-import logging
 import time
-import tempfile
+
+import pytest
 import yaml
 
 

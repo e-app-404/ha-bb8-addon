@@ -4,8 +4,8 @@ warnings.filterwarnings(
     "ignore", "Callback API version 1 is deprecated", DeprecationWarning, "paho"
 )
 import time
+
 from tests.helpers.fakes_ble import FakeBLEDevice
-from tests.helpers.util import assert_contains_log
 
 
 def test_ble_link_thread_lifecycle():
@@ -24,7 +24,7 @@ def test_connect_read_disconnect(monkeypatch, capsys):
     print(f"connect: {dev.addr}")
     dev.connect()
     data = dev.read_gatt("svc1")
-    print(f"read: svc1")
+    print("read: svc1")
     assert data.startswith(b"data-for-")
     dev.disconnect()
     assert not dev.connected

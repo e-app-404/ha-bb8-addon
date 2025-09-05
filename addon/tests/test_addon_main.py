@@ -1,7 +1,10 @@
 import importlib
+
 import pytest
+
 from tests.helpers.fakes import StubCore
 from tests.helpers.util import assert_contains_log
+
 
 @pytest.mark.usefixtures("caplog_level")
 def test_main_start(monkeypatch, caplog):

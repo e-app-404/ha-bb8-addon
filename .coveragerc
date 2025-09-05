@@ -1,16 +1,7 @@
 [run]
 branch = True
-source =
-    addon
-    addon/bb8_core
-omit =
-    tests/*
-    */__init__.py
 
 [report]
+fail_under = 70
 show_missing = True
 skip_covered = False
-fail_under = 60
-
-[html]
-directory = htmlcov

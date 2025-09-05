@@ -304,6 +304,7 @@ def monitor_bb8_presence(
                 devices = ble_scan_fn(scan_seconds=5, adapter=None)
             else:
                 import asyncio
+
                 devices = asyncio.run(scan_for_bb8(scan_seconds=5, adapter=None))
             found = False
             now = time.time()
@@ -445,6 +446,7 @@ def resolve_bb8_mac(
             raise RuntimeError("BB-8 not found during scan and rescan_on_fail is False")
         logger.info({"event": "auto_detect_rescan_retry"})
         import asyncio
+
         devices = asyncio.run(scan_for_bb8(scan_seconds=scan_seconds, adapter=adapter))
         mac = pick_bb8_mac(devices)
         logger.info(

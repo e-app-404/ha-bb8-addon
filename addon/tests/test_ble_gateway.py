@@ -1,25 +1,28 @@
-import logging
-import pytest
 import importlib
+import logging
 from unittest.mock import MagicMock
+
+import pytest
+
 from tests.helpers.fakes import FakeMQTT
 from tests.helpers.fakes_ble import FakeBLEAdapter, FakeBLEDevice
 
+
 class _SyncThread:
     """Synchronous stand-in for threading.Thread to avoid real concurrency in tests."""
+
     def __init__(self, target=None, args=(), kwargs=None):
         self._target = target
         self._args = args
         self._kwargs = kwargs or {}
+
     def start(self):
         if self._target:
             self._target(*self._args, **self._kwargs)
+
     def join(self, *a, **k):
         return
-import pytest
-from tests.helpers.fakes_ble import FakeBLEAdapter, FakeBLEDevice
-from tests.helpers.fakes import FakeMQTT
-from tests.helpers.util import assert_contains_log
+
 
 @pytest.mark.usefixtures("caplog_level")
 def test_gateway_lifecycle(monkeypatch, caplog):
@@ -57,4 +60,6 @@ def test_gateway_lifecycle(monkeypatch, caplog):
 
     # 7) Assertions: publish happened + log captured
     assert publish_spy.call_count >= 1
-    assert ("gateway test: discovery published" in caplog.text) or ("gateway" in caplog.text)
+    assert ("gateway test: discovery published" in caplog.text) or (
+        "gateway" in caplog.text
+    )
