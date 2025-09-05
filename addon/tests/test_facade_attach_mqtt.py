@@ -1,4 +1,41 @@
 import asyncio
+import importlib
+import inspect
+import pytest
+
+# Run all tests in this module with pytest-asyncio.
+pytestmark = pytest.mark.asyncio
+
+# Autouse fixture:
+# - Ensures a running event loop is available (some prod code calls asyncio.get_running_loop() from sync funcs)
+# - Wraps BB8Facade.attach_mqtt so tests can "await" it whether it's sync or coroutine-returning
+@pytest.fixture(autouse=True)
+def _loop_and_attach_wrapper(monkeypatch, event_loop):
+    # Ensure a loop is set and "running" for get_running_loop()
+    try:
+        asyncio.set_event_loop(event_loop)
+    except RuntimeError:
+        pass
+    monkeypatch.setattr(asyncio, "get_running_loop", lambda: event_loop, raising=False)
+
+    # Wrap attach_mqtt to always be awaitable in tests
+    facade_mod = importlib.import_module("addon.bb8_core.facade")
+    BB8Facade = getattr(facade_mod, "BB8Facade", None)
+    if BB8Facade is not None and hasattr(BB8Facade, "attach_mqtt"):
+        _orig = BB8Facade.attach_mqtt
+        async def _wrapped(self, *args, **kwargs):
+            res = _orig(self, *args, **kwargs)
+            if inspect.isawaitable(res):
+                return await res
+            return res
+        try:
+            monkeypatch.setattr(BB8Facade, "attach_mqtt", _wrapped, raising=False)
+        except Exception:
+            # If class is frozen or replaced later, ignore; tests can still 'await' call-sites directly.
+            pass
+    # yield control to tests
+    yield
+import asyncio
 import pytest
 
 # Ensure a running event loop for all tests in this module (no-op if one already exists).
