@@ -168,7 +168,7 @@ class BB8Facade:
         return int(getattr(self.bridge, "get_rssi", lambda: 0)())
 
     # --------- MQTT wiring (subscribe/dispatch/state echo + discovery)
-    async def attach_mqtt(
+    def attach_mqtt(
         self,
         client,
         base_topic: str,
@@ -300,12 +300,14 @@ class BB8Facade:
         )
         import asyncio
 
-        await publish_discovery(
-            client,
-            MQTT_CLIENT_ID,
-            dbus_path=dbus_path,
-            model=BB8_NAME,
-            name=BB8_NAME,
+        asyncio.create_task(
+            publish_discovery(
+                client,
+                MQTT_CLIENT_ID,
+                dbus_path=dbus_path,
+                model=BB8_NAME,
+                name=BB8_NAME,
+            )
         )
 
         # bind telemetry publishers for use by controller/telemetry loop
