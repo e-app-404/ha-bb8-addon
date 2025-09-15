@@ -51,17 +51,18 @@ def test_log_config():
 
 def test_cb_led_set(monkeypatch):
 
-    # Patch FACADE to record calls (use module-level seam)
+    # Patch BB8Facade in the correct module so it is used by _cb_led_set
     called = {}
 
     class DummyFacade:
+        def __init__(self, _):
+            pass
         def set_led_rgb(self, r, g, b):
             called["rgb"] = (r, g, b)
-
         def set_led_off(self):
             called["off"] = True
 
-    monkeypatch.setattr(scanner, "FACADE", DummyFacade())
+    monkeypatch.setattr("addon.bb8_core.facade.BB8Facade", DummyFacade)
 
     class DummyClient:
         def __init__(self):
