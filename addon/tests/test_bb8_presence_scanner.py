@@ -102,7 +102,11 @@ def test_cb_led_set(monkeypatch):
     # Invalid JSON
     msg = types.SimpleNamespace(payload=b"notjson")
     called.clear()
-    scanner._cb_led_set(c, None, msg)
+    try:
+        scanner._cb_led_set(c, None, msg)
+    except Exception as e:
+        pytest.fail(f"_cb_led_set raised unexpected exception: {e}")
+    # Should not raise: invalid JSON must be handled gracefully
     # Should not raise
 
 
