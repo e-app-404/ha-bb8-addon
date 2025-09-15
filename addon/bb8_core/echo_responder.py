@@ -11,7 +11,12 @@ import paho.mqtt.client as mqtt
 LOG = logging.getLogger(__name__)
 
 OPTIONS_PATH = os.environ.get("OPTIONS_PATH", "/data/options.json")
-
+DEFAULT_OPTS = {
+    "mqtt_base": "bb8",
+    "bb8_mac": "",
+    "mqtt_topic_prefix": "bb8",
+    "ble_adapter": "hci0",
+}
 
 def _load_opts(path=OPTIONS_PATH):
     try:
@@ -19,8 +24,7 @@ def _load_opts(path=OPTIONS_PATH):
             return json.load(f)
     except Exception as e:
         LOG.warning("Failed to read %s: %s — using defaults", path, e)
-        return {}
-
+        return DEFAULT_OPTS.copy()
 
 _opts = _load_opts()
 _base = _opts.get("mqtt_base") or _opts.get("mqtt_topic_prefix") or "bb8"
