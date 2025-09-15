@@ -1,83 +1,260 @@
+# --- Comprehensive mqtt_dispatcher.py tests ---
 import json
-import threading
-import time
-from unittest.mock import patch
+import types
+from unittest.mock import MagicMock
 
-import paho.mqtt.client as mqtt  # pyright: ignore[reportMissingImports]
-from addon.bb8_core.logging_setup import logger
-from addon.bb8_core.mqtt_dispatcher import start_mqtt_dispatcher
-
-# Test parameters
-MQTT_HOST = "test.mosquitto.org"
-MQTT_PORT = 1883
-MQTT_TOPIC = "bb8/test/cmd"
-STATUS_TOPIC = "bb8/test/status"
+import addon.bb8_core.mqtt_dispatcher as dispatcher
 
 
-# Mock BLEBridge and its controller
-class MockController:
-    def handle_command(self, command, payload):
-        logger.info(
-            {
-                "event": "test_mock_handle_command",
-                "command": command,
-                "payload": payload,
-            }
-        )
-        return "mock-dispatched"
+def test_is_dispatcher_started_and_ensure(monkeypatch):
+    dispatcher._DISPATCHER_STARTED = False
+    assert dispatcher.is_dispatcher_started() is False
+    assert dispatcher.ensure_dispatcher_started() is True
+    assert dispatcher.is_dispatcher_started() is True
+    # Idempotent
+    assert dispatcher.ensure_dispatcher_started() is True
 
 
-class MockBLEBridge:
-    def __init__(self):
-        self.controller = MockController()
-
-    def diagnostics(self):
-        return {"status": "mock_bridge_ok"}
-
-
-def run_dispatcher():
-    with patch("addon.bb8_core.mqtt_dispatcher.BLEBridge", MockBLEBridge):
-        start_mqtt_dispatcher(
-            mqtt_host=MQTT_HOST,
-            mqtt_port=MQTT_PORT,
-            mqtt_topic=MQTT_TOPIC,
-            status_topic=STATUS_TOPIC,
-        )
+def test_device_block_and_norm_mac(monkeypatch):
+    monkeypatch.setitem(dispatcher.CONFIG, "bb8_mac", "AA:BB:CC:DD:EE:FF")
+    block = dispatcher._device_block()
+    assert "ids" in block and "name" in block
+    assert dispatcher._norm_mac("aa:bb:cc:dd:ee:ff") == "AABBCCDDEEFF"
+    assert dispatcher._norm_mac(None) == "UNKNOWN"
 
 
-def publish_test_messages():
-    client = mqtt.Client()
-    client.connect(MQTT_HOST, MQTT_PORT, 60)
-    client.loop_start()
-    time.sleep(2)  # Wait for connection
-    # Publish valid command
-    payload = json.dumps({"command": "roll", "speed": 100})
-    client.publish(MQTT_TOPIC, payload)
-    logger.info({"event": "test_publish_valid_command", "payload": payload})
-    time.sleep(1)
-    # Publish malformed payload
-    client.publish(MQTT_TOPIC, "{invalid_json")
-    logger.info(
-        {
-            "event": "test_publish_malformed_payload",
-            "payload": "{invalid_json",
-        }
+def test_telemetry_enabled(monkeypatch):
+    monkeypatch.setenv("ENABLE_BRIDGE_TELEMETRY", "1")
+    assert dispatcher._telemetry_enabled() is True
+    monkeypatch.setenv("ENABLE_BRIDGE_TELEMETRY", "0")
+    assert dispatcher._telemetry_enabled() is False
+
+
+def test_is_mock_callable():
+    class Dummy:
+        pass
+
+    m = MagicMock()
+    assert dispatcher._is_mock_callable(m) is True
+    assert dispatcher._is_mock_callable(Dummy()) is False
+
+
+def test_publish_discovery(monkeypatch):
+    called = {}
+
+    async def fake_pub_discovery(*args, **kwargs):
+        called["pub"] = True
+
+    monkeypatch.setattr(dispatcher, "_publish_discovery_async", fake_pub_discovery)
+    dispatcher.publish_discovery("client", "mac")
+    assert "pub" in called
+
+
+def test_publish_led_discovery(monkeypatch):
+    monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", True)
+    called = {}
+
+    def fake_publish_fn(topic, payload, retain):
+        called[topic] = json.loads(payload)
+
+    dispatcher.publish_led_discovery(fake_publish_fn)
+    assert any("led" in t for t in called)
+
+
+def test_publish_bb8_discovery(monkeypatch):
+    monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", True)
+    called = {}
+
+    def fake_publish_fn(topic, payload, retain):
+        called[topic] = json.loads(payload)
+
+    dispatcher.publish_bb8_discovery(fake_publish_fn)
+    assert any("presence" in t or "rssi" in t for t in called)
+
+
+def test_publish_bb8_discovery_gate(monkeypatch):
+    monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", False)
+    called = {}
+
+    def fake_publish_fn(topic, payload, retain):
+        called[topic] = json.loads(payload)
+
+    dispatcher.publish_bb8_discovery(fake_publish_fn)
+    # Should not publish anything
+    assert not called
+
+
+def test_maybe_publish_bb8_discovery(monkeypatch):
+    monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", True)
+
+    class DummyClient:
+        def is_connected(self):
+            return True
+
+        def publish(self, topic, payload, qos, retain):
+            return types.SimpleNamespace(mid=1, wait_for_publish=lambda timeout=3: True)
+
+    dispatcher.CLIENT = DummyClient()
+    dispatcher._DISCOVERY_PUBLISHED.clear()
+    dispatcher._maybe_publish_bb8_discovery()
+    # Should publish all entities
+
+
+def test_bind_subscription(monkeypatch):
+    dispatcher.CLIENT = MagicMock()
+    dispatcher._BOUND_TOPICS.clear()
+    dispatcher._PENDING_SUBS.clear()
+
+    def dummy_handler(client, userdata, message):
+        pass
+
+    topic = "bb8/test/topic"
+    assert dispatcher.register_subscription(topic, dummy_handler) is None
+
+
+def test_main(monkeypatch):
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_HOST", "localhost")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_PORT", 1883)
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_BASE", "bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_USERNAME", "mqtt_bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_PASSWORD", "pw")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_CLIENT_ID", "bb8-addon")
+    monkeypatch.setitem(dispatcher.CONFIG, "ha_discovery_topic", "homeassistant")
+    monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", True)
+    monkeypatch.setitem(
+        dispatcher.CONFIG, "availability_topic_scanner", "bb8/availability/scanner"
     )
-    time.sleep(1)
-    client.loop_stop()
-    client.disconnect()
-
-
-def main():
-    # Start dispatcher in a background thread
-    dispatcher_thread = threading.Thread(target=run_dispatcher, daemon=True)
-    dispatcher_thread.start()
-    time.sleep(3)  # Allow dispatcher to connect and subscribe
-    publish_test_messages()
-    logger.info({"event": "test_waiting_for_dispatcher"})
-    time.sleep(5)
-    logger.info("[TEST] Test complete. Check logs for BLE dispatch and error handling.")
-
-
-if __name__ == "__main__":
-    main()
+    monkeypatch.setitem(dispatcher.CONFIG, "availability_payload_online", "online")
+    monkeypatch.setitem(dispatcher.CONFIG, "availability_payload_offline", "offline")
+    monkeypatch.setitem(dispatcher.CONFIG, "qos", 1)
+    monkeypatch.setitem(dispatcher.CONFIG, "bb8_mac", "AA:BB:CC:DD:EE:FF")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_broker", "localhost")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic_prefix", "bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_port", 1883)
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_username", "mqtt_bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_password", "pw")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_TLS", False)
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_CLIENT_ID", "bb8-addon")
+    monkeypatch.setitem(dispatcher.CONFIG, "state_topic", "bb8/status")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic", "bb8/command/#")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_port", 1883)
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic", "bb8/command/#")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_broker", "localhost")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_username", "mqtt_bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_password", "pw")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_CLIENT_ID", "bb8-addon")
+    monkeypatch.setitem(dispatcher.CONFIG, "ha_discovery_topic", "homeassistant")
+    monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", True)
+    monkeypatch.setitem(
+        dispatcher.CONFIG, "availability_topic_scanner", "bb8/availability/scanner"
+    )
+    monkeypatch.setitem(dispatcher.CONFIG, "availability_payload_online", "online")
+    monkeypatch.setitem(dispatcher.CONFIG, "availability_payload_offline", "offline")
+    monkeypatch.setitem(dispatcher.CONFIG, "qos", 1)
+    monkeypatch.setitem(dispatcher.CONFIG, "bb8_mac", "AA:BB:CC:DD:EE:FF")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_broker", "localhost")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic_prefix", "bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_port", 1883)
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_username", "mqtt_bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_password", "pw")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_TLS", False)
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_CLIENT_ID", "bb8-addon")
+    monkeypatch.setitem(dispatcher.CONFIG, "state_topic", "bb8/status")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic", "bb8/command/#")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_port", 1883)
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic", "bb8/command/#")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_broker", "localhost")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_username", "mqtt_bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_password", "pw")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_CLIENT_ID", "bb8-addon")
+    monkeypatch.setitem(dispatcher.CONFIG, "ha_discovery_topic", "homeassistant")
+    monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", True)
+    monkeypatch.setitem(
+        dispatcher.CONFIG, "availability_topic_scanner", "bb8/availability/scanner"
+    )
+    monkeypatch.setitem(dispatcher.CONFIG, "availability_payload_online", "online")
+    monkeypatch.setitem(dispatcher.CONFIG, "availability_payload_offline", "offline")
+    monkeypatch.setitem(dispatcher.CONFIG, "qos", 1)
+    monkeypatch.setitem(dispatcher.CONFIG, "bb8_mac", "AA:BB:CC:DD:EE:FF")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_broker", "localhost")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic_prefix", "bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_port", 1883)
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_username", "mqtt_bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_password", "pw")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_TLS", False)
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_CLIENT_ID", "bb8-addon")
+    monkeypatch.setitem(dispatcher.CONFIG, "state_topic", "bb8/status")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic", "bb8/command/#")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_port", 1883)
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic", "bb8/command/#")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_broker", "localhost")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_username", "mqtt_bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_password", "pw")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_CLIENT_ID", "bb8-addon")
+    monkeypatch.setitem(dispatcher.CONFIG, "ha_discovery_topic", "homeassistant")
+    monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", True)
+    monkeypatch.setitem(
+        dispatcher.CONFIG, "availability_topic_scanner", "bb8/availability/scanner"
+    )
+    monkeypatch.setitem(dispatcher.CONFIG, "availability_payload_online", "online")
+    monkeypatch.setitem(dispatcher.CONFIG, "availability_payload_offline", "offline")
+    monkeypatch.setitem(dispatcher.CONFIG, "qos", 1)
+    monkeypatch.setitem(dispatcher.CONFIG, "bb8_mac", "AA:BB:CC:DD:EE:FF")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_broker", "localhost")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic_prefix", "bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_port", 1883)
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_username", "mqtt_bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_password", "pw")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_TLS", False)
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_CLIENT_ID", "bb8-addon")
+    monkeypatch.setitem(dispatcher.CONFIG, "state_topic", "bb8/status")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic", "bb8/command/#")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_port", 1883)
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic", "bb8/command/#")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_broker", "localhost")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_username", "mqtt_bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_password", "pw")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_CLIENT_ID", "bb8-addon")
+    monkeypatch.setitem(dispatcher.CONFIG, "ha_discovery_topic", "homeassistant")
+    monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", True)
+    monkeypatch.setitem(
+        dispatcher.CONFIG, "availability_topic_scanner", "bb8/availability/scanner"
+    )
+    monkeypatch.setitem(dispatcher.CONFIG, "availability_payload_online", "online")
+    monkeypatch.setitem(dispatcher.CONFIG, "availability_payload_offline", "offline")
+    monkeypatch.setitem(dispatcher.CONFIG, "qos", 1)
+    monkeypatch.setitem(dispatcher.CONFIG, "bb8_mac", "AA:BB:CC:DD:EE:FF")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_broker", "localhost")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic_prefix", "bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_port", 1883)
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_username", "mqtt_bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_password", "pw")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_TLS", False)
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_CLIENT_ID", "bb8-addon")
+    monkeypatch.setitem(dispatcher.CONFIG, "state_topic", "bb8/status")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic", "bb8/command/#")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_port", 1883)
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic", "bb8/command/#")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_broker", "localhost")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_username", "mqtt_bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_password", "pw")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_CLIENT_ID", "bb8-addon")
+    monkeypatch.setitem(dispatcher.CONFIG, "ha_discovery_topic", "homeassistant")
+    monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", True)
+    monkeypatch.setitem(
+        dispatcher.CONFIG, "availability_topic_scanner", "bb8/availability/scanner"
+    )
+    monkeypatch.setitem(dispatcher.CONFIG, "availability_payload_online", "online")
+    monkeypatch.setitem(dispatcher.CONFIG, "availability_payload_offline", "offline")
+    monkeypatch.setitem(dispatcher.CONFIG, "qos", 1)
+    monkeypatch.setitem(dispatcher.CONFIG, "bb8_mac", "AA:BB:CC:DD:EE:FF")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_broker", "localhost")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic_prefix", "bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_port", 1883)
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_username", "mqtt_bb8")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_password", "pw")
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_TLS", False)
+    monkeypatch.setitem(dispatcher.CONFIG, "MQTT_CLIENT_ID", "bb8-addon")
+    monkeypatch.setitem(dispatcher.CONFIG, "state_topic", "bb8/status")
+    monkeypatch.setitem(dispatcher.CONFIG, "mqtt_topic", "bb8/command/#")
+    dispatcher.main()

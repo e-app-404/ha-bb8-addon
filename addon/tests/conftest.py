@@ -32,21 +32,26 @@ def event_loop():
         loop.close()
 
 
-import os, contextlib
-import types
 import importlib
+import os
+
 
 def _suppress_real_mqtt_connect(monkeypatch):
     try:
         paho = importlib.import_module("paho.mqtt.client")
     except Exception:
         return
-    if os.environ.get("ALLOW_NETWORK_TESTS","0") != "1":
-        def _no_real_connect(self, *a, **k): 
+    if os.environ.get("ALLOW_NETWORK_TESTS", "0") != "1":
+
+        def _no_real_connect(self, *a, **k):
             raise OSError("suppressed real connect in tests")
+
         monkeypatch.setattr(paho.Client, "connect", _no_real_connect, raising=False)
 
+
 import pytest
+
+
 @pytest.fixture(autouse=True)
 def _auto_suppress_mqtt(monkeypatch):
     _suppress_real_mqtt_connect(monkeypatch)

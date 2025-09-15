@@ -407,9 +407,13 @@ async def scan_and_publish():
                     found = True
                     rssi = getattr(d, "rssi", None)
                     if rssi is None:
-                        rssi = (
-                            (getattr(d, "details", {}) or {}).get("props", {}) or {}
-                        ).get("RSSI")
+                        details = getattr(d, "details", {}) or {}
+                        props = (
+                            details.get("props", {})
+                            if isinstance(details.get("props", {}), dict)
+                            else {}
+                        )
+                        rssi = props.get("RSSI")
                     mac, dbus_path = _extract_mac_and_dbus(d)
                     # Ensure dbus_path is a string
                     dbus_path = str(dbus_path) if dbus_path is not None else ""
@@ -431,7 +435,7 @@ async def scan_and_publish():
                 dev = _device_block(mac_upper)
                 pres_cfg = {
                     "name": "BB-8 Presence",
-                    "uniq_id": f"bb8_presence_{mac_upper.lower().replace(':', '')}",
+                    "uniq_id": (f"bb8_presence_{mac_upper.lower().replace(':', '')}"),
                     "stat_t": "bb8/presence/state",
                     "pl_on": "online",
                     "pl_off": "offline",
@@ -604,7 +608,11 @@ if __name__ == "__main__":
                     print(json.dumps(res))
                 else:
                     tick_log(
-                        res["found"], res["name"], res["address"], res["rssi"], args
+                        res["found"],
+                        res["name"],
+                        res["address"],
+                        res["rssi"],
+                        args,
                     )
 
             asyncio.run(_once())
