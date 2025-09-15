@@ -1,0 +1,57 @@
+name: snapshot
+on:
+  schedule:
+    - cron: "0 */2 * * *"   # every 2h UTC
+  workflow_dispatch: {}
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Ensure jq present
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Quick activity check (last 2h)
+        id: recent
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHANGED=$(git log --since='2 hours ago' --pretty=format: --name-only | grep -v '^$' | sort -u | wc -l)
+          echo "changed_files=$CHANGED" >> "$GITHUB_OUTPUT"
+          echo "Recent-changed-files: $CHANGED"
+      - name: Skip if <3 recent file changes
+        if: ${{ steps.recent.outputs.changed_files < '3' }}
+        run: |
+          echo "Fewer than 3 files changed in last 2h. Skipping."
+          exit 0
+      - name: Auto snapshot via policy (threshold-gated)
+        id: policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          # print the dry-run decision JSON
+          LOC_THRESHOLD=${LOC_THRESHOLD:-2000} FILES_THRESHOLD=${FILES_THRESHOLD:-80} bash scripts/snapshot_policy.sh --dry-run | tee /tmp/policy.json
+          NEED=$(jq -r '.needs_snapshot' /tmp/policy.json)
+          echo "policy_needs_snapshot=$NEED" >> "$GITHUB_OUTPUT"
+          if [ "$NEED" = "true" ] || [ "$NEED" = "1" ]; then
+            LOC_THRESHOLD=${LOC_THRESHOLD:-2000} FILES_THRESHOLD=${FILES_THRESHOLD:-80} bash scripts/snapshot_policy.sh | tee /tmp/policy_run.out
+            # Extract created tarball path from the line SNAPSHOT_OK tarball=...
+            TARBALL=$(grep -Eo 'tarball=[^ ]+' /tmp/policy_run.out | cut -d= -f2-)
+            echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
+          else
+            echo "NO_SNAPSHOT_NEEDED"
+          fi
+      - name: Upload snapshot artifact
+        if: ${{ steps.policy.outputs.policy_needs_snapshot == 'true' || steps.policy.outputs.policy_needs_snapshot == '1' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.policy.outputs.tarball }}
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,55 @@
+{
+  "artifact": "ha_mqtt_trace_snapshot",
+  "project": "beep_boop_bb8",
+  "generated_at_utc": "2025-08-09T07:18:50.833444+00:00",
+  "steps": {
+    "a_start_ha": {
+      "ha_version": "PIN_REQUIRED",
+      "status": "not_executed_here"
+    },
+    "b_broker_profile": {
+      "from_config_yaml": true,
+      "profile": {
+        "host": "<options.mqtt_broker>",
+        "auth_mode": "username/password",
+        "qos": 1,
+        "retain_policy": "retain:true for discovery; retain:false for state"
+      }
+    },
+    "c_publish_discovery": {
+      "topics_detected_in_code": [
+        "homeassistant/button/bb8_%s_drive/config",
+        "homeassistant/button/bb8_%s_sleep/config",
+        "homeassistant/light/bb8_%s_led/config",
+        "homeassistant/number/bb8_%s_heading/config",
+        "homeassistant/number/bb8_%s_speed/config"
+      ],
+      "status": "not_executed_here"
+    },
+    "d_roundtrip_per_entity": {
+      "requirement": "command->state echo <= 2s",
+      "status": "not_executed_here",
+      "capture_fields": [
+        "entity_id",
+        "cmd_topic",
+        "cmd_payload",
+        "state_topic",
+        "state_payload",
+        "t_cmd",
+        "t_state",
+        "latency_ms"
+      ]
+    }
+  },
+  "schema_validation": {
+    "checks": {
+      "uniq_id_present": true,
+      "device_block_present": true,
+      "topics_present": true,
+      "light_command_topic_present": true,
+      "uses_homeassistant_prefix": true
+    },
+    "result": "PASS"
+  },
+  "attestation": "STP4/roundtrip: FAIL (no live HA/broker roundtrip executed in this environment)"
+}

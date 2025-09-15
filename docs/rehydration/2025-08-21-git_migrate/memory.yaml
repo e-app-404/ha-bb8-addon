@@ -1,0 +1,180 @@
+memory:
+  anchors:
+    session_label: "WS Restore + ADR-0001 Dual-Clone; Release 2025.8.21"
+    trace_id: "STRAT-9c31463"
+    timestamp_utc: "2025-08-21T15:42:07Z"
+    release_version: "2025.08.21"
+    release_tag: "v2025.8.21"
+    primary_branch: "main"
+    heads:
+      workspace: "9c31463"
+      runtime: "9c31463"
+
+  repositories:
+    workspace_root: "/Users/evertappels/Projects/HA-BB8"
+    addon_repo: "/Users/evertappels/Projects/HA-BB8/addon"
+    runtime_repo: "/Volumes/HA/addons/local/beep_boop_bb8"
+    remote_url: "git@github.com:e-app-404/ha-bb8-addon.git"
+    ha_runtime_hint: "/addons/local/beep_boop_bb8"
+
+  acceptance_tokens:
+    latest:
+      - "DEPLOY_OK runtime_head=9c31463 branch=main"
+      - "VERIFY_OK ws_head=9c31463 runtime_head=9c31463 remote=git@github.com:e-app-404/ha-bb8-addon.git"
+      - "STRUCTURE_OK"
+      - "WS_READY addon_ws=git_clone_ok runtime=git_clone_ok reports=ok wrappers=ok ops=ok"
+    history_notes:
+      - "Earlier receipts showed mismatched heads during rebase; resolved to 243c989, then finalized at 9c31463."
+      - "Tokens now emitted consistently from deploy scripts and structure/verify wrappers."
+
+  adr:
+    id: "ADR-0001"
+    title: "Canonical Topology — Dual-Clone via Git Remote"
+    decision_date: "2025-08-21"
+    decisions:
+      - "addon_workspace is a normal Git clone of remote (no symlink, no submodule)"
+      - "addon_runtime is a normal Git clone of the same remote"
+      - "Deploy = push (workspace) → fetch+hard-reset (runtime), then restart add-on in HA"
+      - "Reports unify to workspace report_root via wrappers exporting REPORT_ROOT"
+      - "Runtime ops live under ops_root/** (NOT inside addon/)"
+      - "Remove stray workspace/bb8_core by merging into addon/bb8_core"
+    receipt_path_latest: "/Users/evertappels/Projects/HA-BB8/reports/governance/ADR-0001_receipt_20250821_154207Z.status"
+
+  constraints_enforced:
+    - "No symlinks, no submodules for repository topology"
+    - "Single report sink at workspace reports/"
+    - "No addon/ops directory at finish"
+    - "Wrappers export WORKSPACE_ROOT and REPORT_ROOT"
+    - "Prefer workspace clone content on conflict; record decisions"
+    - "Caches (__pycache__/, *.pyc) ignored and not tracked"
+
+  structure_state:
+    ops_domains_present:
+      - "ops/audit"
+      - "ops/workspace"
+      - "ops/deploy"
+      - "ops/qa"
+      - "ops/diagnostics"
+      - "ops/maintenance"
+      - "ops/evidence"
+    wrappers:
+      verify_workspace: "/Users/evertappels/Projects/HA-BB8/scripts/verify_workspace.sh"
+      deploy_to_ha: "/Users/evertappels/Projects/HA-BB8/scripts/deploy_to_ha.sh"
+      exports:
+        WORKSPACE_ROOT: true
+        REPORT_ROOT: true
+    report_sink:
+      path: "/Users/evertappels/Projects/HA-BB8/reports"
+      unified: true
+      addon_reports_removed: true
+    tests:
+      location: "/Users/evertappels/Projects/HA-BB8/addon/tests"
+      suite_status: "PASS (local)"
+    symlinks:
+      workspace_removed:
+        - "addon → /Volumes/HA/addons/local/beep_boop_bb8"
+        - "docs → /Users/evertappels/Projects/HABIBI-8/local.mac.beep_boop_bb8"
+      runtime_removed:
+        - "addon → /Volumes/HA/addons/local/beep_boop_bb8"
+        - "docs → /Users/evertappels/Projects/HABIBI-8/local.mac.beep_boop_bb8"
+      python_env_symlinks_kept: true
+
+  git_state:
+    remote_head_normalized: true
+    orphan_HEAD_cleaned: true
+    branch: "main"
+    tag_created: "v2025.8.21"
+    version_bumped_in_config_yaml: "2025.08.21"
+    rebase_conflict_resolution:
+      strategies:
+        - ".gitignore: union merge (keep both rule sets)"
+        - "Code/config (*.py, config files): prefer OURS (workspace) where conflicts"
+        - "Caches (__pycache__/, *.pyc): remove from tree"
+      representative_conflicts_resolved:
+        - "bb8_core/scan_bb8_gatt.py"
+        - "tests/test_facade.py"
+        - "publish_discovery(): accept optional dbus_path kwarg for compatibility"
+    deployment_model: "push workspace → runtime fetch --all --prune; checkout -B main origin/main; hard reset to origin/main"
+
+  releases:
+    current:
+      version: "2025.08.21"
+      commit: "9c31463"
+      tag: "v2025.8.21"
+      changelog_updated: true
+
+  evidence_status:
+    stp4_shim_run: "PASS (prior artifacts present)"
+    stp4_strict_run: "Pending attestation (shim OFF, REQUIRE_DEVICE_ECHO=1)"
+    latest_artifacts_pointers:
+      evidence_manifest: "/Users/evertappels/Projects/HA-BB8/reports/evidence_manifest.json"
+      trace_snapshot: "/Users/evertappels/Projects/HA-BB8/reports/ha_mqtt_trace_snapshot.json"
+      discovery_dump: "/Users/evertappels/Projects/HA-BB8/reports/ha_discovery_dump_20250818_043251Z.txt"
+
+  qa_status:
+    pytest:
+      location: "/Users/evertappels/Projects/HA-BB8/addon/tests"
+      result: "PASS"
+    lint_types_security:
+      ruff: "configured (logs exist)"
+      mypy: "configured (logs exist)"
+      bandit_safety: "available in reports; not enforced as gate yet"
+    coverage:
+      threshold_policy: ">= 80% (target for strict gate)"
+      current: "not captured in-session"
+
+  duplicates_resolved:
+    - ".github duplicated at root and addon → consolidated at root; addon/.github removed"
+    - ".vscode duplicated at root and addon → consolidated at root (keep one)"
+    - "addon/tools and addon/reports → removed; canonicalized to ops/ and reports/"
+    - "verify_workspace.sh duplicate (ops vs scripts) → scripts is canonical wrapper"
+
+  open_validation_loops:
+    - id: "CI-TOKEN-GATE"
+      desc: "Add CI workflow enforcing STRUCTURE_OK & VERIFY_OK tokens on PRs (run ops/audit/check_structure.sh and scripts/verify_workspace.sh)"
+      status: "pending"
+    - id: "STP4-STRICT-ATTEST"
+      desc: "Produce strict evidence with shim disabled and device-originated echoes required"
+      status: "pending"
+    - id: "OPTIONAL-HA-RESTART-HOOK"
+      desc: "Automate HA add-on restart in deploy flow"
+      status: "optional"
+
+  # === Variables explicitly called out for rehydration ===
+  variables_for_rehydration:
+    last_valid_patch: "9c31463"
+    last_decision_checkpoint:
+      id: "ADR-0001-P7-DEPLOY-VERIFY"
+      timestamp_utc: "2025-08-21T15:42:07Z"
+      heads:
+        workspace: "9c31463"
+        runtime: "9c31463"
+      tokens: ["STRUCTURE_OK", "DEPLOY_OK", "VERIFY_OK", "WS_READY"]
+    clustered_entities_and_aliases:
+      entities:
+        - "Strategos (governance)"
+        - "Pythagoras (execution/QA)"
+        - "Copilot (execution surface)"
+        - "Workspace clone (addon/)"
+        - "Runtime clone (HA mount)"
+        - "GitHub Remote (origin)"
+        - "HA Add-on (beep_boop_bb8)"
+      aliases:
+        - "workspace == /Users/evertappels/Projects/HA-BB8/addon"
+        - "runtime == /Volumes/HA/addons/local/beep_boop_bb8"
+        - "remote == git@github.com:e-app-404/ha-bb8-addon.git"
+      counts:
+        entities: 7
+        aliases: 3
+    inclusion_coverage:
+      adr0001_scope: "100% implemented"
+      ops_domain_split: "100% implemented"
+      report_sink_unification: "100% implemented"
+      wrapper_exports: "100% implemented"
+      symlink_policy: "100% (runtime + workspace cleaned; python env links retained)"
+    semantic_summary: >
+      The project now operates under ADR-0001 dual-clone governance: workspace/addon and HA runtime are
+      separate git clones pointing to the same remote. Deployments are branch-based and deterministic
+      (push workspace → runtime fetch/checkout/reset). Ops tooling is organized by domain; tests live under
+      addon/tests and pass locally. Symlink and duplication issues were removed. Version 2025.08.21 is tagged
+      and deployed; strict STP4 evidence remains to be attested, after which STP5 priorities can commence.

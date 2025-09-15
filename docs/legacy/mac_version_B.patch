@@ -1,0 +1,218 @@
+# **1. Copilot-Ready Patch Plan**
+
+### **A. config.yaml**
+
+```yaml
+# config.yaml (HA add-on schema)
+name: "Sphero BB-8 Integration"
+version: "1.0.0"
+slug: "sphero_bb8"
+description: "Home Assistant integration for Sphero BB-8 with auto MAC detection"
+schema:
+  bb8_mac:
+    type: str
+    required: false
+    default: ""
+  scan_seconds:
+    type: int
+    required: false
+    default: 5
+  rescan_on_fail:
+    type: bool
+    required: false
+    default: true
+  cache_ttl_hours:
+    type: int
+    required: false
+    default: 720
+```
+
+* **Improvement:** Defines HA add-on schema so options are validated in Supervisor UI.
+* **Improvement:** Defaults match scaffold.
+
+---
+
+### **B. run.sh**
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+OPTS_JSON="/data/options.json"
+BB8_MAC=$(jq -r '.bb8_mac // ""' "$OPTS_JSON")
+SCAN_SEC=$(jq -r '.scan_seconds // 5' "$OPTS_JSON")
+RESCAN=$(jq -r '.rescan_on_fail // true' "$OPTS_JSON")
+TTL_HR=$(jq -r '.cache_ttl_hours // 720' "$OPTS_JSON")
+
+mkdir -p /data
+
+exec python -m bb8_core.main \
+  --bb8-mac "$BB8_MAC" \
+  --scan-seconds "$SCAN_SEC" \
+  --rescan-on-fail "$RESCAN" \
+  --cache-ttl-hours "$TTL_HR"
+```
+
+* **Improvement:** Ensures `/data` exists.
+* **Improvement:** Quotes all vars to avoid whitespace parsing issues.
+* **Improvement:** Explicit `// ""` for bb8\_mac so unset key doesn’t produce `null`.
+
+---
+
+### **C. bb8\_core/auto\_detect.py**
+
+```python
+# bb8_core/auto_detect.py
+import json, time, os, re
+from dataclasses import dataclass
+from typing import Optional, List, Tuple
+from bleak import BleakScanner, BleakClient
+
+CACHE_PATH = os.environ.get("BB8_CACHE_PATH", "/data/bb8_cache.json")
+
+@dataclass
+class Options:
+    bb8_mac: Optional[str] = ""
+    scan_seconds: int = 5
+    rescan_on_fail: bool = True
+    cache_ttl_hours: int = 720
+
+@dataclass
+class Candidate:
+    mac: str
+    name: str
+    rssi: Optional[int]
+
+def _valid_mac(mac: str) -> bool:
+    return bool(re.fullmatch(r"([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}", mac))
+
+def load_cache(now: float, ttl_hours: int) -> Optional[Candidate]:
+    if not os.path.exists(CACHE_PATH):
+        return None
+    try:
+        with open(CACHE_PATH) as f:
+            data = json.load(f)
+        if ttl_hours > 0:
+            age_hours = (now - data.get("last_seen_epoch", 0)) / 3600.0
+            if age_hours > ttl_hours:
+                return None
+        if not _valid_mac(data.get("mac", "")):
+            return None
+        return Candidate(
+            mac=data["mac"],
+            name=data.get("advertised_name", ""),
+            rssi=None
+        )
+    except Exception:
+        return None
+
+def save_cache(mac: str, name: str) -> None:
+    os.makedirs(os.path.dirname(CACHE_PATH), exist_ok=True)
+    with open(CACHE_PATH, "w") as f:
+        json.dump({
+            "mac": mac,
+            "advertised_name": name or "",
+            "last_seen_epoch": int(time.time()),
+            "source": "discovery"
+        }, f)
+
+def is_probable_bb8(name: Optional[str]) -> bool:
+    if not name:
+        return False
+    name_l = name.lower()
+    return any(t in name_l for t in ("bb-8", "droid", "sphero"))
+
+async def scan_for_bb8(scan_seconds: int) -> List[Candidate]:
+    devices = await BleakScanner.discover(timeout=scan_seconds)
+    candidates = [
+        Candidate(mac=d.address, name=d.name or "", rssi=getattr(d, "rssi", None))
+        for d in devices if is_probable_bb8(getattr(d, "name", None))
+    ]
+    candidates.sort(key=lambda c: (
+        c.name.lower() != "bb-8",
+        -(c.rssi or -999),
+        c.mac
+    ))
+    return candidates
+
+async def resolve_bb8_mac(opts: Options, logger) -> str:
+    now = time.time()
+    if opts.bb8_mac and _valid_mac(opts.bb8_mac.strip()):
+        logger.info({"event": "mac_override", "mac": opts.bb8_mac})
+        return opts.bb8_mac.strip()
+
+    cached = load_cache(now, opts.cache_ttl_hours)
+    if cached:
+        logger.info({"event": "cache_hit", "mac": cached.mac, "name": cached.name})
+        return cached.mac
+
+    logger.info({"event": "scan_start", "seconds": opts.scan_seconds})
+    candidates = await scan_for_bb8(opts.scan_seconds)
+    if not candidates:
+        raise RuntimeError("No BB-8 devices found. Check adapter, permissions, and RF environment.")
+    winner = candidates[0]
+    save_cache(winner.mac, winner.name)
+    logger.info({"event": "scan_winner", "mac": winner.mac, "name": winner.name, "rssi": winner.rssi})
+    return winner.mac
+
+async def connect_bb8(opts: Options, logger):
+    mac = await resolve_bb8_mac(opts, logger)
+
+    async def _try(mac_addr: str):
+        logger.info({"event": "connect_attempt", "mac": mac_addr})
+        async with BleakClient(mac_addr) as client:
+            if not await client.is_connected():
+                raise RuntimeError("Connected=False after context enter")
+            return client
+
+    try:
+        return await _try(mac)
+    except Exception as e:
+        logger.warning({"event": "connect_fail", "error": str(e)})
+        if not opts.rescan_on_fail:
+            raise
+        logger.info({"event": "rescan_trigger"})
+        candidates = await scan_for_bb8(opts.scan_seconds)
+        if not candidates:
+            raise RuntimeError("Rescan found no BB-8 candidates.") from e
+        winner = candidates[0]
+        save_cache(winner.mac, winner.name)
+        return await _try(winner.mac)
+```
+
+* **Improvements:** MAC validation, lowercase matching, structured logs, environment override for cache path, better error messages.
+
+---
+
+### **D. tests/test\_auto\_detect.py**
+
+```python
+import pytest, asyncio, json, time
+from bb8_core.auto_detect import Options, resolve_bb8_mac, save_cache, load_cache, _valid_mac
+
+@pytest.mark.asyncio
+async def test_resolve_prefers_override(tmp_path, monkeypatch, caplog):
+    monkeypatch.setenv("BB8_CACHE_PATH", str(tmp_path / "cache.json"))
+    opts = Options(bb8_mac="11:22:33:44:55:66")
+    mac = await resolve_bb8_mac(opts, caplog)
+    assert mac == "11:22:33:44:55:66"
+
+def test_mac_validation():
+    assert _valid_mac("AA:BB:CC:DD:EE:FF")
+    assert not _valid_mac("invalid-mac")
+
+def test_cache_expiry(tmp_path, monkeypatch):
+    monkeypatch.setenv("BB8_CACHE_PATH", str(tmp_path / "cache.json"))
+    save_cache("AA:BB:CC:DD:EE:FF", "BB-8")
+    old_time = time.time() - (800 * 3600)  # > TTL
+    with open(tmp_path / "cache.json") as f:
+        data = json.load(f)
+    data["last_seen_epoch"] = old_time
+    with open(tmp_path / "cache.json", "w") as f:
+        json.dump(data, f)
+    assert load_cache(time.time(), 720) is None
+```
+
+* **Covers:** Override path, MAC validation, cache expiry.
+
+---

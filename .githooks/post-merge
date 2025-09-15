@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if git grep -nE '^(<<<<<<< |=======|>>>>>>> )' -- '*.py' >/dev/null 2>&1; then
+  echo "❌ post-merge: conflict markers detected in Python files."
+  git grep -nE '^(<<<<<<< |=======|>>>>>>> )' -- '*.py'
+  exit 1
+fi
+echo "✅ post-merge: no conflict markers."

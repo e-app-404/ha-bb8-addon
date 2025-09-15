@@ -1,0 +1,48 @@
+planned_change: "Promote b189f8f8... (main) to strict baseline; supersede 9c31463 for STP4"
+deliverable:
+  - execution_mandate (rev v1.2)
+  - coordination_handoff (rev v1.2)
+  - tag+release actions (annotated)
+action_needed:
+  - "Create annotated tag for b189f8f8... and push to origin"
+  - "Align workspace + runtime clones to b189f8f8...; drop rollback-primary to new tag"
+  - "Re-run STRICT evidence collection (shim OFF) with LED discovery enabled by default (retain=false)"
+  - "Emit patch_bundle_contract_v1 and qa_report_contract_v1; attach to single report sink"
+rationale: >
+  b189f8f8... includes post-9c31463 improvements (workspace pruning, ops tool moves,
+  echo hardening, STP4 strict features) that should form the clean baseline.
+status: ready
+location:
+  workspace: /Users/evertappels/Projects/HA-BB8/addon
+  runtime: /Volumes/HA/addons/local/beep_boop_bb8
+  remote: git@github.com:e-app-404/ha-bb8-addon.git
+RACI_matrix:
+  Strategos: Accountable
+  Pythagoras: Responsible
+  Evert: Informed
+  Copilot: Consulted
+acceptance_criteria:
+  tokens_seen: ["STRUCTURE_OK","DEPLOY_OK","VERIFY_OK","WS_READY"]
+  must_meet:
+    - "pytest suite green; coverage >= 80%"
+    - "Strict device-originated echoes for scalar topics (retain=false)"
+    - "No asyncio event-loop warnings"
+    - "qa_report.verdict == PASS"
+  artifacts_expected:
+    - patch_bundle_contract_v1
+    - qa_report_contract_v1
+    - evidence_manifest.json (strict)
+    - ha_mqtt_trace_snapshot.json
+    - ha_discovery_dump.json
+risk_assessment:
+  risks:
+    - "New baseline not yet tokenized at head"
+    - "Potential LED entity duplication if unique_id logic regressed"
+  mitigations:
+    - "Reacquire tokens at b189f8f8... via wrappers"
+    - "Discovery validation checks; fail build on duplicate ownership"
+signoff_required: true
+trace:
+  label: "WS-STRICT-BASELINE-UPLIFT"
+  new_head: "b189f8f8c6b16410f92520acd5b57823ce47ec2a"
+  supersedes: "9c31463"

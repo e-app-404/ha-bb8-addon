@@ -1,0 +1,27 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		}
+	],
+	"settings": {
+		"github.copilot.enable": {
+			"*": true,
+			"yaml": true,
+			"markdown": true,
+			"python": true
+		},
+		"terminal.integrated.defaultProfile.osx": "zsh",
+		"terminal.integrated.env.osx": {
+			"ZDOTDIR": "/Users/evertappels/Projects/BB8-Bridge/.vscode/shell-clean"
+		},
+		"makefile.configureOnOpen": false,
+		"ruff.configuration": "",
+		"ruff.fixAll": true,
+		"ruff.format.preview": true,
+		"ruff.importStrategy": "useBundled",
+		"ruff.lineLength": 80,
+		"ruff.lint.preview": true,
+		"synthwave84.brightness": 0.65
+	}
+}

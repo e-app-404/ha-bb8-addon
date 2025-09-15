@@ -1,0 +1,73 @@
+escalation_reason: "Baseline uplift to b189f8f8... and immediate STP4 strict run"
+project_state:
+  label: "BB-8 Bridge"
+  topology: "Dual-clone via remote (ADR-0001)"
+  head_commit: "b189f8f8c6b16410f92520acd5b57823ce47ec2a"
+  tag: "v2025.8.21.1"
+  repos:
+    workspace: "/Users/evertappels/Projects/HA-BB8"
+    addon_repo: "/Users/evertappels/Projects/HA-BB8/addon"
+    runtime_repo: "/Volumes/HA/addons/local/beep_boop_bb8"
+    remote: "git@github.com:e-app-404/ha-bb8-addon.git"
+  wrappers:
+    verify_workspace: "/Users/evertappels/Projects/HA-BB8/scripts/verify_workspace.sh"
+    deploy_to_ha: "/Users/evertappels/Projects/HA-BB8/scripts/deploy_to_ha.sh"
+  report_sink: "/Users/evertappels/Projects/HA-BB8/reports"
+
+strategic_input_needed:
+  goals:
+    - "Run STRICT evidence (shim OFF) w/ LED discovery enabled by default"
+    - "Emit patch_bundle_contract_v1 and qa_report_contract_v1"
+    - "Attach artifacts to unified report sink"
+  acceptance_gate:
+    binary: true
+    must_meet:
+      - "pytest suite green; coverage >= 80%"
+      - "Device-originated echoes STRICT for scalar topics (retain=false)"
+      - "No asyncio event-loop warnings"
+      - "qa_report.verdict == PASS"
+    tokens_required: ["STRUCTURE_OK", "DEPLOY_OK", "VERIFY_OK", "WS_READY"]
+    artifacts_expected:
+      - "patch_bundle_contract_v1"
+      - "qa_report_contract_v1"
+      - "evidence_manifest.json (strict)"
+      - "ha_mqtt_trace_snapshot.json"
+      - "ha_discovery_dump.json"
+  environment:
+    MQTT_BASE: "bb8"
+    REQUIRE_DEVICE_ECHO: 1
+    ENABLE_BRIDGE_TELEMETRY: 1
+    PUBLISH_LED_DISCOVERY: 1
+    RETAIN_SCALARS: 0
+    REPORT_SINK: "/Users/evertappels/Projects/HA-BB8/reports"
+    SINGLE_REPORT_SINK: 1
+  governance:
+    empirical_validation: true
+    binary_acceptance: true
+    evidence_tolerance_level: 0
+  tasklist:
+    - id: TAG-ALIGN
+      do: "Align both clones to v2025.8.21.1 tag (b189f8f8...)"
+    - id: DEPLOY
+      do: "Deploy addon; restart if required"
+    - id: VERIFY
+      do: "Run verify_workspace; capture STRUCTURE_OK & VERIFY_OK"
+    - id: TEST
+      do: "Run pytest with coverage + -W error; capture coverage.json and junit xml"
+    - id: ECHO
+      do: "Capture strict scalar echo evidence (retain=false) under bb8/*"
+    - id: DISCOVERY
+      do: "Dump HA discovery; assert LED entity unique_id is stable; no duplicates"
+    - id: EMIT
+      do: "Emit patch_bundle_contract_v1 and qa_report_contract_v1 to report sink"
+    - id: REGISTER
+      do: "Update evidence_manifest.json with strict artifacts"
+timeline:
+  timezone: "Europe/London"
+  start_now: "2025-08-21"
+  due_by: "2025-08-22 12:00"
+success_criteria:
+  - "qa_report_contract_v1.verdict == PASS"
+  - "coverage >= 80%"
+  - "All tokens present at new tag"
+  - "All strict artifacts present in evidence_manifest.json"

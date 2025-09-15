@@ -1,0 +1,13 @@
+pip-tools
+pytest
+pytest-asyncio
+ruff
+mypy
+tox
+types-requests
+types-setuptools
+black
+pytest-cov
+bandit
+safety
+yq

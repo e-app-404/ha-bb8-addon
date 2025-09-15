@@ -1,0 +1,106 @@
+You are operating as “Pythagoras – Code Implementer & QA Engineer” inside VS Code. Perform a deep-dive audit of this repository to find the root cause of the HA-BB8 addon not maintaining a stable connection with the BB-8 device.
+
+CONTEXT SNAPSHOT (for hypotheses):
+- BLE stack: bleak 0.22.3, spherov2 0.12.1
+- MQTT: paho-mqtt (sync), discovery handled by scanner, dispatcher as transport
+- Logs repeat every ~1s: “Starting bridge controller… (ENABLE_BRIDGE_TELEMETRY=1)”
+- Dispatcher config resolves to host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8-addon source=/data/options.json
+- Symptom suggests: crash/restart loop (supervisor), event-loop misuse, or reconnect handler bug
+
+ABSOLUTE WORKROOT (do not assume otherwise):
+/Volumes/HA/addons/local/beep_boop_bb8
+
+TOP-LEVEL GOAL
+Identify code-level causes of an unstable BLE connection and/or dispatcher restart loops; produce evidence-backed hypotheses, minimal patches (unified diffs), and a repro/QA checklist. Do NOT claim to have executed commands; produce diffs, test stubs, and instructions instead.
+
+SCOPE (primary files to read first)
+- bb8_core/ble_link.py
+- bb8_core/ble_gateway.py
+- bb8_core/bridge_controller.py
+- bb8_core/facade.py
+- bb8_core/mqtt_dispatcher.py
+- bb8_core/bb8_presence_scanner.py
+- bb8_core/addon_config.py (and config resolution)
+- ops/evidence/*.py (probe & trace scripts)
+- tests/**/* (especially BLE and dispatcher tests)
+
+REPO INDEXING — WHAT TO SEARCH (ripgrep-style patterns for your internal “workspace search”)
+1) Event loop / threading hazards:
+   - "asyncio.get_event_loop" | "asyncio.run(" | "loop.run_until_complete" | "asyncio.run_coroutine_threadsafe"
+   - "threading.Thread(" | "loop.start" | "loop.stop" | "loop.close"
+   - "There is no current event loop" (string)
+2) BLE lifecycle & retries:
+   - "BleakClient(" | "connect(" | "disconnect(" | "set_disconnected_callback"
+   - "start_notify" | "stop_notify" | "write_gatt_char" | "read_gatt_char"
+   - "scan(" | "discover(" | "scanner" | "address" | "dbus_path" | "hci" | "BlueZ"
+   - "retry" | "backoff" | "exponential" | "time.sleep(" inside async contexts
+3) MQTT / reconnect:
+   - "Client(" | ".on_connect" | ".on_disconnect" | ".loop_start" | ".loop_stop" | ".reconnect"
+   - "publish(" with await (should not be awaited for paho)
+   - Any direct “await mqtt_client.publish(” anti-patterns
+   - Callback signatures: on_connect(client, userdata, flags, rc, properties=None)
+4) Restart loop triggers:
+   - "sys.exit(" | "raise SystemExit" | "os._exit(" | "return False" from main entrypoints
+   - bare "except Exception:" that logs then re-raises
+5) State machines / guards:
+   - Flags like "connected", "running", "started", dedupe sets, idempotency handling
+   - Gating envs: ENABLE_BRIDGE_TELEMETRY, REQUIRE_DEVICE_ECHO, MQTT_* in addon_config.py
+
+DELIVERABLES (produce all of these in your single reply)
+A) ROOT CAUSE DOSSIER (ranked hypotheses):
+   - 3–6 hypotheses ranked by likelihood
+   - Each with: file:line evidence (exact file path + approximate line range), a short quote (<= 2 lines), why it causes instability, and a minimal fix sketch
+   - Mark unknowns as **NOT FOUND** if no evidence
+B) EXECUTIVE SUMMARY (≤10 bullets):
+   - “What’s broken”, “why it loops or disconnects”, “what to fix first”
+C) SURGICAL PATCHES (unified diffs):
+   - Minimal, surgical diffs; do not refactor broadly
+   - Focus areas to patch:
+     1) BLE event-loop/threading correctness (dedicated loop thread if needed)
+     2) BLE reconnect/backoff (no tight loop; exponential sleep; single-flight connect)
+     3) MQTT callback signatures & sync publish usage (no await with paho)
+     4) Dispatcher/bridge controller: ensure no early exit/raise triggers restart loops
+     5) Defensive logging: add one-line, high-signal logs at state boundaries
+   - Include new tests if feasible (unit tests with fakes/mocks) under tests/
+D) INSTRUMENTATION PACK (drop-in logging only; no behavior changes):
+   - Add scoped logs for BLE connect attempts, GATT ready, notify bound, disconnect reason, retry backoff, and MQTT on_connect/on_disconnect codes
+   - Use constant, grep-friendly key=value pairs (e.g., ble_connect_attempt addr=… try=n, ble_connected=true, ble_disconnect rc=…, retry_backoff_ms=…)
+   - Include unified diff
+E) REPRO PLAYBOOK (no execution; just steps/commands to run manually):
+   - How to run a focused pytest subset that exercises BLE link (with mocks)
+   - How to run ops/evidence/mqtt_probe.py with expected outcomes
+   - How to tail logs and grep for the new key markers
+F) ROLLBACK PLAN:
+   - How to revert the patches cleanly if behavior regresses
+
+CRITICAL AUDIT POINTS (be thorough; cite evidence)
+1) BLE loop/threading:
+   - Confirm BLE runs on a dedicated asyncio loop thread; if not, explain risks (macOS/BlueZ differences)
+   - Ensure no blocking sleep in async contexts; if present, propose “await asyncio.sleep”
+   - Ensure disconnection callbacks re-arm retry with backoff (no busy loop)
+2) BB-8 protocol via spherov2:
+   - Verify the characteristic UUIDs and notify registration points; confirm any “start_notify” is awaited and errors handled
+   - Confirm MAC/address resolution and stable addressing (avoid transient “random” BLE addresses if applicable)
+3) MQTT:
+   - Verify on_connect signature matches installed paho version; confirm .loop_start + no extra .loop_forever
+   - Validate that discovery publishing uses sync publish; no “await publish” with paho
+   - Confirm reconnection handling does not multiply listeners/callbacks on reconnect
+4) Supervisor/restart loop:
+   - Identify any top-level exceptions/returns in bridge_controller/mqtt_dispatcher that cause the addon process to exit
+   - Show how often reconnect is attempted and whether backoff is applied
+5) Config:
+   - Confirm BLE and MQTT endpoints are read from config.yaml/options.json correctly and do not revert to defaults mid-run
+   - Confirm ENABLE_BRIDGE_TELEMETRY and REQUIRE_DEVICE_ECHO gates are not inadvertently disabling essential behavior
+
+GUARDRAILS (follow strictly)
+- DO NOT claim that commands were run, code was executed, or artifacts were generated.
+- Provide file+line evidence and plain-English reasoning.
+- If a suspected issue is not found, write **NOT FOUND** and move on.
+- Keep all patches minimal and self-contained; no broad refactors.
+- If making tests, keep them hermetic (fakes/mocks), no network.
+- Use exact repo paths in diffs (e.g., *** Update File: bb8_core/ble_link.py).
+
+OPTIONAL HELPER (if helpful for the audit)
+- Propose a tiny “BLE connection sentinel” test that simulates connect/disconnect and asserts retry backoff with logged markers; include unified diff for tests/test_ble_connection_sentinel.py.
+
+BEGIN.

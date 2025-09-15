@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+set -eu
+# Run a silent dry run first (does not create files)
+OUT="$(LOC_THRESHOLD=${LOC_THRESHOLD:-2000} FILES_THRESHOLD=${FILES_THRESHOLD:-80} bash scripts/snapshot_policy.sh --dry-run 2>/dev/null || true)"
+[ -n "$OUT" ] || exit 0
+NEEDS="$(printf '%s' "$OUT" | jq -r '.needs_snapshot // false' 2>/dev/null || echo false)"
+if [ "${SNAPSHOT_AUTO:-0}" != "1" ]; then
+  # Only notify
+  [ "$NEEDS" = "true" ] && echo "[post-commit] Snapshot thresholds met. Set SNAPSHOT_AUTO=1 to auto-create."
+  exit 0
+fi
+# Auto-create when explicitly enabled
+if [ "$NEEDS" = "true" ]; then
+  LOC_THRESHOLD="${LOC_THRESHOLD:-2000}" FILES_THRESHOLD="${FILES_THRESHOLD:-80}" \
+  bash scripts/snapshot_policy.sh >/dev/null 2>&1 || true
+fi

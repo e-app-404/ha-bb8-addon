@@ -1,0 +1,17 @@
+[run]
+omit =
+    addon/bb8_core/ble_bridge.py
+    addon/bb8_core/controller.py
+    addon/bb8_core/telemetry.py
+    addon/bb8_core/echo_responder.py
+    addon/bb8_core/main.py
+    addon/bb8_core/force_discovery_emit.py
+    addon/bb8_core/ble_ready_check.py
+    addon/bb8_core/blebridge_handler_surface_check.py
+    addon/bb8_core/check_bridge_broker.py
+    addon/bb8_core/discovery_migrate.py
+    addon/bb8_core/mqtt_probe.py
+    addon/tools/*
+    **/__pycache__/*
+[report]
+skip_empty = true

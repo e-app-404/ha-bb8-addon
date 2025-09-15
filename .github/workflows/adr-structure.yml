@@ -1,0 +1,65 @@
+name: ADR-0001 Structure Gate
+on:
+  push:
+  pull_request:
+
+jobs:
+  enforce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enforce ADR-0001 + Backup Policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          FAIL=0
+          ADDON="addon"
+
+
+          echo "== Backup tarball-only policy =="
+          if [ -d _backup ]; then
+            echo "::error::_backup/ directory must NOT exist (use _backups/)"; FAIL=1
+          fi
+          if find . -maxdepth 1 -type d -name '_backup_*' | grep -q .; then
+            echo "::error::loose _backup_* folders at root (must be tarballs in _backups/)"; FAIL=1
+          fi
+          if find _backups -type f ! -name '*.tar.gz' ! -name 'README.md' ! -name '.gitkeep' ! -name '*.sha256' | grep -q .; then
+            echo "::error::Non-tarball artifacts in _backups/"; FAIL=1
+          fi
+
+          echo "== Workspace MUST-HAVE =="
+          for d in ops reports scripts docs .githooks .github _backups; do
+            [ -e "$d" ] || { echo "::error::workspace missing: $d"; FAIL=1; }
+          done
+
+          echo "== Workspace MUST-NOT =="
+          for d in tests tools _backup; do
+            [ -e "$d" ] && { echo "::error::workspace must NOT contain: $d"; FAIL=1; }
+          done
+
+          echo "== Add-on MUST-HAVE =="
+          for p in addon/bb8_core addon/tools addon/tests addon/services.d addon/app \
+                   addon/config.yaml addon/Dockerfile addon/Makefile addon/README.md addon/VERSION addon/apparmor.txt \
+                   addon/.devcontainer; do
+            [ -e "$p" ] || { echo "::error::addon missing: $p"; FAIL=1; }
+          done
+
+          echo "== Add-on MUST-NOT =="
+          for p in addon/scripts addon/reports addon/docs addon/_backup addon/_backups \
+                   addon/.venv addon/.pytest_cache addon/.ruff_cache addon/.mypy_cache; do
+            [ -e "$p" ] && { echo "::error::addon must NOT contain: $p"; FAIL=1; }
+          done
+
+          echo "== No symlink/submodule/nested repo traps =="
+          [ -L addon ] && { echo "::error::'addon' must not be a symlink"; FAIL=1; }
+          if git ls-files -s | awk '$1==160000 && $4=="addon"{f=1} END{exit !f}'; then echo "::error::'addon' is a submodule (gitlink)"; FAIL=1; fi
+          [ -d addon/.git ] && { echo "::error::nested git repo at addon/.git is forbidden"; FAIL=1; }
+          if find addon -type l | grep -q .; then echo "::error::symlinks under addon/ not allowed"; FAIL=1; fi
+
+          if [ $FAIL -eq 0 ]; then
+            echo "WS_READY"
+            echo "STRUCTURE_OK — backups normalized"
+            echo "STRUCTURE_OK — topology"
+          else
+            exit 1
+          fi

@@ -1,0 +1,13 @@
+name: snapshot-policy-check
+on:
+  pull_request:
+    branches: [ "**" ]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify ADR-0015 exists
+        run: test -f docs/ADR/ADR-0015-snapshot-and-inventory-policy.md
+      - name: Snapshot dry-run must succeed
+        run: bash scripts/snapshot_policy.sh --dry-run

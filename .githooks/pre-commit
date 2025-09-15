@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+
+# Remove all .DS_Store files before running checks
+find . -name '.DS_Store' -type f -delete
+
+fail=0
+
+# 1) Root services.d forbidden
+if git ls-files --error-unmatch "services.d/*" >/dev/null 2>&1; then
+  echo "ERROR: root-level services.d/ is forbidden. Use addon/services.d/."
+  fail=1
+fi
+
+# 2) Bare 'bb8_core' imports forbidden
+OFF=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.py$' | xargs -I{} grep -nE '(^|[^/])\b(from|import)\s+bb8_core(\.|[[:space:]]|$)' {} || true)
+if [ -n "$OFF" ]; then
+  echo "ERROR: Forbidden imports detected (use 'addon.bb8_core'):"
+  echo "$OFF"
+  fail=1
+fi
+
+# 3) Repo-root tools/*.py discouraged
+if git ls-files --error-unmatch "tools/*.py" >/dev/null 2>&1; then
+  echo "ERROR: Repo-root tools/*.py not allowed. Rehome to addon/tools or ops/tools."
+  fail=1
+fi
+
+# 4) Block unresolved merge conflicts in Python files
+if git grep -nE '^(<<<<<<< |=======|>>>>>>> )' -- '*.py' >/dev/null 2>&1; then
+  echo "❌ pre-commit: unresolved merge conflict markers found in Python files."
+  git grep -nE '^(<<<<<<< |=======|>>>>>>> )' -- '*.py' || true
+  fail=1
+fi
+
+# 5) Canonical layout enforcement (legacy bb8_core, tests, duplicate verify_discovery.py)
+if git ls-files 'bb8_core/*.py' | grep -q .; then
+  echo "❌ pre-commit: legacy path 'bb8_core/*.py' detected. Move to 'addon/bb8_core/'."
+  git ls-files 'bb8_core/*.py'
+  fail=1
+fi
+if git ls-files 'tests/*' | grep -q .; then
+  echo "❌ pre-commit: legacy 'tests/*' detected. Tests must live in 'addon/tests/*'."
+  git ls-files 'tests/*'
+  fail=1
+fi
+V_CANON='addon/bb8_core/verify_discovery.py'
+if [ -f "$V_CANON" ]; then
+  while IFS= read -r p; do
+    [ "$p" = "$V_CANON" ] && continue
+    echo "❌ pre-commit: duplicate '$p' — only '$V_CANON' is allowed."
+    fail=1
+  done < <(git ls-files '*verify_discovery.py' || true)
+fi
+
+# 6) Quick AST check of changed Python files (fast)
+py_changed=$(git diff --cached --name-only --diff-filter=ACMRTUXB -- '*.py' || true)
+if [ -n "$py_changed" ]; then
+  echo "$py_changed" | python3 - <<'PY' || fail=1
+import ast, sys, pathlib
+bad=[]
+for p in sys.stdin.read().splitlines():
+    if not p.endswith(".py"): 
+        continue
+    try:
+        ast.parse(pathlib.Path(p).read_text(encoding="utf-8"))
+    except SyntaxError as e:
+        bad.append(f"{p}: {e}")
+if bad:
+    print("❌ pre-commit: Python syntax errors:")
+    print("\n".join(bad))
+    sys.exit(1)
+PY
+fi
+
+# 7) Block forbidden bare bb8_core imports and root-level bb8_core directory
+OFFENDERS=$(grep -R -n --include='*.py' -E '^[[:space:]]*(from|import)[[:space:]]+bb8_core(\.|[[:space:]]|$)' \
+  addon ops scripts \
+  | grep -v '^docs/' | grep -v '^reports/' | grep -v '^legacy/' | grep -v '^rescue_staging/' || true)
+if [ -n "$OFFENDERS" ]; then
+  echo "❌ pre-commit: forbidden imports detected:"
+  echo "$OFFENDERS"
+  echo "Use addon.bb8_core.* instead."
+  fail=1
+fi
+if [ -d "bb8_core" ]; then
+  echo "❌ pre-commit: root-level bb8_core/ directory is forbidden; canonical path is addon/bb8_core/"
+  fail=1
+fi
+
+# 8) Run shape guard after all other checks
+python3 ops/guardrails/shape_guard.py
+
+[ $fail -eq 0 ] || exit 1
+echo "✅ pre-commit checks passed."

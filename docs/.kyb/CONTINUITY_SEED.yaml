@@ -1,0 +1,83 @@
+seed_version: 1
+persona:
+  current: kybernetes
+  next: strategos
+protocols:
+- prompt_optimization_first
+- confidence_scoring_always
+- phase_context_memory
+grounding:
+- system_instruction.yaml
+- architecture_doctrine.yaml
+- docs/ADR/
+workspace_shape:
+  canon:
+    root: .
+    code_root: addon/
+    tests: addon/tests/
+    tools: addon/tools/
+    services: addon/services.d/
+    bb8_core_pkg: addon/bb8_core/
+  invariants:
+  - No top-level python modules outside addon/ (report & prevent).
+  - All ADRs live under docs/ADR/, names ADR-00xx.md.
+  - 'Coverage gate script path: tools/coverage_gate.py (under addon/tools if monorepo
+    layout demands).'
+  - No network in tests; use fakes/seams.
+repo_state:
+  head_branch: seed/strategos-handoff-20250910-165924
+  head_sha: b13688307bd8584c48f477c0b265ab7d9b335ad0
+  base_with_origin_main: unknown
+  dirty: true
+  adr_index:
+  - ADR-0001-workspace-topology.md
+  - ADR-0002-dependency-policy.md
+  - ADR-0003-addon-local-build-patterns.md
+  - ADR-0004-runtime-tools-policy.md
+  - ADR-0005-development-setup.md
+  - ADR-0006-helpers-migration.md
+  - ADR-0007-restore-addon.md
+  - ADR-0008-end-to-end-flow.md
+  - ADR-000x-template.md
+  - ADR-0010-unified-supervision-and-diag.md
+  - ADR-0011-supervisor-only-ops.md
+  - ADR-0012-repo-layout-and-imports.md
+  - ADR-0013-keep-addon-app.md
+  coverage:
+    total_line_rate: '0.342'
+    xml: coverage.xml
+    json: coverage.json
+open_items:
+- id: loop-attach-mqtt
+  desc: Sync BB8Facade.attach_mqtt uses asyncio.create_task; tests must bind to running
+    loop; no prod edits.
+  status: mitigated-test-side
+- id: mqtt-fake-trigger-await
+  desc: Ensure FakeMQTT.trigger awaited tasks; if not, collect tasks or await explicitly
+    in tests.
+  status: pending-verification-in-latest-tests
+- id: docs-operations-overview
+  desc: docs/OPERATIONS_OVERVIEW.md missing; recover from history or write canonical
+    outline.
+  status: missing-nonblocking
+- id: ci-workflow-gate
+  desc: Ensure .github/workflows/tests.yml present and calls tools/coverage_gate.py
+  status: verify-or-add
+- id: make-bot-bleep-move
+  desc: 'Minimal real-device smoke: emit LED on/off or tiny drive command via controller
+    path with explicit env/seams.'
+  status: not-started
+ratchets:
+  coverage:
+    repo_min: 0.6
+    high_priority_per_file: 0.9
+  test_policy:
+  - Deterministic only; no sleeps > 50ms unless patched to counter
+  - Caplog for each behavioral assert OR explicit event synchronization
+handoff_checklist:
+- Verify no stray top-level bb8_core/*.py remain
+- 'Run: python -m compileall -q .'
+- Run tests + coverage; produce coverage.xml/json
+- 'Gate: python tools/coverage_gate.py coverage.xml (ensure script path)'
+- "Confirm ADR-0001\u2026ADR-0011 present"
+- Plan & execute single-endpoint device smoke (LED toggle) with explicit env

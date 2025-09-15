@@ -1,0 +1,147 @@
+session_label: BB8_HA_Addon_Dev_Session_20250808
+trace_id: BB8-STP1-RESYNC20250808-A1
+
+files:
+  - config.yaml         # Confirmed correct, privileges + host_dbus: true + options, schema
+  - Dockerfile          # S6 overlay, bluez/dbus, logging, paho-mqtt, correct runtime
+  - run.sh              # Entrypoint, versioned, Python3 invocation, S6 ready
+  - bb8_core/           # All logic: ble_bridge.py, controller.py, mqtt_dispatcher.py, etc.
+  - test_ble_adapter.py # Direct BLE validation, basic check
+  - ha_bb8_addon.log    # Log file sensor path: /config/hestia/diagnostics/logs/ha_bb8_addon.log
+  - ble_audit_*.log     # Host BLE/DBus audit CLI dump(s)
+  - /mnt/data           # Uploaded file root; last tarballs, scripts, and PDFs present
+
+add-on status:
+  - S6 and Supervisor start: ✅
+  - Logging: dual-output (UI + file), with rotation
+  - BLE controller detection: Two adapters, BB-8 visible in scan
+  - MQTT Discovery: Power switch, plus auto-register entities (LED, roll, stop, error sensor, etc.)
+  - Retry/watchdog: Exponential backoff for BLE commands, error topic wired
+  - File sensor: UI-based, monitoring log file, Jinja template for error state
+  - Patch log: copilot_patch_overview.log, with version bumps on major behavioral changes
+
+major patches:
+  - S6 service + Dockerfile: mapped and corrected
+  - MQTT Discovery dynamic entity surfacing (switch, light, button, sensor)
+  - BLE watchdog/retry + error publishing (MQTT + log)
+  - Centralized logging, print() redirection, force=True, robust file handler
+  - File sensor integration, persistent error notification
+  - Audit CLI script, full stack BLE/DBus diagnosis
+  - Behavioral: treat BLE as DBus-brokered, not raw /dev/hciX
+
+recent errors:
+  - System-wide DBus/Bluetooth “broken pipe” and “timed out” errors in core logs
+  - Add-on log file empty (at time of audit)
+  - BLE working at host/BlueZ level, but container/add-on not fully functioning
+  - No process holding BLE adapters (lsof clean)
+  - Home Assistant’s Bluetooth integration can scan and see BB-8, but add-on fails to claim adapter or connect
+
+insights:
+  - HA OS (and supervised) BLE is DBus/BlueZ managed; direct /dev/hciX mapping is legacy/advanced only
+  - Add-ons must use host_dbus: true and be assigned an adapter (hci0/hci1) not in use by HA Core/Bluetooth integration
+  - All adapters/controllers visible in `bluetoothctl list`/`scan on` are “healthy” for use; assignment must be clear and non-conflicting
+  - Adapter exclusivity is paramount: only one process/entity per adapter at any one time
+
+professional behaviors:
+  - Structured, scored, and minimal communication style
+  - CLI, YAML, and Python code blocks as first-class artifacts
+  - Manifest-driven continuity (files, logs, configs, error states)
+  - Empirical, stepwise troubleshooting and patch cycles
+  - Explicit context confirmation before stateful operations
+  - Clear chain-of-custody for patches (audit trail in log)
+  - Session-aware token use and handover protocol
+
+key open issues:
+  - Add-on container still not performing full BLE handshake/command cycle
+  - Log file empty at runtime (suggests early crash or permissions/config deadlock)
+  - Next debug step: full run through Supervisor logs, log tab, and add-on config assignment
+
+context_urgency: "Hydration export required before session expiration — context at risk if not passed"
+
+project:
+  label: BB-8 Home Assistant Add-on — BLE/MQTT
+  repo_root: /mnt/data/
+  sessions:
+    - BB8_HA_Addon_Dev_Session_20250808
+    - trace_id: BB8-STP1-RESYNC20250808-A1
+
+project_structure:
+  - config.yaml                     # Add-on metadata and runtime privilege config
+  - Dockerfile                      # S6 overlay, base image, BLE and MQTT dependencies, entrypoint, log rotation
+  - run.sh                          # Main orchestrator, version-tracked
+  - bb8_core/
+      - ble_bridge.py               # BLE/MQTT bridge, now patched for retry and dynamic MQTT discovery
+      - controller.py               # BB-8 controller, entity actions
+      - mqtt_dispatcher.py          # MQTT dispatcher, dynamic topic handling, retry/error propagation
+      - ... (other supporting modules)
+  - test_ble_adapter.py             # Direct BLE/DBus test script
+  - copilot_patch_overview.log      # Versioned audit of Copilot/strategos intervention, patch provenance
+  - ha_bb8_addon.log                # Add-on persistent log (file sensor + UI, rotation enabled)
+  - ble_audit_*.log                 # Diagnostic script CLI audits (DBus, BLE, permissions)
+  - /config/hestia/diagnostics/logs/# Log file sensor target (HA file integration)
+  - *.tar.gz                        # Project snapshots, upload/downloadable archives (most recent for review)
+  - fsc-bp119.pdf                   # Reference doc for USB dongle
+
+phases:
+  - STP1: Containerization & BLE Access
+      milestone: S6 overlay + Dockerfile finalized, add-on launches in Supervisor
+      next: BLE runtime health, DBus/adapter exclusive access, error triage
+  - STP2: MQTT Discovery & Entity Surfacing
+      milestone: Power switch, basic commands visible in HA via Discovery
+      next: Dynamic MQTT Discovery, roll/light/stop/diagnostics entities, error/heartbeat sensors
+  - STP3: Logging, Diagnostics & Resilience
+      milestone: Dual-destination logging, rotation, file sensor for live HA error surfacing
+      next: Advanced retry/watchdog, error publishing to MQTT/HA entity, proactive dashboard integration
+  - STP4: End-to-End Orchestration
+      milestone: BB-8 responds to native HA actions, robust failure/alert path
+      next: Extended entity support, user-facing automations, diagnostic sensors
+
+current_phase: STP1–STP2 bridge (BLE container health, entity surfacing, error mitigation)
+
+recent_patches:
+  - S6/Dockerfile corrections
+  - MQTT Discovery entity auto-registration at startup
+  - Retry/watchdog for all core BLE commands (exponential backoff)
+  - Centralized logging: force=True, file + UI, print redirection
+  - Error topic publishing for UI and automation surfacing
+
+recent_errors:
+  - DBus “broken pipe”, scanner timeouts: host-level BLE/DBus stack intermittency
+  - Add-on log file empty: probable add-on crash or startup block before logger initialization
+  - File sensor “not present” warning: root cause is empty log (downstream of BLE/add-on crash)
+  - BLE scan **does** see BB-8 from host, but add-on cannot complete handshake
+
+diagnostic_data:
+  - Audit logs: CLI device/adapter checks, lsof, usb, bluetoothctl, Docker mapping
+  - Add-on logs: (usually empty if startup error; check UI log tab for real crash trace)
+  - Project tarballs: last `.tar.gz` is canonical for snapshot review (unpack, walk)
+  - File sensor config: `/config/hestia/diagnostics/logs/ha_bb8_addon.log`, Jinja for last error
+
+external_references:
+  - https://www.home-assistant.io/integrations/bluetooth
+  - https://developers.home-assistant.io/docs/add-ons/
+
+user_profile:
+  name: Evert
+  expects: ultra-precise, empirical, scored, minimal technical responses with code/log/YAML blocks
+  mode: session-aware, context-dense, rapid recall, canonical context export at session boundary
+  tone: strategic and operational, strong preference for manifest/blueprint-driven continuity
+  operator role: Only Evert commits/edits files—always emit actionables as ready-to-commit diffs/blocks
+
+session_handling:
+  - Always check context window/token depth
+  - Export manifest/hydration seed before window overflow
+  - Iterate at least 3x on hydration to capture all artifacts and reasoning
+
+next_actions:
+  - Review add-on log tab for Python exceptions at startup (UI > Supervisor > Add-on > Logs)
+  - If add-on is not running/logging, resolve config/adapter assignment and DBus permissions
+  - Swap `ble_adapter` between hci0/hci1 in config to test adapter mapping (based on `bluetoothctl list` output)
+  - Ensure all code blocks for retry/watchdog and MQTT Discovery are active and present in deployed container (audit logs/tarballs)
+  - Once BLE/DBus is healthy and add-on is logging, verify that all new entities appear in HA and file sensor shows live error status
+  - Next major milestone: end-to-end BB-8 control, robust entity/diagnostics, dashboard-ready
+
+handoff_protocol:
+  - All artifacts, logs, configs, and logic are referenced in this seed
+  - Next GPT must unpack, walk, and re-index the last tarball for 100% context carryover
+  - Resume empirical, structured review, continue round-trip with Copilot and Evert

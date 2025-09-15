@@ -1,0 +1,389 @@
+# Copilot‑Ready Patch Plan — BB‑8 MAC Auto‑Detect (STP1)
+
+C=0.91 • input_signal=0.94
+
+⸻
+
+0) Scope
+
+Touch these files only:
+	•	config.yaml (add‑on schema/options)
+	•	run.sh (orchestrator: pass options → Python)
+	•	bb8_core/auto_detect.py (new)
+	•	tests/test_auto_detect.py (new unit tests)
+
+No other behavior changes required (ble_bridge/main keep using your existing connect path after obtaining a BleakClient).
+
+⸻
+
+1) config.yaml — make MAC optional + add scan controls
+
+--- a/config.yaml
++++ b/config.yaml
+@@
+ name: BB-8 BLE/MQTT Add-on
+ version: "x.y.z"
+ slug: bb8_addon
+ description: Control Sphero BB-8 via BLE with MQTT discovery
+@@
+ schema:
+-  bb8_mac: str
++  bb8_mac: str?
++  scan_seconds: int?
++  rescan_on_fail: bool?
++  cache_ttl_hours: int?
+@@
+ options:
+-  bb8_mac: "AA:BB:CC:DD:EE:FF"
++  # Optional override. When empty/omitted, add-on will auto-discover.
++  bb8_mac: ""
++  # BLE discovery window in seconds (used when override/cache absent or invalid)
++  scan_seconds: 5
++  # If an override or cached MAC fails to connect, do a one-time scan and retry
++  rescan_on_fail: true
++  # Hours before a cached MAC is considered stale; 0 disables TTL
++  cache_ttl_hours: 720
+@@
+ privileges:
+   - NET_ADMIN
+   - SYS_ADMIN
+
+Notes
+
+	•	str? marks the field optional per HA add‑on schema.
+	•	Keep writes within /data (Supervisor‑safe).
+
+⸻
+
+2) run.sh — pass options through to Python
+
+--- a/run.sh
++++ b/run.sh
+@@
+ #!/usr/bin/env bash
+ set -euo pipefail
+
++# Ensure /data exists (Supervisor mounts it, but be defensive)
++mkdir -p /data
++
+ OPTS_JSON="/data/options.json"
+
+-# TODO: existing env extraction...
++BB8_MAC="$(jq -r '.bb8_mac // empty' "$OPTS_JSON")"
++SCAN_SEC="$(jq -r '.scan_seconds // 5' "$OPTS_JSON")"
++RESCAN="$(jq -r '.rescan_on_fail // true' "$OPTS_JSON")"
++TTL_HR="$(jq -r '.cache_ttl_hours // 720' "$OPTS_JSON")"
++
++# Export for Python (also pass as CLI for clarity)
++export BB8_MAC_OVERRIDE="${BB8_MAC:-}"
++export BB8_SCAN_SECONDS="${SCAN_SEC:-5}"
++export BB8_RESCAN_ON_FAIL="${RESCAN:-true}"
++export BB8_CACHE_TTL_HOURS="${TTL_HR:-720}"
++export BB8_CACHE_PATH="/data/bb8_cache.json"
+
+-# Existing launcher, keep as-is if you already call Python
+-exec python -m bb8_core.main
++exec python -m bb8_core.main \
++  --bb8-mac "${BB8_MAC_OVERRIDE}" \
++  --scan-seconds "${BB8_SCAN_SECONDS}" \
++  --rescan-on-fail "${BB8_RESCAN_ON_FAIL}" \
++  --cache-ttl-hours "${BB8_CACHE_TTL_HOURS}"
+
+If your bb8_core.main doesn’t yet accept these flags, it’s OK—exported env vars give you a second path. (You can wire args later without blocking this patch.)
+
+⸻
+
+3) New: bb8_core/auto_detect.py — implementation
+
+*** /dev/null
+--- b/bb8_core/auto_detect.py
+@@
++from __future__ import annotations
++from dataclasses import dataclass
++from typing import Optional, List, Tuple
++import json, time, os, contextlib, logging
++
++# Lazy import to allow tests to stub bleak symbols cleanly
++with contextlib.suppress(ImportError):
++    from bleak import BleakScanner, BleakClient  # type: ignore
++
++DEFAULT_CACHE_PATH = os.getenv("BB8_CACHE_PATH", "/data/bb8_cache.json")
++
++@dataclass
++class Options:
++    bb8_mac: Optional[str] = None          # None/"" => auto
++    scan_seconds: int = 5
++    rescan_on_fail: bool = True
++    cache_ttl_hours: int = 720
++    cache_path: str = DEFAULT_CACHE_PATH
++
++@dataclass
++class Candidate:
++    mac: str
++    name: str
++    rssi: Optional[int]
++
++def _now() -> float:
++    return time.time()
++
++def load_cache(now: float, ttl_hours: int, cache_path: str) -> Optional[Candidate]:
++    if not cache_path or not os.path.exists(cache_path):
++        return None
++    try:
++        with open(cache_path, "r") as f:
++            data = json.load(f)
++        if ttl_hours > 0:
++            age_hours = (now - data.get("last_seen_epoch", 0)) / 3600.0
++            if age_hours > ttl_hours:
++                return None
++        mac = data.get("mac")
++        if not mac:
++            return None
++        return Candidate(mac=mac, name=data.get("advertised_name", ""), rssi=None)
++    except Exception:
++        return None
++
++def save_cache(mac: str, name: str, cache_path: str) -> None:
++    payload = {
++        "mac": mac,
++        "advertised_name": name or "",
++        "last_seen_epoch": int(_now()),
++        "source": "discovery",
++    }
++    os.makedirs(os.path.dirname(cache_path), exist_ok=True)
++    with open(cache_path, "w") as f:
++        json.dump(payload, f)
++
++def is_probable_bb8(name: Optional[str]) -> bool:
++    if not name:
++        return False
++    tokens = ("BB-8", "Droid", "Sphero")
++    return any(t in name for t in tokens)
++
++async def scan_for_bb8(scan_seconds: int) -> List[Candidate]:
++    devices = await BleakScanner.discover(timeout=scan_seconds)  # type: ignore[name-defined]
++    out: List[Candidate] = []
++    for d in devices:
++        name = getattr(d, "name", None)
++        if is_probable_bb8(name):
++            out.append(Candidate(
++                mac=getattr(d, "address", ""),
++                name=name or "",
++                rssi=getattr(d, "rssi", None),
++            ))
++    # Sort: exact name first, stronger RSSI, then MAC
++    def score(c: Candidate) -> Tuple[int, int, str]:
++        exact = 1 if c.name == "BB-8" else 0
++        rssi = c.rssi if isinstance(c.rssi, int) else -999
++        return (exact, rssi, c.mac)
++    out.sort(key=score, reverse=True)
++    return out
++
++async def resolve_bb8_mac(opts: Options, logger: logging.Logger) -> str:
++    # 1) Override
++    if opts.bb8_mac and opts.bb8_mac.strip():
++        mac = opts.bb8_mac.strip()
++        logger.info(f"[bb8] using override MAC: {mac}")
++        return mac
++
++    # 2) Cache
++    cached = load_cache(_now(), opts.cache_ttl_hours, opts.cache_path)
++    if cached:
++        logger.info(f"[bb8] using cached MAC: {cached.mac} (name={cached.name})")
++        return cached.mac
++
++    # 3) Scan
++    logger.info(f"[bb8] scanning for BB-8: {opts.scan_seconds}s ...")
++    candidates = await scan_for_bb8(opts.scan_seconds)
++    if not candidates:
++        raise RuntimeError("No BB-8 candidates found during BLE scan.")
++    winner = candidates[0]
++    save_cache(winner.mac, winner.name, opts.cache_path)
++    logger.info(f"[bb8] discovered {winner.name} @ {winner.mac} (RSSI={winner.rssi})")
++    return winner.mac
++
++async def connect_bb8(opts: Options, logger: logging.Logger):
++    """
++    Returns an *active* BleakClient context manager (already connected).
++    Usage:
++        client = await connect_bb8(opts, logger)  # async context managed inside
++    """
++    mac = await resolve_bb8_mac(opts, logger)
++
++    async def _try(addr: str):
++        logger.info(f"[bb8] connecting → {addr}")
++        async with BleakClient(addr) as client:  # type: ignore[name-defined]
++            if not await client.is_connected():
++                raise RuntimeError("Connected=False after context enter")
++            return client
++
++    try:
++        return await _try(mac)
++    except Exception as e:
++        logger.warning(f"[bb8] primary connect failed: {e}")
++        if not opts.rescan_on_fail:
++            raise
++        logger.info("[bb8] rescanning due to connect failure ...")
++        cands = await scan_for_bb8(opts.scan_seconds)
++        if not cands:
++            raise RuntimeError("Rescan found no BB-8 candidates.") from e
++        winner = cands[0]
++        save_cache(winner.mac, winner.name, opts.cache_path)
++        return await _try(winner.mac)
+
+
+⸻
+
+4) New tests: tests/test_auto_detect.py
+	•	Async tests, hardware‑free.
+	•	Stub out BleakScanner.discover + BleakClient via monkeypatch.
+	•	Use a temp cache path per test.
+
+*** /dev/null
+--- b/tests/test_auto_detect.py
+@@
++import asyncio, json, os, types
++import pytest
++from bb8_core.auto_detect import Options, resolve_bb8_mac, connect_bb8
++
++class _Dev:
++    def __init__(self, address, name, rssi):
++        self.address = address
++        self.name = name
++        self.rssi = rssi
++
++@pytest.mark.asyncio
++async def test_resolve_prefers_override(tmp_path, monkeypatch, caplog):
++    cache_path = tmp_path / "bb8_cache.json"
++    opts = Options(bb8_mac="11:22:33:44:55:66", scan_seconds=1, cache_path=str(cache_path))
++
++    # Stub scanner to ensure it would have found something (but override must win)
++    fake_bleak = types.SimpleNamespace()
++    async def _discover(timeout):  # pragma: no cover
++        return [_Dev("AA:AA:AA:AA:AA:AA", "BB-8", -40)]
++    fake_bleak.discover = _discover
++    monkeypatch.setitem(globals(), "BleakScanner", types.SimpleNamespace(discover=_discover))
++
++    class DummyLogger:
++        def info(self, *a, **k): pass
++        def warning(self, *a, **k): pass
++    logger = DummyLogger()
++
++    mac = await resolve_bb8_mac(opts, logger)
++    assert mac == "11:22:33:44:55:66"
++
++@pytest.mark.asyncio
++async def test_scan_and_cache(tmp_path, monkeypatch):
++    cache_path = tmp_path / "bb8_cache.json"
++    opts = Options(bb8_mac="", scan_seconds=1, cache_path=str(cache_path))
++
++    async def _discover(timeout):
++        return [
++            _Dev("AA:AA:AA:AA:AA:AA", "BB-8", -50),
++            _Dev("BB:BB:BB:BB:BB:BB", "Sphero Mini", -42),
++        ]
++    monkeypatch.setitem(globals(), "BleakScanner", types.SimpleNamespace(discover=_discover))
++
++    class DummyLogger:
++        def info(self, *a, **k): pass
++        def warning(self, *a, **k): pass
++    logger = DummyLogger()
++
++    mac = await resolve_bb8_mac(opts, logger)
++    # Winner should be "BB-8" exact name first → AA...
++    assert mac == "AA:AA:AA:AA:AA:AA"
++    # Cache created
++    assert cache_path.exists()
++    data = json.loads(cache_path.read_text())
++    assert data["mac"] == "AA:AA:AA:AA:AA:AA"
++
++@pytest.mark.asyncio
++async def test_connect_retry_on_fail(tmp_path, monkeypatch):
++    cache_path = tmp_path / "bb8_cache.json"
++    opts = Options(bb8_mac="", scan_seconds=1, rescan_on_fail=True, cache_path=str(cache_path))
++
++    # First discovery returns one device
++    async def _discover(timeout):
++        return [_Dev("CC:CC:CC:CC:CC:CC", "BB-8", -30)]
++    monkeypatch.setitem(globals(), "BleakScanner", types.SimpleNamespace(discover=_discover))
++
++    # BleakClient that fails first, succeeds after retry address
++    class _Client:
++        def __init__(self, addr): self.addr = addr
++        async def __aenter__(self): return self
++        async def __aexit__(self, exc_type, exc, tb): return False
++        async def is_connected(self): return self.addr != "CC:CC:CC:CC:CC:CC"
++
++    # First attempt will use the same addr and fail (is_connected False),
++    # Rescan returns same; we simulate success by changing is_connected logic above.
++    monkeypatch.setitem(globals(), "BleakClient", _Client)
++
++    class DummyLogger:
++        def info(self, *a, **k): pass
++        def warning(self, *a, **k): pass
++    logger = DummyLogger()
++
++    client = await connect_bb8(opts, logger)
++    assert isinstance(client, _Client)
+
+If your test runner isn’t configured: add pytest-asyncio to dev deps and run pytest -q.
+
+⸻
+
+5) Wiring tip (optional, non‑blocking)
+
+Where you currently create/connect BleakClient, use:
+
+# e.g., in bb8_core/main.py or ble_bridge.py
+import logging
+from bb8_core.auto_detect import Options, connect_bb8
+
+logger = logging.getLogger("bb8")
+opts = Options(
+    bb8_mac=os.environ.get("BB8_MAC_OVERRIDE") or None,
+    scan_seconds=int(os.environ.get("BB8_SCAN_SECONDS", "5")),
+    rescan_on_fail=os.environ.get("BB8_RESCAN_ON_FAIL", "true").lower() == "true",
+    cache_ttl_hours=int(os.environ.get("BB8_CACHE_TTL_HOURS", "720")),
+    cache_path=os.environ.get("BB8_CACHE_PATH", "/data/bb8_cache.json"),
+)
+client = await connect_bb8(opts, logger)
+# proceed with your power-on / handshake using `client`
+
+
+⸻
+
+6) Validation (STP1 hardware‑backed)
+	1.	Cold start (no cache, no override):
+	•	Expect: scan → “Discovered … @ MAC”, cache file at /data/bb8_cache.json.
+	2.	Restart (cache present):
+	•	Expect: “using cached MAC …”, no scan, fast connect.
+	3.	Override set (bb8_mac):
+	•	Expect: “using override MAC …”, no scan, connect.
+	4.	Simulated failure: Power off BB‑8 after cache/override → if rescan_on_fail=true expect one rescan + retry, else fail fast with clear log.
+
+Log levels:
+	•	INFO: path chosen, winner, timings.
+	•	WARN: connect failure + rescan notice.
+
+Artifacts:
+	•	ble_adapter_access_log should show discovery path on first run.
+
+⸻
+
+7) Rollback
+
+Set bb8_mac to a known MAC (or disable rescan_on_fail) to restore deterministic direct‑connect behavior without scanning. Delete /data/bb8_cache.json to clear state.
+
+⸻
+
+Done‑For‑You Commit Titles
+	•	addon(config): make bb8_mac optional; add scan/rescan/cache options
+	•	addon(runtime): pass discovery options from options.json to Python
+	•	bb8_core(auto): add auto_detect with scan→cache→connect
+	•	tests(auto): add async unit tests for resolve/connect
+
+⸻
+
+Confidence & Risks
+	•	Assumptions: Bleak available in container; BB‑8 advertises recognizable names; Supervisor write access to /data.
+C = 0.91 (verify name tokens in your RF environment; add service/manufacturer filters later if you have them).

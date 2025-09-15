@@ -1,0 +1,17 @@
+name: repo-guards
+on: { pull_request: { branches: [main] } }
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          for d in addon/{docs,ops,reports,scripts,tools,addon,.github}; do
+            test ! -d "$d" || { echo "[fail] $d present"; exit 1; }
+          done
+      - run: |
+          export WORKSPACE_ROOT="$PWD" REPORT_ROOT="$PWD/reports"
+          mkdir -p "$REPORT_ROOT"
+          bash ops/audit/check_structure.sh | tee "$REPORT_ROOT/ci_structure.log"
+          bash scripts/verify_workspace.sh    | tee "$REPORT_ROOT/ci_verify.log"
+          grep -Eh 'STRUCTURE_OK|VERIFY_OK|WS_READY' "$REPORT_ROOT"/ci_*.log
