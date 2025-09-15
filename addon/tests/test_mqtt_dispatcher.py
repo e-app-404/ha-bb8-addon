@@ -52,6 +52,7 @@ def test_publish_discovery(monkeypatch):
 
 def test_publish_led_discovery(monkeypatch):
     monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", True)
+    dispatcher._DISCOVERY_PUBLISHED.clear()
     called = {}
 
     def fake_publish_fn(topic, payload, retain):
@@ -63,6 +64,7 @@ def test_publish_led_discovery(monkeypatch):
 
 def test_publish_bb8_discovery(monkeypatch):
     monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", True)
+    dispatcher._DISCOVERY_PUBLISHED.clear()
     called = {}
 
     def fake_publish_fn(topic, payload, retain):

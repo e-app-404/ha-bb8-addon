@@ -166,6 +166,7 @@ def test_is_connected_and_get_rssi():
 
 @pytest.mark.asyncio
 async def test_attach_mqtt(monkeypatch):
+    monkeypatch.setenv("REQUIRE_DEVICE_ECHO", "0")
     bridge = DummyBridge()
     f = facade.BB8Facade(bridge)
     client = DummyClient()

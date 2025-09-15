@@ -64,12 +64,12 @@ def test_shutdown_normal_and_error(monkeypatch):
     g.shutdown()
     assert getattr(g, "device", None) is None
     # Error branch: simulate exception
-    g2 = ble_gateway.BleGateway()
+    class ErrorDeviceGateway(ble_gateway.BleGateway):
+        @property
+        def device(self):
+            raise RuntimeError("fail")
 
-    def raise_exc():
-        raise RuntimeError("fail")
-
-    monkeypatch.setattr(g2, "device", property(raise_exc))
+    g2 = ErrorDeviceGateway()
     # Should not raise
     g2.shutdown()
 

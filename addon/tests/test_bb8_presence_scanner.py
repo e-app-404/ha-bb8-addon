@@ -50,7 +50,7 @@ def test_log_config():
 
 
 def test_cb_led_set(monkeypatch):
-    # Patch BB8Facade to record calls
+    # Patch FACADE to record calls (use module-level seam)
     called = {}
 
     class DummyFacade:
@@ -60,9 +60,7 @@ def test_cb_led_set(monkeypatch):
         def set_led_off(self):
             called["off"] = True
 
-    monkeypatch.setattr(
-        "addon.bb8_core.bb8_presence_scanner.BB8Facade", DummyFacade
-    )
+    monkeypatch.setattr(scanner, "FACADE", DummyFacade())
 
     class DummyClient:
         def __init__(self):
