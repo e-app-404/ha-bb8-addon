@@ -1,3 +1,12 @@
+# Workspace tarball targets
+tarball:
+	bash scripts/make_workspace_tarball.sh
+
+snapshot-dry:
+	bash scripts/make_workspace_tarball.sh --dry-run
+
+snapshot-verify:
+	bash scripts/make_workspace_tarball.sh --verify "$(FILE)"
 # =========
 # Strategos: allow space-indented recipe lines (fixes 'missing separator' from GNU make).
 # This is a build-only change. No targets or commands altered.
