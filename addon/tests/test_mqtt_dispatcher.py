@@ -58,6 +58,7 @@ def test_publish_led_discovery(monkeypatch):
     def fake_publish_fn(topic, payload, retain):
         called[topic] = json.loads(payload)
 
+    dispatcher._DISCOVERY_PUBLISHED.clear()
     dispatcher.publish_led_discovery(fake_publish_fn)
     assert any("led" in t for t in called)
 

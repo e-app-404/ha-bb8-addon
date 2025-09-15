@@ -50,6 +50,7 @@ def test_log_config():
 
 
 def test_cb_led_set(monkeypatch):
+
     # Patch FACADE to record calls (use module-level seam)
     called = {}
 
@@ -69,29 +70,35 @@ def test_cb_led_set(monkeypatch):
         def publish(self, topic, payload, qos=1, retain=False):
             self.published.append((topic, json.loads(payload), qos, retain))
 
+    # Test all input branches
+    c = DummyClient()
+
     # JSON with state ON and color
     msg = types.SimpleNamespace(
         payload=json.dumps({"state": "ON", "color": {"r": 1, "g": 2, "b": 3}}).encode()
     )
-    c = DummyClient()
+    called.clear()
     scanner._cb_led_set(c, None, msg)
-    assert "rgb" in called, f"Expected 'rgb' key in called, got {called}"
-    assert called["rgb"] == (1, 2, 3)
+    assert "rgb" in called and called["rgb"] == (1, 2, 3)
+
     # JSON with hex
     msg = types.SimpleNamespace(payload=json.dumps({"hex": "#010203"}).encode())
     called.clear()
     scanner._cb_led_set(c, None, msg)
-    assert called["rgb"] == (1, 2, 3)
+    assert "rgb" in called and called["rgb"] == (1, 2, 3)
+
     # JSON with r,g,b
     msg = types.SimpleNamespace(payload=json.dumps({"r": 4, "g": 5, "b": 6}).encode())
     called.clear()
     scanner._cb_led_set(c, None, msg)
-    assert called["rgb"] == (4, 5, 6)
+    assert "rgb" in called and called["rgb"] == (4, 5, 6)
+
     # OFF string
     msg = types.SimpleNamespace(payload=b"OFF")
     called.clear()
     scanner._cb_led_set(c, None, msg)
-    assert called["off"] is True
+    assert "off" in called and called["off"] is True
+
     # Invalid JSON
     msg = types.SimpleNamespace(payload=b"notjson")
     called.clear()

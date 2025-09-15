@@ -152,11 +152,14 @@ def _env_truthy(val: str) -> bool:
 
 def _write_atomic(path: str, content: str) -> None:
     tmp = f"{path}.tmp"
-    with open(tmp, "w") as f:
-        f.write(content)
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(tmp, path)
+    try:
+        with open(tmp, "w") as f:
+            f.write(content)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except Exception as e:
+        raise OSError(f"atomic write failed: {e}")
 
 
 def _start_heartbeat(path: str, interval: int) -> None:
