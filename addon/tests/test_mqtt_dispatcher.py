@@ -1,3 +1,4 @@
+import pytest
 # --- Comprehensive mqtt_dispatcher.py tests ---
 import json
 import types
@@ -61,9 +62,36 @@ def test_publish_led_discovery(monkeypatch):
     dispatcher._DISCOVERY_PUBLISHED.clear()
     dispatcher.publish_led_discovery(fake_publish_fn)
     assert any("led" in t for t in called)
+    # Call again to hit already-published branch
+    called2 = {}
+    dispatcher.publish_led_discovery(lambda topic, payload, retain: called2.setdefault(topic, json.loads(payload)))
+    assert not called2  # Should skip all topics
+    dispatcher._DISCOVERY_PUBLISHED.clear()
 
 
 def test_publish_bb8_discovery(monkeypatch):
+@pytest.mark.parametrize("uid_key,topic_suffix", [
+    ("presence", "binary_sensor/bb8_presence/config"),
+    ("rssi", "sensor/bb8_rssi/config"),
+    ("power", "switch/bb8_power/config"),
+    ("heading", "number/bb8_heading/config"),
+    ("speed", "number/bb8_speed/config"),
+    ("drive", "button/bb8_drive/config"),
+    ("sleep", "button/bb8_sleep/config"),
+    ("led", "light/bb8_led/config"),
+])
+def test_publish_bb8_discovery_param(monkeypatch, uid_key, topic_suffix):
+    monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", True)
+    dispatcher._DISCOVERY_PUBLISHED.clear()
+    called = {}
+    def fake_publish_fn(topic, payload, retain):
+        called[topic] = json.loads(payload)
+    dispatcher._DISCOVERY_PUBLISHED.clear()
+    dispatcher.publish_bb8_discovery(fake_publish_fn)
+    # Check that the expected topic is published
+    ha_prefix = dispatcher.CONFIG.get("ha_discovery_topic", "homeassistant")
+    expected_topic = f"{ha_prefix}/{topic_suffix}"
+    assert expected_topic in called
     monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", True)
     dispatcher._DISCOVERY_PUBLISHED.clear()
     called = {}
@@ -76,6 +104,25 @@ def test_publish_bb8_discovery(monkeypatch):
     assert any(
         "presence" in t or "rssi" in t for t in called
     ), f"No 'presence' or 'rssi' topic published, called={called}"
+    # Call again to hit already-published branch
+    called2 = {}
+    dispatcher.publish_bb8_discovery(lambda topic, payload, retain: called2.setdefault(topic, json.loads(payload)))
+    assert not called2  # Should skip all topics
+    dispatcher._DISCOVERY_PUBLISHED.clear()
+def test_publish_discovery_already_published(monkeypatch):
+    monkeypatch.setitem(dispatcher.CONFIG, "dispatcher_discovery_enabled", True)
+    dispatcher._DISCOVERY_PUBLISHED.clear()
+    called = {}
+    def fake_publish_fn(topic, payload, retain):
+        called[topic] = json.loads(payload)
+    # First publish
+    dispatcher.publish_bb8_discovery(fake_publish_fn)
+    assert any("presence" in t or "rssi" in t for t in called)
+    # Second publish should skip
+    called2 = {}
+    dispatcher.publish_bb8_discovery(lambda topic, payload, retain: called2.setdefault(topic, json.loads(payload)))
+    assert not called2
+    dispatcher._DISCOVERY_PUBLISHED.clear()
 
 
 def test_publish_bb8_discovery_gate(monkeypatch):

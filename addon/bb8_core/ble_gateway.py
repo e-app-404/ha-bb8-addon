@@ -103,16 +103,15 @@ class BleGateway:
 
     def shutdown(self):
         logger.info({"event": "ble_gateway_shutdown"})
+        device_str = None
         try:
-            logger.debug(
-                {
-                    "event": "ble_gateway_shutdown_pre",
-                    "device": str(getattr(self, "device", None)),
-                }
-            )
-            self.device = None
-            logger.debug({"event": "ble_gateway_shutdown_device_none"})
+            device_str = str(getattr(self, "device", None))
         except Exception as e:
-            logger.error(
-                {"event": "ble_gateway_shutdown_error", "error": str(e)}, exc_info=True
-            )
+            logger.error({"event": "ble_gateway_shutdown_error", "error": str(e)}, exc_info=True)
+            device_str = f"<error: {e}>"
+        logger.debug({
+            "event": "ble_gateway_shutdown_pre",
+            "device": device_str,
+        })
+        self.device = None
+        logger.debug({"event": "ble_gateway_shutdown_device_none"})
