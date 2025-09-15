@@ -57,8 +57,10 @@ def test_cb_led_set(monkeypatch):
     class DummyFacade:
         def __init__(self, _):
             pass
+
         def set_led_rgb(self, r, g, b):
             called["rgb"] = (r, g, b)
+
         def set_led_off(self):
             called["off"] = True
 

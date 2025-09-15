@@ -107,11 +107,9 @@ def test_resolve_topic_default(monkeypatch):
 def test_resolve_topic_wildcard(monkeypatch):
     monkeypatch.setattr(echo_responder, "_opts", {"mqtt_echo_cmd_topic": "bb8/#"})
     result = echo_responder._resolve_topic("mqtt_echo_cmd_topic", "echo/cmd")
-    assert "#" in result
-    # Harden: Assert wildcards are not used for publishing
-    assert (
-        not result.endswith("#") or "publish" not in result
-    ), "Wildcards should not be used for publishing topics"
+    # Wildcards are forbidden; resolver must sanitize to safe default
+    assert "#" not in result
+    assert result.endswith("echo/cmd")
 
 
 def test_env_truthy():

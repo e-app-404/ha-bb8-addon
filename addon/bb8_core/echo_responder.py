@@ -18,6 +18,7 @@ DEFAULT_OPTS = {
     "ble_adapter": "hci0",
 }
 
+
 def _load_opts(path=OPTIONS_PATH):
     try:
         with open(path) as f:
@@ -25,6 +26,7 @@ def _load_opts(path=OPTIONS_PATH):
     except Exception as e:
         LOG.warning("Failed to read %s: %s — using defaults", path, e)
         return DEFAULT_OPTS.copy()
+
 
 _opts = _load_opts()
 _base = _opts.get("mqtt_base") or _opts.get("mqtt_topic_prefix") or "bb8"

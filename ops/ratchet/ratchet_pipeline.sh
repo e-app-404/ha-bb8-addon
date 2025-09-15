@@ -2,7 +2,6 @@
 # ops/ratchet/ratchet_pipeline.sh
 # Stepwise coverage ratchet, test suppression, bleep proof-of-life, and optional git commit/push
 
-
 # Hardened: fail on unset variables, log each step, check shell/venv/repo/bleep/make
 set -euo pipefail
 REPO="${REPO:-/Users/evertappels/Projects/HA-BB8}"
