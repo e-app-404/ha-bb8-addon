@@ -23,8 +23,8 @@ def test_publish_bb8_discovery_param(monkeypatch, uid_key, topic_suffix):
     ha_prefix = dispatcher.CONFIG.get("ha_discovery_topic", "homeassistant")
     expected_topic = f"{ha_prefix}/{topic_suffix}"
     assert expected_topic in called
-# Parametrized test for all unique IDs in publish_bb8_discovery
 
+# --- Parametrized test for all unique IDs in publish_bb8_discovery ---
 import pytest
 
 @pytest.mark.parametrize("uid_key,topic_suffix", [
