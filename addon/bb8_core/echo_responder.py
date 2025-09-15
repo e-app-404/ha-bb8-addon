@@ -105,10 +105,12 @@ def _resolve_topic(opt_key: str, default_suffix: str, env_key: str = None) -> st
     topic = f"{_base}/{default_suffix}" if not raw else raw.lstrip("/")
     if "#" in topic or "+" in topic:
         LOG.warning(
-            "Wildcard detected in %s='%s' — this is unsafe for pub/sub",
+            "Wildcard detected in %s='%s' — this is unsafe for pub/sub. Blocking topic.",
             opt_key,
             topic,
         )
+        # Block unsafe topic
+        topic = f"{_base}/{default_suffix}"
     LOG.info("Resolved topic %s => %s", opt_key, topic)
     return topic
 
@@ -202,7 +204,11 @@ _inflight = threading.BoundedSemaphore(MAX_INFLIGHT)
 
 def on_message(client, _, msg):
     try:
-        payload = json.loads(msg.payload.decode())
+        try:
+            payload = json.loads(msg.payload.decode())
+        except Exception as e:
+            LOG.warning("on_message received invalid JSON: %s", e)
+            return
         now = time.time()
         if msg.topic == MQTT_ECHO_CMD:
             client.publish(
@@ -228,7 +234,7 @@ def on_message(client, _, msg):
                         ble_ms=res["latency_ms"],
                     )
                 except Exception as e:
-                    LOG.exception("Echo publish failed (ack/state): %s", e)
+                    LOG.warning("Echo publish failed (ack/state): %s", e)
 
             threading.Thread(target=_probe_and_publish, daemon=True).start()
         elif msg.topic == MQTT_BLE_READY_CMD:
@@ -240,7 +246,7 @@ def on_message(client, _, msg):
                 retain=False,
             )
     except Exception as e:
-        LOG.exception("on_message error: %s", e)
+        LOG.warning("on_message error: %s", e)
 
 
 class BleTouch:
