@@ -70,8 +70,11 @@ def test_publish_bb8_discovery(monkeypatch):
     def fake_publish_fn(topic, payload, retain):
         called[topic] = json.loads(payload)
 
+    dispatcher._DISCOVERY_PUBLISHED.clear()
     dispatcher.publish_bb8_discovery(fake_publish_fn)
-    assert any("presence" in t or "rssi" in t for t in called)
+    assert any(
+        "presence" in t or "rssi" in t for t in called
+    ), f"No 'presence' or 'rssi' topic published, called={called}"
 
 
 def test_publish_bb8_discovery_gate(monkeypatch):

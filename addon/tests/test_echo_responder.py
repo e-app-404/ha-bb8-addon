@@ -20,8 +20,15 @@ def test_load_opts_valid(tmp_path, monkeypatch):
 
 def test_load_opts_invalid(monkeypatch):
     monkeypatch.setenv("OPTIONS_PATH", "/notfound.json")
-    result = echo_responder._load_opts("/notfound.json")
-    assert result == {}
+
+    # Mock open to always raise FileNotFoundError
+    def fake_open(*_, **__):
+        raise FileNotFoundError
+
+    monkeypatch.setattr("builtins.open", fake_open)
+    opts = echo_responder._load_opts("/notfound.json")
+    assert opts == echo_responder.DEFAULT_OPTS
+    # This test triggers fallback logic for missing file
 
 
 def test_load_opts_missing_keys(tmp_path, monkeypatch):
@@ -81,7 +88,11 @@ def test_resolve_topic_env(monkeypatch):
 
 
 def test_resolve_topic_options(monkeypatch):
-    monkeypatch.setattr(echo_responder, "_opts", {"mqtt_echo_cmd_topic": "opt/topic"})
+    monkeypatch.setattr(
+        echo_responder,
+        "_opts",
+        {"mqtt_echo_cmd_topic": "opt/topic"},
+    )
     result = echo_responder._resolve_topic("mqtt_echo_cmd_topic", "echo/cmd")
     assert result == "opt/topic"
 
@@ -97,6 +108,10 @@ def test_resolve_topic_wildcard(monkeypatch):
     monkeypatch.setattr(echo_responder, "_opts", {"mqtt_echo_cmd_topic": "bb8/#"})
     result = echo_responder._resolve_topic("mqtt_echo_cmd_topic", "echo/cmd")
     assert "#" in result
+    # Harden: Assert wildcards are not used for publishing
+    assert (
+        not result.endswith("#") or "publish" not in result
+    ), "Wildcards should not be used for publishing topics"
 
 
 def test_env_truthy():
@@ -116,7 +131,7 @@ def test_write_atomic_error(monkeypatch):
     monkeypatch.setattr(os, "replace", mock.Mock(side_effect=Exception("fail")))
     with tempfile.TemporaryDirectory() as tmpdir:
         path = os.path.join(tmpdir, "atomic.txt")
-        with pytest.raises(Exception):
+        with pytest.raises(OSError):
             echo_responder._write_atomic(path, "fail")
 
 

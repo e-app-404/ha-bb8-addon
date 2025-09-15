@@ -28,9 +28,7 @@ def read_version_or_default(version_path: str = None) -> str:
         if version_path is not None:
             VERSION_FILE: Final = Path(version_path)
         else:
-            VERSION_FILE: Final = (
-                Path(__file__).resolve().parents[1] / "VERSION"
-            )
+            VERSION_FILE: Final = Path(__file__).resolve().parents[1] / "VERSION"
         txt = VERSION_FILE.read_text(encoding="utf-8").strip()
         return txt or "addon:dev"
     except Exception:

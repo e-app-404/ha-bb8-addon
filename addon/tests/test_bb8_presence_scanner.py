@@ -71,25 +71,19 @@ def test_cb_led_set(monkeypatch):
 
     # JSON with state ON and color
     msg = types.SimpleNamespace(
-        payload=json.dumps({
-            "state": "ON",
-            "color": {"r": 1, "g": 2, "b": 3}
-        }).encode()
+        payload=json.dumps({"state": "ON", "color": {"r": 1, "g": 2, "b": 3}}).encode()
     )
     c = DummyClient()
     scanner._cb_led_set(c, None, msg)
+    assert "rgb" in called, f"Expected 'rgb' key in called, got {called}"
     assert called["rgb"] == (1, 2, 3)
     # JSON with hex
-    msg = types.SimpleNamespace(
-        payload=json.dumps({"hex": "#010203"}).encode()
-    )
+    msg = types.SimpleNamespace(payload=json.dumps({"hex": "#010203"}).encode())
     called.clear()
     scanner._cb_led_set(c, None, msg)
     assert called["rgb"] == (1, 2, 3)
     # JSON with r,g,b
-    msg = types.SimpleNamespace(
-        payload=json.dumps({"r": 4, "g": 5, "b": 6}).encode()
-    )
+    msg = types.SimpleNamespace(payload=json.dumps({"r": 4, "g": 5, "b": 6}).encode())
     called.clear()
     scanner._cb_led_set(c, None, msg)
     assert called["rgb"] == (4, 5, 6)
@@ -124,9 +118,7 @@ def test_publish_extended_discovery():
     base = "bb8/test"
     device_id = "aabbccddeeff"
     device_block = {"identifiers": ["id"]}
-    scanner.publish_extended_discovery(
-        DummyClient(), base, device_id, device_block
-    )
+    scanner.publish_extended_discovery(DummyClient(), base, device_id, device_block)
     topics = [t[0] for t in published]
     assert any("light" in t for t in topics)
     assert any("heading" in t for t in topics)

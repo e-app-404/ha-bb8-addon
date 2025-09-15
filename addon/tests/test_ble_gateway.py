@@ -63,6 +63,7 @@ def test_shutdown_normal_and_error(monkeypatch):
     g.device = object()
     g.shutdown()
     assert getattr(g, "device", None) is None
+
     # Error branch: simulate exception
     class ErrorDeviceGateway(ble_gateway.BleGateway):
         @property
