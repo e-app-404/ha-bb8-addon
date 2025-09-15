@@ -9,11 +9,10 @@ def test_read_version_or_default(monkeypatch, tmp_path):
     # Normal case: file exists
     version_file = tmp_path / "VERSION"
     version_file.write_text("1.2.3\n")
-    monkeypatch.setattr(scanner, "__file__", str(tmp_path / "dummy.py"))
-    assert scanner.read_version_or_default() == "1.2.3"
+    assert scanner.read_version_or_default(str(version_file)) == "1.2.3"
     # Exception branch: file missing
-    monkeypatch.setattr(scanner, "__file__", str(tmp_path / "missing.py"))
-    assert scanner.read_version_or_default() == "addon:dev"
+    missing_file = tmp_path / "DOES_NOT_EXIST"
+    assert scanner.read_version_or_default(str(missing_file)) == "addon:dev"
 
 
 def test_device_block():
@@ -61,7 +60,9 @@ def test_cb_led_set(monkeypatch):
         def set_led_off(self):
             called["off"] = True
 
-    monkeypatch.setattr("addon.bb8_core.bb8_presence_scanner.BB8Facade", DummyFacade)
+    monkeypatch.setattr(
+        "addon.bb8_core.bb8_presence_scanner.BB8Facade", DummyFacade
+    )
 
     class DummyClient:
         def __init__(self):
@@ -72,18 +73,25 @@ def test_cb_led_set(monkeypatch):
 
     # JSON with state ON and color
     msg = types.SimpleNamespace(
-        payload=json.dumps({"state": "ON", "color": {"r": 1, "g": 2, "b": 3}}).encode()
+        payload=json.dumps({
+            "state": "ON",
+            "color": {"r": 1, "g": 2, "b": 3}
+        }).encode()
     )
     c = DummyClient()
     scanner._cb_led_set(c, None, msg)
     assert called["rgb"] == (1, 2, 3)
     # JSON with hex
-    msg = types.SimpleNamespace(payload=json.dumps({"hex": "#010203"}).encode())
+    msg = types.SimpleNamespace(
+        payload=json.dumps({"hex": "#010203"}).encode()
+    )
     called.clear()
     scanner._cb_led_set(c, None, msg)
     assert called["rgb"] == (1, 2, 3)
     # JSON with r,g,b
-    msg = types.SimpleNamespace(payload=json.dumps({"r": 4, "g": 5, "b": 6}).encode())
+    msg = types.SimpleNamespace(
+        payload=json.dumps({"r": 4, "g": 5, "b": 6}).encode()
+    )
     called.clear()
     scanner._cb_led_set(c, None, msg)
     assert called["rgb"] == (4, 5, 6)
@@ -118,7 +126,9 @@ def test_publish_extended_discovery():
     base = "bb8/test"
     device_id = "aabbccddeeff"
     device_block = {"identifiers": ["id"]}
-    scanner.publish_extended_discovery(DummyClient(), base, device_id, device_block)
+    scanner.publish_extended_discovery(
+        DummyClient(), base, device_id, device_block
+    )
     topics = [t[0] for t in published]
     assert any("light" in t for t in topics)
     assert any("heading" in t for t in topics)
