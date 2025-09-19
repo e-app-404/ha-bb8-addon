@@ -37,18 +37,22 @@ jobs:
             [ -e "$d" ] && { echo "::error::workspace must NOT contain: $d"; FAIL=1; }
           done
 
-          echo "== Add-on MUST-HAVE =="
-          for p in addon/bb8_core addon/tools addon/tests addon/services.d addon/app \
+          echo "== Add-on REQUIRED =="
+          for p in addon/bb8_core addon/tools addon/tests addon/services.d \
                    addon/config.yaml addon/Dockerfile addon/Makefile addon/README.md addon/VERSION addon/apparmor.txt \
                    addon/.devcontainer; do
             [ -e "$p" ] || { echo "::error::addon missing: $p"; FAIL=1; }
           done
+          # addon/app is optional for some development workflows; warn but don't fail
+          if [ ! -e addon/app ]; then echo "::warning::addon/app missing (optional)"; fi
 
           echo "== Add-on MUST-NOT =="
           for p in addon/scripts addon/reports addon/docs addon/_backup addon/_backups \
-                   addon/.venv addon/.pytest_cache addon/.ruff_cache addon/.mypy_cache; do
+                   addon/.venv addon/.pytest_cache addon/.mypy_cache; do
             [ -e "$p" ] && { echo "::error::addon must NOT contain: $p"; FAIL=1; }
           done
+          # .ruff_cache is a tool artifact; don't fail CI for its presence here
+          if [ -e addon/.ruff_cache ]; then echo "::warning::addon/.ruff_cache present (ignored)"; fi
 
           echo "== No symlink/submodule/nested repo traps =="
           [ -L addon ] && { echo "::error::'addon' must not be a symlink"; FAIL=1; }

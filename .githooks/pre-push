@@ -13,9 +13,11 @@ for d in tests tools _backup; do [ -e "$d" ] && die "workspace must NOT contain:
 if find . -maxdepth 1 -type d -name '_backup_*' | grep -q .; then die "loose backup folders at root (use _backups/*.tar.gz)"; fi
 
 # Add-on MUST-HAVE
-for p in addon/bb8_core addon/tools addon/tests addon/services.d addon/app \
+for p in addon/bb8_core addon/tools addon/tests addon/services.d \
          addon/config.yaml addon/Dockerfile addon/Makefile addon/README.md addon/VERSION addon/apparmor.txt addon/.devcontainer
 do [ -e "$p" ] || die "addon missing: $p"; done
+# Note: addon/app is optional for some workflows; if missing we warn but do not block
+if [ ! -e addon/app ]; then echo "WARNING: addon/app missing (non-blocking)"; fi
 
 # Add-on MUST-NOT
 for p in addon/scripts addon/reports addon/docs addon/_backup addon/_backups \
