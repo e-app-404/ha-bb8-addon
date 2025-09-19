@@ -1,5 +1,6 @@
 # DIAG-BEGIN IMPORTS
 import atexit
+import contextlib
 import os
 import sys
 import threading
@@ -58,10 +59,8 @@ if ENABLE_HEALTH_CHECKS:
 
 @atexit.register
 def _hb_exit():
-    try:
+    with contextlib.suppress(Exception):
         _write_atomic(HB_PATH_MAIN, f"{time.time()}\n")
-    except Exception:
-        pass
 
 
 logger.info(f"bb8_core.main started (PID={os.getpid()})")
@@ -71,10 +70,8 @@ def _flush_logs():
     logger.info("main.py atexit: flushing logs before exit")
     for h in getattr(logger, "handlers", []):
         if hasattr(h, "flush"):
-            try:
+            with contextlib.suppress(Exception):
                 h.flush()
-            except Exception:
-                pass
 
 
 atexit.register(_flush_logs)
@@ -86,7 +83,8 @@ def main():
     try:
         from addon.bb8_core.bridge_controller import start_bridge_controller
 
-        facade = start_bridge_controller()
+        # Start the bridge controller and ignore any return value (unused)
+        start_bridge_controller()
         logger.info("bridge_controller started; entering run loop")
         # Block main thread until SIGTERM/SIGINT
         import signal
@@ -94,7 +92,7 @@ def main():
         stop_evt = False
 
         def _on_signal(signum, frame):
-            logger.info(f"signal_received signum={signum}")
+            logger.info("signal_received signum=%s", signum)
             nonlocal stop_evt
             stop_evt = True
 
@@ -104,7 +102,7 @@ def main():
             time.sleep(1)
         logger.info("main exiting after signal")
     except Exception as e:
-        logger.exception(f"fatal error in main: {e}")
+        logger.exception("fatal error in main: %s", e)
         _flush_logs()
         sys.exit(1)
 
@@ -114,6 +112,6 @@ if __name__ == "__main__":
         main()
         logger.info("main.py exited normally")
     except Exception as e:
-        logger.exception(f"main.py top-level exception: {e}")
+        logger.exception("main.py top-level exception: %s", e)
         _flush_logs()
         sys.exit(1)
