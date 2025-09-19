@@ -33,7 +33,11 @@ class BleGateway:
         self.adapter = adapter
         self.connected: bool = False
         logger.info(
-            {"event": "ble_gateway_init", "mode": self.mode, "adapter": self.adapter}
+            {
+                "event": "ble_gateway_init",
+                "mode": self.mode,
+                "adapter": self.adapter,
+            }
         )
         logger.debug(
             {
@@ -51,14 +55,21 @@ class BleGateway:
         )
 
     def resolve_adapter(self) -> str | None:
-        logger.debug({"event": "ble_gateway_resolve_adapter", "adapter": self.adapter})
+        logger.debug(
+            {"event": "ble_gateway_resolve_adapter", "adapter": self.adapter}
+        )
         return self.adapter
 
     async def scan(self, seconds: int = 5) -> list[dict]:
-        logger.debug({"event": "ble_scan_start", "mode": self.mode, "seconds": seconds})
+        logger.debug(
+            {"event": "ble_scan_start", "mode": self.mode, "seconds": seconds}
+        )
         if self.mode != "bleak" or BleakScanner is None:
             logger.debug(
-                {"event": "ble_scan_bypass", "reason": "unsupported_or_missing_bleak"}
+                {
+                    "event": "ble_scan_bypass",
+                    "reason": "unsupported_or_missing_bleak",
+                }
             )
             return []
         devices = await BleakScanner.discover(timeout=seconds)  # type: ignore[call-arg]
@@ -86,7 +97,11 @@ class BleGateway:
                 }
             )
         logger.info(
-            {"event": "ble_scan_complete", "count": len(result), "devices": result}
+            {
+                "event": "ble_scan_complete",
+                "count": len(result),
+                "devices": result,
+            }
         )
         return result
 
@@ -107,11 +122,14 @@ class BleGateway:
         try:
             device_str = str(getattr(self, "device", None))
         except Exception as e:
-            logger.error({"event": "ble_gateway_shutdown_error", "error": str(e)}, exc_info=True)
+            # Log the exception with traceback and provide a short message
+            logger.exception("ble_gateway shutdown error: %s", e)
             device_str = f"<error: {e}>"
-        logger.debug({
-            "event": "ble_gateway_shutdown_pre",
-            "device": device_str,
-        })
+        logger.debug(
+            {
+                "event": "ble_gateway_shutdown_pre",
+                "device": device_str,
+            }
+        )
         self.device = None
         logger.debug({"event": "ble_gateway_shutdown_device_none"})
