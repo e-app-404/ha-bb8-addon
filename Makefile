@@ -179,7 +179,14 @@ clean:
 	rm -rf __pycache__ addon/__pycache__ ops/__pycache__ scripts/__pycache__
 	rm -rf .pytest_cache .ruff_cache
 	rm -rf ../reports/stp4_* ../reports/qa_* ../reports/ci_*
+	# move .bak files into _backups (run helper, allow it to skip if recently run)
+	@bash ops/utils/helper_move_backup.sh || true
 	echo "Workspace cleaned."
+
+.PHONY: move-backups
+move-backups:
+	@echo "Running backup mover (helper_move_backup.sh)..."
+	@bash ops/utils/helper_move_backup.sh --force || true
 
 index:
 	bash ops/adr/generate_adr_index.sh

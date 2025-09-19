@@ -1,0 +1,157 @@
+persona: Strategos
+scope: "HA-BB8 workspace rebuild & consolidation — dual-clone via Git remote (no symlinks)"
+trace:
+  label: WS-RESTORE-ADDON-DUAL-CLONE
+  id: ws-restore-2025-08-21
+
+context:
+  workspace_root: /Users/evertappels/Projects/HA-BB8
+  addon_workspace: /Users/evertappels/Projects/HA-BB8/addon
+  addon_runtime: /Volumes/HA/addons/local/beep_boop_bb8
+  remote: git@github.com:e-app-404/ha-bb8-addon.git
+  report_root: /Users/evertappels/Projects/HA-BB8/reports
+  wrappers_root: /Users/evertappels/Projects/HA-BB8/scripts
+  ops_root: /Users/evertappels/Projects/HA-BB8/ops
+  docs_root: /Users/evertappels/Projects/HA-BB8/docs
+  ha_runtime_hint: /addons/local/beep_boop_bb8 # HA’s internal view
+
+adr:
+  id: ADR-0001
+  title: "Canonical Topology — Dual-Clone via Git Remote"
+  decision_date: 2025-08-21
+  decisions:
+    - "addon_workspace is a normal Git clone of remote (no symlink, no submodule)"
+    - "addon_runtime is a normal Git clone of the same remote"
+    - "Deploy = push (workspace) → fetch+hard-reset (runtime), then restart add-on in HA"
+    - "Reports unify to workspace report_root via wrappers exporting REPORT_ROOT"
+    - "Runtime ops live under ops_root/** (NOT inside addon/)"
+    - "Remove stray workspace/bb8_core by merging into addon/bb8_core"
+
+current_state:
+  observed_top_level:
+    - "_backup_20250821_034242/"
+    - "_backup_20250821_042444/"
+    - "_backup_20250821_044155/"
+    - "_backup_20250821_044455/"
+    - "_backup_20250821_044910_addon_ws/" # prior addon content
+    - "bb8_core/ (contains __pycache__/*.pyc)"
+    - "docs/"
+    - "reports/"
+    - "scripts/"
+    - "tests/"
+    - "tools/"
+    - "mypy.ini, pyproject.toml, pytest.ini, ruff.toml"
+    - "HA-BB8_clean_20250821_071841.tar.gz"
+    - "stp4_evidence_rerun.log"
+  missing_from_target:
+    - "addon/ (workspace clone)"
+    - "ops/ (workspace operational tool home)"
+
+target_state:
+  workspace_tree:
+    - "addon/  # clean add-on repo clone only"
+    - "ops/    # operational tools moved here"
+    - "scripts/ # wrappers only; call into ops/"
+    - "reports/ # unified REPORT_ROOT"
+    - "docs/"
+    - "mypy.ini, pyproject.toml, pytest.ini, ruff.toml"
+  runtime_tree:
+    - "/Volumes/HA/addons/local/beep_boop_bb8  # clean add-on repo clone"
+
+constraints:
+  - "Do not create placeholders for missing files; fail with actionable report."
+  - "No symlinks; no submodules."
+  - "Non-destructive merges; preserve all _backup_* directories."
+  - "Prefer workspace clone content if conflict; record any mtimes-based decisions."
+  - "Move any addon/ops content to ops_root/; ensure addon/ops is absent at finish."
+
+deliverables_for_copilot:
+  - "Create addon/ as a Git clone of remote (if absent)."
+  - "Ensure runtime path is a Git clone of the same remote."
+  - "Merge workspace bb8_core/ (if present with sources) → addon/bb8_core/, then remove stray WS/bb8_core."
+  - "Create ops/ and relocate operational tools from scripts/tools/tests/addon/ops → ops/ (single canonical home)."
+  - "Leave wrappers in scripts/; update wrappers to export WORKSPACE_ROOT and REPORT_ROOT."
+  - "Ensure reports/ exists and is the only report sink."
+  - "Install helper scripts (names only; Strategos to approve contents): deploy_to_ha.sh, verify_workspace.sh, check_structure.sh."
+  - "Write docs/adr/ADR-0001-workspace-topology.md (short)."
+
+acceptance_gates:
+  tokens:
+    - "WS_READY addon_ws=git_clone_ok runtime=git_clone_ok reports=ok wrappers=ok ops=ok"
+    - "DEPLOY_OK runtime_head=<sha> branch=<name>"
+    - "VERIFY_OK ws_head=<sha> runtime_head=<sha> remote=<url>"
+    - "STRUCTURE_OK"
+  structural_checks:
+    - "addon/ exists and is a Git repo (not a symlink; not a submodule)"
+    - "runtime clone at /Volumes/HA/addons/local/beep_boop_bb8 is a Git repo tracking same remote"
+    - "no addon/ops directory exists at finish"
+    - "ops/ exists at workspace root and contains operational tools"
+    - "scripts/ contains wrappers only; wrappers export REPORT_ROOT=${report_root}"
+    - "reports/ exists and is writable"
+    - "no workspace-root bb8_core/ remains (merged into addon/bb8_core/)"
+
+phases:
+  - id: P0_preflight
+    goal: "Inventory & backup"
+    steps:
+      - "Record current tree; preserve all _backup_* directories"
+      - "Snapshot git state if any .git present"
+  - id: P1_addon_workspace_clone
+    goal: "Create/normalize addon/ as a standard Git clone of remote"
+    steps:
+      - "If addon/ missing → clone"
+      - "If addon/ exists but is not a git clone → archive and clone fresh"
+  - id: P2_runtime_clone
+    goal: "Normalize runtime to the same remote"
+    steps:
+      - "If runtime dir has .git → set-url to remote, fetch --all"
+      - "Else archive non-git dir (if present) and clone"
+  - id: P3_merge_bb8_core
+    goal: "Consolidate bb8_core"
+    steps:
+      - "If WS bb8_core/ contains source files → merge (newer-only) into addon/bb8_core/"
+      - "Remove WS bb8_core/ after merge; preserve into backup"
+  - id: P4_ops_consolidation
+    goal: "Single operational home under ops/"
+    steps:
+      - "Create ops/ at WS root"
+      - "Relocate any operational tools from scripts/tools/tests and addon/ops → ops/"
+      - "Leave wrappers (run_* / *_wrapper.*) in scripts/"
+  - id: P5_reports_unification
+    goal: "Single report sink"
+    steps:
+      - "Ensure reports/ exists"
+      - "Wrappers export REPORT_ROOT=${report_root}"
+  - id: P6_helpers_and_docs
+    goal: "Operational helpers + ADR note"
+    steps:
+      - "Add deploy_to_ha.sh, verify_workspace.sh, tools/check_structure.sh (to be generated by Copilot)"
+      - "Write docs/adr/ADR-0001-workspace-topology.md (short form)"
+  - id: P7_deploy_and_verify
+    goal: "Align clones; verify structure"
+    steps:
+      - "Push workspace addon; runtime fetch+hard-reset to same branch"
+      - "Run verify script; emit VERIFY_OK and STRUCTURE_OK tokens"
+      - "Print WS_READY line"
+
+risks:
+  - id: R1
+    text: "Workspace root might still be a Git repo (from earlier state)."
+    mitigation: "If .git at WS root → archive .git and treat addon/ as the only repo."
+  - id: R2
+    text: "Operational tools remain inside addon/ops by habit."
+    mitigation: "Hard check at finish: addon/ops must not exist; all ops moved to WS ops/."
+  - id: R3
+    text: "bb8_core sources might be missing (only .pyc present)."
+    mitigation: "If no sources exist in WS bb8_core/, skip merge; rely on repo truth in addon/."
+  - id: R4
+    text: "Multiple report sinks create ambiguity."
+    mitigation: "Wrappers must export REPORT_ROOT; reject if any addon/reports/ exists."
+
+non_goals:
+  - "No changes to add-on runtime logic or MQTT/dispatcher."
+  - "No evidence semantics alteration (only path unification via REPORT_ROOT)."
+
+outputs_expected_from_strategos:
+  - "A single response listing: WS_READY line, DEPLOY_OK, VERIFY_OK, STRUCTURE_OK"
+  - "If anything fails: explicit [missing]/[fail] lines and which phase to revisit"

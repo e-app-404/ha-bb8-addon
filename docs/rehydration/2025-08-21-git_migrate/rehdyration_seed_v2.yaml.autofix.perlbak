@@ -1,0 +1,161 @@
+rehydration_seed:
+  trace:
+    label: "WS-RESTORE-ADDON-DUAL-CLONE"
+    id: "ws-restore-2025-08-21"
+    release: "2025.8.21"
+    head_current: "6e2e2e2"
+    tag_latest:
+      name: "v2025.8.21"
+      commit: "9c31463"
+
+  personas:
+    strategos:
+      id: "strategos_v1.4_20250813"
+      role: "Executive Project Strategist & Integration Delivery Manager"
+      files:
+        system_instruction: "/mnt/data/system_instruction.yaml"
+        core_persona: "/mnt/data/20250813_strategos_v1.4.yaml"
+        expansion_pack: "/mnt/data/20250803_xp_strategos_v1.6.yaml"
+        dual_mode: "/mnt/data/dual_mode_xp_v1_250813.yaml"
+      outputs_emit:
+        ["execution_mandate", "delta_contract", "strategic_assessment"]
+      inputs_accept: ["qa_report_contract_v1", "patch_bundle_contract_v1"]
+      routing:
+        handoff_to: ["pythagoras"]
+        execution_chat: "copilot_only"
+
+    pythagoras:
+      id: "pythagoras_v3"
+      role: "Code Implementer & QA (Copilot-facing)"
+      integration_targets: ["Copilot"]
+      enforced_outputs: ["patch_bundle_contract_v1", "qa_report_contract_v1"]
+      callback_to: "strategos"
+
+  project:
+    label: "BB-8 Bridge"
+    namespace_policy: "flat mqtt → bb8/<behavior>/<action>"
+    repository:
+      workspace_root: "/Users/evertappels/Projects/HA-BB8"
+      addon_repo: "/Users/evertappels/Projects/HA-BB8/addon"
+      runtime_repo: "/Volumes/HA/addons/local/beep_boop_bb8"
+      remote: "git@github.com:e-app-404/ha-bb8-addon.git"
+      primary_branch: "main"
+      heads:
+        workspace: "6e2e2e2"
+        runtime: "6e2e2e2"
+    paths:
+      addon_config: "config.yaml"
+      core_root: "bb8_core/"
+      tests_root: "tests/"
+      ops_root_ws: "../ops/"
+    wrappers:
+      verify_workspace: "/Users/evertappels/Projects/HA-BB8/scripts/verify_workspace.sh"
+      deploy_to_ha: "/Users/evertappels/Projects/HA-BB8/scripts/deploy_to_ha.sh"
+      exports:
+        WORKSPACE_ROOT: true
+        REPORT_ROOT: true
+    acceptance_tokens_expected:
+      - "STRUCTURE_OK"
+      - "DEPLOY_OK"
+      - "VERIFY_OK"
+      - "WS_READY"
+
+  governance:
+    empirical_validation: true
+    binary_acceptance: true
+    evidence_tolerance_level: 0
+    confidence_minimum: 0.85
+    enforcement:
+      no_symlinks: true
+      no_submodules: true
+      single_report_sink: true
+      addon_workspace_dirs_forbidden:
+        [".github", "docs", "ops", "reports", "scripts", "tools", "addon"]
+      gitignore_guards_active: true
+
+  status_summary:
+    adr:
+      id: "ADR-0001"
+      title: "Canonical Topology — Dual-Clone via Git Remote"
+      receipt_latest: "/Users/evertappels/Projects/HA-BB8/reports/governance/ADR-0001_receipt_20250821_185726Z.status"
+    tests_local: "PASS"
+    runtime_clean: true
+    duplicates_pruned_and_guarded: true
+    tokens_latest:
+      - "DEPLOY_OK runtime_head=6e2e2e2 branch=main"
+      - "VERIFY_OK ws_head=6e2e2e2 runtime_head=6e2e2e2 remote=git@github.com:e-app-404/ha-bb8-addon.git"
+      - "STRUCTURE_OK"
+      - "WS_READY addon_ws=git_clone_ok runtime=git_clone_ok reports=ok wrappers=ok ops=ok"
+
+  ops_domains:
+    - "ops/audit"
+    - "ops/workspace"
+    - "ops/deploy"
+    - "ops/qa"
+    - "ops/diagnostics"
+    - "ops/maintenance"
+    - "ops/evidence"
+
+  evidence_pointers:
+    manifest: "/Users/evertappels/Projects/HA-BB8/reports/evidence_manifest.json"
+    trace_snapshot: "/Users/evertappels/Projects/HA-BB8/reports/ha_mqtt_trace_snapshot.json"
+    discovery_dump: "/Users/evertappels/Projects/HA-BB8/reports/ha_discovery_dump_20250818_043251Z.txt"
+
+  next_checkpoint:
+    id: "STP4-STRICT-ATTEST"
+    preconditions:
+      REQUIRE_DEVICE_ECHO: 1
+      ENABLE_BRIDGE_TELEMETRY: 1
+      MQTT_BASE: "bb8"
+    must_meet:
+      - "pytest suite green; coverage >= 80%"
+      - "Strict device-originated echoes for scalar topics (retain=false)"
+      - "No asyncio event-loop warnings"
+      - "qa_report.verdict == PASS"
+    artifacts_expected:
+      - "patch_bundle_contract_v1"
+      - "qa_report_contract_v1"
+      - "evidence_manifest.json (strict)"
+      - "ha_mqtt_trace_snapshot.json"
+      - "ha_discovery_dump.json"
+
+  memory_snapshot:
+    last_valid_patch: "6e2e2e2"
+    last_decision_checkpoint:
+      id: "ADR-0001-P7-DEPLOY-VERIFY (post-prune)"
+      heads:
+        workspace: "6e2e2e2"
+        runtime: "6e2e2e2"
+      tokens: ["STRUCTURE_OK", "DEPLOY_OK", "VERIFY_OK", "WS_READY"]
+    clustered_entities_and_aliases:
+      entities:
+        - "Strategos (governance)"
+        - "Pythagoras (execution/QA)"
+        - "Copilot (execution surface)"
+        - "Workspace clone (addon/)"
+        - "Runtime clone (HA mount)"
+        - "GitHub Remote (origin)"
+        - "HA Add-on (beep_boop_bb8)"
+      aliases:
+        - "workspace == /Users/evertappels/Projects/HA-BB8/addon"
+        - "runtime == /Volumes/HA/addons/local/beep_boop_bb8"
+        - "remote == git@github.com:e-app-404/ha-bb8-addon.git"
+      counts:
+        entities: 7
+        aliases: 3
+    inclusion_coverage:
+      adr0001_scope: "100%"
+      ops_domain_split: "100%"
+      report_sink_unification: "100%"
+      wrapper_exports: "100%"
+      symlink_policy: "100% (python venv links retained)"
+    semantic_summary: >
+      Workspace and runtime are independent git clones on 'main' tracking the same remote. Deploy is push
+      → runtime fetch/checkout/reset. Workspace-only folders are pruned from repo, guarded by .gitignore,
+      and absent in runtime. Tests pass locally. Proceed to strict STP4 attestation with device-originated echoes.
+
+  ci_recommendation:
+    workflow_path: ".github/workflows/repo-guards.yml"
+    gates:
+      - "Ensure addon forbids {docs,ops,reports,scripts,tools,addon,.github}"
+      - "Run ops/audit/check_structure.sh and scripts/verify_workspace.sh; assert tokens"

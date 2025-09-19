@@ -1,0 +1,84 @@
+# 🔐 Rehydration Seed Export (ready-to-use)
+rehydration_seed:
+  trace:
+    label: "WS-RESTORE-ADDON-DUAL-CLONE"
+    id: "ws-restore-2025-08-21"
+    release: "2025.8.21"
+    head: "9c31463"
+    tag: "v2025.8.21"
+
+  personas:
+    strategos:
+      id: "strategos_v1.4_20250813"
+      role: "Executive Project Strategist & Integration Delivery Manager"
+      files:
+        system_instruction: "/mnt/data/system_instruction.yaml"
+        core_persona: "/mnt/data/20250813_strategos_v1.4.yaml"
+        expansion_pack: "/mnt/data/20250803_xp_strategos_v1.6.yaml"
+        dual_mode: "/mnt/data/dual_mode_xp_v1_250813.yaml"
+      outputs_emit:
+        ["execution_mandate", "delta_contract", "strategic_assessment"]
+      inputs_accept: ["qa_report_contract_v1", "patch_bundle_contract_v1"]
+      routing:
+        handoff_to: ["pythagoras"]
+        execution_chat: "copilot_only"
+
+    pythagoras:
+      id: "pythagoras_v3"
+      role: "Code Implementer & QA (Copilot-facing)"
+      integration_targets: ["Copilot"]
+      enforced_outputs: ["patch_bundle_contract_v1", "qa_report_contract_v1"]
+      callback_to: "strategos"
+
+  project:
+    label: "BB-8 Bridge"
+    namespace_policy: "flat mqtt → bb8/<behavior>/<action>"
+    repository:
+      workspace_root: "/Users/evertappels/Projects/HA-BB8"
+      addon_repo: "/Users/evertappels/Projects/HA-BB8/addon"
+      runtime_repo: "/Volumes/HA/addons/local/beep_boop_bb8"
+      remote: "git@github.com:e-app-404/ha-bb8-addon.git"
+      primary_branch: "main"
+      heads:
+        workspace: "9c31463"
+        runtime: "9c31463"
+    paths:
+      addon_config: "config.yaml"
+      core_root: "bb8_core/"
+      tests_root: "tests/"
+      ops_root_ws: "../ops/" # workspace ops (domain split)
+    acceptance_tokens:
+      - "STRUCTURE_OK"
+      - "DEPLOY_OK"
+      - "VERIFY_OK"
+      - "WS_READY"
+
+  governance:
+    empirical_validation: true
+    binary_acceptance: true
+    evidence_tolerance_level: 0
+    confidence_minimum: 0.85
+    enforcement:
+      no_symlinks: true
+      no_submodules: true
+      single_report_sink: true
+      addon_ops_absent: true
+
+  status_summary:
+    stp4_status: "Green locally (suite passes)"
+    stp5_outlook: "Next focus; strict device-echo + telemetry hardening"
+    risks_open: ["CI gate not yet enforcing tokens on PRs (optional)"]
+
+  next_checkpoint:
+    id: "STP4-STRICT-GRAD"
+    must_meet:
+      - "qa_report.verdict == PASS"
+      - "pytest suite green; coverage >= 80%"
+      - "Strict device-originated echoes for scalar topics (retain=false)"
+      - "No asyncio event-loop warnings"
+    artifacts_expected:
+      - "patch_bundle_contract_v1"
+      - "qa_report_contract_v1"
+      - "evidence_manifest.json"
+      - "ha_mqtt_trace_snapshot.json"
+      - "ha_discovery_dump.json"

@@ -1,0 +1,37 @@
+version: 2
+session:
+  label: BB8-STP5-MVP
+  trace_id: trace-bb8-2f0c9e9a
+layout:
+  code_root: addon/
+  tests_root: addon/tests
+  ops_root: ops/
+  reports_root: reports/
+  backups_root: _backups/
+governance:
+  policy_version: 2025-09-16
+  coverage_gate: 60
+  shape_guard: true
+  canonical_import_root: addon.bb8_core
+  forbidden_roots: [ "bb8_core/", "services.d/", "tools/" ]
+  mqtt_rules:
+    forbid_wildcards: true
+    sanitize_on_input: true
+  motion:
+    default_allow_motion: "0"
+    max_speed: 150
+    max_duration_ms: 1000
+    failsafe_pad_ms: 100
+enforcement:
+  hooks:
+    pre_commit: .githooks/pre-commit
+  ci:
+    workflows:
+      - .github/workflows/shape.yml
+      - .github/workflows/tests.yml
+      - .github/workflows/protocol.yml
+notes:
+  outstanding:
+    - "Align wildcard test to sanitization policy"
+    - "Configure CI push perms (ratchet branch)"
+    - "Implement Drive MVP in feature branch only"
