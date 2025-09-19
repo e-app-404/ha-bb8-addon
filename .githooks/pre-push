@@ -6,6 +6,11 @@ echo "STRUCTURE_OK — topology"
 set -euo pipefail
 fail=0; die(){ echo "ERROR: $*"; fail=1; }
 
+# Move any addon/.ruff_cache out of the working tree to _backups to avoid remote guard failures
+if [ -x "ops/utils/move_ruff_cache_before_push.sh" ]; then
+  ops/utils/move_ruff_cache_before_push.sh || true
+fi
+
 # Workspace MUST-HAVE
 for d in ops reports scripts docs .githooks .github _backups; do [ -e "$d" ] || die "workspace missing: $d"; done
 # Workspace MUST-NOT
