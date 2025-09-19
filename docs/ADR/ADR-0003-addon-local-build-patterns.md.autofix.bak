@@ -1,0 +1,12 @@
+---
+title: "ADR-0003: Home Assistant Add-on Local Build & Slug Management"
+date: 2025-08-24
+status: Accepted
+author:
+  - Promachos Governance
+related:
+  - ADR-0001
+  - ADR-0002
+  - ADR-0008
+supersedes: []
+last_updated: 2025-08-24
