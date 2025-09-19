@@ -1,36 +1,33 @@
 import argparse
 import asyncio
 
-from bleak import BleakClient as _BleakClient, BleakScanner as _BleakScanner
+try:
+    from bleak import BleakClient as _BleakClient, BleakScanner as _BleakScanner
+except Exception:  # pragma: no cover - fallback for test monkeypatching
+    class _BleakScanner:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            raise NotImplementedError("Monkeypatch in tests")
+
+        async def __aexit__(self, exc_type, exc, tb):
+            pass
 
 
-class BleakScanner:
-    def __init__(self, *args, **kwargs):
-        pass
+    class _BleakClient:
+        def __init__(self, *args, **kwargs):
+            pass
 
-    async def __aenter__(self):
-        raise NotImplementedError("Monkeypatch in tests")
+        async def __aenter__(self):
+            raise NotImplementedError("Monkeypatch in tests")
 
-    async def __aexit__(self, exc_type, exc, tb):
-        pass
+        async def __aexit__(self, exc_type, exc, tb):
+            pass
 
-
-class BleakClient:
-    def __init__(self, *args, **kwargs):
-        pass
-
-    async def __aenter__(self):
-        raise NotImplementedError("Monkeypatch in tests")
-
-    async def __aexit__(self, exc_type, exc, tb):
-        pass
-
-
+# Expose the names expected by the rest of the module
 BleakScanner = _BleakScanner
 BleakClient = _BleakClient
-
-# Expose print as a module attribute for test monkeypatching
-print = print
 
 
 async def main(adapter, bb8_name):
