@@ -37,3 +37,6 @@ rescue_staging/
 
 # ignore automatic autofix backups in ADR
 docs/ADR/*.autofix.*
+# ignore any autofix backup files created by tooling
+**/*.autofix.*
+**/*.perlbak

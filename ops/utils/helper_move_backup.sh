@@ -42,11 +42,11 @@ echo "project_root: $PROJECT_ROOT" >> "$LOGFILE"
 echo "backup_root: $BACKUP_ROOT" >> "$LOGFILE"
 echo "search: looking for *.bak files (excluding _backups, .git, reports)" >> "$LOGFILE"
 
-# find .bak files excluding _backups, .git and reports directories
 cd "$PROJECT_ROOT"
 IFS=$'\n'
 set -f
-FILES=( $(find . -type f -name '*.bak' \
+# Find common backup filename patterns: .bak, .perlbak, and any .autofix.* files
+FILES=( $(find . -type f \( -name '*.bak' -o -name '*.perlbak' -o -name '*.autofix.*' \) \
   -not -path './_backups/*' -not -path './.git/*' -not -path './reports/*' 2>/dev/null) )
 set +f
 IFS=$' \t\n'
