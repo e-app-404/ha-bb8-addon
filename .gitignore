@@ -34,3 +34,6 @@ __pycache__/
 .idea/
 /bb8_core/
 rescue_staging/
+
+# ignore automatic autofix backups in ADR
+docs/ADR/*.autofix.*
