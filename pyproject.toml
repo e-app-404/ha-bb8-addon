@@ -1,5 +1,3 @@
-# Authoritative; duplicate section removed on 18 August 2025.
-
 [project]
 name = "ha-bb8"
 version = "0.0.0"
@@ -12,3 +10,9 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["bb8_core*"]
+
+[tool.ruff]
+line-length = 88
+# Per-file ignores for ruff. Use a compact valid TOML table.
+per-file-ignores = { "addon/tests/*.py" = ["D"], "addon/tests/**/*.py" = ["D"], "scripts/*.py" = ["D"] }
+# Authoritative; duplicate section removed on 18 August 2025.
