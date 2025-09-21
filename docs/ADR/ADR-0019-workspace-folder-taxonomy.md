@@ -12,8 +12,13 @@ related:
   - ADR-0009
   - ADR-0017
   - ADR-0018
-last_updated: 2025-09-14
 supersedes: []
+last_updated: 2025-09-14
+references:
+  - check_root_tools.sh
+  - check_root_services_d.sh
+  - check_bare_bb8_core_imports.sh
+  - run_guardrails.sh
 ---
 
 # ADR-0019: Workspace folder taxonomy and assignation rules
