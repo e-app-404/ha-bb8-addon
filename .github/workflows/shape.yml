@@ -26,3 +26,9 @@ jobs:
           test -z "$OFF" || { echo "Forbidden imports:\n$OFF"; exit 1; }
           PY_AT_ROOT_TOOLS=$(find tools -maxdepth 1 -name '*.py' 2>/dev/null | wc -l | tr -d ' ')
           test "$PY_AT_ROOT_TOOLS" = "0" || { echo "tools/*.py at repo root not allowed"; exit 1; }
+
+      - name: Run guardrails
+        run: |
+          set -euo pipefail
+          chmod +x ops/guardrails/run_guardrails.sh || true
+          ./ops/guardrails/run_guardrails.sh
