@@ -29,11 +29,17 @@ class DummyClient:
     "payload,expected",
     [
         (
-            '{"stat_t": "foo", "avty_t": "bar", "dev": {"sw_version": "1.0", "identifiers": ["id1"]}}',
+            (
+                '{"stat_t": "foo", "avty_t": "bar", "dev": '
+                '{"sw_version": "1.0", "identifiers": ["id1"]}}'
+            ),
             True,
         ),
         (
-            '{"state_topic": "foo", "availability_topic": "bar", "device": {"sw_version": "1.0", "identifiers": ["id1"]}}',
+            (
+                '{"state_topic": "foo", "availability_topic": "bar", "device": '
+                '{"sw_version": "1.0", "identifiers": ["id1"]}}'
+            ),
             True,
         ),
         ('{"stat_t": "foo", "avty_t": "bar", "dev": {}}', False),
@@ -65,7 +71,10 @@ def test_get_any(d, key, expected):
 
 
 def test_first_identifiers():
-    assert vd.first_identifiers({"identifiers": ["id1", "id2"]}) == ["id1", "id2"]
+    assert (
+        vd.first_identifiers({"identifiers": ["id1", "id2"]})
+        == ["id1", "id2"]
+    )
     assert vd.first_identifiers({"identifiers": "notalist"}) == []
     assert vd.first_identifiers(None) == []
 

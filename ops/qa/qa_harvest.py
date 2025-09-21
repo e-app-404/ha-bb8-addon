@@ -125,7 +125,7 @@ def parse_pytest(txt):
             key = {"xfailed": "xfail", "xpassed": "xpass"}.get(k, k)
             summary[key] = int(mm.group(1))
     # collect failing test names
-    failing = re.findall(r"^_{5,}\s*(.+?)\s_{5,}$", txt, flags=re.M)
+    failing = re.findall(r"^_{5,}\s*(.+?)\s_{5,}$", txt, flags=re.MULTILINE)
     # coverage if present
     cov = None
     mc = re.search(r"TOTAL\s+\d+\s+\d+\s+(\d+)%", txt)
@@ -231,13 +231,13 @@ def main():
     if not result["acceptance"]["types_mypy_pass"]:
         na.append(
             "Investigate mypy.log top 10; add types or "
-            "`# type: ignore[code]` with justification"
+            "`# type: ignore[code]` with justification",
         )
     if not result["acceptance"]["tests_pass"]:
         failing = logs["pytest.log"].get("failing", [])
         if failing:
             na.append(
-                f'Run focused: pytest -q -k "{" or ".join(failing[:3])}" --maxfail=1'
+                f'Run focused: pytest -q -k "{" or ".join(failing[:3])}" --maxfail=1',
             )
         else:
             na.append("Investigate pytest.log for errors; no failing test names found.")

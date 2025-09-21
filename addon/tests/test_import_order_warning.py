@@ -4,8 +4,7 @@ import warnings
 
 
 def test_no_runtimewarning_on_import_order():
-    """
-    Guard against:
+    """Guard against:
     RuntimeWarning: 'bb8_core.bridge_controller' found in sys.modules after import of
     package 'bb8_core', but prior to execution of 'bb8_core.bridge_controller'
     """

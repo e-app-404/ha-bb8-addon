@@ -16,8 +16,7 @@ hardware acceptance. (See the env/logic in record(...).)
 
 
 class EvidenceRecorder:
-    """
-    Subscribes to command and state topics and records round-trip evidence.
+    """Subscribes to command and state topics and records round-trip evidence.
     Constraints:
       - Single publisher (façade) policy remains intact; this only records.
       - Writes JSON lines to reports/ha_mqtt_trace_snapshot.jsonl (≤150 lines).
@@ -47,7 +46,9 @@ class EvidenceRecorder:
         self._stop.clear()
         self._install_callbacks()
         self._t = threading.Thread(
-            target=self._runner, name="stp4_evidence", daemon=True
+            target=self._runner,
+            name="stp4_evidence",
+            daemon=True,
         )
         self._t.start()
 

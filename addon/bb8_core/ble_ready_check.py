@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-ble_ready_check.py: Checks if BB-8 BLE device is awake and ready.
+"""ble_ready_check.py: Checks if BB-8 BLE device is awake and ready.
 Emits a JSON summary artifact and returns exit code 0 if detected, 1 if not.
 Leverages existing BLE scan logic from bb8_core modules.
 """
@@ -12,8 +11,9 @@ import time
 from pathlib import Path
 
 try:
-    from addon.bb8_core.auto_detect import scan_for_bb8
     from bleak import BleakClient
+
+    from addon.bb8_core.auto_detect import scan_for_bb8
 except ImportError:
     print(json.dumps({"error": "Could not import scan_for_bb8 or BleakClient"}))
     sys.exit(2)
@@ -21,7 +21,7 @@ except ImportError:
 SCAN_TIMEOUT = int(os.environ.get("BLE_SCAN_TIMEOUT", "45"))
 RETRY_INTERVAL = float(os.environ.get("BLE_SCAN_RETRY_INTERVAL", "2.0"))
 MAX_ATTEMPTS = int(
-    os.environ.get("BLE_SCAN_MAX_ATTEMPTS", str(SCAN_TIMEOUT // int(RETRY_INTERVAL)))
+    os.environ.get("BLE_SCAN_MAX_ATTEMPTS", str(SCAN_TIMEOUT // int(RETRY_INTERVAL))),
 )
 ARTIFACT_PATH = os.environ.get("BLE_READY_ARTIFACT", "/tmp/ble_ready_summary.json")
 REGISTRY_PATH = os.environ.get(
@@ -92,7 +92,6 @@ def main():
             from bleak import BleakScanner
 
             # Find device by MAC
-            found = None
 
             async def find_and_connect():
                 scanner = BleakScanner()

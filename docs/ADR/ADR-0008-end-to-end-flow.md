@@ -15,6 +15,8 @@ last_updated: 2025-08-27
 
 # ADR‑0008: End‑to‑End Development → Deploy Flow (Dual‑Clone & HA Supervisor)
 
+## Context
+
 > Canonical, **machine‑friendly*- procedure to take a change from the developer workspace to a running Home Assistant add‑on container, and to publish/tag when ready. This ADR binds **what*- to **how*- (commands, tokens, receipts).
 
 

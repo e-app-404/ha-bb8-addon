@@ -1,3 +1,10 @@
+"""Utilities to verify Home Assistant discovery configurations.
+
+Small helper module used to validate discovery config topics are present and
+well-formed on an MQTT broker. The functions are intentionally minimal and
+safe for offline checks.
+"""
+
 import json
 import os
 import time
@@ -27,6 +34,10 @@ def on_message(client, userdata, msg):
 
 
 def get_any(d: dict[str, Any], key: str) -> Any:
+    """Return the first available synonym value for ``key`` from mapping.
+
+    If none of the synonyms are present, ``None`` is returned.
+    """
     for k in KEY_SYNONYMS.get(key, [key]):
         if k in d:
             return d[k]
@@ -34,6 +45,11 @@ def get_any(d: dict[str, Any], key: str) -> Any:
 
 
 def first_identifiers(dev: dict[str, Any] | None) -> list[str]:
+    """Return the device 'identifiers' list if present and valid.
+
+    If the device mapping is missing or identifiers are absent, an empty
+    list is returned.
+    """
     if not dev:
         return []
     for k in ("identifiers",):
@@ -43,6 +59,10 @@ def first_identifiers(dev: dict[str, Any] | None) -> list[str]:
 
 
 def extract_cfg(raw: str) -> dict[str, Any]:
+    """Safely decode a JSON configuration string.
+
+    Any decode errors are caught and an empty mapping is returned.
+    """
     try:
         return json.loads(raw)
     except Exception:
@@ -51,7 +71,8 @@ def extract_cfg(raw: str) -> dict[str, Any]:
 
 
 def verify_configs_and_states(
-    client: mqtt.Client, timeout: float = 2.0
+    client: mqtt.Client,
+    timeout: float = 2.0,
 ) -> tuple[list[dict[str, Any]], bool]:
     results: dict[str, dict[str, Any]] = {}
     retained: dict[str, bool] = {}
@@ -122,15 +143,15 @@ def main():
     rows, ok = verify_configs_and_states(client)  # pragma: no cover
     print("Discovery Verification Results:")  # pragma: no cover
     print(
-        "Topic           | Retained | stat_t        | avty_t   | sw_ver   | ids"
+        "Topic           | Retained | stat_t        | avty_t   | " "sw_ver   | ids",
     )  # pragma: no cover
     for r in rows:  # pragma: no cover
         print(
-            f"{r['topic']:27} | {str(r['retained']):8} | {r['stat_t']:19} | "
-            f"{r['avty_t']:11} | {r['sw_version']:14} | {r['identifiers']}"
+            f"{r['topic']:27} | {r['retained']!s:8} | {r['stat_t']:19} | "
+            f"{r['avty_t']:11} | {r['sw_version']:14} | {r['identifiers']}",
         )  # pragma: no cover
     print(
-        "\nPASS" if ok else "\nFAIL: One or more checks did not pass."
+        "\nPASS" if ok else "\nFAIL: One or more checks did not pass.",
     )  # pragma: no cover
 
 

@@ -9,6 +9,20 @@ import paho.mqtt.client as mqtt
 
 
 def env(name, default=None, required=False):
+    """Retrieve an environment variable value with optional default and required checks.
+
+    Args:
+        name (str): The name of the environment variable to retrieve.
+        default (Any, optional): The default value to return if the environment variable is not set. Defaults to None.
+        required (bool, optional): If True, raises SystemExit if the environment variable is missing or empty. Defaults to False.
+
+    Returns:
+        str: The value of the environment variable as a string, or the default value if not set.
+
+    Raises:
+        SystemExit: If `required` is True and the environment variable is missing or empty.
+
+    """
     v = os.environ.get(name, default)
     if required and (v is None or v == ""):
         raise SystemExit(f"[probe] missing env {name}")
@@ -18,6 +32,41 @@ def env(name, default=None, required=False):
 
 
 def main():
+    """Probes an MQTT broker for connectivity and device echo response.
+
+    This function connects to an MQTT broker using credentials and
+    configuration from environment variables. It publishes a test command
+    to a device echo topic, waits for a response, and evaluates the roundtrip
+    and schema validity.
+
+    Command-line arguments:
+        --timeout (int): Maximum time in seconds to wait for echo response
+            (default: 8).
+        --require-echo (str): Whether device echo is required to pass
+            (default: "1").
+
+    Environment variables:
+        MQTT_HOST (str): Hostname or IP address of the MQTT broker (required).
+        MQTT_PORT (str): Port number of the MQTT broker (default: "1883").
+        MQTT_USERNAME (str): Username for MQTT authentication (optional).
+        MQTT_PASSWORD (str): Password for MQTT authentication (optional).
+        MQTT_BASE (str): Base topic for MQTT messages (default: "bb8").
+        REQUIRE_DEVICE_ECHO (str): If set to "1", require device echo for
+            success (default: "1").
+
+    Behavior:
+        - Connects to the MQTT broker and subscribes to echo topics.
+        - Publishes a test command to the echo command topic.
+        - Waits for an echo response within the specified timeout.
+        - Checks if the response is from a device and if the schema is valid.
+        - Prints probe results and exits with status code:
+            2 if connection failed,
+            3 if roundtrip failed and device echo is required.
+
+    Raises:
+        SystemExit: If connection or roundtrip requirements are not met.
+
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--timeout", type=int, default=8)
     ap.add_argument("--require-echo", default="1")
@@ -71,7 +120,7 @@ def main():
     print(
         f"probe: connected={res['connected']} "
         f"roundtrip={res['roundtrip']} "
-        f"schema={res['schema']}"
+        f"schema={res['schema']}",
     )
     if not res["connected"]:
         raise SystemExit(2)

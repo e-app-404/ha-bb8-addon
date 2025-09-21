@@ -6,8 +6,9 @@ import os
 import sys
 from pathlib import Path
 
-import addon.bb8_core.mqtt_dispatcher as _dispatcher
 import pytest
+
+import addon.bb8_core.mqtt_dispatcher as _dispatcher
 
 # --- BEGIN: ensure repo root on sys.path + test MQTT host before any imports ---
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,7 +49,6 @@ def _suppress_real_mqtt_connect(monkeypatch):
 @pytest.fixture(autouse=True)
 def _auto_suppress_mqtt(monkeypatch):
     _suppress_real_mqtt_connect(monkeypatch)
-    yield
 
 
 # --- Deterministic discovery: clear the per-run published set ---
@@ -82,7 +82,6 @@ def _suppress_real_mqtt_connect(monkeypatch):
 @pytest.fixture(autouse=True)
 def _auto_suppress_mqtt(monkeypatch):
     _suppress_real_mqtt_connect(monkeypatch)
-    yield
 
 
 # --- Deterministic discovery: clear the per-run published set ---

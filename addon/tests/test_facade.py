@@ -1,10 +1,10 @@
 import logging
 import time
 
-import addon.bb8_core.facade as facade
-
 # --- Comprehensive facade.py tests ---
 import pytest
+
+from addon.bb8_core import facade
 
 
 class DummyBridge:
@@ -174,7 +174,11 @@ async def test_attach_mqtt(monkeypatch):
     called = {}
 
     async def fake_publish_discovery(
-        client_, mac_upper, dbus_path=None, model=None, name=None
+        client_,
+        mac_upper,
+        dbus_path=None,
+        model=None,
+        name=None,
     ):
         called["discovery"] = (mac_upper, dbus_path, model, name)
 

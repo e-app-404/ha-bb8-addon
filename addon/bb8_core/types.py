@@ -1,4 +1,9 @@
-# bb8_core/types.py
+"""Compact type and Protocol definitions for bb8_core public surfaces.
+
+Keep these definitions small to avoid import-time cycles in tests and
+applications that only need type hints.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -9,13 +14,9 @@ from typing import Any, Protocol, runtime_checkable
 # ---------------------------
 RGB = tuple[int, int, int]
 Scalar = (
-    "Scalar"  # alias for readable callbacks below (string-based to avoid 3.8 | syntax)
+    "Scalar"
+    # alias for readable callbacks used in callback type names
 )
-
-# NB: Avoid importing any local modules at runtime to prevent cycles.
-# If you must reference concrete classes for typing only, do:
-# if TYPE_CHECKING:
-#     from .bridge_controller import BridgeController  # noqa: F401
 
 
 # ---------------------------
@@ -31,10 +32,18 @@ ScalarCallback = Callable[[Any], None]  # Scalar echo: bool|int|float|str
 # ---------------------------
 # Minimal external client surfaces
 # ---------------------------
+@runtime_checkable
 class MqttClient(Protocol):
+    """Minimal MQTT client API used by internal components."""
+
     def publish(
-        self, topic: str, payload: str, qos: int = ..., retain: bool = ...
-    ) -> Any: ...
+        self,
+        topic: str,
+        payload: str,
+        qos: int = ...,
+        retain: bool = ...,
+    ) -> Any:
+        """Publish a string payload to topic."""
 
 
 # ---------------------------
@@ -42,8 +51,13 @@ class MqttClient(Protocol):
 # ---------------------------
 @runtime_checkable
 class BLELink(Protocol):
-    def start(self) -> None: ...
-    def stop(self) -> None: ...
+    """Protocol representing a BLE link/connection used by the bridge."""
+
+    def start(self) -> None:
+        """Start the BLE link."""
+
+    def stop(self) -> None:
+        """Stop the BLE link."""
 
 
 # ---------------------------
@@ -51,20 +65,36 @@ class BLELink(Protocol):
 # ---------------------------
 @runtime_checkable
 class BridgeController(Protocol):
+    """Interface a concrete bridge controller should implement."""
+
     base_topic: str
     mqtt: MqttClient
 
     # Command handlers (examples; keep surface minimal and stable)
-    def on_power(self, value: bool) -> None: ...
-    def on_stop(self) -> None: ...
-    def on_sleep(self) -> None: ...
-    def on_drive(self, speed: int) -> None: ...
-    def on_heading(self, degrees: int) -> None: ...
-    def on_led(self, r: int, g: int, b: int) -> None: ...
+    def on_power(self, value: bool) -> None:
+        """Handle power on/off requests."""
+
+    def on_stop(self) -> None:
+        """Handle a stop command."""
+
+    def on_sleep(self) -> None:
+        """Handle a sleep command."""
+
+    def on_drive(self, speed: int) -> None:
+        """Handle a drive command with speed."""
+
+    def on_heading(self, degrees: int) -> None:
+        """Handle heading change commands."""
+
+    def on_led(self, r: int, g: int, b: int) -> None:
+        """Handle LED color updates."""
 
     # Optional lifecycle hooks
-    def start(self) -> None: ...
-    def shutdown(self) -> None: ...
+    def start(self) -> None:
+        """Start the controller."""
+
+    def shutdown(self) -> None:
+        """Shutdown the controller and cleanup."""
 
 
 @runtime_checkable
@@ -74,21 +104,28 @@ class Facade(Protocol):
     base_topic: str
 
     def publish_scalar_echo(
-        self, topic: str, value: Any, *, source: str = "facade"
-    ) -> None: ...
-    def publish_led_echo(self, r: int, g: int, b: int) -> None: ...
+        self,
+        topic: str,
+        value: Any,
+        *,
+        source: str = "facade",
+    ) -> None:
+        """Publish a scalar echo value to MQTT."""
+
+    def publish_led_echo(self, r: int, g: int, b: int) -> None:
+        """Publish an RGB LED echo to MQTT."""
 
 
 __all__ = [
     "RGB",
-    "Scalar",
-    "BoolCallback",
-    "IntCallback",
-    "OptIntCallback",
-    "RGBCallback",
-    "ScalarCallback",
-    "MqttClient",
     "BLELink",
+    "BoolCallback",
     "BridgeController",
     "Facade",
+    "IntCallback",
+    "MqttClient",
+    "OptIntCallback",
+    "RGBCallback",
+    "Scalar",
+    "ScalarCallback",
 ]

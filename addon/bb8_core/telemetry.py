@@ -1,17 +1,28 @@
+"""Telemetry helpers: periodic probes and publishing helpers.
+
+This module provides a small background helper that probes a bridge for
+connectivity and publishes presence/RSSI via callback hooks or bridge
+methods. Edits here are intentionally non-functional and focus on
+concise documentation for public APIs.
+"""
+
 from __future__ import annotations
 
 import threading
 import time
 from collections.abc import Callable
-from typing import TYPE_CHECKING
 
 from .logging_setup import logger
 
-if TYPE_CHECKING:
-    pass
-
 
 class Telemetry:
+    """Background telemetry probe and publisher.
+
+    The Telemetry object periodically probes the provided ``bridge`` for
+    connectivity and optionally publishes presence and RSSI values using
+    supplied callbacks or bridge-provided methods.
+    """
+
     def __init__(
         self,
         bridge,
@@ -27,14 +38,18 @@ class Telemetry:
         self._cb_rssi = publish_rssi
 
     def start(self):
-        if self._t and self._t.is_alive():
-            return
-        self._stop.clear()
-        self._t = threading.Thread(target=self._run, daemon=True)
-        self._t.start()
-        logger.info({"event": "telemetry_start", "interval_s": self.interval_s})
+        """Start the telemetry background thread if not already running."""
 
     def stop(self):
+        """Stop the telemetry thread and join it (briefly)."""
+        if self._t and self._t.is_alive():
+            self._stop.clear()
+            self._t = threading.Thread(target=self._run, daemon=True)
+            self._t.start()
+            logger.info({"event": "telemetry_start", "interval_s": self.interval_s})
+
+    def _run(self):
+        """Background loop: probe connectivity and publish presence/RSSI."""
         self._stop.set()
         if self._t:
             self._t.join(timeout=2)
@@ -59,7 +74,7 @@ class Telemetry:
                             {
                                 "event": "telemetry_presence_cb_error",
                                 "error": repr(e),
-                            }
+                            },
                         )
 
                 # --- rssi probe ---
@@ -73,7 +88,7 @@ class Telemetry:
                             {
                                 "event": "telemetry_rssi_probe_error",
                                 "error": repr(e),
-                            }
+                            },
                         )
 
                 # --- rssi publish ---
@@ -82,21 +97,22 @@ class Telemetry:
                     cb_rssi = getattr(self.bridge, "publish_rssi", None)
                 if callable(cb_rssi) and dbm is not None:
                     try:
-                        if isinstance(dbm, int | float | str):
+                        # Use tuple form for isinstance checks
+                        if isinstance(dbm, (int, float, str)):
                             cb_rssi(int(dbm))
                         else:
                             logger.warning(
                                 {
                                     "event": "telemetry_invalid_rssi",
                                     "dbm": repr(dbm),
-                                }
+                                },
                             )
                     except Exception as e:
                         logger.warning(
                             {
                                 "event": "telemetry_rssi_cb_error",
                                 "error": repr(e),
-                            }
+                            },
                         )
             except Exception as e:
                 logger.warning({"event": "telemetry_error", "error": repr(e)})

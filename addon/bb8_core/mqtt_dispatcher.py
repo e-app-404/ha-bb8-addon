@@ -1,17 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import inspect
 import json
 import logging
 import os
-# Opt-in flag to preserve legacy flat-topic subscriptions at runtime.
-# Default is off (False) to prefer per-device `/cmd/...` topics.
-ENABLE_LEGACY_FLAT_TOPICS = os.getenv("ENABLE_LEGACY_FLAT_TOPICS", "0") == "1"
-from datetime import datetime
-import contextlib
 import socket
 from collections.abc import Callable
+from datetime import datetime, timezone
 from typing import Any
 
 import paho.mqtt.client as mqtt
@@ -20,6 +17,10 @@ from .addon_config import CONFIG, CONFIG_SOURCE, init_config
 from .bb8_presence_scanner import publish_discovery as _publish_discovery_async
 from .common import CMD_TOPICS, STATE_TOPICS
 from .logging_setup import logger
+
+# Opt-in flag to preserve legacy flat-topic subscriptions at runtime.
+# Default is off (False) to prefer per-device `/cmd/...` topics.
+ENABLE_LEGACY_FLAT_TOPICS = os.getenv("ENABLE_LEGACY_FLAT_TOPICS", "0") == "1"
 
 """MQTT dispatcher and discovery helpers for the BB-8 addon.
 
@@ -228,21 +229,18 @@ def _trigger_discovery_connected() -> None:
                     pub = _get_scanner_publisher()
                     pub(*args)
                     log.info(
-                        "discovery_scanner_called_with_dummy_args=true "
-                        "count=%d",
+                        "discovery_scanner_called_with_dummy_args=true " "count=%d",
                         len(args),
                     )
                     log.debug("Publisher called with dummy args: %r", pub)
                     return
                 log.info(
-                    "discovery_skip reason=scanner_publish_requires_args "
-                    "err=%s",
+                    "discovery_skip reason=scanner_publish_requires_args " "err=%s",
                     te,
                 )
         except Exception as e:
             log.warning(
-                "discovery_skip reason=scanner_import_or_call_failed "
-                "err=%s",
+                "discovery_skip reason=scanner_import_or_call_failed " "err=%s",
                 e,
             )
             log.debug("Exception in _trigger_discovery_connected: %s", e)
@@ -332,13 +330,56 @@ def _on_drive_trigger(_text: str) -> None:
             qos=0,
             retain=False,
         )
+
+
+def register_command_handlers(
+    mqtt_base: str | None = None,
+    device_id: str | None = None,
+):
+    """Compatibility helper used by tests to exercise command handler
+    registration.
+
+    This is a non-invasive seam that mirrors the registration logic used in
+    `start_mqtt_dispatcher` but does not start network clients. Tests may
+    call this with a fake `register_subscription` in place to verify which
+    topics would be bound.
+    """
+    base = None
+    try:
+        # Legacy flat-topic registrations are opt-in
+        if ENABLE_LEGACY_FLAT_TOPICS:
+            register_subscription(CMD_TOPICS["speed"][0], _on_speed)
+            register_subscription(CMD_TOPICS["heading"][0], _on_heading)
+            register_subscription(CMD_TOPICS["drive"][0], _on_drive_trigger)
+
+        # Per-device canonical topics
+        dev = device_id or CONFIG.get("DEVICE_ID") or os.environ.get("DEVICE_ID")
+        base = f"{mqtt_base or CONFIG.get('MQTT_BASE', 'bb8')}/{dev}" if dev else None
+        if base:
+            register_subscription(f"{base}/cmd/speed", _on_speed)
+            register_subscription(f"{base}/cmd/heading", _on_heading)
+            register_subscription(f"{base}/cmd/duration_ms", _on_duration)
+            register_subscription(
+                f"{base}/cmd/drive_trigger",
+                _on_drive_trigger,
+            )
+    except Exception:
+        log.exception("register_command_handlers failed")
         # State (retained)
-        CLIENT.publish(
-            f"{base}/state/drive",
-            json.dumps({**last_cmd, "ts": datetime.utcnow().isoformat()}),
-            qos=1,
-            retain=True,
-        )
+        if CLIENT is not None and base is not None:
+            CLIENT.publish(
+                f"{base}/state/drive",
+                json.dumps(
+                    {
+                        **last_cmd,
+                        "ts": datetime.now(timezone.utc).isoformat(),
+                    }
+                ),
+                qos=1,
+                retain=True,
+            )
+
+
 # ---- Optional: LED discovery (gated by config) ------------------------------
 # Verify if dispatcher already has a generic discovery publisher,
 # adapt the function body to call it (most systems expose a client.publish wrapper).
@@ -733,9 +774,7 @@ def _maybe_publish_bb8_discovery() -> None:
     ]
     for topic, uniq_id, payload in entities:
         if uniq_id in _DISCOVERY_PUBLISHED:
-            log.info(
-                f"discovery_skip reason=already_published " f"entity={uniq_id}"
-            )
+            log.info(f"discovery_skip reason=already_published " f"entity={uniq_id}")
             continue
         keys = sorted(payload.keys())
         log.info(f"publishing_discovery topic={topic} retain=True keys={keys}")
@@ -809,9 +848,7 @@ def ensure_dispatcher_started(*args: Any, **kwargs: Any) -> bool:
         )
         user_flag = bool(username)
         client_id = (
-            kwargs.get("client_id")
-            or CONFIG.get("MQTT_CLIENT_ID")
-            or "bb8-addon"
+            kwargs.get("client_id") or CONFIG.get("MQTT_CLIENT_ID") or "bb8-addon"
         )
         logger.info(
             "Dispatcher config (resolved): host=%s port=%s user=%s topic=%s "
@@ -823,8 +860,8 @@ def ensure_dispatcher_started(*args: Any, **kwargs: Any) -> bool:
             client_id,
             CONFIG_SOURCE,
         )
-    # If host is loopback but CONFIG specifies a non-loopback host,
-    # coerce it.
+        # If host is loopback but CONFIG specifies a non-loopback host,
+        # coerce it.
         cfg_host = CONFIG.get("MQTT_HOST") or CONFIG.get("mqtt_broker")
         if host in _LOOPBACKS and cfg_host and str(cfg_host) not in _LOOPBACKS:
             log.warning(
@@ -842,8 +879,8 @@ def ensure_dispatcher_started(*args: Any, **kwargs: Any) -> bool:
         except Exception:  # noqa: BLE001
             port = 1883  # fallback to default port
 
-    # Start the dispatcher here (you may need to call
-    # start_mqtt_dispatcher or like)
+        # Start the dispatcher here (you may need to call
+        # start_mqtt_dispatcher or like)
         # For demonstration, we just set the flag
         _DISPATCHER_STARTED = True
         # Replace discovery trigger with runtime-gated call
@@ -924,7 +961,9 @@ def start_mqtt_dispatcher(
 
     # Paho v2 API (compatible with our version); v311 is fine for HA
     client = mqtt.Client(
-        client_id=client_id, protocol=mqtt.MQTTv311, clean_session=True,
+        client_id=client_id,
+        protocol=mqtt.MQTTv311,
+        clean_session=True,
     )
 
     # Auth
@@ -947,17 +986,13 @@ def start_mqtt_dispatcher(
         reason = REASONS.get(rc, f"unknown_{rc}")
         if rc == 0:
             logger.info({"event": "mqtt_connected", "rc": rc, "reason": reason})
-            client.publish(
-                status_topic, payload="online", qos=qos, retain=False
-            )
+            client.publish(status_topic, payload="online", qos=qos, retain=False)
             # Authoritative seam invocation at call time
             # (thread-safe & testable)
             _trigger_discovery_connected()
             if hasattr(controller, "attach_mqtt"):
                 try:
-                    controller.attach_mqtt(
-                        client, mqtt_topic, qos=qos, retain=retain
-                    )
+                    controller.attach_mqtt(client, mqtt_topic, qos=qos, retain=retain)
                 except Exception as e:
                     logger.error(
                         {
@@ -1010,9 +1045,7 @@ def start_mqtt_dispatcher(
                 register_subscription(f"{base}/cmd/speed", _on_speed)
                 register_subscription(f"{base}/cmd/heading", _on_heading)
                 register_subscription(f"{base}/cmd/duration_ms", _on_duration)
-                register_subscription(
-                    f"{base}/cmd/drive_trigger", _on_drive_trigger
-                )
+                register_subscription(f"{base}/cmd/drive_trigger", _on_drive_trigger)
         except Exception:
             # Non-fatal: fall back to legacy flat topic registration above
             log.debug("Per-device cmd topic registration skipped")
@@ -1090,9 +1123,7 @@ def _make_cb(handler):
         try:
             handler(text)
         except Exception as exc:
-            log.warning(
-                "command dispatch failed for %s: %s", message.topic, exc
-            )
+            log.warning("command dispatch failed for %s: %s", message.topic, exc)
 
 
 def _bind_subscription(topic, handler):

@@ -1,3 +1,10 @@
+"""Presence scanner: BLE scan loop and MQTT discovery helpers.
+
+This module provides functions to scan for BB-8 toys, publish Home
+Assistant discovery payloads, and run a presence/RSSI advertising loop
+over MQTT. Docstrings are short to avoid import-time side effects.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -23,12 +30,13 @@ class RgbTD(TypedDict):
     b: int
 
 
-def read_version_or_default(version_path: str = None) -> str:
+def read_version_or_default(version_path: str = "") -> str:
     try:
         if version_path is not None:
             VERSION_FILE: Final = Path(version_path)
         else:
-            VERSION_FILE: Final = Path(__file__).resolve().parents[1] / "VERSION"
+            parent_dir = Path(__file__).resolve().parents[1]
+            VERSION_FILE: Final = parent_dir / "VERSION"
         txt = VERSION_FILE.read_text(encoding="utf-8").strip()
         return txt or "addon:dev"
     except Exception:
@@ -47,10 +55,12 @@ def _device_block(mac_upper: str) -> dict[str, Any]:
 
 
 async def publish_discovery(
-    mqtt, mac_upper: str, dbus_path: str | None = None, **_ignored
+    mqtt,
+    mac_upper: str,
+    dbus_path: str | None = None,
+    **_ignored,
 ) -> None:
-    """
-    Publish Home Assistant discovery for presence & rssi.
+    """Publish Home Assistant discovery for presence & rssi.
     `mqtt` is an async bus with publish(topic, payload, retain=False, qos=0).
     """
     dev = _device_block(mac_upper)
@@ -126,6 +136,83 @@ async def publish_discovery(
             True,
         )
         logger.info(f"discovery: published topic={topic3}")
+
+    # NOTE: Discovery JSON must not include 'retain'; use retain=True on publish calls.
+    # Publish number: speed/heading/duration and a static drive button.
+    device_id = uid
+    base = make_base(device_id)
+    speed_cfg = {
+        "name": "BB-8 Speed",
+        "unique_id": f"bb8_{device_id}_speed",
+        "device": {
+            "identifiers": [f"bb8_{device_id}"],
+            "manufacturer": "Sphero",
+            "model": "BB-8",
+            "name": f"BB-8 {device_id}",
+        },
+        "state_topic": f"{base}/state/drive",
+        "value_template": "{{ value_json.speed | default(0) }}",
+        "command_topic": f"{base}/cmd/speed",
+        "min": 0,
+        "max": 255,
+        "step": 1,
+    }
+    # similarly build heading_cfg (0..359) and duration_cfg (100..1000)
+    heading_cfg = {
+        "name": "BB-8 Heading",
+        "unique_id": f"bb8_{device_id}_heading",
+        "device": {"identifiers": [f"bb8_{device_id}"]},
+        "state_topic": f"{base}/state/drive",
+        "value_template": "{{ value_json.heading | default(0) }}",
+        "command_topic": f"{base}/cmd/heading",
+        "min": 0,
+        "max": 359,
+        "step": 1,
+    }
+    duration_cfg = {
+        "name": "BB-8 Duration",
+        "unique_id": f"bb8_{device_id}_duration_ms",
+        "device": {"identifiers": [f"bb8_{device_id}"]},
+        "state_topic": f"{base}/state/drive",
+        "value_template": "{{ value_json.duration_ms | default(100) }}",
+        "command_topic": f"{base}/cmd/duration_ms",
+        "min": 100,
+        "max": 10000,
+        "step": 10,
+    }
+    # button (static payload)
+    drive_btn_cfg = {
+        "name": "BB-8 Drive",
+        "unique_id": f"bb8_{device_id}_drive",
+        "device": {"identifiers": [f"bb8_{device_id}"]},
+        "command_topic": f"{base}/cmd/drive_trigger",
+        "payload_press": "DRIVE",
+    }
+    # Publish configs with retain=True (publisher flag), not a config field
+    await mqtt.publish(
+        f"{HA_DISCOVERY_TOPIC}/number/{speed_cfg['unique_id']}/config",
+        json.dumps(speed_cfg),
+        0,
+        True,
+    )
+    await mqtt.publish(
+        f"{HA_DISCOVERY_TOPIC}/number/{heading_cfg['unique_id']}/config",
+        json.dumps(heading_cfg),
+        0,
+        True,
+    )
+    await mqtt.publish(
+        f"{HA_DISCOVERY_TOPIC}/number/{duration_cfg['unique_id']}/config",
+        json.dumps(duration_cfg),
+        0,
+        True,
+    )
+    await mqtt.publish(
+        f"{HA_DISCOVERY_TOPIC}/button/{drive_btn_cfg['unique_id']}/config",
+        json.dumps(drive_btn_cfg),
+        0,
+        True,
+    )
 
 
 logger = logging.getLogger("bb8_presence_scanner")
@@ -218,8 +305,7 @@ def _cb_led_set(client, userdata, msg):
 
 
 def ensure_discovery_initialized() -> None:
-    """
-    Ensure discovery/dispatch is active exactly once from the scanner POV.
+    """Ensure discovery/dispatch is active exactly once from the scanner POV.
     Uses the mqtt_dispatcher singleton rather than a third-party dispatcher.
     """
     global _scanner_dispatcher_initialized
@@ -234,8 +320,7 @@ ensure_discovery_initialized()
 
 
 def publish_extended_discovery(client, base, device_id, device_block):
-    """
-    Publish extended Home Assistant discovery configs for LED, sleep, drive,
+    """Publish extended Home Assistant discovery configs for LED, sleep, drive,
     heading, speed. Topics and payloads match those in discovery_publish.py for
     compatibility.
     """
@@ -339,8 +424,7 @@ def publish_extended_discovery(client, base, device_id, device_block):
 
 # Step 2: Device Identity Helpers
 def make_device_id(mac: str) -> str:
-    """
-    Normalize MAC to lowercase hex without colons.
+    """Normalize MAC to lowercase hex without colons.
     Example: 'AA:BB:CC:DD:EE:FF' -> 'aabbccddeeff'.
     """
     return (mac or "").replace(":", "").lower()
@@ -392,8 +476,7 @@ def _connect_mqtt():
 # Main loop
 # -----------------------------------------------------------------------------
 async def scan_and_publish():
-    """
-    Scan loop: find BB-8, publish presence/RSSI (retained),
+    """Scan loop: find BB-8, publish presence/RSSI (retained),
     publish discovery once per MAC.
     """
     published_discovery_for = None  # last MAC we advertised
@@ -420,14 +503,16 @@ async def scan_and_publish():
                     mac, dbus_path = _extract_mac_and_dbus(d)
                     # Ensure dbus_path is a string
                     dbus_path = str(dbus_path) if dbus_path is not None else ""
+                    # Normalize nested detail access for readability
+                    details = getattr(d, "details", {}) or {}
+                    props = details.get("props", {}) or {}
+                    uuids = props.get("UUIDs")
                     logger.info(
                         "Found BB-8: %s [%s] RSSI: %s UUIDs: %s",
                         d.name,
                         mac,
                         rssi,
-                        ((getattr(d, "details", {}) or {}).get("props", {}) or {}).get(
-                            "UUIDs"
-                        ),
+                        uuids,
                     )
                     break
 
@@ -436,9 +521,10 @@ async def scan_and_publish():
             if found and mac and published_discovery_for != mac:
                 # Publish discovery using new retained config
                 dev = _device_block(mac_upper)
+                uid = mac_upper.lower().replace(":", "")
                 pres_cfg = {
                     "name": "BB-8 Presence",
-                    "uniq_id": (f"bb8_presence_{mac_upper.lower().replace(':', '')}"),
+                    "uniq_id": f"bb8_presence_{uid}",
                     "stat_t": "bb8/presence/state",
                     "pl_on": "online",
                     "pl_off": "offline",
@@ -504,7 +590,7 @@ async def scan_and_publish():
 # -----------------------------------------------------------------------------
 
 parser = argparse.ArgumentParser(
-    description="BB-8 BLE presence scanner and MQTT publisher"
+    description="BB-8 BLE presence scanner and MQTT publisher",
 )
 
 if __name__ == "__main__":
@@ -517,7 +603,9 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--bb8_name", default=CFG.get("BB8_NAME", "BB-8"), help="BB-8 BLE name"
+        "--bb8_name",
+        default=CFG.get("BB8_NAME", "BB-8"),
+        help="BB-8 BLE name",
     )
     parser.add_argument(
         "--scan_interval",
@@ -547,19 +635,31 @@ if __name__ == "__main__":
         help="MQTT password",
     )
     parser.add_argument(
-        "--print", action="store_true", help="Print discovery payloads and exit"
+        "--print",
+        action="store_true",
+        help="Print discovery payloads and exit",
     )
     parser.add_argument(
-        "--once", action="store_true", help="Run one scan cycle and exit"
+        "--once",
+        action="store_true",
+        help="Run one scan cycle and exit",
     )
     parser.add_argument(
-        "--json", action="store_true", help="Emit JSON on one-shot runs"
+        "--json",
+        action="store_true",
+        help="Emit JSON on one-shot runs",
     )
     parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Verbose not-found ticks"
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Verbose not-found ticks",
     )
     parser.add_argument(
-        "--quiet", "-q", action="store_true", help="No periodic tick output"
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="No periodic tick output",
     )
 
     BB8_NAME = args.bb8_name
@@ -584,7 +684,7 @@ if __name__ == "__main__":
             # nothing to print upfront
             print(
                 "# discovery will be published after a successful scan "
-                "when MAC/DBus are known"
+                "when MAC/DBus are known",
             )
             raise SystemExit(0)
 
@@ -630,7 +730,8 @@ if __name__ == "__main__":
 
 class _NullBridge:
     """Safe no-op bridge so the scanner runs even
-    if the real bridge is absent."""
+    if the real bridge is absent.
+    """
 
     def connect(self):
         pass
@@ -664,7 +765,6 @@ class _NullBridge:
 
 
 class _NullFacade:
-    pass
     """Safe no-op facade for when bridge is missing."""
 
     def power(self, on: bool):
@@ -745,6 +845,11 @@ FLAT_DRIVE_SET = f"{MQTT_BASE}/drive/set"
 FLAT_HEADING_SET = f"{MQTT_BASE}/heading/set"
 FLAT_SPEED_SET = f"{MQTT_BASE}/speed/set"
 
+# Back-compat aliases (explicitly LEGACY_*) to make greps clearer while
+# keeping constants available for tooling.
+LEGACY_FLAT_HEADING_SET = FLAT_HEADING_SET
+LEGACY_FLAT_SPEED_SET = FLAT_SPEED_SET
+
 # Flat state topics (advertised by discovery)
 FLAT_LED_STATE = f"{MQTT_BASE}/led/state"
 FLAT_STOP_STATE = f"{MQTT_BASE}/stop/state"
@@ -777,7 +882,7 @@ def _on_connect(client, userdata, flags, rc, properties=None):
             (FLAT_DRIVE_SET, 1),
             (FLAT_HEADING_SET, 1),
             (FLAT_SPEED_SET, 1),
-        ]
+        ],
     )
     # Route both sets to the same callbacks
     client.message_callback_add(CMD_POWER_SET, _cb_power_set)
@@ -816,7 +921,8 @@ def _parse_led_payload(raw: bytes | str):
     try:
         if isinstance(raw, memoryview):
             raw = raw.tobytes()
-        if isinstance(raw, bytes | bytearray):
+        # `isinstance` expects a type or tuple of types; use tuple form
+        if isinstance(raw, (bytes, bytearray)):
             raw = raw.decode("utf-8", "ignore")
         s = str(raw).strip()
         if s.upper() == "OFF":
@@ -952,9 +1058,7 @@ mqtt_client.on_connect = _on_connect
 # BLE helpers
 # -----------------------------------------------------------------------------
 def _extract_mac_and_dbus(device):
-    """
-    Return (MAC, D-Bus object path) from a Bleak BLEDevice, when possible.
-    """
+    """Return (MAC, D-Bus object path) from a Bleak BLEDevice, when possible."""
     details = getattr(device, "details", {}) or {}
     props = details.get("props", {}) or {}
     mac = (props.get("Address") or getattr(device, "address", "") or "").upper()
@@ -967,11 +1071,12 @@ def _extract_mac_and_dbus(device):
 
 
 def build_device_block(
-    mac: str, dbus_path: str, model: str, name: str = "BB-8"
+    mac: str,
+    dbus_path: str,
+    model: str,
+    name: str = "BB-8",
 ) -> dict:
-    """
-    Build a Home Assistant-compliant 'device' block for MQTT Discovery.
-    """
+    """Build a Home Assistant-compliant 'device' block for MQTT Discovery."""
     mac_norm = mac.upper()
     slug = "bb8-" + mac_norm.replace(":", "").lower()
     sw_version = CFG.get("ADDON_VERSION", "unknown")
@@ -999,15 +1104,18 @@ def publish_discovery_old(
     model: str = "",
     name: str = "",
 ):
-    """
-    Publish Home Assistant discovery for Presence and RSSI w/ full device block.
-    """
+    """Publish HA discovery for Presence and RSSI with full device block."""
     # TODO: Store and map device_defaults from facade_mapping_table.json
     # to retrievable dynamic variables
     model_hint = model if model else CFG.get("BB8_NAME", "S33 BB84 LE")
     name_hint = name if name else CFG.get("BB8_NAME", "BB-8")
     base = MQTT_BASE
-    device = build_device_block(mac, dbus_path, model=model_hint, name=name_hint)
+    device = build_device_block(
+        mac,
+        dbus_path,
+        model=model_hint,
+        name=name_hint,
+    )
     uid_suffix = mac.replace(":", "").lower()
     availability = {
         "availability_topic": AVAIL_TOPIC,
@@ -1065,11 +1173,10 @@ def tick_log(found: bool, name: str, addr: str | None, rssi, args=None):
                     "name": name,
                     "address": addr,
                     "rssi": rssi,
-                }
-            )
+                },
+            ),
         )
-    else:
-        if found:
-            print(f"[{ts}] found name={name} addr={addr} rssi={rssi}")
-        elif args and getattr(args, "verbose", False):
-            print(f"[{ts}] not_found name={name}")
+    elif found:
+        print(f"[{ts}] found name={name} addr={addr} rssi={rssi}")
+    elif args and getattr(args, "verbose", False):
+        print(f"[{ts}] not_found name={name}")

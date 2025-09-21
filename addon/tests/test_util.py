@@ -1,6 +1,6 @@
 import types
 
-import addon.bb8_core.util as util
+from addon.bb8_core import util
 
 
 def test_clamp_within_range(monkeypatch):

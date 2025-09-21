@@ -13,6 +13,7 @@ related:
   - ADR-0018
 last_updated: 2025-09-13
 supersedes: []
+tags: ["governance", "adr", "formatting", "redaction", "token-block", "machine-parseable", "metadata"]
 ---
 
 # ADR-0009: ADR Governance, Redaction, and Formatting Policy
@@ -117,6 +118,8 @@ Optional keys (recommended):
 - Use clear section headers (`##`) for Context, Decision, Consequences, Enforcement, etc.
 - Include a Table of Contents for ADRs longer than one page.
 - All code, token, and marker blocks must be fenced with triple backticks and specify the language (`yaml` or `json`).
+- Use consistent indentation (2 spaces) for nested lists and code blocks.
+- Do not include `---` to underline section headers. Use only `##`, `###` and so on as appropriate.
 
 ## 9. Machine-Parseable Blocks
 

@@ -1,3 +1,9 @@
+"""Orchestrate BLE and MQTT bridge controller startup for the add-on.
+
+This module resolves device addresses, wires the BLE gateway/bridge,
+and hooks the MQTT dispatcher into Home Assistant discovery and commands.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -8,29 +14,24 @@ import threading
 from typing import Any
 
 from .addon_config import load_config
+from .auto_detect import resolve_bb8_mac
+from .ble_bridge import BLEBridge
+from .ble_gateway import BleGateway
 from .common import STATE_TOPICS, publish_device_echo
 from .evidence_capture import EvidenceRecorder
 from .facade import BB8Facade
 from .logging_setup import logger
-from .mqtt_dispatcher import (
-    ensure_dispatcher_started,
-    register_subscription,  # dynamic topic binding
-)
+from .mqtt_dispatcher import register_subscription  # dynamic topic binding
+from .mqtt_dispatcher import ensure_dispatcher_started
 
 log = logging.getLogger(__name__)
 
-from .auto_detect import resolve_bb8_mac
-
-# Explicit export set (helps linters/import tools)
-from .ble_bridge import BLEBridge
-from .ble_gateway import BleGateway
-
 __all__ = [
-    "start_bridge_controller",
+    "BB8Facade",
     "BLEBridge",
     "BleGateway",
-    "BB8Facade",
     "resolve_bb8_mac",
+    "start_bridge_controller",
     # add other public symbols here as needed
 ]
 """
@@ -54,8 +55,7 @@ DEFAULT_MQTT_PORT = 1883
 
 
 def get_client():
-    """
-    Return the live MQTT client from the dispatcher.
+    """Return the live MQTT client from the dispatcher.
     Lazy import avoids import-time cycles. This function fails fast with a clear
     message if the dispatcher has not initialized the client yet.
     """
@@ -66,7 +66,7 @@ def get_client():
     if client is None:
         raise RuntimeError(
             "MQTT client unavailable: start mqtt_dispatcher before "
-            "bridge_controller."
+            "bridge_controller.",
         )
     return client
 
@@ -76,10 +76,11 @@ _client_or_none_cached_client = None
 
 def _client_or_none():
     global _client_or_none_cached_client
+    """Return cached MQTT client or None if dispatcher not initialized."""
     if _client_or_none_cached_client is None:
         try:
             _client_or_none_cached_client = get_client()
-        except Exception:
+        except RuntimeError:
             _client_or_none_cached_client = None
     return _client_or_none_cached_client
 
@@ -92,9 +93,13 @@ client = None
 
 
 def on_power_set(payload):
+    """Publish device-originated power state to the configured echo topic."""
     c = get_client()
     if not c:
-        logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["power"])
+        logger.warning(
+            "echo_pub skipped (no mqtt client): %s",
+            STATE_TOPICS["power"],
+        )
         return
     publish_device_echo(c, STATE_TOPICS["power"], payload)
     logger.info(
@@ -104,9 +109,13 @@ def on_power_set(payload):
 
 
 def on_stop():
+    """Publish device-originated stop event to the echo topic."""
     c = get_client()
     if not c:
-        logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["stop"])
+        logger.warning(
+            "echo_pub skipped (no mqtt client): %s",
+            STATE_TOPICS["stop"],
+        )
         return
     publish_device_echo(c, STATE_TOPICS["stop"], "pressed")
     logger.info(
@@ -116,9 +125,13 @@ def on_stop():
 
 
 def on_sleep():
+    """Publish device-originated sleep/idle event to the echo topic."""
     c = get_client()
     if not c:
-        logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["sleep"])
+        logger.warning(
+            "echo_pub skipped (no mqtt client): %s",
+            STATE_TOPICS["sleep"],
+        )
         return
     publish_device_echo(c, STATE_TOPICS["sleep"], "idle")
     logger.info(
@@ -128,9 +141,13 @@ def on_sleep():
 
 
 def on_drive(value=None):
+    """Publish device-originated drive telemetry/value to the echo topic."""
     c = get_client()
     if not c:
-        logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["drive"])
+        logger.warning(
+            "echo_pub skipped (no mqtt client): %s",
+            STATE_TOPICS["drive"],
+        )
         return
     publish_device_echo(c, STATE_TOPICS["drive"], value)
     logger.info(
@@ -140,9 +157,13 @@ def on_drive(value=None):
 
 
 def on_heading(value=None):
+    """Publish device-originated heading telemetry to the echo topic."""
     c = get_client()
     if not c:
-        logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["heading"])
+        logger.warning(
+            "echo_pub skipped (no mqtt client): %s",
+            STATE_TOPICS["heading"],
+        )
         return
     publish_device_echo(c, STATE_TOPICS["heading"], value)
     logger.info(
@@ -152,9 +173,13 @@ def on_heading(value=None):
 
 
 def on_speed(value=None):
+    """Publish device-originated speed telemetry to the echo topic."""
     c = get_client()
     if not c:
-        logger.warning("echo_pub skipped (no mqtt client): %s", STATE_TOPICS["speed"])
+        logger.warning(
+            "echo_pub skipped (no mqtt client): %s",
+            STATE_TOPICS["speed"],
+        )
         return
     publish_device_echo(c, STATE_TOPICS["speed"], value)
     logger.info(
@@ -164,26 +189,31 @@ def on_speed(value=None):
 
 
 def _mqtt_publish(
-    topic: str, payload: str, *, qos: int = 0, retain: bool = False
+    topic: str,
+    payload: str,
+    *,
+    qos: int = 0,
+    retain: bool = False,
 ) -> None:
-    """
-    Single publish seam used by echo paths. Resolves client AT CALL TIME to
-    pick up test monkeypatches reliably.
+    """Single publish seam used by echo paths.
+
+    Resolves client AT CALL TIME to pick up test monkeypatches reliably.
     """
     client = None
     try:
         from .mqtt_dispatcher import get_client as _get_client
 
         client = _get_client()
-    except Exception:
+    except ImportError:
         client = None
     if client is None:
         try:
             client = get_client()
-        except Exception:
+        except RuntimeError:
             client = None
     if client is None:
-        raise RuntimeError("MQTT client not available for publish")
+        msg = "MQTT client not available for publish"
+        raise RuntimeError(msg)
     log.info(
         "echo_pub topic=%s retain=%s qos=%s payload=%s",
         topic,
@@ -201,8 +231,8 @@ def on_led_set(r, g, b):
 
 
 def _on_led_command(text: str) -> None:
-    """
-    MQTT command handler for LED payloads coming via `/led/set` or `/led/cmd`.
+    """MQTT handler for LED payloads via `/led/set` or `/led/cmd`.
+
     Expects JSON: {"r":<int>,"g":<int>,"b":<int>}.
     """
     try:
@@ -212,15 +242,14 @@ def _on_led_command(text: str) -> None:
         r = int(data.get("r", 0))
         g = int(data.get("g", 0))
         b = int(data.get("b", 0))
-    except Exception as exc:
+    except (json.JSONDecodeError, TypeError, ValueError) as exc:
         log.warning("led_cmd parse error: %s payload=%r", exc, text)
         return
     on_led_set(r, g, b)
 
 
 def _wire_led_command_handler() -> None:
-    """
-    Subscribe to bb8/led/cmd and publish strict {"r","g","b"} to
+    """Subscribe to bb8/led/cmd and publish strict {"r","g","b"} to
     bb8/led/state. No 'source' field; retain=False (STP4 strict).
     Uses dispatcher subscription registry for idempotent binding.
     """
@@ -250,7 +279,7 @@ def _wire_led_command_handler() -> None:
             r = int(data.get("r", 0))
             g = int(data.get("g", 0))
             b = int(data.get("b", 0))
-        except Exception as exc:
+        except (json.JSONDecodeError, TypeError, ValueError) as exc:
             log.warning("led_cmd parse error: %s payload=%r", exc, text)
             return
         _publish_led_state({"r": r, "g": g, "b": b})
@@ -260,7 +289,11 @@ def _wire_led_command_handler() -> None:
         try:
             register_subscription(topic_cmd, _on_led_cmd_text)
             register_subscription(topic_set, _on_led_cmd_text)
-            log.info("LED cmd handlers registered: %s , %s", topic_cmd, topic_set)
+            log.info(
+                "LED cmd handlers registered: %s , %s",
+                topic_cmd,
+                topic_set,
+            )
             return
         except Exception as exc:  # pragma: no cover
             log.debug("register_subscription failed: %s", exc)
@@ -271,7 +304,7 @@ def _wire_led_command_handler() -> None:
         log.warning("LED cmd wiring deferred: no mqtt client yet")
         return
 
-    def _on_msg(_c, _u, msg):
+    def _on_msg(_c: object, _u: object, msg) -> None:
         try:
             _on_led_cmd_text(msg.payload.decode("utf-8"))
         except Exception as exc:  # noqa: BLE001
@@ -280,12 +313,21 @@ def _wire_led_command_handler() -> None:
     for t in (topic_cmd, topic_set):
         cli.message_callback_add(t, _on_msg)
         cli.subscribe(t, qos=qos)
-    log.info("LED cmd handler wired (fallback): %s , %s", topic_cmd, topic_set)
+    log.info(
+        "LED cmd handler wired (fallback): %s , %s",
+        topic_cmd,
+        topic_set,
+    )
 
 
 def _start_ble_loop_thread() -> asyncio.AbstractEventLoop:
+    """Create and start a background thread running a dedicated event loop."""
     loop = asyncio.new_event_loop()
-    thread = threading.Thread(target=loop.run_forever, name="BLEThread", daemon=True)
+    thread = threading.Thread(
+        target=loop.run_forever,
+        name="BLEThread",
+        daemon=True,
+    )
     thread.start()
     return loop
 
@@ -322,10 +364,12 @@ def shutdown_ble() -> None:
 
 # -------- Dispatcher compatibility shim --------
 def _start_dispatcher_compat(func, supplied: dict[str, Any]) -> Any:
-    """
-    Start MQTT dispatcher, pruning/aliasing kwargs to match the function signature.
-    Supports both legacy ('host','port','topic','user','password','controller') and
-    new-style ('mqtt_host','mqtt_port','mqtt_topic','username','passwd','bridge') names.
+    """Start MQTT dispatcher, pruning/aliasing kwargs to match the signature.
+
+    Supports both legacy names and new-style names. Legacy names include:
+    'host', 'port', 'topic', 'user', 'password', 'controller'. New-style
+    names include 'mqtt_host', 'mqtt_port', 'mqtt_topic', 'username',
+    'passwd', and 'bridge'.
     """
     import inspect
 
@@ -388,8 +432,8 @@ def start_bridge_controller(
     EvidenceRecorder_cls=None,
     client=None,
 ) -> BB8Facade | None:
-    """
-    Canonical entry point for starting the BB-8 bridge controller.
+    """Canonical entry point for starting the BB-8 bridge controller.
+
     Resolves BB-8 MAC, initializes BLE gateway/bridge, starts MQTT dispatcher.
     Accepts optional config dict for testability.
     """
@@ -400,9 +444,10 @@ def start_bridge_controller(
     from .logging_setup import logger
     from .mqtt_dispatcher import ensure_dispatcher_started
 
-    BB8Facade_cls = BB8Facade_cls or _BB8Facade
-    BLEBridge_cls = BLEBridge_cls or _BLEBridge
-    BleGateway_cls = BleGateway_cls or _BleGateway
+    # normalize injected class names to lowercase local vars to satisfy style
+    bb8facade_cls = BB8Facade_cls or _BB8Facade
+    blebridge_cls = BLEBridge_cls or _BLEBridge
+    blegateway_cls = BleGateway_cls or _BleGateway
     resolve_bb8_mac_fn = resolve_bb8_mac_fn or _resolve_bb8_mac
 
     cfg = config or (load_config()[0] if "load_config" in globals() else {})
@@ -413,15 +458,15 @@ def start_bridge_controller(
             "scan_seconds": cfg.get("scan_seconds") if cfg else None,
             "rescan_on_fail": cfg.get("rescan_on_fail") if cfg else None,
             "cache_ttl_hours": cfg.get("cache_ttl_hours") if cfg else None,
-        }
+        },
     )
-    gw = BleGateway_cls(mode="bleak", adapter=cfg.get("ble_adapter"))
+    gw = blegateway_cls(mode="bleak", adapter=cfg.get("ble_adapter"))
     logger.info(
         {
             "event": "ble_gateway_init",
             "mode": getattr(gw, "mode", None),
             "adapter": cfg.get("ble_adapter"),
-        }
+        },
     )
     target_mac: str | None = (cfg.get("bb8_mac") or "").strip() or None
     if not target_mac:
@@ -432,7 +477,7 @@ def start_bridge_controller(
                 "scan_seconds": cfg.get("scan_seconds"),
                 "cache_ttl_hours": cfg.get("cache_ttl_hours"),
                 "adapter": cfg.get("ble_adapter"),
-            }
+            },
         )
         target_mac = resolve_bb8_mac_fn(
             scan_seconds=cfg.get("scan_seconds", 5),
@@ -447,19 +492,19 @@ def start_bridge_controller(
                 "event": "bb8_mac_resolve_bypass",
                 "reason": "env_or_options",
                 "bb8_mac": target_mac,
-            }
+            },
         )
     if not target_mac:
         logger.error(
             {
                 "event": "ble_bridge_init_failed",
                 "reason": "target_mac_missing",
-            }
+            },
         )
         raise SystemExit("BB-8 MAC address could not be resolved. Exiting.")
-    bridge = BLEBridge_cls(gw, target_mac)
+    bridge = blebridge_cls(gw, target_mac)
     logger.info({"event": "ble_bridge_init", "target_mac": target_mac})
-    facade = BB8Facade_cls(bridge)
+    facade = bb8facade_cls(bridge)
     ensure_dispatcher_started()
     logger.info({"event": "bridge_controller_ready"})
 
@@ -484,18 +529,19 @@ def start_bridge_controller(
 
             client = _get_client()
         except Exception:
-            import unittest.mock as mock
+            from unittest import mock
 
             client = mock.Mock()
     if enable_evidence or force_evidence:
         if client is None:
+            msg = "Client is None, cannot instantiate EvidenceRecorder"
             logger.error(
                 {
                     "event": "evidence_recorder_client_missing",
-                    "msg": "Client is None, cannot instantiate EvidenceRecorder",
-                }
+                    "msg": msg,
+                },
             )
-            raise RuntimeError("Client is None, cannot instantiate EvidenceRecorder")
+            raise RuntimeError(msg)
         try:
             recorder_cls = (
                 EvidenceRecorder_cls
@@ -511,7 +557,7 @@ def start_bridge_controller(
                         "evidence_report_path": src_report,
                         "mqtt_topic": src_topic,
                     },
-                }
+                },
             )
         except Exception as e:
             logger.warning(
@@ -522,7 +568,7 @@ def start_bridge_controller(
                         "evidence_report_path": src_report,
                         "mqtt_topic": src_topic,
                     },
-                }
+                },
             )
 
     # Telemetry logic
@@ -537,7 +583,7 @@ def start_bridge_controller(
                     "event": "telemetry_start",
                     "interval_s": telemetry_interval,
                     "role": "bridge",
-                }
+                },
             )
             telemetry = Telemetry(bridge)
             telemetry.start()
@@ -546,7 +592,7 @@ def start_bridge_controller(
                     "event": "telemetry_loop_started",
                     "interval_s": telemetry_interval,
                     "role": "bridge",
-                }
+                },
             )
         except Exception as e:
             logger.warning(
@@ -554,7 +600,7 @@ def start_bridge_controller(
                     "event": "telemetry_error",
                     "error": repr(e),
                     "role": "bridge",
-                }
+                },
             )
     else:
         logger.info(
@@ -562,7 +608,7 @@ def start_bridge_controller(
                 "event": "telemetry_skipped",
                 "reason": "scanner_owns_telemetry",
                 "role": "bridge",
-            }
+            },
         )
 
     return facade

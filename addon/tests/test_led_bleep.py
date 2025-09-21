@@ -10,7 +10,10 @@ pytestmark = pytest.mark.asyncio
 
 class FakeMessage:
     def __init__(self, topic, payload, qos=0, retain=False):
-        self.topic, self.payload, self.qos, self.retain = topic, payload, qos, retain
+        self.topic = topic
+        self.payload = payload
+        self.qos = qos
+        self.retain = retain
 
 
 class FakeMQTT:
@@ -33,7 +36,8 @@ class FakeMQTT:
         if not h:
             return
         msg = FakeMessage(
-            topic, payload.encode() if isinstance(payload, str) else payload
+            topic,
+            payload.encode() if isinstance(payload, str) else payload,
         )
         if asyncio.iscoroutinefunction(h):
             await h(self, None, msg)
@@ -53,7 +57,7 @@ async def led_handler(_client, _ud, msg):
                     "g": int(data.get("g", 0)),
                     "b": int(data.get("b", 0)),
                     "source": "device",
-                }
+                },
             )
         else:
             # State payload
@@ -61,8 +65,13 @@ async def led_handler(_client, _ud, msg):
             payload = json.dumps({"state": state, "source": "device"})
     except Exception:
         payload = json.dumps({"state": "OFF", "source": "device"})
+    topic = (
+        f"{os.environ.get('MQTT_BASE', 'bb8')}/"
+        f"{os.environ.get('DEVICE_ID', 'testbb8')}/state/led"
+    )
+
     _client.publish(
-        f"{os.environ.get('MQTT_BASE', 'bb8')}/{os.environ.get('DEVICE_ID', 'testbb8')}/state/led",
+        topic,
         payload,
         retain=True,
     )
@@ -110,7 +119,7 @@ async def test_led_bleep_rgb_publish(rgb):
     rgb_publishes = [
         (t, p, r)
         for (t, p, _q, r) in client.published
-        if t == state_topic and p and all(k in json.loads(p) for k in ("r", "g", "b"))
+        if (t == state_topic and p and all(k in json.loads(p) for k in ("r", "g", "b")))
     ]
     assert rgb_publishes, f"No RGB publish found for {rgb}"
     for _t, p, retained in rgb_publishes:

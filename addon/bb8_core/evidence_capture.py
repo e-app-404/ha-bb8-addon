@@ -10,11 +10,12 @@ from typing import Any
 
 
 class EvidenceRecorder:
-    """
-    Subscribes to command and state topics and records round-trip evidence.
-    Constraints:
-      - Single publisher (façade) policy remains intact; this only records.
-      - Writes JSON lines to reports/ha_mqtt_trace_snapshot.jsonl (≤150 lines).
+    """Record MQTT command/state round-trips to a JSONL report.
+
+    The recorder subscribes to command and state topics beneath the
+    configured prefix and writes compact JSON lines to the configured
+    ``report_path``. The implementation is conservative and intended for
+    offline diagnostics; it does not alter published messages.
     """
 
     def __init__(
@@ -36,12 +37,15 @@ class EvidenceRecorder:
         self._t: threading.Thread | None = None
 
     def start(self):
+        """Start the recorder background thread if not already running."""
         if self._t and self._t.is_alive():
             return
         self._stop.clear()
         self._install_callbacks()
         self._t = threading.Thread(
-            target=self._runner, name="stp4_evidence", daemon=True
+            target=self._runner,
+            name="stp4_evidence",
+            daemon=True,
         )
         self._t.start()
 
@@ -71,7 +75,7 @@ class EvidenceRecorder:
             if callable(old):
                 with contextlib.suppress(Exception):
                     old(client, userdata, msg)
-            on_message(client, userdata, msg)
+            # forward to local recorder callback once
             on_message(client, userdata, msg)
 
         self.client.on_message = chained

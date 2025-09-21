@@ -18,8 +18,7 @@ CONFIG_SOURCE: Path | None = None
 
 
 def _candidate_paths() -> list[Path]:
-    """
-    Ordered config locations (HA first, then add-on, then local/dev).
+    """Ordered config locations (HA first, then add-on, then local/dev).
     The '/Volumes/...' path is dev-only and logged at DEBUG.
     """
     env_path = os.environ.get("CONFIG_PATH")
@@ -34,7 +33,7 @@ def _candidate_paths() -> list[Path]:
             Path(__file__).parent / "config.yaml",
             Path("/app/config.yaml"),
             Path("/Volumes/HA/addons/docs/config.yaml"),
-        ]
+        ],
     )
     return paths
 
@@ -42,9 +41,7 @@ def _candidate_paths() -> list[Path]:
 def _load_options_json(
     path: Path = Path("/data/options.json"),
 ) -> tuple[dict[str, Any], Path | None]:
-    """
-    Load Home Assistant add-on options (JSON). Returns (data, source_path).
-    """
+    """Load Home Assistant add-on options (JSON). Returns (data, source_path)."""
     if path.exists():
         try:
             with path.open("r", encoding="utf-8") as fh:
@@ -64,8 +61,7 @@ def _load_options_json(
 def _load_yaml_cfg(
     paths: list[Path] | None = None,
 ) -> tuple[dict[str, Any], Path | None]:
-    """
-    Load YAML config from the first available candidate path.
+    """Load YAML config from the first available candidate path.
     Returns (data, source_path). Empty dict if none valid.
     """
     candidates = paths or _candidate_paths()
@@ -81,17 +77,15 @@ def _load_yaml_cfg(
                 return data, pth
             except Exception as exc:  # noqa: BLE001
                 logger.warning("[CONFIG] Failed to load YAML %s: %s", pth, exc)
+        elif "Volumes" in str(pth):
+            logger.debug("[CONFIG] Dev-only path skipped: %s", pth)
         else:
-            if "Volumes" in str(pth):
-                logger.debug("[CONFIG] Dev-only path skipped: %s", pth)
-            else:
-                logger.debug("[CONFIG] Path not found: %s", pth)
+            logger.debug("[CONFIG] Path not found: %s", pth)
     return {}, None
 
 
 def load_config() -> tuple[dict[str, Any], Path | None]:
-    """
-    Produce the effective configuration.
+    """Produce the effective configuration.
     Precedence: /data/options.json (HA) overrides YAML values.
     Returns (config_dict, primary_source_path).
     """
@@ -209,11 +203,11 @@ def init_config() -> None:
 __all__ = [
     "CONFIG",
     "CONFIG_SOURCE",
-    "load_config",
-    "init_config",
+    "LOG",
     "_load_options_json",
     "_load_yaml_cfg",
-    "LOG",
+    "init_config",
+    "load_config",
 ]
 
 # Initialize on import; safe for runtime and tests

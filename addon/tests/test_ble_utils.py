@@ -1,5 +1,6 @@
-import addon.bb8_core.ble_utils as ble_utils
 import pytest
+
+from addon.bb8_core import ble_utils
 
 
 class DummyClientCoroutine:

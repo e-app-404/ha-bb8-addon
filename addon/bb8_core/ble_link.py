@@ -1,3 +1,9 @@
+"""BLE link runner: shared event loop worker and facade.
+
+Provides a single background runner for BLE tasks and a thin BLELink
+compatibility facade used by higher-level modules and tests.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -19,8 +25,7 @@ def set_loop(loop: asyncio.AbstractEventLoop) -> None:
 
 
 async def _run() -> None:
-    """
-    BLE worker main coroutine.
+    """BLE worker main coroutine.
     Must only be scheduled on the dedicated loop.
     """
     backoff = [0.1, 0.2, 0.5, 1.0, 2.0]
@@ -36,8 +41,7 @@ async def _run() -> None:
 
 
 async def _cancel_and_drain() -> int:
-    """
-    Cancel and await completion of all pending tasks on the BLE loop.
+    """Cancel and await completion of all pending tasks on the BLE loop.
     Must be executed *inside* the BLE loop.
     Returns the number of tasks cancelled.
     """
@@ -90,7 +94,8 @@ def stop(timeout: float = 2.5) -> None:
     if _loop is not None:
         try:
             drained = asyncio.run_coroutine_threadsafe(
-                _cancel_and_drain(), _loop
+                _cancel_and_drain(),
+                _loop,
             ).result(timeout=timeout)
             log.info("BLE cleanup: cancelled %d pending task(s).", drained)
         except TimeoutError:
@@ -110,8 +115,7 @@ def run_coro(coro: Coroutine[Any, Any, Any]) -> Future:
 # Compatibility facade for callers importing `BLELink`
 # ---------------------------------------------------------------------------
 class BLELink:
-    """
-    Minimal facade to satisfy callers/tests that expect a BLELink class.
+    """Minimal facade to satisfy callers/tests that expect a BLELink class.
     Internally delegates to the module-level runner functions above.
     """
 
@@ -128,22 +132,21 @@ class BLELink:
         stop(timeout=timeout)
 
     def submit(self, coro: Coroutine[Any, Any, Any]) -> Future:
-        """
-        Schedule a coroutine onto the dedicated BLE loop.
+        """Schedule a coroutine onto the dedicated BLE loop.
         Example: link.submit(device.connect())
         """
         return run_coro(coro)
 
     # Optional convenience shims if legacy code calls these:
-    def set_loop(self, loop: asyncio.AbstractEventLoop) -> None:  # noqa: D401
+    def set_loop(self, loop: asyncio.AbstractEventLoop) -> None:
         """Delegate to module-level set_loop()."""
         set_loop(loop)
 
 
 __all__ = [
+    "BLELink",
+    "run_coro",
     "set_loop",
     "start",
     "stop",
-    "run_coro",
-    "BLELink",
 ]

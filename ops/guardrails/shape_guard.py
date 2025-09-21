@@ -3,7 +3,7 @@ import re
 import sys
 
 errors = []
-root = pathlib.Path(".").resolve()
+root = pathlib.Path().resolve()
 
 # 1) no root-level bb8_core
 if (root / "bb8_core").exists():
@@ -16,13 +16,14 @@ for p in root.rglob("*.py"):
         continue
     s = p.read_text(encoding="utf-8", errors="ignore")
     if re.search(r"(^|\n)\s*from\s+bb8_core\s+import\s+", s) or re.search(
-        r"(^|\n)\s*import\s+bb8_core(\s|$)", s
+        r"(^|\n)\s*import\s+bb8_core(\s|$)",
+        s,
     ):
         bad.append(str(p))
 if bad:
     errors.append(
         "Forbidden imports referencing bare 'bb8_core' found in:\n  - "
-        + "\n  - ".join(sorted(bad))
+        + "\n  - ".join(sorted(bad)),
     )
 
 # 3) DS_Store junk

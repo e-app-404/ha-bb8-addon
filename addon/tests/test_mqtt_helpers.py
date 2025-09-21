@@ -1,7 +1,8 @@
 from unittest.mock import AsyncMock
 
-import addon.bb8_core.mqtt_helpers as mqtt_helpers
 import pytest
+
+from addon.bb8_core import mqtt_helpers
 
 
 @pytest.mark.asyncio
@@ -29,7 +30,7 @@ async def test_publish_retain_signature_3_sync():
 
     # Simulate both async publish signatures raising TypeError
     async def fail_publish(*args, **kwargs):
-        raise TypeError()
+        raise TypeError
 
     mqtt.publish = AsyncMock(side_effect=fail_publish)
 
@@ -60,7 +61,7 @@ async def test_publish_retain_typeerror_all():
 
     # All async attempts fail, fallback to sync
     async def fail_publish(*args, **kwargs):
-        raise TypeError()
+        raise TypeError
 
     mqtt.publish = fail_publish
 

@@ -5,6 +5,7 @@ import threading
 from unittest import mock
 
 import pytest
+
 from addon.bb8_core import echo_responder
 
 
@@ -82,7 +83,9 @@ def test_publish_echo_roundtrip(monkeypatch):
 def test_resolve_topic_env(monkeypatch):
     monkeypatch.setenv("MQTT_ECHO_CMD_TOPIC", "custom/topic")
     result = echo_responder._resolve_topic(
-        "mqtt_echo_cmd_topic", "echo/cmd", "MQTT_ECHO_CMD_TOPIC"
+        "mqtt_echo_cmd_topic",
+        "echo/cmd",
+        "MQTT_ECHO_CMD_TOPIC",
     )
     assert result == "custom/topic"
 
@@ -151,14 +154,22 @@ def test_on_message_echo(monkeypatch):
         lambda timeout_s=3.0: {"ok": True, "latency_ms": 42},
     )
     monkeypatch.setattr(
-        echo_responder, "_publish_echo_roundtrip", lambda *a, **kw: None
+        echo_responder,
+        "_publish_echo_roundtrip",
+        lambda *a, **kw: None,
     )
     echo_responder.on_message(client, None, msg)
     client.publish.assert_any_call(
-        echo_responder.MQTT_ECHO_ACK, mock.ANY, qos=1, retain=False
+        echo_responder.MQTT_ECHO_ACK,
+        mock.ANY,
+        qos=1,
+        retain=False,
     )
     client.publish.assert_any_call(
-        echo_responder.MQTT_ECHO_STATE, mock.ANY, qos=1, retain=False
+        echo_responder.MQTT_ECHO_STATE,
+        mock.ANY,
+        qos=1,
+        retain=False,
     )
 
 
@@ -169,7 +180,9 @@ def test_on_message_ble_ready(monkeypatch):
     msg.payload = b"{}"
     # Patch MQTT_BLE_READY_SUMMARY to a known value
     monkeypatch.setattr(
-        echo_responder, "MQTT_BLE_READY_SUMMARY", "bb8/ble_ready/summary"
+        echo_responder,
+        "MQTT_BLE_READY_SUMMARY",
+        "bb8/ble_ready/summary",
     )
     echo_responder.on_message(client, None, msg)
     # Accept any call to publish with the summary topic

@@ -2,11 +2,13 @@ import sys
 import types
 from unittest.mock import AsyncMock, MagicMock
 
-import addon.bb8_core.scan_bb8_gatt as scan_bb8_gatt
 import pytest
 
+from addon.bb8_core import scan_bb8_gatt
+
 sys.modules["bleak"] = types.SimpleNamespace(
-    BleakClient=MagicMock(), BleakScanner=MagicMock()
+    BleakClient=MagicMock(),
+    BleakScanner=MagicMock(),
 )
 
 
@@ -58,7 +60,9 @@ async def test_main_device_found(monkeypatch):
     # Capture print output
     output = []
     monkeypatch.setattr(
-        scan_bb8_gatt, "print", lambda *a, **k: output.append(" ".join(map(str, a)))
+        scan_bb8_gatt,
+        "print",
+        lambda *a, **k: output.append(" ".join(map(str, a))),
     )
     await scan_bb8_gatt.main("hci0", "BB-8")
     assert any("Found BB-8" in line for line in output)
@@ -89,7 +93,9 @@ async def test_main_device_not_found(monkeypatch):
     monkeypatch.setattr(scan_bb8_gatt.asyncio, "sleep", AsyncMock())
     output = []
     monkeypatch.setattr(
-        scan_bb8_gatt, "print", lambda *a, **k: output.append(" ".join(map(str, a)))
+        scan_bb8_gatt,
+        "print",
+        lambda *a, **k: output.append(" ".join(map(str, a))),
     )
     await scan_bb8_gatt.main("hci0", "BB-8")
     assert any("BB-8 not found" in line for line in output)
@@ -118,7 +124,9 @@ async def test_main_fallback_device(monkeypatch):
     monkeypatch.setattr(scan_bb8_gatt.asyncio, "sleep", AsyncMock())
     output = []
     monkeypatch.setattr(
-        scan_bb8_gatt, "print", lambda *a, **k: output.append(" ".join(map(str, a)))
+        scan_bb8_gatt,
+        "print",
+        lambda *a, **k: output.append(" ".join(map(str, a))),
     )
 
     # Patch BleakClient to skip connection

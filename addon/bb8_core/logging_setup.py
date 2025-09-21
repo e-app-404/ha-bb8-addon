@@ -1,3 +1,10 @@
+"""Logging helpers and structured redaction for bb8 addon.
+
+Provides a simple redacting JSON log handler and convenience emitters
+used across the addon. These helpers keep sensitive fields masked and
+standardize the event-shaped logs produced by the codebase.
+"""
+
 import json
 import logging
 import os
@@ -17,11 +24,16 @@ except Exception:
 
 # Expanded redaction pattern
 REDACT = re.compile(
-    r"(?i)\b(pass(word)?|token|apikey|api_key|secret|bearer)\b\s*[:=]\s*([^\s,]+)"
+    r"(?i)\b(pass(word)?|token|apikey|api_key|secret|bearer)\b\s*[:=]\s*([^\s,]+)",
 )
 
 
 def redact(s: str) -> str:
+    """Redact known sensitive key/value patterns in a string.
+
+    This substitutes a placeholder for common secrets like passwords
+    and tokens.
+    """
     return REDACT.sub(lambda m: f"{m.group(1)}=***REDACTED***", s)
 
 
@@ -63,7 +75,7 @@ def log_command_received(command: str, topic: str, payload: dict):
             "payload": {
                 k: v for k, v in payload.items() if k != "password" and k != "token"
             },
-        }
+        },
     )
 
 
@@ -73,11 +85,15 @@ def log_device_handler_invoked(handler: str, args: dict):
             "event": "device_handler_invoked",
             "handler": handler,
             "args": {k: v for k, v in args.items() if k != "password" and k != "token"},
-        }
+        },
     )
 
 
 def log_ble_link_started(mac: str):
+    """Emit a simple event marking the start of a BLE link.
+
+    The function emits a structured event containing the MAC address.
+    """
     ble_logger.info({"event": "ble_link_started", "mac": mac})
 
 
@@ -89,7 +105,7 @@ def log_echo_published(topic: str, payload: dict):
             "payload": {
                 k: v for k, v in payload.items() if k != "password" and k != "token"
             },
-        }
+        },
     )
 
 
@@ -107,9 +123,11 @@ def _writable(path: str) -> bool:
 def init_file_handler(
     default_path="/addons/docs/reports/ha_bb8_addon.log",
 ) -> logging.Handler:
-    """
-    Pref config LOG_PATH, then BB8_LOG_PATH env, then default_path, then /tmp,
-    then stderr. Emits one warning on fallback.
+    """Resolve and return a file handler suitable for the environment.
+
+    Resolution order: configuration, BB8_LOG_PATH environment variable,
+    provided default, temporary directory, then stderr. A single warning
+    is emitted when falling back.
     """
     candidate = _cfg.get("LOG_PATH") or os.environ.get("BB8_LOG_PATH") or default_path
     # Detect env: if running in HA, /addons is present and /Volumes is not
@@ -126,14 +144,14 @@ def init_file_handler(
         tmp = os.path.join(tempfile.gettempdir(), "bb8_addon.log")
         print(
             f"[LOGGING DEBUG] Fallback to temp log path: {tmp}, "
-            f"Writable: {_writable(tmp)}"
+            f"Writable: {_writable(tmp)}",
         )
         candidate = tmp if _writable(tmp) else None
         logger.warning(
             {
                 "event": "log_path_fallback",
                 "target": candidate or "stderr",
-            }
+            },
         )
     if candidate:
         return logging.FileHandler(candidate)

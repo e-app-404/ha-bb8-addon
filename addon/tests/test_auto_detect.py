@@ -4,6 +4,7 @@ import time
 from unittest import mock
 
 import pytest
+
 from addon.bb8_core import auto_detect
 
 
@@ -43,11 +44,12 @@ class TestCache:
             assert cache.mac == "AA:BB:CC:DD:EE:FF"
             # Expired cache
             with open(cache_path, "w") as f:
-                # Write cache with last_seen_epoch 2 hours ago (age_hours=2 > ttl_hours=1)
+                # Write cache with last_seen_epoch 2 hours ago
+                # (age_hours=2 > ttl_hours=1)
                 f.write(
                     f'{{"mac": "AA:BB:CC:DD:EE:FF", '
                     f'"advertised_name": "BB8", '
-                    f'"last_seen_epoch": {now - 7200}}}'
+                    f'"last_seen_epoch": {now - 7200}}}',
                 )
             cache = auto_detect.load_cache(now, 1, cache_path)
             assert cache is None
@@ -101,7 +103,9 @@ class TestCache:
                 cache_path = os.path.join(tmpdir, "bb8_cache.json")
                 now = time.time()
                 with open(cache_path, "w") as f:
-                    f.write(f'{{"advertised_name": "BB8", "last_seen_epoch": {now}}}')
+                    f.write(
+                        f'{{"advertised_name": "BB8", ' f'"last_seen_epoch": {now}}}'
+                    )
                 cache = auto_detect.load_cache(now, 1, cache_path)
                 assert cache is None
 
@@ -111,7 +115,10 @@ class TestCache:
                 now = time.time()
                 with open(cache_path, "w") as f:
                     f.write(
-                        f'{{"mac": "BADMAC", "advertised_name": "BB8", "last_seen_epoch": {now}}}'
+                        (
+                            f'{{"mac": "BADMAC", "advertised_name": "BB8", '
+                            f'"last_seen_epoch": {now}}}'
+                        ),
                     )
                 cache = auto_detect.load_cache(now, 1, cache_path)
                 assert cache is None
@@ -150,19 +157,23 @@ class TestResolveScanPick:
         with mock.patch("addon.bb8_core.auto_detect.BleakScanner") as mock_scanner:
             yield mock_scanner
 
-    @mock.patch("addon.bb8_core.auto_detect.load_mac_from_cache", return_value=None)
+    @mock.patch(
+        "addon.bb8_core.auto_detect.load_mac_from_cache",
+        return_value=None,
+    )
     @mock.patch("addon.bb8_core.auto_detect.scan_for_bb8")
     def test_resolve_bb8_mac(self, mock_scan_for_bb8, mock_load_cache):
         # Device found branch
         mock_scan_for_bb8.return_value = [
-            {"name": "BB8", "address": "AA:BB:CC:DD:EE:FF"}
+            {"name": "BB8", "address": "AA:BB:CC:DD:EE:FF"},
         ]
         mac = auto_detect.resolve_bb8_mac(1, 1, False)
         assert mac == "AA:BB:CC:DD:EE:FF"
         # No device found branch
         mock_scan_for_bb8.return_value = []
         with pytest.raises(
-            RuntimeError, match="BB-8 not found during scan and rescan_on_fail is False"
+            RuntimeError,
+            match=("BB-8 not found during scan and rescan_on_fail is False"),
         ):
             auto_detect.resolve_bb8_mac(1, 1, False)
 
@@ -170,7 +181,7 @@ class TestResolveScanPick:
     def test_scan_for_bb8(self, mock_scan_for_bb8, mock_bleak_scanner):
         # Device found branch
         mock_scan_for_bb8.return_value = [
-            {"name": "BB8", "address": "AA:BB:CC:DD:EE:FF"}
+            {"name": "BB8", "address": "AA:BB:CC:DD:EE:FF"},
         ]
         candidates = auto_detect.scan_for_bb8(1, None)
         assert any(c["address"] == "AA:BB:CC:DD:EE:FF" for c in candidates)
@@ -181,7 +192,9 @@ class TestResolveScanPick:
 
     @mock.patch("addon.bb8_core.auto_detect.scan_for_bb8")
     def test_scan_for_bb8_multiple_candidates(
-        self, mock_scan_for_bb8, mock_bleak_scanner
+        self,
+        mock_scan_for_bb8,
+        mock_bleak_scanner,
     ):
         # Patch scan_for_bb8 to return deterministic candidates
         candidates = [
@@ -194,7 +207,11 @@ class TestResolveScanPick:
         assert result[0]["address"] == "AA:BB:CC:DD:EE:FF"
 
     @mock.patch("addon.bb8_core.auto_detect.scan_for_bb8")
-    def test_scan_for_bb8_invalid_mac(self, mock_scan_for_bb8, mock_bleak_scanner):
+    def test_scan_for_bb8_invalid_mac(
+        self,
+        mock_scan_for_bb8,
+        mock_bleak_scanner,
+    ):
         candidates = [
             {"address": "BADMAC", "name": "BB8", "rssi": -60},
             {"address": "AA:BB:CC:DD:EE:FF", "name": "BB8", "rssi": -50},
@@ -235,11 +252,16 @@ class TestConnectBB8:
         instance.is_connected = True
         instance.disconnect.return_value = None
         # connect_bb8 is async, so we need to run it in an event loop
-        # Here, just check that the function exists and can be called with Options
-        opts = auto_detect.Options(
-            scan_seconds=1, cache_ttl_hours=1, rescan_on_fail=False, adapter=None
+        # Here, just check that the function exists and can be called with
+        # Options
+        auto_detect.Options(
+            scan_seconds=1,
+            cache_ttl_hours=1,
+            rescan_on_fail=False,
+            adapter=None,
         )
-        # You may need to use asyncio.run in real test, but here just check instantiation
+        # You may need to use asyncio.run in real test, but here we just
+        # check instantiation
         assert hasattr(auto_detect, "connect_bb8")
 
         @mock.patch("addon.bb8_core.auto_detect.BleakClient")

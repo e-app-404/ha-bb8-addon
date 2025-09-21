@@ -3,13 +3,13 @@ import inspect
 import json
 
 import pytest
+
 from addon.bb8_core.bb8_presence_scanner import publish_discovery
 from addon.bb8_core.mqtt_dispatcher import start_mqtt_dispatcher
 
 
 class FakeMQTT:
-    """
-    Minimal paho-mqtt compatible fake with per-topic callbacks.
+    """Minimal paho-mqtt compatible fake with per-topic callbacks.
     Supports:
       - publish(topic, payload, qos=0, retain=False) -> FakeMid
       - subscribe(topic, qos=0) -> (rc, mid)
@@ -69,7 +69,7 @@ class FakeMQTT:
         """Simulate an inbound message to the appropriate handler."""
 
         class _Msg:
-            __slots__ = ("topic", "payload")
+            __slots__ = ("payload", "topic")
 
             def __init__(self, topic, payload):
                 self.topic = topic
@@ -147,12 +147,18 @@ async def test_discovery_and_dispatcher_smoke(caplog):
         async def handle_led(self, client, userdata, msg):
             # Echo LED state
             await client.publish(
-                f"bb8/{device_id}/state/led", msg.payload, qos=1, retain=False
+                f"bb8/{device_id}/state/led",
+                msg.payload,
+                qos=1,
+                retain=False,
             )
 
         async def handle_sleep(self, client, userdata, msg):
             await client.publish(
-                f"bb8/{device_id}/event/slept", msg.payload, qos=1, retain=False
+                f"bb8/{device_id}/event/slept",
+                msg.payload,
+                qos=1,
+                retain=False,
             )
 
         async def handle_drive(self, client, userdata, msg):

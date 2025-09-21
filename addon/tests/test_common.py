@@ -1,8 +1,9 @@
 import asyncio
 from unittest.mock import MagicMock
 
-import addon.bb8_core.common as common
 import pytest
+
+from addon.bb8_core import common
 
 
 def test_mqtt_base_env(monkeypatch):
@@ -18,10 +19,10 @@ def test_cmd_and_state_topics(monkeypatch):
     import importlib
 
     importlib.reload(common)
-    for k, v in common.CMD_TOPICS.items():
+    for _k, v in common.CMD_TOPICS.items():
         assert isinstance(v, list)
         assert all(isinstance(t, str) for t in v)
-    for k, v in common.STATE_TOPICS.items():
+    for _k, v in common.STATE_TOPICS.items():
         assert isinstance(v, str)
         assert v.startswith("testbase/")
 
@@ -38,7 +39,7 @@ def test_cmd_and_state_topics(monkeypatch):
 )
 def test_coerce_raw(val, expected):
     result = common._coerce_raw(val)
-    if isinstance(val, (int, float, str)):
+    if isinstance(val, int | float | str):
         assert result == val
     else:
         assert isinstance(result, str)

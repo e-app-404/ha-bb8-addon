@@ -1,3 +1,10 @@
+"""BLE bridge helpers: safe shims and utilities for BB-8 BLE control.
+
+This module contains the BLEBridge class (a conservative wrapper used by
+tests/CI when hardware is not present) and helper functions used by
+higher-level power/diagnostic flows. Docstrings are intentionally brief.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -6,11 +13,11 @@ import json
 import os
 import threading
 import time
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-import paho.mqtt.publish as publish
 from bleak import BleakClient
 from bleak.exc import BleakCharacteristicNotFoundError
+from paho.mqtt import publish
 from spherov2.adapter.bleak_adapter import BleakAdapter
 from spherov2.commands.core import IntervalOptions
 from spherov2.scanner import find_toys
@@ -32,8 +39,6 @@ REQUIRE_DEVICE_ECHO = os.environ.get("REQUIRE_DEVICE_ECHO", "1") not in (
     "off",
 )
 
-if TYPE_CHECKING:
-    pass
 
 try:
     bleak_version = importlib.metadata.version("bleak")
@@ -48,20 +53,30 @@ logger.info(
         "event": "version_probe",
         "bleak": bleak_version,
         "spherov2": spherov2_version,
-    }
+    },
 )
 
 
 class BLEBridge:
+    """Device bridge shim for BB-8 BLE operations.
+
+    When hardware is unavailable the bridge logs safe no-ops and emits
+    MQTT echoes to facilitate testing and smoke runs.
+    """
+
     # --------- Extended shims (safe no-ops until wired) ---------
     def set_heading(self, degrees: int) -> None:
+        """Request the device to set heading (degrees 0-359).
+
+        When device hardware is not available this emits a safe MQTT echo.
+        """
         if REQUIRE_DEVICE_ECHO:
             logger.warning(
                 {
                     "event": "shim_disabled",
                     "reason": "REQUIRE_DEVICE_ECHO=1",
                     "topic": "heading",
-                }
+                },
             )
             return
         try:
@@ -72,18 +87,27 @@ class BLEBridge:
             from .mqtt_echo import echo_scalar
 
             if hasattr(self, "_mqtt") and self._mqtt.get("client"):
-                echo_scalar(self._mqtt["client"], self._mqtt["base"], "heading", v)
+                echo_scalar(
+                    self._mqtt["client"],
+                    self._mqtt["base"],
+                    "heading",
+                    v,
+                )
         except Exception as e:
             logger.error({"event": "ble_heading_error", "error": repr(e)})
 
     def set_speed(self, speed: int) -> None:
+        """Set the device drive speed (0-255).
+
+        Emits an MQTT echo when hardware is absent.
+        """
         if REQUIRE_DEVICE_ECHO:
             logger.warning(
                 {
                     "event": "shim_disabled",
                     "reason": "REQUIRE_DEVICE_ECHO=1",
                     "topic": "speed",
-                }
+                },
             )
             return
         try:
@@ -94,18 +118,27 @@ class BLEBridge:
             from .mqtt_echo import echo_scalar
 
             if hasattr(self, "_mqtt") and self._mqtt.get("client"):
-                echo_scalar(self._mqtt["client"], self._mqtt["base"], "speed", v)
+                echo_scalar(
+                    self._mqtt["client"],
+                    self._mqtt["base"],
+                    "speed",
+                    v,
+                )
         except Exception as e:
             logger.error({"event": "ble_speed_error", "error": repr(e)})
 
     def drive(self, heading: int, speed: int) -> None:
+        """Drive the device with heading and speed for a short burst.
+
+        This is a shim for environments without the real spherov2 API.
+        """
         if REQUIRE_DEVICE_ECHO:
             logger.warning(
                 {
                     "event": "shim_disabled",
                     "reason": "REQUIRE_DEVICE_ECHO=1",
                     "topic": "drive",
-                }
+                },
             )
             return
         try:
@@ -114,7 +147,7 @@ class BLEBridge:
                     "event": "ble_drive",
                     "heading": int(heading),
                     "speed": int(speed),
-                }
+                },
             )
             # TODO: spherov2 roll for a short burst
             # Publish scalar echoes for heading and speed
@@ -137,11 +170,14 @@ class BLEBridge:
             logger.error({"event": "ble_drive_error", "error": repr(e)})
 
     def set_led_off(self) -> None:
-        """Turn off LEDs."""
+        """Turn off LEDs by delegating to set_led_rgb(0,0,0)."""
         self.set_led_rgb(0, 0, 0)
 
     def set_led_rgb(self, r: int, g: int, b: int) -> None:
-        """Set LED color; clamps inputs; safe no-op if not connected."""
+        """Set the LED color (r,g,b). Values are clamped to 0-255.
+
+        This is a no-op when the device is not connected.
+        """
         r = max(0, min(255, int(r)))
         g = max(0, min(255, int(g)))
         b = max(0, min(255, int(b)))
@@ -155,7 +191,7 @@ class BLEBridge:
                             "r": r,
                             "g": g,
                             "b": b,
-                        }
+                        },
                     )
                     return
                 # TODO: implement real LED set via spherov2
@@ -168,12 +204,14 @@ class BLEBridge:
                         "g": g,
                         "b": b,
                         "error": repr(e),
-                    }
+                    },
                 )
 
     def sleep(self, after_ms: int | None = None) -> None:
-        """Put device to sleep; default immediate.
-        Safe no-op if not connected."""
+        """Put the device to sleep after optional delay in milliseconds.
+
+        Safe no-op when the device is not connected.
+        """
         with self._lock:
             try:
                 if not getattr(self, "_toy", None):
@@ -182,7 +220,7 @@ class BLEBridge:
                             "event": "ble_sleep_noop",
                             "reason": "toy_not_connected",
                             "after_ms": after_ms,
-                        }
+                        },
                     )
                     return
                 # TODO: implement real sleep via spherov2
@@ -204,15 +242,15 @@ class BLEBridge:
                         "event": "ble_sleep_error",
                         "after_ms": after_ms,
                         "error": repr(e),
-                    }
+                    },
                 )
 
     def is_connected(self) -> bool:
-        """Best-effort connection flag for telemetry/presence."""
+        """Return True when bridge believes the device is connected."""
         return bool(getattr(self, "_connected", False))
 
     def get_rssi(self) -> int:
-        """Return RSSI dBm if the gateway exposes it; else 0."""
+        """Return RSSI value in dBm when available, otherwise 0."""
         try:
             gw_get = getattr(self.gateway, "get_rssi", None)
             if callable(gw_get):
@@ -224,8 +262,17 @@ class BLEBridge:
         return 0
 
     def attach_mqtt(
-        self, client, base_topic: str, qos: int = 1, retain: bool = True
+        self,
+        client,
+        base_topic: str,
+        qos: int = 1,
+        retain: bool = True,
     ) -> None:
+        """Attach an MQTT client and base topic for emitting echo messages.
+
+        The provided client will be used by helper echoes (heading, speed,
+        sleep, etc.).
+        """
         self._mqtt = {
             "client": client,
             "base": base_topic,
@@ -257,20 +304,20 @@ class BLEBridge:
                         {
                             "event": "ble_cmd_power_invalid",
                             "payload": val,
-                        }
+                        },
                     )
             except Exception as e:
                 logger.error(
                     {
                         "event": "ble_cmd_power_handler_error",
                         "error": repr(e),
-                    }
+                    },
                 )
 
         def _parse_color(raw: str):
             raw = raw.strip()
             if raw.upper() == "OFF":
-                return None
+                return
             try:
                 obj = json.loads(raw)
                 if isinstance(obj, dict):
@@ -278,7 +325,7 @@ class BLEBridge:
                     pass
             except Exception:
                 pass
-            return None
+            return
 
         def _handle_led(_client, _userdata, msg):
             try:
@@ -296,7 +343,7 @@ class BLEBridge:
                     {
                         "event": "ble_cmd_led_handler_error",
                         "error": repr(e),
-                    }
+                    },
                 )
 
             # Removed unused _handle_stop function and subbed self.stop() with
@@ -312,7 +359,7 @@ class BLEBridge:
                     {
                         "event": "ble_cmd_stop_state_echo",
                         "state": "pressed",
-                    }
+                    },
                 )
 
                 def _reset():
@@ -325,7 +372,7 @@ class BLEBridge:
                     {
                         "event": "ble_cmd_stop_handler_error",
                         "error": repr(e),
-                    }
+                    },
                 )
 
     def __init__(
@@ -335,6 +382,10 @@ class BLEBridge:
         mac: str | None = None,
         **kwargs,
     ) -> None:
+        """Initialize BLEBridge with a gateway and target MAC address.
+
+        The gateway must provide adapter resolution and scanning helpers.
+        """
         import threading
 
         self._lock = threading.RLock()
@@ -350,14 +401,15 @@ class BLEBridge:
         self.controller: Any | None = kwargs.get("controller")
         # Low-level core
         self.core = Core(
-            address=self.target_mac, adapter=self.gateway.resolve_adapter()
+            address=self.target_mac,
+            adapter=self.gateway.resolve_adapter(),
         )
         logger.debug(
             {
                 "event": "ble_bridge_init",
                 "mac": self.target_mac,
                 "adapter": self.gateway.resolve_adapter(),
-            }
+            },
         )
 
     def connect_bb8(self):
@@ -368,7 +420,7 @@ class BLEBridge:
                 {
                     "event": "connect_bb8_scan_result",
                     "device": str(device),
-                }
+                },
             )
             if not device:
                 msg = (
@@ -384,7 +436,7 @@ class BLEBridge:
                         "event": "connect_bb8_attach_device",
                         "controller": str(type(self.controller)),
                         "device": str(device),
-                    }
+                    },
                 )
                 self.controller.attach_device(device)
             else:
@@ -404,10 +456,10 @@ class BLEBridge:
                         "event": "connect_bb8_not_awake",
                         "msg": msg,
                         "device": str(device),
-                    }
+                    },
                 )
                 raise BleakCharacteristicNotFoundError(
-                    "22bb746f-2bbd-7554-2d6f-726568705327"
+                    "22bb746f-2bbd-7554-2d6f-726568705327",
                 )
             logger.info({"event": "connect_bb8_success", "device": str(device)})
             return device
@@ -432,7 +484,7 @@ class BLEBridge:
                     "event": "connect_attach_device",
                     "controller": str(type(self.controller)),
                     "device": str(device),
-                }
+                },
             )
             self.controller.attach_device(device)
         else:
@@ -447,9 +499,8 @@ class BLEBridge:
             diag = self.controller.get_diagnostics_for_mqtt()
             logger.debug({"event": "diagnostics_result", "diagnostics": diag})
             return diag
-        else:
-            logger.error({"event": "diagnostics_controller_none"})
-            return {"error": "controller is None"}
+        logger.error({"event": "diagnostics_controller_none"})
+        return {"error": "controller is None"}
 
     def shutdown(self):
         logger.debug({"event": "shutdown_start"})
@@ -474,6 +525,10 @@ class BLEBridge:
 
 
 def bb8_find(timeout=10):
+    """Scan for a BB-8 toy using spherov2's find_toys helper.
+
+    Returns a BB8 instance or None.
+    """
     logger.info("[BB-8] Scanning for BB-8...")
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -487,6 +542,11 @@ def bb8_find(timeout=10):
 
 
 def bb8_power_on_sequence(core_or_facade, *args, **kwargs):
+    """Run a standard power-on LED/roll health check sequence.
+
+    Accepts either a context-manager core_or_facade or an object with
+    connect()/disconnect() methods.
+    """
     cm = getattr(core_or_facade, "__enter__", None)
     if callable(cm):
         with core_or_facade:
@@ -514,7 +574,7 @@ def _power_on_sequence_body(bb8):
         if hasattr(bb8, "set_main_led"):
             bb8.set_main_led(255, 255, 255, None)
             logger.info(
-                f"[BB-8] LED command succeeded in {time.time() - led_start:.2f}s"
+                "[BB-8] LED command succeeded in " f"{time.time() - led_start:.2f}s",
             )
         else:
             logger.warning("[BB-8] Device does not support set_main_led.")
@@ -526,7 +586,7 @@ def _power_on_sequence_body(bb8):
         )
         logger.info(
             f"[BB-8] Status after LED error: is_connected="
-            f"{getattr(bb8, 'is_connected', None)}"
+            f"{getattr(bb8, 'is_connected', None)}",
         )
         return
     roll_start = time.time()
@@ -534,7 +594,7 @@ def _power_on_sequence_body(bb8):
         if hasattr(bb8, "roll"):
             bb8.roll(30, 0, 1000)  # speed, heading, duration_ms
             logger.info(
-                f"[BB-8] Roll command succeeded in {time.time() - roll_start:.2f}s"
+                "[BB-8] Roll command succeeded in " f"{time.time() - roll_start:.2f}s",
             )
         else:
             logger.warning("[BB-8] Device does not support roll.")
@@ -546,12 +606,16 @@ def _power_on_sequence_body(bb8):
         )
         logger.info(
             f"[BB-8] Status after roll error: is_connected="
-            f"{getattr(bb8, 'is_connected', None)}"
+            f"{getattr(bb8, 'is_connected', None)}",
         )
         return
 
 
 def bb8_power_off_sequence():
+    """Run a graceful power-off (LED fade and sleep) sequence on BB-8.
+
+    Uses `bb8_find` and spherov2's context manager API.
+    """
     logger.info("[BB-8] Power OFF sequence: beginning...")
     try:
         bb8 = bb8_find()
@@ -571,7 +635,8 @@ def bb8_power_off_sequence():
             try:
                 bb8.set_main_led(0, 100, 255, None)
                 logger.info(
-                    f"[BB-8] LED command succeeded in {time.time() - led_start:.2f}s"
+                    "[BB-8] LED command succeeded in "
+                    f"{time.time() - led_start:.2f}s",
                 )
             except Exception as e:
                 logger.error(
@@ -581,17 +646,21 @@ def bb8_power_off_sequence():
                 )
                 logger.info(
                     f"[BB-8] Status after LED error: is_connected="
-                    f"{getattr(bb8, 'is_connected', None)}"
+                    f"{getattr(bb8, 'is_connected', None)}",
                 )
                 return
             for i in reversed(range(0, 101, 20)):
                 fade_start = time.time()
                 try:
-                    logger.info(f"[BB-8] Setting LED: (0, {i}, {int(2.55 * i)})")
+                    logger.info(
+                        "[BB-8] Setting LED: (0, %s, %s)",
+                        i,
+                        int(2.55 * i),
+                    )
                     bb8.set_main_led(0, i, int(2.55 * i), None)
                     logger.info(
                         f"[BB-8] LED fade step succeeded in "
-                        f"{time.time() - fade_start:.2f}s"
+                        f"{time.time() - fade_start:.2f}s",
                     )
                 except Exception as e:
                     logger.error(
@@ -601,14 +670,16 @@ def bb8_power_off_sequence():
                     )
                     logger.info(
                         f"[BB-8] Status after fade error: is_connected="
-                        f"{getattr(bb8, 'is_connected', None)}"
+                        f"{getattr(bb8, 'is_connected', None)}",
                     )
                     return
                 time.sleep(0.15)
             off_start = time.time()
             try:
                 bb8.set_main_led(0, 0, 0, None)
-                logger.info(f"[BB-8] After LED off in {time.time() - off_start:.2f}s")
+                logger.info(
+                    "[BB-8] After LED off in " f"{time.time() - off_start:.2f}s"
+                )
             except Exception as e:
                 logger.error(
                     f"[BB-8][ERROR] LED off command failed after "
@@ -617,13 +688,15 @@ def bb8_power_off_sequence():
                 )
                 logger.info(
                     f"[BB-8] Status after LED off error: is_connected="
-                    f"{getattr(bb8, 'is_connected', None)}"
+                    f"{getattr(bb8, 'is_connected', None)}",
                 )
                 return
             sleep_start = time.time()
             try:
                 bb8.sleep(IntervalOptions(IntervalOptions.NONE), 0, 0, None)  # type: ignore
-                logger.info(f"[BB-8] After sleep in {time.time() - sleep_start:.2f}s")
+                logger.info(
+                    "[BB-8] After sleep in " f"{time.time() - sleep_start:.2f}s"
+                )
             except Exception as e:
                 logger.error(
                     f"[BB-8][ERROR] Sleep command failed after "
@@ -632,50 +705,80 @@ def bb8_power_off_sequence():
                 )
                 logger.info(
                     f"[BB-8] Status after sleep error: is_connected="
-                    f"{getattr(bb8, 'is_connected', None)}"
+                    f"{getattr(bb8, 'is_connected', None)}",
                 )
                 return
         logger.info("[BB-8] Power OFF sequence: complete.")
     except Exception as e:
         logger.error(
-            f"[BB-8][ERROR] Exception in power OFF sequence: {e}", exc_info=True
+            "[BB-8][ERROR] Exception in power OFF sequence: %s",
+            e,
+            exc_info=True,
         )
 
 
 def publish_bb8_error(msg):
+    """Publish an error message to the configured MQTT broker.
+
+    This is a best-effort helper and will log if publishing fails.
+    """
     try:
         broker = CFG.get("MQTT_HOST", "localhost")
         topic_prefix = CFG.get("MQTT_BASE", "bb8")
         publish.single(f"{topic_prefix}/state/error", msg, hostname=broker)
     except Exception as e:
-        logger.error(f"[BB-8][ERROR] Failed to publish error to MQTT: {e}")
+        logger.error("[BB-8][ERROR] Failed to publish error to MQTT: %s", e)
 
 
 def ble_command_with_retry(
-    cmd_func, max_attempts=4, initial_cooldown=3, *args, **kwargs
+    cmd_func,
+    max_attempts=4,
+    initial_cooldown=3,
+    *args,
+    **kwargs,
 ):
+    """Run a BLE command with retry/backoff semantics.
+
+    Returns the result on success or None after exhausting retries.
+    """
     cooldown = initial_cooldown
     for attempt in range(1, max_attempts + 1):
         try:
             logger.info(
-                f"[BB-8] Attempt {attempt}/{max_attempts} for {cmd_func.__name__}"
+                "[BB-8] Attempt %d/%d for %s",
+                attempt,
+                max_attempts,
+                cmd_func.__name__,
             )
             result = cmd_func(*args, **kwargs)
-            logger.info(f"[BB-8] {cmd_func.__name__} succeeded on attempt {attempt}")
+            logger.info(
+                "[BB-8] %s succeeded on attempt %d",
+                cmd_func.__name__,
+                attempt,
+            )
             return result
         except Exception as e:
             logger.error(
-                f"[BB-8][ERROR] {cmd_func.__name__} failed on attempt {attempt}: {e}",
+                "[BB-8][ERROR] %s failed on attempt %d: %s",
+                cmd_func.__name__,
+                attempt,
+                e,
                 exc_info=True,
             )
             time.sleep(cooldown)
             cooldown *= 2
-    logger.critical(f"[BB-8] {cmd_func.__name__} failed after {max_attempts} attempts.")
+    logger.critical(
+        "[BB-8] %s failed after %d attempts.", cmd_func.__name__, max_attempts
+    )
     publish_bb8_error(f"{cmd_func.__name__} failed after {max_attempts} attempts.")
     return None
 
 
 def publish_discovery(topic, payload, dbus_path: str | None = None, **_ignored):
+    """Publish a discovery payload to MQTT (best-effort).
+
+    Keeps signature compatible with older code that passed dbus_path.
+    """
     try:
         broker = CFG.get("MQTT_HOST", "localhost")
         publish.single(topic, json.dumps(payload), hostname=broker)
@@ -684,8 +787,15 @@ def publish_discovery(topic, payload, dbus_path: str | None = None, **_ignored):
 
 
 async def connect_bb8_with_retry(
-    address, max_attempts=5, retry_delay=3, adapter="hci0"
+    address,
+    max_attempts=5,
+    retry_delay=3,
+    adapter="hci0",
 ):
+    """Attempt to open a BleakClient connection, retrying on failure.
+
+    Returns an active BleakClient or None.
+    """
     for attempt in range(1, max_attempts + 1):
         try:
             async with BleakClient(address, adapter=adapter) as client:
@@ -695,7 +805,7 @@ async def connect_bb8_with_retry(
                     services = await resolve_services(client)
                     if services is None:
                         logger.debug(
-                            "BLE services not available on this client/version"
+                            "BLE services not available on this client/version",
                         )
                         return None
                 found = any(
@@ -705,16 +815,24 @@ async def connect_bb8_with_retry(
                 )
                 if found:
                     return client
-                else:
-                    raise Exception("Sphero control characteristic not found.")
+                raise Exception("Sphero control characteristic not found.")
         except Exception as e:
-            logger.error(f"Connect attempt {attempt}/{max_attempts} failed: {e}")
+            logger.error(
+                "Connect attempt %d/%d failed: %s",
+                attempt,
+                max_attempts,
+                e,
+            )
             await asyncio.sleep(retry_delay)
     logger.error("Failed to connect to BB-8 after retries.")
     return None
 
 
 def register_bb8_entities(bb8_mac):
+    """Publish Home Assistant discovery entries for a BB-8 device.
+
+    This publishes several entity discovery payloads used by HA.
+    """
     base_device = {
         "identifiers": [f"{CFG.get('MQTT_BASE', 'bb8')}_{bb8_mac.replace(':', '')}"],
         "name": BB8_NAME,
@@ -744,7 +862,8 @@ def register_bb8_entities(bb8_mac):
             "command_topic": f"{topic_prefix}/command",
             "schema": "json",
             "rgb_command_template": (
-                "{{ {'command': 'set_led', 'r': red, 'g': green, 'b': blue} | tojson }}"
+                "{{ {'command': 'set_led', 'r': red, 'g': green, 'b': blue}"
+                " | tojson }}"
             ),
             "device": base_device,
         },

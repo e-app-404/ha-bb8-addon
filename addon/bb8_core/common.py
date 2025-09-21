@@ -23,6 +23,10 @@ CMD_TOPICS: dict[str, list[str]] = {
     "led": [f"{_mqtt_base()}/led/set", f"{_mqtt_base()}/led/cmd"],
 }
 
+# Back-compat aliases (explicitly marked LEGACY) kept for docs/tools but
+# gated at runtime by ENABLE_LEGACY_FLAT_TOPICS in the dispatcher.
+LEGACY_CMD_TOPICS = CMD_TOPICS.copy()
+
 # State topics (outbound) — STP4 expects '/state' suffix consistently
 STATE_TOPICS: dict[str, str] = {
     "power": f"{_mqtt_base()}/power/state",
@@ -42,7 +46,10 @@ def _coerce_raw(value: Any) -> str | int | float:
 
 
 def publish_device_echo(
-    client: Any, state_topic: str, value: Any, qos: int = 1
+    client: Any,
+    state_topic: str,
+    value: Any,
+    qos: int = 1,
 ) -> None:
     raw = _coerce_raw(value)
     client.publish(state_topic, payload=raw, qos=qos, retain=False)
@@ -80,7 +87,8 @@ def on_speed(client, value):
 
 def on_led_set(client, r, g, b):
     """Direct LED state publication helper.
-    Does **not** publish to command topics."""
+    Does **not** publish to command topics.
+    """
     payload = json.dumps({"r": int(r), "g": int(g), "b": int(b)})
     client.publish(STATE_TOPICS["led"], payload=payload, qos=1, retain=False)
 

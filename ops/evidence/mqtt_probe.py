@@ -92,7 +92,7 @@ def main():
     print(
         f"probe: connected={res['connected']} "
         f"roundtrip={res['roundtrip']} "
-        f"schema={res['schema']}"
+        f"schema={res['schema']}",
     )
     if not res["connected"]:
         raise SystemExit(2)

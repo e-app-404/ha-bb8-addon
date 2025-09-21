@@ -8,7 +8,9 @@ import warnings
 import paho.mqtt.client as mqtt
 
 warnings.filterwarnings(
-    "ignore", category=DeprecationWarning, module="paho.mqtt.client"
+    "ignore",
+    category=DeprecationWarning,
+    module="paho.mqtt.client",
 )
 
 

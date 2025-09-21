@@ -25,3 +25,5 @@ last_updated: 2025-09-15
 - Commit format: `feat|fix|chore(scope): summary`.
 
 ## Token Blocks
+
+Note: validators and guard scripts live under `ops/guardrails/`. Run `ops/guardrails/protocol_enforcer.sh` to execute the working-area validators. Tests live under `ops/guardrails/tests/`.

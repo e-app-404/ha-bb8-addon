@@ -1,8 +1,9 @@
 import types
 from unittest.mock import AsyncMock
 
-import addon.bb8_core.ble_gateway as ble_gateway
 import pytest
+
+from addon.bb8_core import ble_gateway
 
 
 class DummyDevice:

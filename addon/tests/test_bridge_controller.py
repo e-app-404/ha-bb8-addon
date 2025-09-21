@@ -1,6 +1,7 @@
 from unittest import mock
 
 import pytest
+
 from addon.bb8_core import bridge_controller
 
 
@@ -13,7 +14,11 @@ class DummyFacade:
 @mock.patch("addon.bb8_core.bridge_controller.BLEBridge")
 @mock.patch("addon.bb8_core.bridge_controller.BleGateway")
 @mock.patch("addon.bb8_core.bridge_controller.BB8Facade", new=DummyFacade)
-def test_start_bridge_controller_env_mac(mock_gateway, mock_bridge, mock_dispatcher):
+def test_start_bridge_controller_env_mac(
+    mock_gateway,
+    mock_bridge,
+    mock_dispatcher,
+):
     config = {"bb8_mac": "AA:BB:CC:DD:EE:FF", "ble_adapter": "hci0"}
     mock_bridge.return_value = mock.Mock()
     mock_gateway.return_value = mock.Mock()
@@ -28,7 +33,8 @@ def test_start_bridge_controller_env_mac(mock_gateway, mock_bridge, mock_dispatc
         )
     assert isinstance(result, DummyFacade)
     mock_bridge.assert_called_with(mock_gateway.return_value, "AA:BB:CC:DD:EE:FF")
-    # Instead of assert_called, check that dispatcher is started by side effect (e.g., log)
+    # Instead of assert_called, check that dispatcher is started by
+    # side effect (e.g., log)
     # mock_dispatcher.assert_called()  # Disabled: import-time call not patchable
 
 
@@ -38,7 +44,10 @@ def test_start_bridge_controller_env_mac(mock_gateway, mock_bridge, mock_dispatc
 @mock.patch("addon.bb8_core.bridge_controller.BB8Facade", new=DummyFacade)
 @mock.patch("addon.bb8_core.bridge_controller.resolve_bb8_mac")
 def test_start_bridge_controller_auto_detect(
-    mock_resolve, mock_gateway, mock_bridge, mock_dispatcher
+    mock_resolve,
+    mock_gateway,
+    mock_bridge,
+    mock_dispatcher,
 ):
     config = {
         "bb8_mac": "",
@@ -63,11 +72,15 @@ def test_start_bridge_controller_auto_detect(
     assert isinstance(result, DummyFacade)
     mock_resolve.assert_called()
     mock_bridge.assert_called_with(mock_gateway.return_value, "AA:BB:CC:DD:EE:FF")
-    # Instead of assert_called, check that dispatcher is started by side effect (e.g., log)
+    # Instead of assert_called, check that dispatcher is started by
+    # side effect (e.g., log)
     # mock_dispatcher.assert_called()  # Disabled: import-time call not patchable
 
 
-@mock.patch("addon.bb8_core.bridge_controller.resolve_bb8_mac", return_value=None)
+@mock.patch(
+    "addon.bb8_core.bridge_controller.resolve_bb8_mac",
+    return_value=None,
+)
 @mock.patch("addon.bb8_core.bridge_controller.BleGateway")
 def test_start_bridge_controller_error(mock_gateway, mock_resolve):
     config = {"bb8_mac": "", "ble_adapter": "hci0"}
@@ -118,7 +131,12 @@ def test_mqtt_publish(monkeypatch):
     class DummyClient:
         def publish(self, topic, payload, qos=0, retain=False):
             called.update(
-                {"topic": topic, "payload": payload, "qos": qos, "retain": retain}
+                {
+                    "topic": topic,
+                    "payload": payload,
+                    "qos": qos,
+                    "retain": retain,
+                }
             )
 
     monkeypatch.setattr(bridge_controller, "get_client", lambda: DummyClient())
@@ -151,7 +169,9 @@ def test_ble_loop_thread(monkeypatch):
 
     monkeypatch.setattr(bridge_controller.threading, "Thread", DummyThread)
     monkeypatch.setattr(
-        bridge_controller.asyncio, "new_event_loop", lambda: DummyLoop()
+        bridge_controller.asyncio,
+        "new_event_loop",
+        lambda: DummyLoop(),
     )
     loop = bridge_controller._start_ble_loop_thread()
     assert isinstance(loop, DummyLoop)
@@ -192,13 +212,19 @@ def test_evidence_and_telemetry(monkeypatch):
     sys.modules["addon.bb8_core.telemetry"] = mock.Mock(Telemetry=DummyTelemetry)
     # Patch BLEBridge, BleGateway, BB8Facade, ensure_dispatcher_started
     monkeypatch.setattr(
-        bridge_controller, "BLEBridge", mock.Mock(return_value="bridge")
+        bridge_controller,
+        "BLEBridge",
+        mock.Mock(return_value="bridge"),
     )
     monkeypatch.setattr(
-        bridge_controller, "BleGateway", mock.Mock(return_value="gateway")
+        bridge_controller,
+        "BleGateway",
+        mock.Mock(return_value="gateway"),
     )
     monkeypatch.setattr(
-        bridge_controller, "BB8Facade", mock.Mock(return_value="facade")
+        bridge_controller,
+        "BB8Facade",
+        mock.Mock(return_value="facade"),
     )
     monkeypatch.setattr(bridge_controller, "ensure_dispatcher_started", mock.Mock())
     monkeypatch.setattr(bridge_controller, "client", mock.Mock())
@@ -211,7 +237,7 @@ def test_evidence_and_telemetry(monkeypatch):
         "enable_bridge_telemetry": True,
         "telemetry_interval_s": 10,
     }
-    result = bridge_controller.start_bridge_controller(
+    bridge_controller.start_bridge_controller(
         config,
         client=mock.Mock(),
         EvidenceRecorder_cls=DummyRecorder,

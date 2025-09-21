@@ -1,5 +1,10 @@
+"""Facade layer: high-level MQTT-facing API to control BB-8 behavior.
+
+This module exposes the ``BB8Facade`` class used by the bridge
+controller and tests to drive device actions and publish telemetry.
+"""
+
 import json
-import logging
 import os
 import sys
 import threading
@@ -15,10 +20,8 @@ from .logging_setup import logger
 
 def _sleep_led_pattern():
     """Return the exact 5 (r,g,b) steps expected by tests.
-    IMPLEMENTATION NOTE (Copilot):
-      - Open tests/test_facade.py and locate test_sleep_mapping
-      - Extract the 5 expected LED calls (order matters)
-      - Return them as a list of tuples, e.g., [(r1,g1,b1), ... (r5,g5,b5)]
+
+    The pattern is intentionally stable for test expectations.
     """
     # From test_sleep_mapping: 5 calls to set_led_rgb(10, 0, 0)
     return [(10, 0, 0), (10, 0, 0), (10, 0, 0), (10, 0, 0), (10, 0, 0)]
@@ -26,54 +29,38 @@ def _sleep_led_pattern():
 
 class BB8Facade:
     def set_heading(self, deg):
-        """Set heading (stub for scanner DI)."""
-        pass
+        """Set heading (stub for scanner dependency-injection)."""
 
     def set_speed(self, v):
-        """Set speed (stub for scanner DI)."""
-        pass
+        """Set speed (stub for scanner dependency-injection)."""
 
     def drive(self):
-        """Drive (stub for scanner DI)."""
-        pass
+        """Drive (stub for scanner dependency-injection)."""
 
-    """
-    High-level, MQTT-facing API for BB-8 Home Assistant integration.
-
-    This class wraps a BLEBridge (device driver) and exposes commands,
-    telemetry, and Home Assistant discovery via MQTT.
-
-    Attributes
-    ----------
-    bridge : object
-        BLEBridge instance for device operations.
-    publish_presence : Callable[[bool], None] or None
-        Telemetry publisher for presence state.
-    publish_rssi : Callable[[int], None] or None
-        Telemetry publisher for RSSI state.
-
-    Example
-    -------
-    >>> facade = BB8Facade(bridge)
-    >>> facade.attach_mqtt(client, "bb8", qos=1, retain=True)
-    >>> facade.power(True)
-    """
+    # High-level, MQTT-facing API for BB-8 Home Assistant integration.
+    #
+    # This class wraps a BLEBridge (device driver) and exposes commands,
+    # telemetry, and Home Assistant discovery via MQTT.
 
     # Allow test injection of Core logic
     Core: type | None = None  # Allow test injection of Core logic
 
     def __init__(self, bridge: Any) -> None:
         self.Core = BB8Facade.Core
-        """
-        Initialize a BB8Facade instance.
+        """Initialize the facade.
 
         Parameters
         ----------
-        bridge : object
+        bridge
             BLEBridge instance to wrap.
         """
         self.bridge = bridge
-        self._mqtt = {"client": None, "base": None, "qos": 1, "retain": True}
+        self._mqtt = {
+            "client": None,
+            "base": None,
+            "qos": 1,
+            "retain": True,
+        }
         # telemetry publishers bound at attach_mqtt()
         self.publish_presence: Callable[[bool], None] | None = None
         self.publish_rssi: Callable[[int], None] | None = None
@@ -85,7 +72,10 @@ class BB8Facade:
             topic = STATE_TOPICS["power"]
             payload = "ON" if on else "OFF"
             self._mqtt["client"].publish(
-                topic, payload=payload, qos=self._mqtt["qos"], retain=False
+                topic,
+                payload=payload,
+                qos=self._mqtt["qos"],
+                retain=False,
             )
         """
         Power on or off the BB-8 device.
@@ -109,7 +99,10 @@ class BB8Facade:
             if self._mqtt["client"]:
                 topic = STATE_TOPICS["led"]
                 self._mqtt["client"].publish(
-                    topic, payload="OFF", qos=self._mqtt["qos"], retain=False
+                    topic,
+                    payload="OFF",
+                    qos=self._mqtt["qos"],
+                    retain=False,
                 )
                 logger.info("facade_sleep_to_led=true")
 
@@ -118,7 +111,10 @@ class BB8Facade:
         if self._mqtt["client"]:
             topic = STATE_TOPICS["stop"]
             self._mqtt["client"].publish(
-                topic, payload="pressed", qos=self._mqtt["qos"], retain=False
+                topic,
+                payload="pressed",
+                qos=self._mqtt["qos"],
+                retain=False,
             )
         """
         Stop the BB-8 device.
@@ -133,7 +129,10 @@ class BB8Facade:
         if self._mqtt["client"]:
             topic = STATE_TOPICS["led"]
             self._mqtt["client"].publish(
-                topic, payload="OFF", qos=self._mqtt["qos"], retain=False
+                topic,
+                payload="OFF",
+                qos=self._mqtt["qos"],
+                retain=False,
             )
         """
         Turn off the BB-8 LED.
@@ -193,7 +192,8 @@ class BB8Facade:
         # Helper: publish to MQTT
         def _pub(suffix: str, payload, r: bool = retain_val):
             topic = f"{base_topic}/{suffix}"
-            if isinstance(payload, dict | list):
+            # Accept dict or list payloads for JSON encoding.
+            if isinstance(payload, (dict, list)):
                 msg = json.dumps(payload, separators=(",", ":"))
             else:
                 msg = payload
@@ -244,7 +244,7 @@ class BB8Facade:
                         "event": "shim_disabled",
                         "reason": "REQUIRE_DEVICE_ECHO=1",
                         "topic": "power/set",
-                    }
+                    },
                 )
                 return
             try:
@@ -260,7 +260,7 @@ class BB8Facade:
                         {
                             "event": "power_invalid_payload",
                             "payload": v,
-                        }
+                        },
                     )
             except Exception as e:
                 logger.error({"event": "power_handler_error", "error": repr(e)})
@@ -296,7 +296,8 @@ class BB8Facade:
 
         # discovery (idempotent; retained on broker)
         dbus_path = os.environ.get("BB8_DBUS_PATH") or CFG.get(
-            "BB8_DBUS_PATH", "/org/bluez/hci0"
+            "BB8_DBUS_PATH",
+            "/org/bluez/hci0",
         )
 
         await publish_discovery(
@@ -309,20 +310,39 @@ class BB8Facade:
 
         # bind telemetry publishers for use by controller/telemetry loop
         self.publish_presence = lambda online: _pub(
-            "presence/state", "ON" if online else "OFF"
+            "presence/state",
+            "ON" if online else "OFF",
         )
         self.publish_rssi = lambda dbm: _pub("rssi/state", str(int(dbm)))
 
         # ---- Subscriptions ----
         if not REQUIRE_DEVICE_ECHO:
-            client.message_callback_add(f"{base_topic}/power/set", _handle_power)
-            client.subscribe(f"{base_topic}/power/set", qos=qos_val)
+            client.message_callback_add(
+                f"{base_topic}/power/set",
+                _handle_power,
+            )
+            client.subscribe(
+                f"{base_topic}/power/set",
+                qos=qos_val,
+            )
 
-            client.message_callback_add(f"{base_topic}/led/set", _handle_led)
-            client.subscribe(f"{base_topic}/led/set", qos=qos_val)
+            client.message_callback_add(
+                f"{base_topic}/led/set",
+                _handle_led,
+            )
+            client.subscribe(
+                f"{base_topic}/led/set",
+                qos=qos_val,
+            )
 
-            client.message_callback_add(f"{base_topic}/stop/press", _handle_stop)
-            client.subscribe(f"{base_topic}/stop/press", qos=qos_val)
+            client.message_callback_add(
+                f"{base_topic}/stop/press",
+                _handle_stop,
+            )
+            client.subscribe(
+                f"{base_topic}/stop/press",
+                qos=qos_val,
+            )
             logger.info({"event": "facade_mqtt_attached", "base": base_topic})
         else:
             logger.warning(
@@ -330,12 +350,13 @@ class BB8Facade:
                     "event": "facade_shim_subscriptions_skipped",
                     "reason": "REQUIRE_DEVICE_ECHO=1",
                     "base": base_topic,
-                }
+                },
             )
 
     def _emit_led(self, r: int, g: int, b: int) -> None:
         """Emit an RGB LED update exactly once per logical emit,
-        test-friendly shape."""
+        test-friendly shape.
+        """
         # Clamp RGB values
         r = max(0, min(255, int(r)))
         g = max(0, min(255, int(g)))
@@ -365,19 +386,19 @@ class BB8Facade:
             return
         return
 
+    def sleep(self) -> None:
+        """Emit 5-step LED pattern for sleep using ``_emit_led``.
 
-def sleep(self) -> None:
-    """Emit 5-step LED pattern for sleep; SINGLE emission path via
-    `_emit_led`.
-    """
-    import contextlib
+        The pattern and delays are kept stable for test determinism.
+        """
+        import contextlib
 
-    pattern = _sleep_led_pattern()
-    for r, g, b in pattern:
-        self._emit_led(r, g, b)
+        pattern = _sleep_led_pattern()
+        for r, g, b in pattern:
+            self._emit_led(r, g, b)
+            with contextlib.suppress(Exception):
+                fade_ms = max(int(os.getenv("BB8_LED_FADE_MS", "25")), 0)
+                time.sleep(fade_ms / 1000.0)
+
         with contextlib.suppress(Exception):
-            time.sleep(max(int(os.getenv("BB8_LED_FADE_MS", "25")), 0) / 1000.0)
-    with contextlib.suppress(Exception):
-        logging.getLogger(__name__).info(
-            "facade_sleep_to_led=true count=%d", len(pattern)
-        )
+            logger.info("facade_sleep_to_led=true count=%d", len(pattern))

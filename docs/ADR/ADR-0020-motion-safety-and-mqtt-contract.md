@@ -16,8 +16,8 @@ last_updated: 2025-09-15
 
 
 ## Safety Defaults
-- ALLOW_MOTION=0 by default (no physical movement without opt-in).
-- Limits: MAX_SPEED=150, MAX_DURATION_MS=1000, FAILSAFE_PAD_MS=100.
+- `ALLOW_MOTION=0` by default (no physical movement without opt-in).
+- Limits: `MAX_SPEED=150`, `MAX_DURATION_MS=1000`, `FAILSAFE_PAD_MS=100`.
 
 ## Topics (no wildcards)
 - Drive command (JSON): `bb8/<device>/cmd/drive` → payload:
@@ -119,3 +119,5 @@ Schema validation; clamps; disabled-motion NACK; retained states on accept; fail
 
 
 ## Token Blocks
+
+Note: validators and guard scripts live under `ops/guardrails/`. Run `ops/guardrails/protocol_enforcer.sh` to execute the working-area validators. Tests live under `ops/guardrails/tests/`.

@@ -1,4 +1,4 @@
-import addon.bb8_core.ports as ports
+from addon.bb8_core import ports
 
 
 # Test MqttBus Protocol compliance

@@ -5,10 +5,10 @@ import sys
 
 # Only define __all__ at the top level; do not import submodules here.
 __all__ = [
-    "Core",
-    "BleGateway",
     "BLEBridge",
     "Bb8Facade",
+    "BleGateway",
+    "Core",
     "start_bridge_controller",
 ]
 

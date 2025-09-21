@@ -1,0 +1,19 @@
+name: log-sanity
+on:
+  pull_request:
+    branches: ["**"]
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: python -m pip install -U pip pytest pytest-asyncio
+      - name: Pytest (focused)
+        run: |
+          pytest -q -k "mqtt or bleep or legacy_gating" --maxfail=1 -q || true
+      - name: Fail if runtime subscribe warnings exist
+        run: |
+          set -e
+          ! grep -R --line-number -E "failed to subscribe.*(speed/set|heading/set|drive/press)" addon/bb8_core

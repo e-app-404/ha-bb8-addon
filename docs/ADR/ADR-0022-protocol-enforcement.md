@@ -27,3 +27,28 @@ last_updated: 2025-09-15
 
 
 ## Token Blocks
+
+Note: validators and guard scripts live under `ops/guardrails/`. Run `ops/guardrails/protocol_enforcer.sh` to execute the working-area validators. Tests live under `ops/guardrails/tests/`.
+
+## Decision (addendum)
+
+```yaml
+TOKEN_BLOCK:
+  accepted:
+    - PROTOCOL_GUARD_ENABLED
+    - COVERAGE_FLOOR_60
+    - ADR0009_VALIDATION_ON
+    - LEGACY_RUNTIME_GATED
+  requires:
+    - ADR_SCHEMA_V1
+  drift:
+    - DRIFT: legacy_runtime_subscription_detected
+```
+## Decision (addendum)
+
+- No MQTT wildcards in configured topics; sanitize to safe literals.
+- HA discovery JSON **must not** include broker-publish options (e.g., `retain`).
+- MQTT Button `payload_press` is static; no templating in discovery JSON.
+- Three `mqtt.number` entities (`speed`, `heading`, `duration_ms`) publish to simple numeric topics; controller composes JSON on `cmd/drive`.
+- Discovery publishes are sent with `retain=True` at publish time.
+- Coverage gate floor remains **60%** (ratchet later).

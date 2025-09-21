@@ -43,8 +43,6 @@ jobs:
                    addon/.devcontainer; do
             [ -e "$p" ] || { echo "::error::addon missing: $p"; FAIL=1; }
           done
-          # addon/app is optional for some development workflows; warn but don't fail
-          if [ ! -e addon/app ]; then echo "::warning::addon/app missing (optional)"; fi
 
           echo "== Add-on MUST-NOT =="
           for p in addon/scripts addon/reports addon/docs addon/_backup addon/_backups \

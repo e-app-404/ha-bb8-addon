@@ -1,3 +1,9 @@
+"""MQTT helper utilities used by the bridge and facade modules.
+
+These helpers normalize differing client signatures and payload shapes
+so callers can use a consistent API.
+"""
+
 from __future__ import annotations
 
 import json
@@ -5,16 +11,19 @@ from typing import Any
 
 
 async def publish_retain(
-    mqtt: Any, topic: str, payload: Any, qos: int = 0, retain: bool = True
+    mqtt: Any,
+    topic: str,
+    payload: Any,
+    qos: int = 0,
+    retain: bool = True,
 ) -> None:
-    """
-    Publish with retain=True across differing client signatures.
-    Tries (topic, payload, qos, retain) then kwargs fallback.
-    Payload may be str/bytes or JSON-serializable object.
+    """Publish with retain handling across differing client signatures.
+
+    Attempts several publish signatures to support multiple MQTT libs.
     """
     data = (
         payload
-        if isinstance(payload, str | bytes)
+        if isinstance(payload, (str, bytes))
         else json.dumps(payload, separators=(",", ":"))
     )
     # Common signature: (topic, payload, qos, retain)
@@ -31,4 +40,4 @@ async def publish_retain(
         pass
     # Last resort: synchronous publish (returns immediately)
     mqtt.publish(topic, data, qos, retain)  # type: ignore[call-arg]
-    return None
+    return

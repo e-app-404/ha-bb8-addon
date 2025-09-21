@@ -40,7 +40,7 @@ except Exception as e:
     logging.basicConfig(level=logging.WARNING)
     logging.warning(
         f"[DEPENDENCY] paho-mqtt not installed or import failed: {e}. "
-        f"Usually means inactive virtual environment or missing dependencies."
+        f"Usually means inactive virtual environment or missing dependencies.",
     )
     print("ERR: paho-mqtt not installed. pip install paho-mqtt", file=sys.stderr)
     raise
@@ -59,13 +59,13 @@ def get_shared_config():
             logging.basicConfig(level=logging.WARNING)
             logging.warning(
                 f"[CONFIG] Config loader failed: {e}. This could mean any of:"
-                f"config missing, broken loader, or missing dependencies."
+                f"config missing, broken loader, or missing dependencies.",
             )
             print(f"[ERROR] Failed to load config: {e}", file=sys.stderr)
             return {}
     logging.warning(
         "[CONFIG] load_config is unavailable, usually means the module import "
-        "failed or PYTHONPATH is not set."
+        "failed or PYTHONPATH is not set.",
     )
     return {}
 
@@ -103,7 +103,8 @@ def parse_args():
         default=int(cfg.get("MQTT_PORT", os.environ.get("MQTT_PORT"))),
     )
     p.add_argument(
-        "--user", default=cfg.get("MQTT_USERNAME", os.environ.get("MQTT_USER"))
+        "--user",
+        default=cfg.get("MQTT_USERNAME", os.environ.get("MQTT_USER")),
     )
     p.add_argument(
         "--password",
@@ -118,7 +119,10 @@ def parse_args():
         default="reports/stp4_" + datetime.now().strftime("%Y%m%d_%H%M%S"),
     )
     p.add_argument(
-        "--timeout", type=float, default=2.0, help="State echo timeout seconds"
+        "--timeout",
+        type=float,
+        default=2.0,
+        help="State echo timeout seconds",
     )
     return p.parse_args()
 
@@ -148,8 +152,7 @@ def validate_discovery_obj(obj: dict[str, Any]) -> tuple[bool, str]:
 
 # Aggregator: filter and validate only relevant discovery configs for this device
 def validate_discovery(configs, device_identifiers, base_topic=None):
-    """
-    Validate only discovery payloads that belong to this device.
+    """Validate only discovery payloads that belong to this device.
     Minimal HA-required keys per entity:
       - unique_id, name, state_topic
       - command_topic for commandables
@@ -186,7 +189,7 @@ def validate_discovery(configs, device_identifiers, base_topic=None):
                     "topic": topic,
                     "valid": False,
                     "reason": f"missing:{missing}",
-                }
+                },
             )
             ok = False
             continue
@@ -199,7 +202,7 @@ def validate_discovery(configs, device_identifiers, base_topic=None):
                     "topic": topic,
                     "valid": False,
                     "reason": "device.identifiers missing",
-                }
+                },
             )
             ok = False
             continue
@@ -213,7 +216,7 @@ def validate_discovery(configs, device_identifiers, base_topic=None):
                     "topic": topic,
                     "valid": False,
                     "reason": "command_topic missing",
-                }
+                },
             )
             ok = False
             continue
@@ -304,7 +307,10 @@ class Collector:
             self.msg_cv.notify_all()
 
     def wait_for_topic(
-        self, topic: str, predicate, timeout: float
+        self,
+        topic: str,
+        predicate,
+        timeout: float,
     ) -> dict[str, Any] | None:
         deadline = time.time() + timeout
         with self.msg_cv:
@@ -346,7 +352,10 @@ class Collector:
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.client.will_set(
-            f"{self.base}/status", payload="offline", qos=1, retain=True
+            f"{self.base}/status",
+            payload="offline",
+            qos=1,
+            retain=True,
         )
         self.client.connect(self.host, self.port, keepalive=60)
         self.client.loop_start()
@@ -362,8 +371,7 @@ class Collector:
                 self.client.loop_stop()
 
     def publish(self, topic: str, payload: str | None, qos=1, retain=False):
-        """
-        Publish and return a UTC ISO timestamp captured *before* publish.
+        """Publish and return a UTC ISO timestamp captured *before* publish.
         This timestamp is the authoritative command_ts for roundtrip ordering.
         """
         if payload is None:
@@ -486,7 +494,7 @@ class Collector:
                     f"[DEBUG] REQUIRE_DEVICE_ECHO={os.getenv('REQUIRE_DEVICE_ECHO')}, "
                     f"require_device={require_device}, "
                     f"is_commandable={is_commandable}, "
-                    f"echo_source={echo.get('source')}"
+                    f"echo_source={echo.get('source')}",
                 )
                 if require_device and is_commandable and echo.get("source") != "device":
                     passed, note_val = False, "facade_only"
@@ -592,7 +600,7 @@ class Collector:
                 "state_topic": f"{base}/presence/state",
                 "state_payload": pres.get("payload_raw") if pres else None,
                 "pass": bool(pres),
-            }
+            },
         )
         if not pres:
             failures.append("presence:no_state")
@@ -608,7 +616,7 @@ class Collector:
                 "state_topic": f"{base}/rssi/state",
                 "state_payload": rssi.get("payload_raw") if rssi else None,
                 "pass": bool(rssi),
-            }
+            },
         )
         if not rssi:
             failures.append("rssi:no_state")
@@ -640,7 +648,9 @@ class Collector:
         # heading number
         _ts = self.publish(f"{base}/heading/set", "270")
         m = self.wait_for_topic(
-            f"{base}/heading/state", lambda x: x["payload_raw"] == "270", to
+            f"{base}/heading/state",
+            lambda x: x["payload_raw"] == "270",
+            to,
         )
         record(
             "heading_set_270",
@@ -655,7 +665,9 @@ class Collector:
         # speed number
         _ts = self.publish(f"{base}/speed/set", "128")
         m = self.wait_for_topic(
-            f"{base}/speed/state", lambda x: x["payload_raw"] == "128", to
+            f"{base}/speed/state",
+            lambda x: x["payload_raw"] == "128",
+            to,
         )
         record(
             "speed_set_128",

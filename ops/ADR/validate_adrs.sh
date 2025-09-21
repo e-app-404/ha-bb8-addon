@@ -13,32 +13,30 @@ for file in "$ADR_DIR"/ADR-*.md; do
  fm="$(awk '/^---/{flag=!flag; next} flag' "$file" | sed $'s/\t/ /g' | tr -d '\r')"
  [ -z "$fm" ] && fail "$file" 1 "Missing YAML front-matter."
 
- tmp="$(mktemp)"
+	tmp="$(mktemp)"
  # Quote unsafe single-line scalars with colon+space (defensive), preserve inline comments
-		echo "$fm" | awk '
+	echo "$fm" | awk '
 	match($0, /^[[:space:]]*([A-Za-z0-9_.-]+):[[:space:]]*(.*)$/, m) {
-	key=m[1]; val=m[2];
-	if (val ~ /^$/) { print; next }
-	if (val ~ /^['\''"\[{>|!&*]/) { print; next }
-	# separate inline comment (starts with space + #)
-	cidx = index(val, " #")
-	if (cidx>0) { v=substr(val,1,cidx-1); comment=substr(val,cidx) } else { v=val; comment="" }
-	# trim
-	sub(/^[[:space:]]+/, "", v); sub(/[[:space:]]+$/, "", v)
-	if (v ~ /: / || v ~ /(^[ \t]|[ \t]$)/) {
-	gsub(/"/, "\\\"", v);
-	indent = substr($0, 1, index($0, key)-1)
-	print indent key ": \"" v "\"" comment
-	next
-	}
-	print; next
+		key=m[1]; val=m[2];
+		if (val ~ /^$/) { print; next }
+		if (val ~ /^['\''"\[{>|!&*]/) { print; next }
+		# separate inline comment (starts with space + #)
+		cidx = index(val, " #")
+		if (cidx>0) { v=substr(val,1,cidx-1); comment=substr(val,cidx) } else { v=val; comment="" }
+		# trim
+		sub(/^[[:space:]]+/, "", v); sub(/[[:space:]]+$/, "", v)
+		if (v ~ /: / || v ~ /(^[ \t]|[ \t]$)/) {
+			gsub(/"/, "\\\"", v);
+			indent = substr($0, 1, index($0, key)-1)
+			print indent key ": \"" v "\"" comment
+			next
+		}
+		print; next
 	}
 	{ print }
-' > "$tmp"
+	' > "$tmp"
  # Basic shape checks with yq
  yq -e '.title and .date and .status and (.author|length>0) and (.related != null) and (.supersedes != null) and .last_updated' "$tmp" >/dev/null \
- || fail "$file" 1 "Front-matter missing required keys."
- yq -e '.title and .date and .status and (.author|length>0) and (.related) and (.supersedes) and .last_updated' "$tmp" >/dev/null \
  || fail "$file" 1 "Front-matter missing required keys."
 
  # Status normalization (treat Approved as Accepted)

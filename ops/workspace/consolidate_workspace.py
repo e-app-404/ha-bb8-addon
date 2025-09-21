@@ -55,7 +55,7 @@ def main():
                         "src": str(f),
                         "dst": str(dst),
                         "stash": str(stash),
-                    }
+                    },
                 )
                 if args.apply:
                     stash.parent.mkdir(parents=True, exist_ok=True)
@@ -77,7 +77,7 @@ def main():
                         "src": str(f),
                         "dst": str(dst),
                         "stash": str(stash),
-                    }
+                    },
                 )
                 if args.apply:
                     stash.parent.mkdir(parents=True, exist_ok=True)

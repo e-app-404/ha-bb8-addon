@@ -2,6 +2,7 @@ import asyncio
 from types import SimpleNamespace
 
 import pytest
+
 from addon.bb8_core.facade import BB8Facade
 
 # Ensure pytest-asyncio is active for the module
@@ -54,9 +55,11 @@ async def _kyb_bind_create_task(monkeypatch):
     import asyncio as _asyncio
 
     monkeypatch.setattr(
-        _asyncio, "create_task", lambda c: loop.create_task(c), raising=False
+        _asyncio,
+        "create_task",
+        lambda c: loop.create_task(c),
+        raising=False,
     )
-    yield
 
 
 async def test_attach_mqtt_invocation_1():

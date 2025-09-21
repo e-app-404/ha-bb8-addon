@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import json
 import os
 import re
 import threading
 import time
 from collections.abc import Iterable
+from dataclasses import dataclass
 from typing import Any
 
 from .addon_config import load_config
@@ -17,32 +17,34 @@ from .logging_setup import logger
 """
 auto_detect.py
 
-Device discovery and auto-detection logic, scans for BB-8 and caches MAC address.
+Device discovery and auto-detection logic, scans for BB-8 and caches MAC address
 """
-# Lazy import for testability
-with contextlib.suppress(ImportError):
+try:
     from bleak import BleakClient, BleakScanner  # type: ignore
+except ImportError:
+    BleakClient = None
+    BleakScanner = None
 
 CFG, SRC = load_config()
 CACHE_PATH: str = CFG.get("CACHE_PATH", "/data/bb8_mac_cache.json")
 CACHE_DEFAULT_TTL_HOURS: int = CFG.get("CACHE_DEFAULT_TTL_HOURS", 24)
 
 __all__ = [
-    "resolve_bb8_mac",
+    "CACHE_DEFAULT_TTL_HOURS",
+    "CACHE_PATH",
     "load_mac_from_cache",
+    "pick_bb8_mac",
+    "resolve_bb8_mac",
     "save_mac_to_cache",
     "scan_for_bb8",
-    "pick_bb8_mac",
-    "CACHE_PATH",
-    "CACHE_DEFAULT_TTL_HOURS",
 ]
 
 
+@dataclass
 class Candidate:
-    def __init__(self, mac: str, name: str = "", rssi: Any = None):
-        self.mac = mac
-        self.name = name
-        self.rssi = rssi
+    mac: str
+    name: str = ""
+    rssi: Any = None
 
 
 def _valid_mac(mac: str) -> bool:
@@ -66,7 +68,9 @@ def load_cache(now: float, ttl_hours: int, cache_path: str) -> Candidate | None:
         if not _valid_mac(data.get("mac", "")):
             return None
         return Candidate(
-            mac=data["mac"], name=data.get("advertised_name", ""), rssi=None
+            mac=data["mac"],
+            name=data.get("advertised_name", ""),
+            rssi=None,
         )
     except Exception:
         return None
@@ -88,10 +92,13 @@ def is_probable_bb8(name: str | None) -> bool:
     if not name:
         return False
     name_l = name.lower()
-    return any(t in name_l for t in ("bb-8", "bb8", "droid", "sphero"))
+    return "bb-8" in name_l
 
 
 async def async_scan_for_bb8(scan_seconds: int) -> list[Candidate]:
+    if BleakScanner is None:
+        logger.error({"event": "bleak_not_installed"})
+        return []
     devices = await BleakScanner.discover(timeout=scan_seconds)  # type: ignore[name-defined]
     out: list[Candidate] = []
     for d in devices:
@@ -102,7 +109,7 @@ async def async_scan_for_bb8(scan_seconds: int) -> list[Candidate]:
                     mac=getattr(d, "address", ""),
                     name=name or "",
                     rssi=getattr(d, "rssi", None),
-                )
+                ),
             )
 
     # Sort: exact name first, stronger RSSI, then MAC
@@ -110,6 +117,9 @@ async def async_scan_for_bb8(scan_seconds: int) -> list[Candidate]:
         exact = 1 if c.name.lower() == "bb-8" else 0
         rssi = c.rssi if isinstance(c.rssi, int) else -999
         return (exact, rssi, c.mac)
+
+    out.sort(key=score, reverse=True)
+    return out
 
     out.sort(key=score, reverse=True)
     return out
@@ -140,7 +150,7 @@ def resolve_bb8_mac(
             {
                 "event": "auto_detect_rescan_complete",
                 "count": len(devices),
-            }
+            },
         )
         if not mac:
             raise RuntimeError("BB-8 not found after rescan")
@@ -159,7 +169,7 @@ def load_mac_from_cache(ttl_hours: int = CACHE_DEFAULT_TTL_HOURS) -> str | None:
                 {
                     "event": "auto_detect_cache_stale",
                     "age_hours": age_hours,
-                }
+                },
             )
             return None
         with open(cache_path, encoding="utf-8") as f:
@@ -184,7 +194,7 @@ def save_mac_to_cache(mac: str) -> None:
             {
                 "event": "auto_detect_cache_write_error",
                 "error": repr(e),
-            }
+            },
         )
 
 
@@ -192,9 +202,16 @@ def scan_for_bb8(scan_seconds: int, adapter: str | None) -> list[dict]:
     gw = BleGateway(mode="bleak", adapter=adapter)
     try:
         loop = asyncio.new_event_loop()
-        t = threading.Thread(target=loop.run_forever, name="BB8ScanThread", daemon=True)
+        t = threading.Thread(
+            target=loop.run_forever,
+            name="BB8ScanThread",
+            daemon=True,
+        )
         t.start()
-        fut = asyncio.run_coroutine_threadsafe(gw.scan(seconds=scan_seconds), loop)
+        fut = asyncio.run_coroutine_threadsafe(
+            gw.scan(seconds=scan_seconds),
+            loop,
+        )
         result = fut.result()
         loop.call_soon_threadsafe(loop.stop)
         return result
@@ -242,14 +259,16 @@ class Options:
 
 async def connect_bb8(opts: Options):
     mac = resolve_bb8_mac(
-        scan_seconds=opts.scan_seconds,
-        cache_ttl_hours=opts.cache_ttl_hours,
-        rescan_on_fail=opts.rescan_on_fail,
-        adapter=getattr(opts, "adapter", None),
+        opts.scan_seconds,
+        opts.cache_ttl_hours,
+        opts.rescan_on_fail,
+        opts.adapter,
     )
 
     async def _try(mac_addr: str):
         logger.info({"event": "connect_attempt", "mac": mac_addr})
+        if BleakClient is None:
+            raise ImportError("Bleak library is not installed.")
         async with BleakClient(mac_addr) as client:  # type: ignore[name-defined]
             if not client.is_connected:
                 raise RuntimeError("Connected=False after context enter")

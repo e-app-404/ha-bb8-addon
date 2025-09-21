@@ -13,6 +13,7 @@ last_updated: 2025-08-26
 # ADR-0005: Development Setup (legacy)
 
 ## Table of Contents
+
 1. Editable Install & Test/Coverage Setup
 2. Editable Install
 3. Token Block

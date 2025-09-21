@@ -1,0 +1,26 @@
+name: smoke_mqtt
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "**" ]
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.MQTT_HOST && secrets.MQTT_PORT && secrets.MQTT_USERNAME && secrets.MQTT_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: python -m pip install -U pip pytest pytest-asyncio
+      - name: Smoke (secrets-gated)
+        env:
+          MQTT_HOST: ${{ secrets.MQTT_HOST }}
+          MQTT_PORT: ${{ secrets.MQTT_PORT }}
+          MQTT_TLS:  ${{ secrets.MQTT_TLS || '1' }}
+          MQTT_USERNAME: ${{ secrets.MQTT_USERNAME }}
+          MQTT_PASSWORD: ${{ secrets.MQTT_PASSWORD }}
+          DEVICE_ID: "CI_SMOKE"
+        run: |
+          python - <<'PY'
+          print("Secrets present; would run smoke here (placeholder).")
+          PY

@@ -12,7 +12,7 @@ def test_scalar_alias():
     scalars = [True, 42, 3.14, "foo"]
     for val in scalars:
         s: ct.Scalar = val
-        assert isinstance(s, (bool, int, float, str))
+        assert isinstance(s, bool | int | float | str)
 
 
 # --- Callback Signatures ---
@@ -63,7 +63,7 @@ def test_rgb_callback():
 def test_scalar_callback():
     called = {}
 
-    def cb(val: bool | int | float | str):
+    def cb(val: bool | float | str):
         called["v"] = val
 
     fn: ct.ScalarCallback = cb

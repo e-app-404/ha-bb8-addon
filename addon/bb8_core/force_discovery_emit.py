@@ -16,7 +16,10 @@ LOG_CANDIDATES = [
 
 
 def find_mac_from_logs() -> str | None:
-    rx = re.compile(r"(?:MAC[:=]\s*|mac:)\s*([0-9A-F]{2}(?::[0-9A-F]{2}){5})", re.I)
+    rx = re.compile(
+        r"(?:MAC[:=]\s*|mac:)\s*([0-9A-F]{2}(?::[0-9A-F]{2}){5})",
+        re.IGNORECASE,
+    )
     for p in LOG_CANDIDATES:
         if p.exists():
             try:

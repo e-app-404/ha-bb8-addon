@@ -1,8 +1,9 @@
 import json
 import types
 
-import addon.bb8_core.bb8_presence_scanner as scanner
 import pytest
+
+import addon.bb8_core.bb8_presence_scanner as scanner
 
 
 def test_read_version_or_default(monkeypatch, tmp_path):
@@ -78,7 +79,7 @@ def test_cb_led_set(monkeypatch):
 
     # JSON with state ON and color
     msg = types.SimpleNamespace(
-        payload=json.dumps({"state": "ON", "color": {"r": 1, "g": 2, "b": 3}}).encode()
+        payload=json.dumps({"state": "ON", "color": {"r": 1, "g": 2, "b": 3}}).encode(),
     )
     called.clear()
     scanner._cb_led_set(c, None, msg)

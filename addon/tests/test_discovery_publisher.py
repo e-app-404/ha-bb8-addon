@@ -13,7 +13,8 @@ def test_scanner_discovery_uses_hook_when_set():
         md.SCANNER_PUBLISH_HOOK = stub
         # 2) Patch the seam function so lookup MUST return our stub
         with patch(
-            "bb8_core.mqtt_dispatcher._get_scanner_publisher", return_value=stub
+            "bb8_core.mqtt_dispatcher._get_scanner_publisher",
+            return_value=stub,
         ):
             md.start_mqtt_dispatcher(controller=MagicMock())
             # Wait briefly for async on_connect callback to invoke the stub
@@ -35,7 +36,8 @@ def test_scanner_only_discovery_when_bridge_telemetry_enabled():
         md.SCANNER_PUBLISH_HOOK = stub
         # 2) Patch the seam to return the stub (covers any aliasing/caching)
         with patch(
-            "bb8_core.mqtt_dispatcher._get_scanner_publisher", return_value=stub
+            "bb8_core.mqtt_dispatcher._get_scanner_publisher",
+            return_value=stub,
         ):
             md.start_mqtt_dispatcher(controller=MagicMock())
             # Wait briefly for on_connect callback to run

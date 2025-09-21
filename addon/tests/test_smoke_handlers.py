@@ -2,6 +2,7 @@ import json
 from unittest import mock
 
 import pytest
+
 from addon.bb8_core import smoke_handlers
 
 
@@ -41,7 +42,9 @@ def test_main_success(monkeypatch):
     monkeypatch.setenv("MQTT_USERNAME", "user")
     monkeypatch.setenv("MQTT_PASSWORD", "pass")
     monkeypatch.setattr(
-        smoke_handlers, "env", lambda: ("localhost", 1883, "bb8", "user", "pass")
+        smoke_handlers,
+        "env",
+        lambda: ("localhost", 1883, "bb8", "user", "pass"),
     )
     # Patch mqtt.Client
     mock_client = mock.Mock()
@@ -71,7 +74,9 @@ def test_main_success(monkeypatch):
 
 def test_main_failure(monkeypatch):
     monkeypatch.setattr(
-        smoke_handlers, "env", lambda: ("localhost", 1883, "bb8", "user", "pass")
+        smoke_handlers,
+        "env",
+        lambda: ("localhost", 1883, "bb8", "user", "pass"),
     )
     mock_client = mock.Mock()
     mock_client.loop_start = mock.Mock()
@@ -99,7 +104,9 @@ def test_main_failure(monkeypatch):
 def test_on_message_invalid_json(monkeypatch):
     # Patch env and mqtt.Client
     monkeypatch.setattr(
-        smoke_handlers, "env", lambda: ("localhost", 1883, "bb8", "user", "pass")
+        smoke_handlers,
+        "env",
+        lambda: ("localhost", 1883, "bb8", "user", "pass"),
     )
     mock_client = mock.Mock()
     got_event = mock.Mock()
@@ -135,7 +142,9 @@ def test_on_message_invalid_json(monkeypatch):
 def test_on_message_missing_event(monkeypatch):
     # Patch env and mqtt.Client
     monkeypatch.setattr(
-        smoke_handlers, "env", lambda: ("localhost", 1883, "bb8", "user", "pass")
+        smoke_handlers,
+        "env",
+        lambda: ("localhost", 1883, "bb8", "user", "pass"),
     )
     mock_client = mock.Mock()
     got_event = mock.Mock()
@@ -163,7 +172,9 @@ def test_on_message_missing_event(monkeypatch):
         smoke_handlers,
         "main",
         lambda: fake_on_message(
-            None, None, mock.Mock(payload=json.dumps({"foo": "bar"}).encode())
+            None,
+            None,
+            mock.Mock(payload=json.dumps({"foo": "bar"}).encode()),
         ),
     )
     smoke_handlers.main()

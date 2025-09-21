@@ -1,8 +1,7 @@
-"""
-ble_gateway.py
+"""BLE gateway helpers: adapter selection and device scanning.
 
-Handles BLE adapter selection, device scanning, and connection status for BB-8
-device management.
+The BleGateway exposes a small async scan API and connection status
+helpers used by higher-level controllers.
 """
 
 from .logging_setup import logger
@@ -37,39 +36,39 @@ class BleGateway:
                 "event": "ble_gateway_init",
                 "mode": self.mode,
                 "adapter": self.adapter,
-            }
+            },
         )
         logger.debug(
             {
                 "event": "ble_gateway_init_debug",
                 "mode": self.mode,
                 "adapter": str(self.adapter),
-            }
+            },
         )
         logger.debug(
             {
                 "event": "ble_gateway_init_state",
                 "connected": self.connected,
                 "class": str(type(self)),
-            }
+            },
         )
 
     def resolve_adapter(self) -> str | None:
         logger.debug(
-            {"event": "ble_gateway_resolve_adapter", "adapter": self.adapter}
+            {"event": "ble_gateway_resolve_adapter", "adapter": self.adapter},
         )
         return self.adapter
 
     async def scan(self, seconds: int = 5) -> list[dict]:
         logger.debug(
-            {"event": "ble_scan_start", "mode": self.mode, "seconds": seconds}
+            {"event": "ble_scan_start", "mode": self.mode, "seconds": seconds},
         )
         if self.mode != "bleak" or BleakScanner is None:
             logger.debug(
                 {
                     "event": "ble_scan_bypass",
                     "reason": "unsupported_or_missing_bleak",
-                }
+                },
             )
             return []
         devices = await BleakScanner.discover(timeout=seconds)  # type: ignore[call-arg]
@@ -77,7 +76,7 @@ class BleGateway:
             {
                 "event": "ble_scan_devices_found",
                 "devices": [getattr(d, "address", None) for d in devices],
-            }
+            },
         )
         result = []
         for d in devices:
@@ -87,21 +86,21 @@ class BleGateway:
                     "name": getattr(d, "name", None),
                     "address": getattr(d, "address", None),
                     "rssi": getattr(d, "rssi", None),
-                }
+                },
             )
             result.append(
                 {
                     "name": getattr(d, "name", None),
                     "address": getattr(d, "address", None),
                     "rssi": getattr(d, "rssi", None),
-                }
+                },
             )
         logger.info(
             {
                 "event": "ble_scan_complete",
                 "count": len(result),
                 "devices": result,
-            }
+            },
         )
         return result
 
@@ -112,7 +111,7 @@ class BleGateway:
                 "event": "ble_status",
                 "status": status,
                 "device": str(getattr(self, "device", None)),
-            }
+            },
         )
         return status
 
@@ -129,7 +128,7 @@ class BleGateway:
             {
                 "event": "ble_gateway_shutdown_pre",
                 "device": device_str,
-            }
+            },
         )
         self.device = None
         logger.debug({"event": "ble_gateway_shutdown_device_none"})
