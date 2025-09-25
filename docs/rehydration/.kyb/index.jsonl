@@ -1,0 +1,2 @@
+{"path": "CONTINUITY_SEED.yaml", "name": "CONTINUITY_SEED.yaml", "size": 2807, "sha256": "8506118183240c01aeaf28cae1db4912fa58abdb4248e9f6310f25dd6d50c537", "category": "docs", "language": "yaml", "tags": ["ble", "coverage", "mqtt"], "generated": false}
+{"path": "README.md", "name": "README.md", "size": 270, "sha256": "ee1e11391950ea45c314e7af6cc4905e09f306cea0de1ba187115026bca2f792", "category": "docs", "language": "markdown", "tags": ["doc"], "generated": false}

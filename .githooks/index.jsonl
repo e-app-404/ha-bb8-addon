@@ -1,0 +1,4 @@
+{"path": "post-commit", "name": "post-commit", "size": 734, "sha256": "d713658e33ac1aadf31a6222b1fcf89eaa18a47faeb55c095b7fd0c8832ccdbf", "category": "other", "language": "bash", "tags": ["ble"], "generated": false}
+{"path": "post-merge", "name": "post-merge", "size": 296, "sha256": "632d1ad99306a212bfa5fdf1e4fed7d084fd1833a321dd82065c306fa6940fa9", "category": "other", "language": "bash", "tags": [], "generated": false}
+{"path": "pre-commit", "name": "pre-commit", "size": 3200, "sha256": "cdb4abb25cd75cfcebf45d635c82b441349e725eb76a9bc3808e20a417b5cd84", "category": "other", "language": "bash", "tags": ["homeassistant"], "generated": false}
+{"path": "pre-push", "name": "pre-push", "size": 2246, "sha256": "4ee50d3a0bf5ccf9d2d22e720766795c4ac42bf32f2a5b4a99cfe6dc5734d967", "category": "other", "language": null, "tags": ["pytest"], "generated": false}

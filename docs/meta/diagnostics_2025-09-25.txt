@@ -1,0 +1,231 @@
+# Quick diagnostics output captured on: 2025-09-25T00:40:11Z
+=== git remote -v
+origin	ssh://gituser@ds220plus.reverse-beta.ts.net/volume1/git-mirrors/ha-config.git (fetch)
+origin	ssh://gituser@ds220plus.reverse-beta.ts.net/volume1/git-mirrors/ha-config.git (push)
+
+=== git rev-parse --abbrev-ref HEAD
+chore/restructure-bb8-addon
+
+=== git config --get init.defaultBranch || true
+main
+
+=== git branch -r | sed -n '1,50p'
+  origin/feat/motion-mvp-tidy
+  origin/feature/oom-recorder-policy
+  origin/feature/oom-recorder-policy-adr-only
+  origin/main
+  origin/meta/rehydration/68b5e5e1-archive
+  origin/recover/stash-2025-09-20
+  origin/restore/adr-to-core-architecture
+
+=== git lfs env 2>/dev/null | sed -n '1,80p' || echo 'no-git-lfs'
+git-lfs/3.7.0 (GitHub; darwin arm64; go 1.24.4)
+git version 2.39.5 (Apple Git-154)
+
+Endpoint=https://ds220plus.reverse-beta.ts.net/volume1/git-mirrors/ha-config.git/info/lfs (auth=none)
+  SSH=gituser@ds220plus.reverse-beta.ts.net:/volume1/git-mirrors/ha-config.git
+LocalWorkingDir=/Users/evertappels/Projects/HA-BB8
+LocalGitDir=/Users/evertappels/Projects/HA-BB8/.git
+LocalGitStorageDir=/Users/evertappels/Projects/HA-BB8/.git
+LocalMediaDir=/Users/evertappels/Projects/HA-BB8/.git/lfs/objects
+LocalReferenceDirs=
+TempDir=/Users/evertappels/Projects/HA-BB8/.git/lfs/tmp
+ConcurrentTransfers=8
+TusTransfers=false
+BasicTransfersOnly=false
+SkipDownloadErrors=false
+FetchRecentAlways=false
+FetchRecentRefsDays=7
+FetchRecentCommitsDays=0
+FetchRecentRefsIncludeRemotes=true
+PruneOffsetDays=3
+PruneVerifyRemoteAlways=false
+PruneVerifyUnreachableAlways=false
+PruneRemoteName=origin
+LfsStorageDir=/Users/evertappels/Projects/HA-BB8/.git/lfs
+AccessDownload=none
+AccessUpload=none
+DownloadTransfers=basic,lfs-standalone-file,ssh
+UploadTransfers=basic,lfs-standalone-file,ssh
+GIT_ASKPASS=/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/extensions/git/dist/askpass.sh
+GIT_EXEC_PATH=/Applications/Xcode.app/Contents/Developer/usr/libexec/git-core
+GIT_PAGER=cat
+git config filter.lfs.process = "git-lfs filter-process"
+git config filter.lfs.smudge = "git-lfs smudge -- %f"
+git config filter.lfs.clean = "git-lfs clean -- %f"
+
+=== git submodule status 2>/dev/null || echo 'no-submodules'
+
+=== git config --list | grep -E 'user.signingkey|commit.gpgsign|tag.gpgsign' || true
+
+=== top 20 largest files
+xargs: command line cannot be assembled, too long
+152108 coverage.xml
+48461 addon/CHANGELOG.md
+47963 CHANGELOG.md
+44354 docs/legacy/ha_mqtt_configuration_info.md
+39552 addon/bb8_core/mqtt_dispatcher.py
+38878 addon/bb8_core/bb8_presence_scanner.py
+32661 addon/bb8_core/ble_bridge.py
+19422 addon/bb8_core/bridge_controller.py
+17810 docs/legacy/CHANGELOG_legacy.md
+17263 addon/bb8_core/controller.py
+16203 docs/legacy/ha_addon.config.info.md
+13802 addon/bb8_core/facade.py
+13171 docs/legacy/mac_version_A.patch
+12198 addon/bb8_core/echo_responder.py
+11354 addon/tests/test_auto_detect.py
+11249 docs/ADR/INDEX.md
+10806 docs/ADR/ADR-0023-bb8-integration.md
+10781 addon/tests/test_facade.py
+10763 addon/tests/test_bb8_presence_scanner.py
+9483 docs/legacy/ADDON_DEVELOPMENT_CHECKLIST_v1.1.md
+
+=== symlinks
+./.venv/bin/python3
+./.venv/bin/python
+./.venv/bin/python3.13
+
+=== nested .git
+
+=== path probes
+./_backups/docs/directives/directive.run_pack_strict_led_on.md.autofix.perlbak:143:*(This run is operational-toggle only—no code diffs expected. If you did change code/config, replace the empty arrays accordingly.)*
+./_backups/docs/directives/directive.run_pack_strict_led_on.md.autofix.bak:143:*(This run is operational-toggle only—no code diffs expected. If you did change code/config, replace the empty arrays accordingly.)*
+./_backups/docs/ADR/_autofix_backups/ADR-0020-motion-safety-and-mqtt-contract.md.autofix.bak:32:Publish each config to `homeassistant/number/<unique_id>/config` with `retain=True` on publish (not in JSON).
+./_backups/docs/ADR/_autofix_backups/ADR-0020-motion-safety-and-mqtt-contract.md.autofix.bak:96:Publish to homeassistant/button/<unique_id>/config with `retain=True` on publish. 
+./_backups/docs/ADR/_autofix_backups/INDEX.md.autofix.bak:10:| [ADR-0004-runtime-tools-policy.md](ADR-0004-runtime-tools-policy.md) | "ADR-0004: Conditional Runtime Tools Policy (CRTP) & Workspace Drift Enforcement" | Accepted | 2025-08-26 | Strategos | ADR-0001,ADR-0009 |  | 2025-09-13 | TOKEN_BLOCK: accepted: - TOOLS_ALLOWED - SCRIPTS_ALLOWED - STRUCTURE_GUARD_OK drift: - DRIFT: tools_unreferenced_in_dockerfile - DRIFT: scripts_unreferenced_in_dockerfile - DRIFT: structure_guard_failed - name: Structure guard (ADR-0001 + CRTP) run: \| set -euo pipefail test -d addon \|\| (echo addon/ missing && exit 2) if [ -d addon/.git ]; then echo addon is a repo (forbidden); exit 3; fi # Forbidden workspace-only dirs (always) for d in .github docs ops reports addon; do if [ -e addon/$d ]; then echo DRIFT:forbidden_in_addon:$d; exit 4; fi done # Required files + mode test -f addon/config.yaml \|\| (echo DRIFT:missing_config_yaml && exit 5) if rg -n ^\s*image:\s* addon/config.yaml >/dev/null; then echo MODE: PUBLISH rg -n ^\s*version:\s* addon/config.yaml >/dev/null \|\| (echo DRIFT:version_missing_in_publish_mode && exit 7) else echo MODE: LOCAL_DEV test -f addon/Dockerfile \|\| (echo DRIFT:dockerfile_missing_in_local_dev && exit 6) echo TOKEN: DEV_LOCAL_BUILD_FORCED fi # CRTP: tools/ allowed if referenced by Dockerfile or marker present if [ -d addon/tools ]; then if ! grep -Ei (COPY\|ADD\|RUN\|ENTRYPOINT\|CMD).*tools/ addon/Dockerfile >/dev/null 2>&1   && [ ! -f addon/.allow_runtime_tools ]; then echo DRIFT:tools_unreferenced_in_dockerfile; exit 8 else echo TOKEN: TOOLS_ALLOWED fi fi # CRTP: scripts/ allowed if referenced by Dockerfile or marker present if [ -d addon/scripts ]; then if ! grep -Ei (COPY\|ADD\|RUN\|ENTRYPOINT\|CMD).*scripts/ addon/Dockerfile >/dev/null 2>&1   && [ ! -f addon/.allow_runtime_scripts ]; then echo DRIFT:scripts_unreferenced_in_dockerfile; exit 9 else echo TOKEN: SCRIPTS_ALLOWED fi fi echo TOKEN: STRUCTURE_OK CRTP-ALLOW: path: addon/tools/healthcheck.sh reason: container health probe invoked by s6 longrun referenced_by: run.sh:23 safety: shellcheck-clean, no-secrets, bounded-exit owner: pythagoras CRTP-MARKER: file: addon/.allow_runtime_tools entries: - addon/tools/diag_snapshot.sh reason: on-device diagnostics; manual invocation on support safety: shellcheck-clean, ≤100KB, no elevated privileges | - |
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.perlbak:24:- Supervisor builds locally when `addon/config.yaml` contains a **`build:`*- block **and `image:` is absent**. Use `image:` **only for PUBLISH*- (pull from a registry).
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.perlbak:45:  - `addon/config.yaml` (mode-aware):
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.perlbak:126:- Runtime sync token: `/config/reports/deploy_receipt.txt`
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.perlbak:130:mkdir -p /config/reports && echo 'TOKEN: CLEAN_RUNTIME_OK' | tee -a /config/reports/deploy_receipt.txt
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.perlbak:154:# 6.5 Emit verify token (receipt: `/config/reports/deploy_receipt.txt`)
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.perlbak:155:echo 'TOKEN: DEPLOY_OK' | tee -a /config/reports/deploy_receipt.txt
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.perlbak:177:# Ensure addon/config.yaml:version == tag
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.perlbak:183:- **“Add‑on not available inside store”**: ensure `/addons/local/beep_boop_bb8/config.yaml` exists, then UI → *Add‑on Store → HA‑BB8 (local)- → **Install**; or run `ssh babylon-babes@homeassistant "ha addons reload"`.
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.perlbak:240:- CI guard ensures `addon/config.yaml` has `build:` and a local `image:` in non‑publish PRs.
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.perlbak:249:- `addon/config.yaml` → `image:` local + `build:` present
+./_backups/docs/ADR/_autofix_backups/ADR-0004-runtime-tools-policy.md.autofix.bak:81:    test -f addon/config.yaml || (echo "DRIFT:missing_config_yaml" && exit 5)
+./_backups/docs/ADR/_autofix_backups/ADR-0004-runtime-tools-policy.md.autofix.bak:82:    if rg -n '^\s*image:\s*' addon/config.yaml >/dev/null; then
+./_backups/docs/ADR/_autofix_backups/ADR-0004-runtime-tools-policy.md.autofix.bak:84:      rg -n '^\s*version:\s*' addon/config.yaml >/dev/null || (echo "DRIFT:version_missing_in_publish_mode" && exit 7)
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.bak:24:- Supervisor builds locally when `addon/config.yaml` contains a **`build:`*- block **and `image:` is absent**. Use `image:` **only for PUBLISH*- (pull from a registry).
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.bak:45:  - `addon/config.yaml` (mode-aware):
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.bak:67:- Optional: macOS runtime mount at `/n/ha/addons/local/beep_boop_bb8`.
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.bak:110:  addon/ /n/ha/addons/local/beep_boop_bb8/
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.bak:126:- Runtime sync token: `/config/reports/deploy_receipt.txt`
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.bak:130:mkdir -p /config/reports && echo 'TOKEN: CLEAN_RUNTIME_OK' | tee -a /config/reports/deploy_receipt.txt
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.bak:154:# 6.5 Emit verify token (receipt: `/config/reports/deploy_receipt.txt`)
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.bak:155:echo 'TOKEN: DEPLOY_OK' | tee -a /config/reports/deploy_receipt.txt
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.bak:177:# Ensure addon/config.yaml:version == tag
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.bak:183:- **“Add‑on not available inside store”**: ensure `/addons/local/beep_boop_bb8/config.yaml` exists, then UI → *Add‑on Store → HA‑BB8 (local)- → **Install**; or run `ssh babylon-babes@homeassistant "ha addons reload"`.
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.bak:240:- CI guard ensures `addon/config.yaml` has `build:` and a local `image:` in non‑publish PRs.
+./_backups/docs/ADR/_autofix_backups/ADR-0008-end-to-end-flow.md.autofix.bak:249:- `addon/config.yaml` → `image:` local + `build:` present
+./_backups/docs/ADR/_autofix_backups/ADR-0010-unified-supervision-and-diag.md.autofix.bak:21:2. Emit deterministic DIAG events for runloop attempts, process starts, and child exits; persist to `/data/reports/ha_bb8_addon.log`.  
+./_backups/docs/ADR/_autofix_backups/ADR-0010-unified-supervision-and-diag.md.autofix.bak:23:4. Normalize log paths, create parent dirs, and fallback to `/data` then `/tmp`.  
+./_backups/docs/ADR/ADR-0008-end-to-end-flow.md.autofix.bak:24:- Supervisor builds locally when `addon/config.yaml` contains a **`build:`*- block **and `image:` is absent**. Use `image:` **only for PUBLISH*- (pull from a registry).
+./_backups/docs/ADR/ADR-0008-end-to-end-flow.md.autofix.bak:45:  - `addon/config.yaml` (mode-aware):
+./_backups/docs/ADR/ADR-0008-end-to-end-flow.md.autofix.bak:126:- Runtime sync token: `/config/reports/deploy_receipt.txt`
+./_backups/docs/ADR/ADR-0008-end-to-end-flow.md.autofix.bak:130:mkdir -p /config/reports && echo 'TOKEN: CLEAN_RUNTIME_OK' | tee -a /config/reports/deploy_receipt.txt
+./_backups/docs/ADR/ADR-0008-end-to-end-flow.md.autofix.bak:154:# 6.5 Emit verify token (receipt: `/config/reports/deploy_receipt.txt`)
+./_backups/docs/ADR/ADR-0008-end-to-end-flow.md.autofix.bak:155:echo 'TOKEN: DEPLOY_OK' | tee -a /config/reports/deploy_receipt.txt
+./_backups/docs/ADR/ADR-0008-end-to-end-flow.md.autofix.bak:177:# Ensure addon/config.yaml:version == tag
+./_backups/docs/ADR/ADR-0008-end-to-end-flow.md.autofix.bak:183:- **“Add‑on not available inside store”**: ensure `/addons/local/beep_boop_bb8/config.yaml` exists, then UI → *Add‑on Store → HA‑BB8 (local)- → **Install**; or run `ssh babylon-babes@homeassistant "ha addons reload"`.
+./_backups/docs/ADR/ADR-0008-end-to-end-flow.md.autofix.bak:240:- CI guard ensures `addon/config.yaml` has `build:` and a local `image:` in non‑publish PRs.
+./_backups/docs/ADR/ADR-0008-end-to-end-flow.md.autofix.bak:249:- `addon/config.yaml` → `image:` local + `build:` present
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:15:2025-08-18 13:40:41,778 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:25:2025-08-18 13:40:43,374 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:34:2025-08-18 13:40:44,980 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:43:2025-08-18 13:40:46,607 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:52:2025-08-18 13:40:48,201 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:61:2025-08-18 13:40:49,813 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:70:2025-08-18 13:40:51,445 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:79:2025-08-18 13:40:53,022 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:88:2025-08-18 13:40:54,635 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:97:2025-08-18 13:40:56,205 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:106:2025-08-18 13:40:57,769 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:114:2025-08-18 13:40:59,328 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:124:2025-08-18 13:41:00,884 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:133:2025-08-18 13:41:02,497 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:142:2025-08-18 13:41:04,059 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:151:2025-08-18 13:41:05,627 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:160:2025-08-18 13:41:07,210 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:169:2025-08-18 13:41:08,802 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:178:2025-08-18 13:41:10,385 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:187:2025-08-18 13:41:11,953 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:196:2025-08-18 13:41:13,504 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:205:2025-08-18 13:41:15,085 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:214:2025-08-18 13:41:16,678 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:223:2025-08-18 13:41:18,274 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:232:2025-08-18 13:41:19,951 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:241:2025-08-18 13:41:21,551 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:251:2025-08-18 13:41:23,159 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:259:2025-08-18 13:41:24,787 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:268:2025-08-18 13:41:26,394 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:277:2025-08-18 13:41:27,957 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:286:2025-08-18 13:41:29,530 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:296:2025-08-18 13:41:31,107 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:304:2025-08-18 13:41:32,700 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:313:2025-08-18 13:41:34,273 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:322:2025-08-18 13:41:35,870 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:331:2025-08-18 13:41:37,503 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:340:2025-08-18 13:41:39,113 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:349:2025-08-18 13:41:40,736 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:358:2025-08-18 13:41:42,320 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:367:2025-08-18 13:41:43,909 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:376:2025-08-18 13:41:45,494 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:385:2025-08-18 13:41:47,088 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:394:2025-08-18 13:41:48,775 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:403:2025-08-18 13:41:50,400 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:412:2025-08-18 13:41:51,996 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:420:2025-08-18 13:41:53,584 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:430:2025-08-18 13:41:55,187 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:439:2025-08-18 13:41:56,765 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:448:2025-08-18 13:41:58,356 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:457:2025-08-18 13:41:59,969 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:466:2025-08-18 13:42:01,597 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:475:2025-08-18 13:42:03,201 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:484:2025-08-18 13:42:04,793 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:493:2025-08-18 13:42:06,451 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:502:2025-08-18 13:42:08,033 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:511:2025-08-18 13:42:09,633 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:520:2025-08-18 13:42:11,234 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:529:2025-08-18 13:42:12,822 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:538:2025-08-18 13:42:14,415 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:547:2025-08-18 13:42:16,011 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:556:2025-08-18 13:42:17,638 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:564:2025-08-18 13:42:19,232 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:574:2025-08-18 13:42:20,827 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:583:2025-08-18 13:42:22,422 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:592:2025-08-18 13:42:24,043 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:601:2025-08-18 13:42:25,639 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:610:2025-08-18 13:42:27,220 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:619:2025-08-18 13:42:28,806 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:628:2025-08-18 13:42:30,423 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:636:2025-08-18 13:42:32,018 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:646:2025-08-18 13:42:33,570 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:655:2025-08-18 13:42:35,205 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:664:2025-08-18 13:42:36,776 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:673:2025-08-18 13:42:38,350 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:682:2025-08-18 13:42:39,929 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:691:2025-08-18 13:42:41,524 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:700:2025-08-18 13:42:43,121 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+./_backups/docs/meta/bb8_addon_logs.log.autofix.bak:709:2025-08-18 13:42:44,704 INFO:bb8_addon: Dispatcher config (resolved): host=192.168.0.129 port=1883 user=True topic=bb8 client_id=bb8_presence_scanner source=/data/options.json
+
+=== .github workflows
+total 104
+drwxr-xr-x@ 15 evertappels  staff   480 Sep 22 18:26 .
+drwxr-xr-x@  6 evertappels  staff   192 Sep 22 16:28 ..
+-rw-r--r--@  1 evertappels  staff   623 Aug 23 12:41 addon-audit.yml
+-rw-r--r--@  1 evertappels  staff   505 Sep 13 20:56 adr-governance.yml
+-rw-r--r--@  1 evertappels  staff  2860 Sep 19 13:38 adr-structure.yml
+-rw-r--r--@  1 evertappels  staff   813 Aug 23 12:41 governance-gates.yaml
+-rw-r--r--@  1 evertappels  staff  2787 Sep 22 19:21 index.jsonl
+-rw-r--r--@  1 evertappels  staff   610 Sep 21 11:34 log_sanity.yml
+-rw-r--r--@  1 evertappels  staff  1157 Sep 23 22:37 regenerate_indexes.yml
+-rw-r--r--@  1 evertappels  staff   677 Sep  5 14:45 repo-guards.yml
+-rw-r--r--@  1 evertappels  staff  1435 Sep 21 04:35 shape.yml
+-rw-r--r--@  1 evertappels  staff   866 Sep 21 04:47 smoke_mqtt.yml
+-rw-r--r--@  1 evertappels  staff   367 Sep 13 16:23 snapshot-policy-check.yml
+-rw-r--r--@  1 evertappels  staff  2328 Sep 14 03:19 snapshot.yml
+-rw-r--r--@  1 evertappels  staff   603 Sep 13 14:56 tests.yml
+
+# End of diagnostics

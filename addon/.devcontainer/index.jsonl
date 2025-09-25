@@ -1,0 +1,2 @@
+{"path": "Dockerfile", "name": "Dockerfile", "size": 426, "sha256": "aa608ad771a5e1987711b64501c35026602c8644a2526dc9395db8f96cccad34", "category": "code.runtime", "language": "dockerfile", "tags": ["ble", "ci", "mqtt"], "generated": false}
+{"path": "devcontainer.json", "name": "devcontainer.json", "size": 1275, "sha256": "7ac97289c974524afe642ced29645aab7f654e937682a364e865387dca9fe0f2", "category": "code.runtime", "language": "json", "tags": ["ble"], "generated": false}

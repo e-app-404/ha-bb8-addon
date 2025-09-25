@@ -1,0 +1,41 @@
+{"path": ".HA_ADDON_README.md", "name": ".HA_ADDON_README.md", "size": 1944, "sha256": "84a9f5cac39cd8b7b294a9165f1bae2d6fe17a423b1aad53aa7221896e55b9d1", "category": "docs", "language": "markdown", "tags": ["ble", "doc", "homeassistant", "mqtt"], "generated": false}
+{"path": ".coveragerc", "name": ".coveragerc", "size": 508, "sha256": "6835ea0de772efbcf7396394f4f05a6f40795e3549cd881cb2db9a71ca8685cf", "category": "other", "language": null, "tags": ["ble", "coverage", "homeassistant", "mqtt"], "generated": false}
+{"path": ".devcontainer", "name": ".devcontainer", "size": 160, "sha256": "", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": ".dockerignore", "name": ".dockerignore", "size": 204, "sha256": "f70a1491c526b07725dba2a98d90cf90989ed45b733ad615eef5a5133a29424e", "category": "other", "language": null, "tags": ["pytest"], "generated": false}
+{"path": ".editorconfig", "name": ".editorconfig", "size": 232, "sha256": "d45c376ccbfc786bd16e9ad29cb179c30034156701fe56537a7b938bcbe76a18", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": ".env.bleep.example", "name": ".env.bleep.example", "size": 229, "sha256": "891d1609efa69b51c30bc0c1ec57318a9354550b240674586112f33c3bbecf2e", "category": "other", "language": null, "tags": ["ble", "mqtt"], "generated": false}
+{"path": ".evidence.env", "name": ".evidence.env", "size": 198, "sha256": "a15accff7cbd78042b3008d298405b8f79b374fcca430d9694fc198d87d10a51", "category": "other", "language": null, "tags": ["ble", "mqtt"], "generated": false}
+{"path": ".githooks", "name": ".githooks", "size": 224, "sha256": "", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": ".github", "name": ".github", "size": 192, "sha256": "", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": ".gitignore", "name": ".gitignore", "size": 645, "sha256": "b144c915f12b9589573169f08b83e1bb3c505dbdd5b782a004abbe4a746e03e8", "category": "other", "language": null, "tags": ["pytest"], "generated": false}
+{"path": ".pre-commit-config.yaml", "name": ".pre-commit-config.yaml", "size": 204, "sha256": "efa18b1d723fbe0973b9561d824302120d9ef8874a052027c41b286f249fce98", "category": "other", "language": "yaml", "tags": [], "generated": false}
+{"path": ".pytest_cache", "name": ".pytest_cache", "size": 224, "sha256": "", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": ".ruff_cache", "name": ".ruff_cache", "size": 192, "sha256": "", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": ".ruffignore", "name": ".ruffignore", "size": 100, "sha256": "3ffe3b7e1210d1182a54ff004155fb17aeb49fc2006d5645c0f609a5c78ee9aa", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": ".vscode", "name": ".vscode", "size": 160, "sha256": "", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": "CHANGELOG.md", "name": "CHANGELOG.md", "size": 47963, "sha256": "4ceb6be166f0c265a6203e9f542e8a07cc9825ffc413a76dc983efd00fa82dd5", "category": "docs", "language": "markdown", "tags": ["ble", "doc", "homeassistant", "mqtt", "pytest"], "generated": false}
+{"path": "Dockerfile", "name": "Dockerfile", "size": 1405, "sha256": "89f5fb5e8fbde8caee0866ac3807ca97a0f4d3e69932a70d076c5a130ada7ad5", "category": "other", "language": "dockerfile", "tags": ["ble", "ci", "mqtt"], "generated": false}
+{"path": "Makefile", "name": "Makefile", "size": 7457, "sha256": "6096ec2c7d6485eb274c66b4c7b985713ee6de634068edccb319902ec13be96f", "category": "other", "language": null, "tags": ["ble", "ci", "pytest"], "generated": false}
+{"path": "README.md", "name": "README.md", "size": 6029, "sha256": "8dbbfa5eb77aeb7b510a9838c8ded012e7ce14a0ee0a378b7ce810e9283dcc80", "category": "docs", "language": "markdown", "tags": ["ble", "doc", "generated", "homeassistant", "mqtt"], "generated": true}
+{"path": "VERSION", "name": "VERSION", "size": 4, "sha256": "9c5955fc99a60b8f6dee6cf582c4420d91e1b3e2a201f532c91e2cbdfce7fa51", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": "__init__.py", "name": "__init__.py", "size": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "category": "other", "language": "python", "tags": [], "generated": false}
+{"path": "addon", "name": "addon", "size": 1024, "sha256": "", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": "apparmor.txt", "name": "apparmor.txt", "size": 1135, "sha256": "bf42763201a3b0aebf5ed252a2f5dabb3fc0ec3d755bb81b758696b91b4ba5c2", "category": "other", "language": null, "tags": ["ble"], "generated": false}
+{"path": "build.yaml", "name": "build.yaml", "size": 327, "sha256": "39ed44b6de1c9f653727e9111b5645d34bbe0e96bf185a2129f517c66d81ff37", "category": "other", "language": "yaml", "tags": [], "generated": false}
+{"path": "config.yaml", "name": "config.yaml", "size": 1811, "sha256": "c74387f6c1556a3c7b5229949309bb4c531c89b3101f77e33196728e7894b48a", "category": "other", "language": "yaml", "tags": ["ble", "homeassistant", "mqtt"], "generated": false}
+{"path": "coverage.xml", "name": "coverage.xml", "size": 152108, "sha256": "269e77d00164909f0776671b3898f430e02ccdec8fb5b6d0513c556e4fe4cc64", "category": "other", "language": null, "tags": ["coverage", "generated"], "generated": true}
+{"path": "docs", "name": "docs", "size": 800, "sha256": "", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": "mypy.ini", "name": "mypy.ini", "size": 407, "sha256": "5ca217d441b696bc1079cccffbd22dec75ac2004b3600e24a0b374e02dd48ba7", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": "ops", "name": "ops", "size": 608, "sha256": "", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": "pyproject.toml", "name": "pyproject.toml", "size": 486, "sha256": "48cb310668a1d37c5b3ac46a771f70c75033c6e7b6db4a83cc69af231076682f", "category": "other", "language": "toml", "tags": ["ble", "manifest"], "generated": false}
+{"path": "pytest.ini", "name": "pytest.ini", "size": 386, "sha256": "44c62631326b27adf9c6f76f96137e5390a6c5274264a7715ad51fbc3e07efe5", "category": "other", "language": null, "tags": ["ble", "pytest"], "generated": false}
+{"path": "rehydration", "name": "rehydration", "size": 128, "sha256": "", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": "requirements-dev.in", "name": "requirements-dev.in", "size": 111, "sha256": "e33646537c170a9f04aca466f877145fed073fef0917b26faec3ffb7feeba8e1", "category": "other", "language": null, "tags": ["pytest"], "generated": false}
+{"path": "requirements-dev.txt", "name": "requirements-dev.txt", "size": 191, "sha256": "34198642151401bbc442c0ca264c065307db2e68ab0bde566fb73f6eb501b914", "category": "other", "language": null, "tags": ["pytest"], "generated": false}
+{"path": "requirements.in", "name": "requirements.in", "size": 204, "sha256": "37625f498e29c381d513d06ca42298544d85a7e2731514759a3b06329dd09437", "category": "other", "language": null, "tags": ["ble", "mqtt"], "generated": false}
+{"path": "requirements.txt", "name": "requirements.txt", "size": 390, "sha256": "26146443e8789b50405340d6c3aff36eeb470a6a900840dab7f297b2846e0895", "category": "other", "language": null, "tags": ["ble", "manifest", "mqtt"], "generated": false}
+{"path": "ruff.toml", "name": "ruff.toml", "size": 422, "sha256": "72001ab49ff85394bdda70bb27368c0f35dfdbb88b2632e0273e732c98e9dbe4", "category": "other", "language": "toml", "tags": [], "generated": false}
+{"path": "run.sh", "name": "run.sh", "size": 1647, "sha256": "624327c27ed8b95306cbe37a4e184078e344fe53de67e8a62c14c273e7cf74df", "category": "other", "language": "bash", "tags": ["ble", "mqtt"], "generated": false}
+{"path": "scripts", "name": "scripts", "size": 576, "sha256": "", "category": "other", "language": null, "tags": [], "generated": false}
+{"path": "stp4_evidence_rerun.log", "name": "stp4_evidence_rerun.log", "size": 243, "sha256": "c7be084c15ebed079ab305132d56405dbbf032b36e2d77dd60ec658473a299b7", "category": "other", "language": null, "tags": ["mqtt"], "generated": false}
+{"path": "tmp", "name": "tmp", "size": 128, "sha256": "", "category": "other", "language": null, "tags": [], "generated": false}

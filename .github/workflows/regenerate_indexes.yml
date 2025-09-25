@@ -1,0 +1,44 @@
+name: Regenerate indexes
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  regen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt || true
+
+      - name: Regenerate indexes and relationships
+        run: |
+          python3 ops/guardrails/generate_index.py
+          python3 ops/guardrails/build_relationships.py
+
+      - name: Fail if indexes out of date
+        run: |
+          git --no-pager diff --exit-code docs/architecture/*.json */index.jsonl || (
+            echo "Indexes out of date. Please run the generator locally and commit changes." && exit 1
+          )
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-artifacts
+          path: |
+            docs/architecture/*
+            reports/relationship_graph.dot

@@ -1,0 +1,2 @@
+{"path": "discovery_fix.patch", "name": "discovery_fix.patch", "size": 3655, "sha256": "b405579e2cde7242bcc2e5c1d02185132d55182b015c79b4e6efb1ad6cbaaf32", "category": "docs", "language": null, "tags": ["homeassistant", "mqtt"], "generated": false}
+{"path": "ruff_mypy_fixes.patch", "name": "ruff_mypy_fixes.patch", "size": 1858, "sha256": "9dac971f0aedf91c60249b1b22cf071f383c3023e6b9f86c53321f6a20a46295", "category": "docs", "language": null, "tags": [], "generated": false}

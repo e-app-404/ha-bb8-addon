@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.local.ha.mount.real</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/usr/local/bin/ha_mount_helper</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StartInterval</key>
+    <integer>300</integer>
+    <key>StandardErrorPath</key>
+    <string>/var/log/ha-mount.log</string>
+    <key>StandardOutPath</key>
+    <string>/var/log/ha-mount.log</string>
+    <key>KeepAlive</key>
+    <false/>
+  </dict>
+</plist>
+
+<!-- Installation:
+ sudo cp scripts/ha_mount_helper.sh /usr/local/bin/ha_mount_helper
+ sudo chown root:wheel /usr/local/bin/ha_mount_helper
+ sudo chmod 755 /usr/local/bin/ha_mount_helper
+ sudo cp scripts/com.local.ha.mount.real.plist.example /Library/LaunchDaemons/com.local.ha.mount.real.plist
+ sudo chown root:wheel /Library/LaunchDaemons/com.local.ha.mount.real.plist
+ sudo chmod 644 /Library/LaunchDaemons/com.local.ha.mount.real.plist
+ sudo launchctl bootstrap system /Library/LaunchDaemons/com.local.ha.mount.real.plist
+ sudo launchctl kickstart -k system/com.local.ha.mount.real
+ -->

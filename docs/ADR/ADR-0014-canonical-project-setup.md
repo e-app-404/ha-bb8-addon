@@ -10,6 +10,11 @@ related:
   - ADR-0013
 supersedes: []
 last_updated: 2025-09-11
+references:
+  - Makefile (root)
+  - Makefile (addon shim)
+  - coverage_gate.py
+  - bleep_run.py
 ---
 
 # ADR-0014: Canonical Project Setup for HA-BB8 Addon

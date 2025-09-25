@@ -1,0 +1,16 @@
+{"path": ".gitkeep", "name": ".gitkeep", "size": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "category": "code.tooling", "language": null, "tags": [], "generated": false}
+{"path": "ADR", "name": "ADR", "size": 192, "sha256": "", "category": "code.tooling", "language": null, "tags": [], "generated": false}
+{"path": "audit", "name": "audit", "size": 224, "sha256": "", "category": "code.tooling", "language": null, "tags": [], "generated": false}
+{"path": "backup", "name": "backup", "size": 64, "sha256": "", "category": "code.tooling", "language": null, "tags": [], "generated": false}
+{"path": "copilot_baseline_artifacts.sh", "name": "copilot_baseline_artifacts.sh", "size": 2081, "sha256": "e27d25853440660bcdf9c4312a84f65fd01a1df6f0c7eb0de8b98474360cdda7", "category": "code.tooling", "language": "bash", "tags": ["homeassistant"], "generated": false}
+{"path": "deploy_dual_clone.sh", "name": "deploy_dual_clone.sh", "size": 1277, "sha256": "9c091db03597c65903bcafcbd59ffea62c4c482e58ea7d2981e352eeb43f6962", "category": "code.tooling", "language": "bash", "tags": [], "generated": false}
+{"path": "dev", "name": "dev", "size": 128, "sha256": "", "category": "code.tooling", "language": null, "tags": [], "generated": false}
+{"path": "diagnostics", "name": "diagnostics", "size": 128, "sha256": "", "category": "code.tooling", "language": null, "tags": [], "generated": false}
+{"path": "duplicate_removal", "name": "duplicate_removal", "size": 224, "sha256": "", "category": "code.tooling", "language": null, "tags": [], "generated": false}
+{"path": "evidence", "name": "evidence", "size": 416, "sha256": "", "category": "code.tooling", "language": null, "tags": [], "generated": false}
+{"path": "guardrails", "name": "guardrails", "size": 544, "sha256": "", "category": "code.tooling", "language": null, "tags": [], "generated": false}
+{"path": "qa", "name": "qa", "size": 224, "sha256": "", "category": "code.tooling", "language": null, "tags": [], "generated": false}
+{"path": "ratchet", "name": "ratchet", "size": 160, "sha256": "", "category": "code.tooling", "language": null, "tags": [], "generated": false}
+{"path": "release", "name": "release", "size": 128, "sha256": "", "category": "code.tooling", "language": null, "tags": [], "generated": false}
+{"path": "utils", "name": "utils", "size": 160, "sha256": "", "category": "code.tooling", "language": null, "tags": [], "generated": false}
+{"path": "workspace", "name": "workspace", "size": 608, "sha256": "", "category": "code.tooling", "language": null, "tags": [], "generated": false}

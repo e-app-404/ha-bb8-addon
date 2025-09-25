@@ -1,0 +1,2 @@
+{"path": "helper_move_backup.sh", "name": "helper_move_backup.sh", "size": 2790, "sha256": "3545e2aeee912eb3d96b2109179fad7ec63ed7f43ffddcea9ab2e09c40b6d9ba", "category": "code.tooling", "language": "bash", "tags": ["ble"], "generated": false}
+{"path": "move_ruff_cache_before_push.sh", "name": "move_ruff_cache_before_push.sh", "size": 768, "sha256": "b76ecef95f378d2e2737728d612821174148a072a86202be48568651617a722e", "category": "code.tooling", "language": "bash", "tags": [], "generated": false}

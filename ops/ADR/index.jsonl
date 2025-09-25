@@ -1,0 +1,3 @@
+{"path": "consolidate_adr0001.sh", "name": "consolidate_adr0001.sh", "size": 3224, "sha256": "884be709236167e69bd0e4152ab0b9484e4363aab45a0c5b48a8bcb50c145ed4", "category": "code.tooling", "language": "bash", "tags": [], "generated": false}
+{"path": "generate_adr_index.sh", "name": "generate_adr_index.sh", "size": 4860, "sha256": "7bbb8ab4c953b64b10493f912fbba6b3f6535a72e41277dd835086edc8db92ac", "category": "code.tooling", "language": "bash", "tags": ["ble"], "generated": false}
+{"path": "validate_adrs.sh", "name": "validate_adrs.sh", "size": 2880, "sha256": "868d8e8d5e8f8352fe54a5ddbe43c5d6fad16d7310889093c7e52413abcc95c1", "category": "code.tooling", "language": "bash", "tags": [], "generated": false}

@@ -1,0 +1,22 @@
+{"path": "ADR", "name": "ADR", "size": 928, "sha256": "", "category": "docs", "language": null, "tags": [], "generated": false}
+{"path": "DEV_SETUP.md", "name": "DEV_SETUP.md", "size": 499, "sha256": "d11a9d0867286be1e83a5b26ff8ee5f5ab4e3d9624dc0168aa80d514ab169e01", "category": "docs", "language": "markdown", "tags": ["ble", "doc"], "generated": false}
+{"path": "HELPERS_MIGRATION.md", "name": "HELPERS_MIGRATION.md", "size": 573, "sha256": "2231f6ddb14d9a0555abb71296d3dabb003612a5928a4d630c0d201c2c28a638", "category": "docs", "language": "markdown", "tags": ["ble", "doc", "homeassistant"], "generated": false}
+{"path": "RESTORE_ADDON.md", "name": "RESTORE_ADDON.md", "size": 309, "sha256": "c0ff714baffcf9679e4eebcff3e38bbe2c2594f4b3b64722f34ca63dce730519", "category": "docs", "language": "markdown", "tags": ["doc"], "generated": false}
+{"path": "architecture", "name": "architecture", "size": 256, "sha256": "", "category": "docs", "language": null, "tags": [], "generated": false}
+{"path": "bb8_health_endpoint_log.json", "name": "bb8_health_endpoint_log.json", "size": 1359, "sha256": "fabef76e3c24cb5cb5bd030a94e6f3b7eef9f9e3fba20155abd1cd1df3391d02", "category": "docs", "language": "json", "tags": ["ble", "mqtt"], "generated": false}
+{"path": "delta_contracts", "name": "delta_contracts", "size": 192, "sha256": "", "category": "docs", "language": null, "tags": [], "generated": false}
+{"path": "directives", "name": "directives", "size": 128, "sha256": "", "category": "docs", "language": null, "tags": [], "generated": false}
+{"path": "entity_set.json", "name": "entity_set.json", "size": 1182, "sha256": "9281e5574be0d591bb07e8606455e906a9c9a410d6ebd25deb1ecdd4f67bee5f", "category": "docs", "language": "json", "tags": [], "generated": false}
+{"path": "entity_set_extended.json", "name": "entity_set_extended.json", "size": 6970, "sha256": "d0631b4231e4a35ab250639f5a6ae5ea18399570025d3ec1bd1cc718031420b0", "category": "docs", "language": "json", "tags": ["homeassistant", "mqtt"], "generated": false}
+{"path": "facade_mapping_table.json", "name": "facade_mapping_table.json", "size": 7040, "sha256": "dc23a82858baf4f231555f15cfc706aaf2e5ed3ce5f022650c9cb09d39a3c6a9", "category": "docs", "language": "json", "tags": ["ble", "homeassistant", "mqtt"], "generated": false}
+{"path": "ha-mount-nas-prompt.prompt", "name": "ha-mount-nas-prompt.prompt", "size": 7830, "sha256": "fae1ae6bb26ff4748c8324b1b846bd788600c0cd053fc8a326912350877e2f75", "category": "docs", "language": null, "tags": ["ble"], "generated": false}
+{"path": "ha_mqtt_trace_snapshot.json", "name": "ha_mqtt_trace_snapshot.json", "size": 1574, "sha256": "363828ee210da0ab4a9c2e0008330323428748b209336df4b5b0bec1382c28f4", "category": "docs", "language": "json", "tags": ["homeassistant", "mqtt"], "generated": false}
+{"path": "intervention_plan.json", "name": "intervention_plan.json", "size": 2028, "sha256": "0d68525cbb735bc619ca373eaa9d96b0b002dfbe6477c7b84770036c1be304bf", "category": "docs", "language": "json", "tags": ["ble", "homeassistant", "mqtt", "pytest"], "generated": false}
+{"path": "legacy", "name": "legacy", "size": 640, "sha256": "", "category": "docs", "language": null, "tags": [], "generated": false}
+{"path": "meta", "name": "meta", "size": 512, "sha256": "", "category": "docs", "language": null, "tags": [], "generated": false}
+{"path": "patches", "name": "patches", "size": 224, "sha256": "", "category": "docs", "language": null, "tags": [], "generated": false}
+{"path": "presence_finder_data.txt", "name": "presence_finder_data.txt", "size": 12519, "sha256": "97b03fb9c86bbea4be649e4c7d7145cd4ba183603088033bb5ca680abd65ce21", "category": "docs", "language": null, "tags": ["ble"], "generated": false}
+{"path": "prompts", "name": "prompts", "size": 320, "sha256": "", "category": "docs", "language": null, "tags": [], "generated": false}
+{"path": "rehydration", "name": "rehydration", "size": 288, "sha256": "", "category": "docs", "language": null, "tags": [], "generated": false}
+{"path": "strategic_assessment.json", "name": "strategic_assessment.json", "size": 3103, "sha256": "66114157bdf5f60dcfa17a0ce667109e0c086f218828edec9a77e6a02f3b97d1", "category": "docs", "language": "json", "tags": ["ble", "homeassistant", "mqtt"], "generated": false}
+{"path": "tarballs", "name": "tarballs", "size": 768, "sha256": "", "category": "docs", "language": null, "tags": [], "generated": false}

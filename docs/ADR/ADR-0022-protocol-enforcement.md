@@ -36,7 +36,7 @@ Note: validators and guard scripts live under `ops/guardrails/`. Run `ops/guardr
 TOKEN_BLOCK:
   accepted:
     - PROTOCOL_GUARD_ENABLED
-    - COVERAGE_FLOOR_60
+    - COVERAGE_FLOOR_70
     - ADR0009_VALIDATION_ON
     - LEGACY_RUNTIME_GATED
   requires:
@@ -51,4 +51,4 @@ TOKEN_BLOCK:
 - MQTT Button `payload_press` is static; no templating in discovery JSON.
 - Three `mqtt.number` entities (`speed`, `heading`, `duration_ms`) publish to simple numeric topics; controller composes JSON on `cmd/drive`.
 - Discovery publishes are sent with `retain=True` at publish time.
-- Coverage gate floor remains **60%** (ratchet later).
+- Coverage gate floor remains **70%** (ratchet later).

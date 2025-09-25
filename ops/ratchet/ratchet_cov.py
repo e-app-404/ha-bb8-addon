@@ -7,7 +7,7 @@ text = (
     if cfg.exists()
     else (
         "[run]\nbranch = True\n\n[report]\n"
-        "fail_under = 60\nshow_missing = True\nskip_covered = False\n"
+        "fail_under = 70\nshow_missing = True\nskip_covered = False\n"
     )
 )
 text = re.sub(r"(?im)^(fail_under\s*=\s*)(\d+(\.\d+)?)", r"\g<1>70", text)
