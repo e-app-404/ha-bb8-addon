@@ -1,0 +1,11 @@
+name: Guard: block large files & symlinks
+on: [push, pull_request]
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run validator
+        run: bash tools/validators/guard_size_symlinks.sh
