@@ -1,7 +1,15 @@
 ---
-title: Guardrails to prevent mass-deletion and accidental backup commits
+id: ADR-0023
+title: "Guardrails to prevent mass-deletion and accidental backup commits"
+authors:
+  - "Evert Appels"
+  - "Strategos"
 status: accepted
+related: 
+  - ADR-0018
+supersedes: []
 date: 2025-09-25
+last_updated: 2025-09-25
 ---
 
 ## Context

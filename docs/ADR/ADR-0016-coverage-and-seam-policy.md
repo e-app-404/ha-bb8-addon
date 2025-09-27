@@ -1,9 +1,10 @@
 ---
-title: "ADR-0016: Coverage & seam policy"
+id: ADR-0016
+title: "Coverage & seam policy"
 date: 2025-09-12
 status: Accepted
 author:
-  - Promachos Governance
+  - "Promachos Governance"
 related:
   - ADR-0012
 supersedes: []

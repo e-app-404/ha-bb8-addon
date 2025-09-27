@@ -1,10 +1,11 @@
 ---
-title: "ADR-0022: Protocol Enforcement (Topics, Imports, Shape)"
+id: ADR-0022
+title: "Protocol Enforcement (Topics, Imports, Shape)"
 date: 2025-09-15
 status: Accepted
 author:
-  - Evert Appels
-  - Strategos GPT
+  - "Evert Appels"
+  - "Strategos GPT"
 related: []
 supersedes: []
 last_updated: 2025-09-15

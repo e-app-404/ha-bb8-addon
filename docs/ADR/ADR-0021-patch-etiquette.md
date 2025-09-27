@@ -1,5 +1,6 @@
 ---
-title: "ADR-0021: Patch Etiquette & Session Guidelines"
+id: ADR-0021
+title: "Patch Etiquette & Session Guidelines"
 date: 2025-09-15
 status: Accepted
 author:

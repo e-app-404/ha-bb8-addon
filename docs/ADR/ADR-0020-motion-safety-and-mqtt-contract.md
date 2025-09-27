@@ -1,5 +1,6 @@
 ---
-title: "ADR-0020: Workspace folder taxonomy and assignation rules"
+id: ADR-0020
+title: "Workspace folder taxonomy and assignation rules"
 date: 2025-09-15
 status: Accepted
 author:

@@ -1,9 +1,10 @@
 ---
-title: "ADR-0017: Branch & Rescue Protocol"
+id: ADR-0017
+title: "Branch & Rescue Protocol"
 date: 2025-09-13
 status: Draft
 author:
-  - Promachos Governance
+  - "Promachos Governance"
 related:
   - ADR-0018
   - ADR-0009

@@ -1,5 +1,6 @@
 ---
-title: "ADR-0018: Mass-Deletion Guard"
+id: ADR-0018
+title: "Mass-Deletion Guard"
 date: 2025-09-13
 status: Draft
 author:
@@ -7,6 +8,7 @@ author:
 related:
   - ADR-0017
   - ADR-0009
+  - ADR-0023
 supersedes: []
 last_updated: 2025-09-13
 ---
