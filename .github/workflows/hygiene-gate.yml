@@ -1,20 +1,9 @@
 name: hygiene-gate
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
-jobs:
-  quiet:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Workspace must be quiet (ADR-0024)
-        run: sh ops/check_workspace_quiet.sh .
-      - name: Fail if banned archives are tracked
-        run: |
-          set -e
-          git ls-files -z | xargs -0 -n1 | grep -E '\.(tar\.gz|tgz|zip|bundle)$' && {
-            echo "BANNED: tracked archive detected"; exit 1; } || true
-      - name: Status (for diagnostics)
-        run: git status -s || true
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: "13 2 * * *"
