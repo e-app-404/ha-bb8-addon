@@ -6,4 +6,37 @@ on:
     branches: [ main ]
   workflow_dispatch:
   schedule:
-    - cron: "13 2 * * *"
+    - cron: '13 2 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Workspace quiet check
+        run: |
+          set -e
+          if [ ! -f ops/check_workspace_quiet.sh ]; then
+            echo "ops/check_workspace_quiet.sh missing"; exit 1
+          fi
+          sh ops/check_workspace_quiet.sh .
+
+      - name: Ban tracked archives
+        run: |
+          set -e
+          if git ls-files -z | tr '\0' '\n' | grep -E '\.(tar\.gz|tgz|zip|bundle)$' >/dev/null; then
+            echo "Forbidden archives are tracked in git"; 
+            git ls-files | grep -E '\.(tar\.gz|tgz|zip|bundle)$' || true
+            exit 1
+          fi
+          echo "No tracked archives found."
+
+      - name: Short git status (on failure)
+        if: failure()
+        run: git status -s
