@@ -11,7 +11,7 @@ from unittest.mock import patch
 import paho.mqtt.client as mqtt  # pyright: ignore[reportMissingImports]
 from paho.mqtt.client import CallbackAPIVersion
 
-from bb8_core.logging_setup import logger
+from addon.bb8_core.logging_setup import logger
 
 # Test parameters
 MQTT_HOST = "test.mosquitto.org"
@@ -43,7 +43,7 @@ class MockBLEBridge:
 
 def run_dispatcher():
     with patch("bb8_core.mqtt_dispatcher.BLEBridge", MockBLEBridge):
-        from bb8_core import mqtt_dispatcher
+        from addon.bb8_core import mqtt_dispatcher
 
         mqtt_dispatcher.start_mqtt_dispatcher(
             mqtt_host=MQTT_HOST,

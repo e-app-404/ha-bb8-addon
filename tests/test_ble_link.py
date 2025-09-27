@@ -7,7 +7,7 @@ import time
 
 
 def test_ble_link_thread_lifecycle():
-    from bb8_core import ble_link
+    from addon.bb8_core import ble_link
 
     ble_link.start()
     # Yield to BLELoopThread (no async loop in this test)

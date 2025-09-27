@@ -1,4 +1,4 @@
-from bb8_core.ble_bridge import BLEBridge
+from addon.bb8_core.ble_bridge import BLEBridge
 
 
 class Gw:

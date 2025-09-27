@@ -2,7 +2,7 @@
 """
 ble_ready_check.py: Checks if BB-8 BLE device is awake and ready.
 Emits a JSON summary artifact and returns exit code 0 if detected, 1 if not.
-Leverages existing BLE scan logic from bb8_core modules.
+Leverages existing BLE scan logic from addon.bb8_core modules.
 """
 
 import json
@@ -14,7 +14,7 @@ from pathlib import Path
 try:
     from bleak import BleakClient
 
-    from bb8_core.auto_detect import scan_for_bb8
+    from addon.bb8_core.auto_detect import scan_for_bb8
 except ImportError:
     print(json.dumps({"error": "Could not import scan_for_bb8 or BleakClient"}))
     sys.exit(2)

@@ -5,7 +5,7 @@ import sys
 import threading
 import time
 
-from bb8_core.logging_setup import logger
+from addon.bb8_core.logging_setup import logger
 
 # DIAG-END IMPORTS
 
@@ -84,7 +84,7 @@ atexit.register(_flush_logs)
 def main():
     logger.info("bb8_core.main started")
     try:
-        from bb8_core.bridge_controller import start_bridge_controller
+        from addon.bb8_core.bridge_controller import start_bridge_controller
 
         facade = start_bridge_controller()
         logger.info("bridge_controller started; entering run loop")

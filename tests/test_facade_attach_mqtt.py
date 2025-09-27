@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from bb8_core.facade import BB8Facade
+from addon.bb8_core.facade import BB8Facade
 
 
 class FakeClient:

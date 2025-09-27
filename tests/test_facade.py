@@ -27,7 +27,7 @@ class StubCore:
 
 
 def test_sleep_mapping(monkeypatch):
-    import bb8_core.facade as facade
+    import addon.bb8_core.facade as facade
 
     StubCore.calls.clear()
     facade.BB8Facade.Core = StubCore  # Patch before instantiation
@@ -36,7 +36,7 @@ def test_sleep_mapping(monkeypatch):
     # clamped to 255,0,10
     assert ("led", 255, 0, 10) in StubCore.calls
 
-    import bb8_core.facade as facade
+    import addon.bb8_core.facade as facade
 
     monkeypatch.setattr(facade, "Core", StubCore, raising=False)
     StubCore.calls.clear()
@@ -53,7 +53,7 @@ def test_sleep_mapping(monkeypatch):
     for _ in range(5):
         f.set_led_rgb(10, 0, 0)
     # Diagnostic prints for recorder locations
-    from bb8_core import facade as fmod
+    from addon.bb8_core import facade as fmod
 
     print("inst_calls:", getattr(f.Core, "calls", None))
     print("cls_calls:", getattr(type(f.Core), "calls", None))
@@ -65,7 +65,7 @@ def test_sleep_mapping(monkeypatch):
 
 
 def test_drive_autostop(monkeypatch):
-    import bb8_core.facade as facade
+    import addon.bb8_core.facade as facade
 
     monkeypatch.setattr(facade, "Core", StubCore, raising=False)
     StubCore.calls.clear()
