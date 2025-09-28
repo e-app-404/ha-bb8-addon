@@ -52,10 +52,19 @@ This project maintains a canonical add-on code root at `addon/`. Prior drift pro
   - otherwise → `scripts/`
 
 ## 3. Assignation Rules (programmatic)
-- **ADR documents** → **`docs/ADR/`** ONLY (canonical location, no subfolders).
+- **ADR documents (canonical)** → **`docs/ADR/`** ONLY (final, approved architectural decisions).
   - Format: `docs/ADR/ADR-XXXX-<slug>.md`
-  - ❌ FORBIDDEN: `docs/ADR/architecture/`, `docs/ADR/legacy/`, or any ADR subfolders
   - All ADRs must comply with ADR-0009 formatting and governance standards
+  - These are the "source of truth" architectural decisions
+- **Architecture supporting documents** → **`docs/ADR/architecture/`** (general architecture, structure, plans).
+  - Research that informs ADR development
+  - Non-ADR architectural documentation
+  - Design materials and architectural analysis
+- **Research archive and evidence** → **`docs/ADR/architecture/historical/`** (preserved for validation/reference).
+  - Raw research findings and operational evidence
+  - Historical data that informed ADR write-ups
+  - Reconnaissance responses, session transcripts, operational logs
+  - Source materials for future validation and ADR updates
 - Python files importing `addon.bb8_core` → **`addon/`** (runtime or add-on bundled tools).
 - Python files importing docker, paho, git, HA CLI, cloud SDKs, or performing audits/releases → **`ops/`**.
 - Python files with CLI `if __name__ == "__main__"` but no runtime imports:
@@ -69,10 +78,10 @@ This project maintains a canonical add-on code root at `addon/`. Prior drift pro
   - root `services.d/`
   - bare `bb8_core` imports (must be `addon.bb8_core`)
   - Python under `tools/` at repo root (must be rehomed)
-  - **ADRs in subfolders** (must be directly in `docs/ADR/`)
+  - **ADR documents outside canonical location** (canonical ADRs must be directly in `docs/ADR/`)
   - **ADRs without proper ADR-0009 formatting** (YAML front-matter, TOKEN_BLOCK required)
 - CI job runs repo-shape audit and fails on violations.
-- ADR governance validation ensures all ADRs are in canonical location with proper structure.
+- Three-tier ADR structure enforced: canonical (`docs/ADR/`), supporting docs (`docs/ADR/architecture/`), historical archive (`docs/ADR/architecture/historical/`).
 
 ## 5. Consequences
 - No duplicate code trees.
@@ -85,15 +94,18 @@ TOKEN_BLOCK:
   accepted:
     - WORKSPACE_TAXONOMY_OK
     - FOLDER_ASSIGNATION_OK
-    - ADR_CANONICAL_PATH_ENFORCED
+    - ADR_THREE_TIER_STRUCTURE
+    - ADR_CANONICAL_SEGREGATION
     - TOKEN_BLOCK_OK
   requires:
     - ADR_SCHEMA_V1
     - ADR_FORMAT_OK
     - ADR_GENERATION_OK
     - ADR_REDACTION_OK
+    - THREE_TIER_ADR_FOLDER_DISCIPLINE
   drift:
     - DRIFT: root_services_d_present
+    - DRIFT: adr_canonical_supporting_confusion
     - DRIFT: bare_bb8_core_import
     - DRIFT: python_tools_root
     - DRIFT: folder_taxonomy_violation
