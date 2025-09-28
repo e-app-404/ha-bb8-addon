@@ -34,6 +34,9 @@ This directory contains all architectural decision records for the HA-BB8 Home A
 - [ADR-0028] Remote triad, backups, and mirror cutover policy
 - [ADR-0029] Restore staging protocol and receipts
 - [ADR-0030] Cross-Repository ADR Alignment and Linking Standard
+- [ADR-0031] Supervisor-only Operations & Testing Protocol
+- [ADR-0032] MQTT/BLE Integration Architecture
+- [ADR-0033] Dual-Clone Deployment Topology & Git Hygiene
 
 ## Status Legend
 
@@ -78,3 +81,6 @@ Use [ADR-template.md](ADR-template.md) for new ADRs.
 [ADR-0028]: ADR-0028-remotes-and-mirror-cutover-policy.md
 [ADR-0029]: ADR-0029-restore-staging-and-receipts.md
 [ADR-0030]: ADR-0030-cross-repository-adr-alignment.md
+[ADR-0031]: ADR-0031-supervisor-only-operations-testing.md
+[ADR-0032]: ADR-0032-mqtt-ble-integration-architecture.md
+[ADR-0033]: ADR-0033-dual-clone-topology-git-hygiene.md
