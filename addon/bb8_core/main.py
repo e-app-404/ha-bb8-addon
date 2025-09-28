@@ -1,5 +1,6 @@
 # DIAG-BEGIN IMPORTS
 import atexit
+import contextlib
 import os
 import sys
 import threading
@@ -51,17 +52,17 @@ HB_INTERVAL = int(os.environ.get("HEARTBEAT_INTERVAL_SEC", "5"))
 HB_PATH_MAIN = "/tmp/bb8_heartbeat_main"
 if ENABLE_HEALTH_CHECKS:
     logger.info(
-        "main.py health check enabled: %s interval=%ss", HB_PATH_MAIN, HB_INTERVAL
+        "main.py health check enabled: %s interval=%ss",
+        HB_PATH_MAIN,
+        HB_INTERVAL,
     )
     _start_heartbeat(HB_PATH_MAIN, HB_INTERVAL)
 
 
 @atexit.register
 def _hb_exit():
-    try:
+    with contextlib.suppress(Exception):
         _write_atomic(HB_PATH_MAIN, f"{time.time()}\n")
-    except Exception:
-        pass
 
 
 logger.info(f"bb8_core.main started (PID={os.getpid()})")
@@ -71,10 +72,8 @@ def _flush_logs():
     logger.info("main.py atexit: flushing logs before exit")
     for h in getattr(logger, "handlers", []):
         if hasattr(h, "flush"):
-            try:
+            with contextlib.suppress(Exception):
                 h.flush()
-            except Exception:
-                pass
 
 
 atexit.register(_flush_logs)
@@ -86,7 +85,7 @@ def main():
     try:
         from addon.bb8_core.bridge_controller import start_bridge_controller
 
-        facade = start_bridge_controller()
+        start_bridge_controller()
         logger.info("bridge_controller started; entering run loop")
         # Block main thread until SIGTERM/SIGINT
         import signal

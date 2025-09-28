@@ -707,7 +707,7 @@ def ensure_dispatcher_started(*args: Any, **kwargs: Any) -> bool:
             or CONFIG.get("MQTT_USERNAME")
             or CONFIG.get("mqtt_username")
         )
-        password = (
+        _ = (
             kwargs.get("password")
             or CONFIG.get("MQTT_PASSWORD")
             or CONFIG.get("mqtt_password")
@@ -717,7 +717,8 @@ def ensure_dispatcher_started(*args: Any, **kwargs: Any) -> bool:
             kwargs.get("client_id") or CONFIG.get("MQTT_CLIENT_ID") or "bb8-addon"
         )
         logger.info(
-            "Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s",
+            "Dispatcher config (resolved): host=%s port=%s user=%s topic=%s "
+            "client_id=%s source=%s",
             host,
             port,
             user_flag,
@@ -725,11 +726,13 @@ def ensure_dispatcher_started(*args: Any, **kwargs: Any) -> bool:
             client_id,
             CONFIG_SOURCE,
         )
-        # If host is loopback but CONFIG specifies a non-loopback host, coerce it.
+        # If host is loopback but CONFIG specifies a non-loopback host,
+        # coerce it.
         cfg_host = CONFIG.get("MQTT_HOST") or CONFIG.get("mqtt_broker")
         if host in _LOOPBACKS and cfg_host and str(cfg_host) not in _LOOPBACKS:
             log.warning(
-                "Coercing loopback MQTT host '%s' to configured host '%s' (source=%s).",
+                "Coercing loopback MQTT host '%s' to configured host '%s' "
+                "(source=%s).",
                 host,
                 cfg_host,
                 CONFIG_SOURCE,
@@ -742,7 +745,8 @@ def ensure_dispatcher_started(*args: Any, **kwargs: Any) -> bool:
         except Exception:  # noqa: BLE001
             port = 1883  # fallback to default port
 
-        # Start the dispatcher here (you may need to call start_mqtt_dispatcher or like)
+        # Start the dispatcher here (you may need to call
+        # start_mqtt_dispatcher or like)
         # For demonstration, we just set the flag
         _DISPATCHER_STARTED = True
         # Replace discovery trigger with runtime-gated call
@@ -854,13 +858,20 @@ def start_mqtt_dispatcher(
         rc_value = rc.value if hasattr(rc, 'value') else rc
         reason = REASONS.get(rc_value, f"unknown_{rc_value}")
         if rc_value == 0:
-            logger.info({"event": "mqtt_connected", "rc": rc_value, "reason": reason})
-            client.publish(status_topic, payload="online", qos=qos, retain=False)
-            # Authoritative seam invocation at call time (thread-safe & testable)
+            logger.info(
+                {"event": "mqtt_connected", "rc": rc_value, "reason": reason}
+            )
+            client.publish(
+                status_topic, payload="online", qos=qos, retain=False
+            )
+            # Authoritative seam invocation at call time
+            # (thread-safe & testable)
             _trigger_discovery_connected()
             if hasattr(controller, "attach_mqtt"):
                 try:
-                    controller.attach_mqtt(client, mqtt_topic, qos=qos, retain=retain)
+                    controller.attach_mqtt(
+                        client, mqtt_topic, qos=qos, retain=retain
+                    )
                 except Exception as e:
                     logger.error(
                         {
@@ -877,7 +888,7 @@ def start_mqtt_dispatcher(
                 }
             )
 
-    def _on_disconnect(client, userdata, rc, properties=None):
+    def _on_disconnect(client, userdata, flags, rc, properties=None):
         logger.warning({"event": "mqtt_disconnected", "rc": rc})
 
     client.on_connect = _on_connect
@@ -886,7 +897,8 @@ def start_mqtt_dispatcher(
     client.connect_async(str(mqtt_host), mqtt_port, keepalive)
     client.loop_start()
 
-    # No proactive triggering here; on_connect handles publication deterministically.
+    # No proactive triggering here; on_connect handles publication
+    # deterministically.
     return client
 
 
@@ -959,8 +971,8 @@ def _make_cb(handler):
 def _bind_subscription(topic, handler):
     """
     Bind an MQTT topic subscription to a handler function.
-    Adds a message callback for the given topic and subscribes to it if not already bound.
-    Returns True if successful, False otherwise.
+    Adds a message callback for the given topic and subscribes to it if not
+    already bound. Returns True if successful, False otherwise.
     """
     if CLIENT is None:
         return False
@@ -998,7 +1010,8 @@ def _apply_pending_subscriptions():
 def register_subscription(topic, handler):
     """
     Register a handler for an MQTT topic subscription.
-    If the subscription cannot be bound immediately, it is queued for later binding.
+    If the subscription cannot be bound immediately, it is queued for
+    later binding.
     """
     if not _bind_subscription(topic, handler):
         _PENDING_SUBS.append((topic, handler))

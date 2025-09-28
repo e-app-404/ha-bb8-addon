@@ -1,8 +1,14 @@
+import asyncio
+import atexit
+import contextlib
 import json
 import logging
 import os
 import threading
 import time
+
+import paho.mqtt.client as mqtt
+from paho.mqtt.enums import CallbackAPIVersion
 
 LOG = logging.getLogger(__name__)
 
@@ -108,13 +114,6 @@ MQTT_BLE_READY_CMD = _resolve_topic(
 MQTT_BLE_READY_SUMMARY = _resolve_topic(
     "mqtt_ble_ready_summary_topic", "ble_ready/summary", "MQTT_BLE_READY_SUMMARY_TOPIC"
 )
-import asyncio
-import atexit
-import logging
-import os
-
-import paho.mqtt.client as mqtt
-from paho.mqtt.enums import CallbackAPIVersion
 
 LOG = logging.getLogger("echo_responder")
 
@@ -167,10 +166,8 @@ if ENABLE_HEALTH_CHECKS:
 
 @atexit.register
 def _hb_exit():
-    try:
+    with contextlib.suppress(Exception):
         _write_atomic(HB_PATH_ECHO, f"{time.time()}\n")
-    except Exception:
-        pass
 
 
 try:
@@ -189,10 +186,8 @@ def _flush_logs_echo():
         LOG.info("echo_responder.py atexit: flushing logs before exit")
         for h in getattr(LOG, "handlers", []):
             if hasattr(h, "flush"):
-                try:
+                with contextlib.suppress(Exception):
                     h.flush()
-                except Exception:
-                    pass
     except Exception:
         # Last-gasp safety; avoid raising during interpreter shutdown
         pass
@@ -387,9 +382,10 @@ class BleTouch:
             self.value = bytes.fromhex(BLE_TOUCH_VALUE)
         except ValueError:
             # Fallback to b"\x01" if BLE_TOUCH_VALUE is not a valid hex string.
-            # Ensure this fallback value is compatible with your BLE device's expected input.
+            # Ensure fallback value is compatible with your BLE device's input.
             LOG.warning(
-                f"Invalid BLE_TOUCH_VALUE hex string: {BLE_TOUCH_VALUE}, defaulting to b'\\x01'"
+                f"Invalid BLE_TOUCH_VALUE hex string: {BLE_TOUCH_VALUE}, "
+                f"defaulting to b'\\x01'"
             )
             self.value = b"\x01"
 
@@ -439,10 +435,8 @@ def main():
 
     # Backoff to prevent tight reconnect storms under broker/auth failures
     # (keeps CPU/memory stable if broker is down or credentials invalid)
-    try:
+    with contextlib.suppress(Exception):
         client.reconnect_delay_set(min_delay=1, max_delay=5)
-    except Exception:
-        pass
 
     mqtt_host = (
         os.environ.get("MQTT_HOST") or os.environ.get("MQTT_SERVER") or "localhost"
@@ -453,7 +447,8 @@ def main():
     mqtt_pass = os.environ.get("MQTT_PASSWORD") or os.environ.get("MQTT_PASS")
     if mqtt_user and mqtt_pass:
         client.username_pw_set(mqtt_user, mqtt_pass)
-    # Note: client.connect() is non-blocking; loop_forever() starts the network loop and blocks the main thread.
+    # Note: client.connect() is non-blocking; loop_forever() starts the
+    # network loop and blocks the main thread.
     client.connect(mqtt_host, mqtt_port, 60)  # pragma: no cover
     LOG.info(f"Starting MQTT loop on {mqtt_host}:{mqtt_port}")
     client.loop_forever()  # pragma: no cover
