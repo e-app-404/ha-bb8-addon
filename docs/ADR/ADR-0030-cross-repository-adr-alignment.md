@@ -11,6 +11,7 @@ related:
   - ADR-0024
 supersedes: []
 last_updated: 2025-09-28
+tags: ["adr", "cross-repository", "linking", "alignment", "governance", "tokens"]
 ---
 
 # ADR-0030: Cross-Repository ADR Alignment and Linking Standard

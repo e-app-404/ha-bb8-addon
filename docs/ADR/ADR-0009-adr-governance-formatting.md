@@ -14,6 +14,7 @@ related:
   - ADR-0018
 last_updated: 2025-09-13
 supersedes: []
+tags: ["governance", "adr", "formatting", "redaction", "tokens", "automation"]
 ---
 
 # ADR-0009: ADR Governance, Redaction, and Formatting Policy

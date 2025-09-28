@@ -20,6 +20,7 @@ alignment_dependencies:
   - "ha-config:ADR-0024"
 supersedes: []
 last_updated: 2025-09-28
+tags: ["adr", "cross-repository", "linking", "alignment", "governance", "tokens", "workspace-hygiene", "backups", "ci", "enforcement"]
 ---
 
 ## Context

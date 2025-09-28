@@ -11,6 +11,7 @@ related:
   - ADR-0026
 supersedes: []
 last_updated: 2025-09-27
+tags: ["ci", "hygiene", "branch-protection", "status-checks", "automation", "governance", "tokens"]
 ---
 
 # ADR-0027: Hygiene gate CI and required status checks

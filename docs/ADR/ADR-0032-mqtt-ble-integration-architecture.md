@@ -8,6 +8,7 @@ author:
 related: ["ADR-0020", "ADR-0031", "ADR-0033"]
 supersedes: []
 last_updated: 2025-09-28
+tags: ["mqtt", "ble", "integration", "architecture", "topics", "evidence", "validation", "governance", "tokens"]
 ---
 
 # ADR-0032: MQTT/BLE Integration Architecture

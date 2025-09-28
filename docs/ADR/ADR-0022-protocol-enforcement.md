@@ -9,6 +9,7 @@ author:
 related: []
 supersedes: []
 last_updated: 2025-09-15
+tags: ["governance", "protocol", "enforcement", "imports", "topics", "shape", "coverage", "snapshots", "tokens"]
 ---
 
 # ADR-0022: Protocol Enforcement (Topics, Imports, Shape)

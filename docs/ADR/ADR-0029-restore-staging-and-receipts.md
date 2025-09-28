@@ -11,6 +11,7 @@ related:
   - ADR-0028
 supersedes: []
 last_updated: 2025-09-27
+tags: ["restore", "staging", "receipts", "protocol", "governance", "tokens", "normalization", "auditability"]
 ---
 
 # ADR-0029: Restore staging protocol and receipts

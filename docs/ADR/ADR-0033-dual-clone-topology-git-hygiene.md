@@ -8,6 +8,7 @@ author:
 related: ["ADR-0001", "ADR-0008", "ADR-0031", "ADR-0032"]
 supersedes: []
 last_updated: 2025-09-28
+tags: ["deployment", "topology", "git", "hygiene", "tokens", "governance", "automation"]
 ---
 
 # ADR-0033: Dual-Clone Deployment Topology & Git Hygiene

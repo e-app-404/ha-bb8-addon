@@ -10,6 +10,7 @@ related:
   - ADR-0023
 supersedes: []
 last_updated: 2025-09-27
+tags: ["backup", "inventory", "retention", "policy", "governance", "tokens", "hygiene", "ci", "enforcement", "adr"]
 ---
 
 # ADR-0026: Backups, inventory, and retention policy for BB-8 add-on

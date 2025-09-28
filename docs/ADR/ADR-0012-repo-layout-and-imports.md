@@ -11,6 +11,7 @@ related:
   - ADR-0009
 supersedes: []
 last_updated: 2025-09-05
+tags: ["repo-structure", "imports", "governance", "coverage"]
 ---
 
 # ADR-0012 - Canonical module layout & imports

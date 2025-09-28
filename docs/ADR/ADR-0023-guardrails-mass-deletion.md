@@ -10,6 +10,7 @@ related:
 supersedes: []
 date: 2025-09-25
 last_updated: 2025-09-25
+tags: ["guardrails", "mass-deletion", "backup-files", "governance", "tokens", "ci", "pre-commit", "snapshots", "auditability"]
 ---
 
 ## Context

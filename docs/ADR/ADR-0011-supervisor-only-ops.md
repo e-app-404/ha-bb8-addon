@@ -10,6 +10,7 @@ related:
   - ADR-0010
 supersedes: []
 last_updated: 2025-09-03
+tags: ["supervisor", "operations", "diagnostics", "ha-cli", "governance", "tokens"]
 ---
 
 # ADR-0011: Supervisor-only Operations

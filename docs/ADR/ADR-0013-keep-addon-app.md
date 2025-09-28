@@ -10,6 +10,7 @@ related:
   - ADR-0012
 supersedes: []
 last_updated: 2025-09-06
+tags: ["app", "scripts", "diagnostics", "repo-structure", "governance"]
 ---
 
 # ADR-0013 - Keep all app/ scripts and diagnostics in addon/app/

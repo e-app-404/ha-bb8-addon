@@ -13,9 +13,9 @@ last_updated: 2025-09-28
 # ADR-0031: Supervisor-only Operations & Testing Protocol
 
 **Session Evidence Sources:** 
-- STRAT-HA-BB8-2025-09-03T06:50Z-001 (Supervisor verification, attestation runs, MQTT probes)
-- BB8-STP5-MVP trace-bb8-2f0c9e9a (CI/testing validation, coverage ratcheting)
-- HANDOFF::STRATEGOS::HA-BB8::2025-09-03T06:50Z-001 (Release pipeline, deployment topology)
+- `STRAT-HA-BB8-2025-09-03T06:50Z-001` (Supervisor verification, attestation runs, MQTT probes)
+- `BB8-STP5-MVP trace-bb8-2f0c9e9a` (CI/testing validation, coverage ratcheting)
+- `Handoff::Strategos::HA-BB8::2025-09-03T06:50Z-001` (Release pipeline, deployment topology)
 
 ## Context
 
@@ -70,17 +70,20 @@ last_updated: 2025-09-28
 **Technical Choice:** Adopt a **comprehensive Supervisor-only operational model** encompassing:
 
 ### 1. Health Monitoring & Validation
+
 - Single control-plane supervision via `run.sh`
 - Health heartbeat files: `/tmp/bb8_heartbeat_main`, `/tmp/bb8_heartbeat_echo`  
 - Periodic health summaries logged every 15 seconds
 - Process lifecycle logging with PID tracking and exit codes
 
 ### 2. Testing & Quality Gates
+
 - **Coverage Gate:** Maintain ≥80% test coverage threshold (enhanced from ≥70%)
 - **Repository Shape Guard:** Enforce canonical `addon/` structure via CI
 - **MQTT Seam Testing:** Use FakeMQTT (`bleep_run.py`) for integration validation
 - **Test Count Benchmark:** Target 200+ passing tests
 - **QA Pipeline Commands:** (from STP4 strict requirements)
+  
   ```bash
   black --check .
   ruff check .
@@ -91,9 +94,11 @@ last_updated: 2025-09-28
   ```
 
 ### 3. Deployment & Release Automation
+
 - **One-command Release:** `make release-patch` with automated version bumping
-- **Validation Tokens:** Explicit success markers (STRUCTURE_OK, VERIFY_OK, WS_READY, DEPLOY_OK)
+- **Validation Tokens:** Explicit success markers (`STRUCTURE_OK`, `VERIFY_OK`, `WS_READY`, `DEPLOY_OK`)
 - **Dual-Clone Deployment:** Git-based workspace to runtime synchronization
+
   ```bash
   # Dual-clone deployment pattern (verified)
   git -C "$ADDON" push origin HEAD:main
@@ -178,6 +183,7 @@ DURATION=30 BURST_COUNT=10 BURST_GAP_MS=2000 REQUIRE_BLE=true \
 ## Implementation Evidence
 
 ### Configuration Discovered
+
 ```yaml
 # Add-on Configuration
 devices:
@@ -200,26 +206,34 @@ options:
 ```
 
 ### Log Patterns Observed
-```
+
 # Startup Sequence
+```
 [BB-8] run.sh entry (version=X.X.X) wd=/usr/src/app LOG=/data/reports/ha_bb8_addon.log HEALTH=1 ECHO=true
 [BB-8] RUNLOOP attempt #1
 [BB-8] Started bb8_core.main PID=131
 [BB-8] Started bb8_core.echo_responder PID=134
+```
 
 # Health Monitoring
+```
 [BB-8] HEALTH_SUMMARY main_age=4.1s echo_age=4.1s interval=15s
+```
 
 # MQTT Integration
+```
 Connected to MQTT broker with rc=Success
 Subscribed to bb8/echo/cmd
 Received message on bb8/echo/cmd: b'{"value":1}'
+```
 
 # Version Probing
+```json
 {"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
 ```
 
 ### Artifact Paths Verified
+
 ```
 /config/reports/stp5_runs/<timestamp>/        # STP5 attestation results
 /data/reports/ha_bb8_addon.log               # Add-on runtime logs  
@@ -243,6 +257,7 @@ reports/bleep_run_*.log                      # FakeMQTT test logs
   - `ha_discovery_dump.json`
 
 ### Secondary  
+
 - **MQTT broker ACL documentation:** Clarify remote vs local execution differences
 - **CI edge case coverage:** Test all generated artifact scenarios
 - **End-to-end motion validation:** Beyond echo/attestation to full device control
@@ -268,9 +283,9 @@ reports/bleep_run_*.log                      # FakeMQTT test logs
 - Health monitoring cadence validation over extended periods
 
 **Session References:**
-- STRAT-HA-BB8-2025-09-03T06:50Z-001: Supervisor verification and attestation
-- BB8-STP5-MVP trace-bb8-2f0c9e9a: CI validation and testing protocols  
-- HANDOFF::STRATEGOS::HA-BB8::2025-09-03T06:50Z-001: Deployment and release automation
+- `STRAT-HA-BB8-2025-09-03T06:50Z-001`: Supervisor verification and attestation
+- `BB8-STP5-MVP trace-bb8-2f0c9e9a`: CI validation and testing protocols
+- `HANDOFF::STRATEGOS::HA-BB8::2025-09-03T06:50Z-001`: Deployment and release automation
 
 ---
 
