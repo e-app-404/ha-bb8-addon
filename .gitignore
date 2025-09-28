@@ -45,3 +45,4 @@ pytest-report.xml
 
 .git.DISABLED/
 .env
+.ssh/
