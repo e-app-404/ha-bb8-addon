@@ -128,7 +128,7 @@ echo "🌐 Testing network connectivity..."
         echo "✗ BLE adapter not accessible"
         echo "Checking Bluetooth service and tools..."
         remote_ssh "systemctl is-active bluetooth 2>/dev/null || echo 'bluetooth service not active'"
-        remote_ssh "which hciconfig bluetoothctl 2>/dev/null || echo 'bluez tools missing: try sudo apt-get install bluez bluez-tools'"
+        remote_ssh "which hciconfig bluetoothctl 2>/dev/null || echo 'bluez tools missing: try apk add bluez-deprecated'"
         remote_ssh "ls -la /dev/hci* 2>/dev/null || echo 'no BLE adapters found in /dev/'"
     fi
     echo ""
