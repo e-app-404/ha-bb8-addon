@@ -1,0 +1,134 @@
+name: "HA-BB8"
+description: "Homeassistant Sphero BB-8 bluetooth integration using MQTT discovery"
+slug: "beep_boop_bb8"
+version: 2025.8.21.44
+arch: ["aarch64"]
+url: "https://github.com/e-app-404/ha-bb8-addon"
+# LOCAL_DEV: comment out image: to force Supervisor to build locally from Dockerfile/build.yaml
+# - PUBLISH:   use the same 'image:' and push a matching tag to your registry.
+# image: "local/{arch}-addon-beep_boop_bb8"
+
+build:
+  dockerfile: Dockerfile
+  args:
+    BUILD_FROM: "ghcr.io/home-assistant/{arch}-base-debian:bookworm"
+
+startup: services
+init: false
+
+boot: auto
+host_dbus: true
+udev: true
+apparmor: false
+privileged:
+  - NET_ADMIN
+uart: true
+devices:
+  - /dev/hci0
+# ---------- Runtime Options (defaults) ----------
+options:
+  enable_echo: false            # default OFF; enable only for STP5 windows
+  echo_max_inflight: 4          # hard cap on concurrent echo jobs
+  echo_min_interval_ms: 50      # throttle per message
+  # --- Telemetry & Logging ---
+  enable_bridge_telemetry: false
+  log_path: "/addons/local/beep_boop_bb8/ha_bb8_addon.log"
+  report_root: "/addons/local/beep_boop_bb8/reports"
+  telemetry_interval_s: 20
+
+  # --- Health checks ---
+  enable_health_checks: false
+
+  # --- Discovery / Publishing policy ---
+  dispatcher_discovery_enabled: true   # <-- LED discovery ON by default
+  discovery_retain: false
+
+  # --- Caching & scan cadence ---
+  cache_path: "/addons/local/beep_boop_bb8/bb8_mac_cache.json"
+  cache_default_ttl_hours: 24
+  cache_ttl_hours: 24
+  bb8_scan_interval: 10
+  scan_seconds: 5
+  rescan_on_fail: true
+
+  # --- MQTT ---
+  mqtt_host: "192.168.0.129"
+  mqtt_port: 1883
+  mqtt_user: "mqtt_bb8"
+  mqtt_password: "mqtt_bb8"
+  mqtt_base: "bb8"
+  mqtt_client_id: "bb8_presence_scanner"
+  keepalive: 60
+  qos: 1
+  ha_discovery_topic: "homeassistant"
+  mqtt_tls: false
+  # --- Optional MQTT topic overrides (leave blank to use defaults from mqtt_base) ---
+  mqtt_echo_cmd_topic: ""
+  mqtt_echo_ack_topic: ""
+  mqtt_echo_state_topic: ""
+  mqtt_telemetry_echo_roundtrip_topic: ""
+  mqtt_ble_ready_cmd_topic: ""
+  mqtt_ble_ready_summary_topic: ""
+
+  # --- Device Identification ---
+  bb8_mac: "ED:ED:87:D7:27:50"
+  bb8_name: "S33 BB84 LE"
+  ble_adapter: "hci0"
+
+  # --- Echo responder ---
+
+# ---------- Option Schema (validation) ----------
+schema:
+  enable_echo: bool
+  echo_max_inflight: int?
+  echo_min_interval_ms: int?
+  # --- Telemetry & Logging ---
+  enable_bridge_telemetry: "bool?"
+  log_path: "str?"
+  report_root: "str?"
+  telemetry_interval_s: "int?"
+
+  # --- Health checks ---
+  enable_health_checks: "bool?"
+
+  # --- Discovery / Publishing policy ---
+  dispatcher_discovery_enabled: "bool?"
+  discovery_retain: "bool?"
+
+  # --- Caching & scan cadence ---
+  cache_path: "str"
+  cache_default_ttl_hours: "int?"
+  cache_ttl_hours: "int?"
+  bb8_scan_interval: "int?"
+  scan_seconds: "int?"
+  rescan_on_fail: "bool?"
+
+  # --- MQTT ---
+  mqtt_client_id: "str"
+  keepalive: "int?"
+  qos: "int?"
+  mqtt_host: "str?"
+  mqtt_port: "int?"
+  mqtt_user: "str?"
+  mqtt_password: "str?"
+  mqtt_base: "str?"
+  ha_discovery_topic: "str"
+  mqtt_tls: "bool?"
+  # Back-compat aliases accepted (optional)
+  mqtt_broker: "str?"
+  mqtt_broker_port: "int?"
+  mqtt_username: "str?"
+  mqtt_topic_prefix: "str?"
+  mqtt_echo_cmd_topic: "str?"
+  mqtt_echo_ack_topic: "str?"
+  mqtt_echo_state_topic: "str?"
+  mqtt_telemetry_echo_roundtrip_topic: "str?"
+  mqtt_ble_ready_cmd_topic: "str?"
+  mqtt_ble_ready_summary_topic: "str?"
+
+  # --- Device Identification ---
+  bb8_mac: "str"
+  bb8_name: "str?"
+  ble_adapter: "str?"
+
+  # --- Echo responder ---

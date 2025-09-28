@@ -353,35 +353,6 @@ async def _ble_ready_probe(bb8_mac, cfg):
         "rssi": rssi,
         "name": name,
     }
-    LOG.info(f"Received message on {msg.topic}: {msg.payload}")
-    try:
-        payload = json.loads(msg.payload.decode("utf-8"))
-    except Exception:
-        payload = {"raw": msg.payload.decode("utf-8", errors="replace")}
-
-    # Optional rate limit
-    if MIN_INTERVAL_MS > 0:
-        global _last_ts
-        now = time.time()
-        with _last_ts_lock:
-            if (now - _last_ts) < (MIN_INTERVAL_MS / 1000.0):
-                LOG.warning("Echo throttled by MIN_INTERVAL_MS; dropping")
-                return
-            _last_ts = now
-
-    # Bounded inflight protection
-    acquired = _inflight.acquire(blocking=False)
-    if not acquired:
-        LOG.warning("Echo backlog full (MAX_INFLIGHT=%d); dropping", MAX_INFLIGHT)
-        return
-
-    def _task():
-        try:
-            handle_echo(client, payload)
-        finally:
-            _inflight.release()
-
-    threading.Thread(target=_task, daemon=True).start()  # pragma: no cover
 
 
 def handle_echo(client, payload):

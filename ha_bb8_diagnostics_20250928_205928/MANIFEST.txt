@@ -1,0 +1,20 @@
+# HA BB-8 Diagnostics Bundle Manifest
+Created: 2025-09-28T20:59:30+01:00
+Host: <ssh_alias>
+Bundle: ha_bb8_diagnostics_20250928_205928.tar.gz
+
+## Files:
+addon_config.yaml
+addon_options.json
+connectivity_tests.txt
+diagnostics_summary.md
+MANIFEST.txt
+validation_results.txt
+
+## File Sizes:
+ha_bb8_diagnostics_20250928_205928/MANIFEST.txt: 287B
+ha_bb8_diagnostics_20250928_205928/diagnostics_summary.md: 260B
+ha_bb8_diagnostics_20250928_205928/addon_options.json: 3B
+ha_bb8_diagnostics_20250928_205928/addon_config.yaml: 3.5K
+ha_bb8_diagnostics_20250928_205928/validation_results.txt: 211B
+ha_bb8_diagnostics_20250928_205928/connectivity_tests.txt: 922B

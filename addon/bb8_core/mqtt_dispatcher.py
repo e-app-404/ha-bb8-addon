@@ -850,9 +850,11 @@ def start_mqtt_dispatcher(
 
     # ---- Callbacks ----
     def _on_connect(client, userdata, flags, rc, properties=None):
-        reason = REASONS.get(rc, f"unknown_{rc}")
-        if rc == 0:
-            logger.info({"event": "mqtt_connected", "rc": rc, "reason": reason})
+        # Handle both integer (v1) and ReasonCode (v2) formats
+        rc_value = rc.value if hasattr(rc, 'value') else rc
+        reason = REASONS.get(rc_value, f"unknown_{rc_value}")
+        if rc_value == 0:
+            logger.info({"event": "mqtt_connected", "rc": rc_value, "reason": reason})
             client.publish(status_topic, payload="online", qos=qos, retain=False)
             # Authoritative seam invocation at call time (thread-safe & testable)
             _trigger_discovery_connected()
@@ -998,11 +1000,6 @@ def register_subscription(topic, handler):
     Register a handler for an MQTT topic subscription.
     If the subscription cannot be bound immediately, it is queued for later binding.
     """
-    if not _bind_subscription(topic, handler):
-        _PENDING_SUBS.append((topic, handler))
-
-
-def register_subscription(topic, handler):
     if not _bind_subscription(topic, handler):
         _PENDING_SUBS.append((topic, handler))
 
