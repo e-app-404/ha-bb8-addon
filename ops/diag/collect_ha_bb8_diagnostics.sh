@@ -82,25 +82,25 @@ echo "🏠 Collecting local workspace info..."
 
 # HA Supervisor info
 echo "🏠 Collecting HA Supervisor information..."
-remote_ssh "echo '## Home Assistant Supervisor Info' >> /tmp/ha_diag.txt; ha info >> /tmp/ha_diag.txt 2>&1 || echo 'ha info failed' >> /tmp/ha_diag.txt; echo '' >> /tmp/ha_diag.txt; echo '## Add-on Status' >> /tmp/ha_diag.txt; ha addons info ${ADDON_SLUG} >> /tmp/ha_diag.txt 2>&1 || echo 'addon info failed' >> /tmp/ha_diag.txt; echo '' >> /tmp/ha_diag.txt; echo '## System Info' >> /tmp/ha_diag.txt; uname -a >> /tmp/ha_diag.txt 2>&1; free -h >> /tmp/ha_diag.txt 2>&1 || true; df -h >> /tmp/ha_diag.txt 2>&1 || true; echo '' >> /tmp/ha_diag.txt" 2>/dev/null || echo "⚠️  SSH connection failed"
+remote_ssh "echo '## Home Assistant Supervisor Info' >> /tmp/ha_diag.txt; sudo ha info >> /tmp/ha_diag.txt 2>&1 || echo 'ha info failed (try: sudo ha info)' >> /tmp/ha_diag.txt; echo '' >> /tmp/ha_diag.txt; echo '## Add-on Status' >> /tmp/ha_diag.txt; sudo ha addons info ${ADDON_SLUG} >> /tmp/ha_diag.txt 2>&1 || echo 'addon info failed (try: sudo ha addons info)' >> /tmp/ha_diag.txt; echo '' >> /tmp/ha_diag.txt; echo '## System Info' >> /tmp/ha_diag.txt; uname -a >> /tmp/ha_diag.txt 2>&1; free -h >> /tmp/ha_diag.txt 2>&1 || true; df -h >> /tmp/ha_diag.txt 2>&1 || true; echo '' >> /tmp/ha_diag.txt" 2>/dev/null || echo "⚠️  SSH connection failed"
 
 REMOTE_PREFIX=$(remote_prefix)
 scp "${REMOTE_PREFIX}:/tmp/ha_diag.txt" "${DIAG_DIR}/ha_supervisor_info.txt" 2>/dev/null || echo "⚠️  Could not retrieve HA info"
 
 # Container information
 echo "🐳 Collecting container information..."
-remote_ssh "echo '## Docker Container Info' > /tmp/container_diag.txt; docker ps -a --filter name=addon_${ADDON_SLUG} >> /tmp/container_diag.txt 2>&1 || echo 'docker ps failed' >> /tmp/container_diag.txt; echo '' >> /tmp/container_diag.txt; CONTAINER_ID=\$(docker ps --filter name=addon_${ADDON_SLUG} --format '{{.ID}}' | head -1); if [ -n \"\$CONTAINER_ID\" ]; then echo '## Container Inspect' >> /tmp/container_diag.txt; docker inspect \$CONTAINER_ID >> /tmp/container_diag.txt 2>&1 || echo 'docker inspect failed' >> /tmp/container_diag.txt; echo '' >> /tmp/container_diag.txt; echo '## Container Environment' >> /tmp/container_diag.txt; docker exec \$CONTAINER_ID env | grep -E 'MQTT|BB8|ADDON|DIAG|HEALTH' >> /tmp/container_diag.txt 2>&1 || echo 'env failed' >> /tmp/container_diag.txt; echo '' >> /tmp/container_diag.txt; echo '## Container File System' >> /tmp/container_diag.txt; docker exec \$CONTAINER_ID ls -la /usr/src/app/ >> /tmp/container_diag.txt 2>&1 || echo 'ls failed' >> /tmp/container_diag.txt; echo '' >> /tmp/container_diag.txt; echo '## Heartbeat Files' >> /tmp/container_diag.txt; docker exec \$CONTAINER_ID ls -la /tmp/bb8_heartbeat_* >> /tmp/container_diag.txt 2>&1 || echo 'no heartbeat files' >> /tmp/container_diag.txt; else echo 'Container not running' >> /tmp/container_diag.txt; fi" 2>/dev/null || echo "⚠️  Container inspection failed"
+remote_ssh "echo '## Docker Container Info' > /tmp/container_diag.txt; sudo docker ps -a --filter name=addon_${ADDON_SLUG} >> /tmp/container_diag.txt 2>&1 || echo 'docker ps failed (try: sudo docker ps)' >> /tmp/container_diag.txt; echo '' >> /tmp/container_diag.txt; CONTAINER_ID=\$(sudo docker ps --filter name=addon_${ADDON_SLUG} --format '{{.ID}}' | head -1); if [ -n \"\$CONTAINER_ID\" ]; then echo '## Container Inspect' >> /tmp/container_diag.txt; sudo docker inspect \$CONTAINER_ID >> /tmp/container_diag.txt 2>&1 || echo 'docker inspect failed' >> /tmp/container_diag.txt; echo '' >> /tmp/container_diag.txt; echo '## Container Environment' >> /tmp/container_diag.txt; sudo docker exec \$CONTAINER_ID env | grep -E 'MQTT|BB8|ADDON|DIAG|HEALTH' >> /tmp/container_diag.txt 2>&1 || echo 'env failed' >> /tmp/container_diag.txt; echo '' >> /tmp/container_diag.txt; echo '## Container File System' >> /tmp/container_diag.txt; sudo docker exec \$CONTAINER_ID ls -la /usr/src/app/ >> /tmp/container_diag.txt 2>&1 || echo 'ls failed' >> /tmp/container_diag.txt; echo '' >> /tmp/container_diag.txt; echo '## Heartbeat Files' >> /tmp/container_diag.txt; sudo docker exec \$CONTAINER_ID ls -la /tmp/bb8_heartbeat_* >> /tmp/container_diag.txt 2>&1 || echo 'no heartbeat files' >> /tmp/container_diag.txt; else echo 'Container not running' >> /tmp/container_diag.txt; fi" 2>/dev/null || echo "⚠️  Container inspection failed"
 
 scp "${REMOTE_PREFIX}:/tmp/container_diag.txt" "${DIAG_DIR}/container_info.txt" 2>/dev/null || echo "⚠️  Could not retrieve container info"
 
 # Add-on logs
 echo "📝 Collecting add-on logs..."
-remote_ssh "ha addons logs ${ADDON_SLUG} > /tmp/addon_logs.txt 2>&1" 2>/dev/null || echo "⚠️  Could not retrieve logs"
+remote_ssh "sudo ha addons logs ${ADDON_SLUG} > /tmp/addon_logs.txt 2>&1 || echo 'ha addons logs failed (try: sudo ha addons logs)' > /tmp/addon_logs.txt" 2>/dev/null || echo "⚠️  Could not retrieve logs"
 scp "${REMOTE_PREFIX}:/tmp/addon_logs.txt" "${DIAG_DIR}/addon_logs.txt" 2>/dev/null || echo "⚠️  Could not retrieve addon logs"
 
 # Recent system logs (journalctl)
 echo "📰 Collecting system logs..."
-remote_ssh "journalctl --since '1 hour ago' --no-pager > /tmp/system_logs.txt 2>&1 || echo 'journalctl failed' > /tmp/system_logs.txt" 2>/dev/null || echo "⚠️  System logs failed"
+remote_ssh "sudo journalctl --since '1 hour ago' --no-pager > /tmp/system_logs.txt 2>&1 || echo 'journalctl failed (try: sudo journalctl)' > /tmp/system_logs.txt" 2>/dev/null || echo "⚠️  System logs failed"
 scp "${REMOTE_PREFIX}:/tmp/system_logs.txt" "${DIAG_DIR}/system_logs.txt" 2>/dev/null || echo "⚠️  Could not retrieve system logs"
 
 # Configuration files
@@ -123,8 +123,13 @@ echo "🌐 Testing network connectivity..."
     echo "### BLE Adapter Test"
     if remote_ssh "hciconfig hci0" 2>&1; then
         echo "✓ BLE adapter accessible"
+        remote_ssh "hciconfig hci0" 2>&1 | head -3
     else
         echo "✗ BLE adapter not accessible"
+        echo "Checking Bluetooth service and tools..."
+        remote_ssh "systemctl is-active bluetooth 2>/dev/null || echo 'bluetooth service not active'"
+        remote_ssh "which hciconfig bluetoothctl 2>/dev/null || echo 'bluez tools missing: try sudo apt-get install bluez bluez-tools'"
+        remote_ssh "ls -la /dev/hci* 2>/dev/null || echo 'no BLE adapters found in /dev/'"
     fi
     echo ""
 } >> "${DIAG_DIR}/connectivity_tests.txt" 2>/dev/null || echo "⚠️  Connectivity tests failed"
