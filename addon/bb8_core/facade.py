@@ -376,9 +376,10 @@ def sleep(self) -> None:
     All LED updates during sleep are routed exclusively through the `_emit_led` method,
     ensuring a single, consistent emission path for maintainability and testability.
 
-    This method is intended to be called on a BB8Facade instance to visually indicate sleep mode
-    by emitting a predefined LED pattern via the `_emit_led` method. It is test-friendly and
-    logs the emission count. Side effects: emits LED updates and logs the action.
+    This method is intended to be called on a BB8Facade instance to visually
+    indicate sleep mode by emitting a predefined LED pattern via the `_emit_led`
+    method. It is test-friendly and logs the emission count. Side effects: emits
+    LED updates and logs the action.
 
     Usage:
         facade.sleep()

@@ -33,7 +33,8 @@ async def main(adapter, bb8_name):
                     break
     if not device:
         print(
-            "BB-8 not found. Is it awake and advertising? Try tapping or removing from charger."
+            "BB-8 not found. Is it awake and advertising? "
+            "Try tapping or removing from charger."
         )
         return
 
@@ -59,10 +60,7 @@ async def main(adapter, bb8_name):
             out = subprocess.check_output(cmd, text=True).strip()
             # Output is like 'i -60' (int32)
             parts = out.split()
-            if len(parts) == 2 and parts[0] == "i":
-                rssi = int(parts[1])
-            else:
-                rssi = None
+            rssi = int(parts[1]) if len(parts) == 2 and parts[0] == "i" else None
         except Exception as e:
             print(f"  RSSI: unavailable (busctl query failed: {e})")
             rssi = None
@@ -84,7 +82,8 @@ async def main(adapter, bb8_name):
             for char in service.characteristics:
                 props = ",".join(char.properties)
                 print(
-                    f"  [Characteristic] {char.uuid} | {char.description} | properties: {props}"
+                    f"  [Characteristic] {char.uuid} | {char.description} | "
+                    f"properties: {props}"
                 )
 
 

@@ -359,6 +359,7 @@ mosquitto_pub/sub commands as documented above
 - BLE hardware detection and initialization logging
 - FakeMQTT integration testing with policy enforcement
 - STP5 attestation runs with both NO_BLE and BLE_ENFORCED modes
+- **[MILESTONE 1]** Production MQTT echo validation via SSH deployment testing
 
 **Tests Performed:**
 - End-to-end MQTT echo sequence validation  
@@ -366,11 +367,37 @@ mosquitto_pub/sub commands as documented above
 - BLE hardware initialization and readiness probing
 - Integration seam validation via FakeMQTT
 - Telemetry schema validation with evidence field verification
+- **[MILESTONE 1]** Production roundtrip testing with live Home Assistant deployment
+
+**Production Validation Evidence (Milestone 1):**
+```bash
+# Live MQTT Echo Validation (28 Sep 2025)
+ssh home-assistant "mosquitto_pub -h 192.168.0.129 -u mqtt_bb8 -P mqtt_bb8 -t bb8/echo/cmd -m '{\"test\": true}' & mosquitto_sub -h 192.168.0.129 -u mqtt_bb8 -P mqtt_bb8 -t bb8/echo/ack"
+# Response: {"ts": 1759098629.0950077, "value": 1}
+# RTT: <2 seconds - validates P0 MQTT fixes deployed successfully
+
+# Container Stability Evidence
+sudo docker ps | grep bb8
+# Result: Up 3 hours - confirms no crash loops post-deployment
+```
+
+**Critical Compatibility Fix (paho-mqtt v2):**
+```python
+# ISSUE: TypeError with paho-mqtt v2 ReasonCode objects
+# SOLUTION: Extract .value attribute for backward compatibility
+def _on_connect(client, userdata, flags, rc, properties=None):
+    rc_value = rc.value if hasattr(rc, 'value') else rc  # v2 compatibility
+    reason = REASONS.get(rc_value, f"unknown_{rc_value}")
+
+def _on_disconnect(client, userdata, flags, rc, properties=None):  # v2 signature
+    logger.warning({"event": "mqtt_disconnected", "rc": rc})
+```
 
 **Session References:**
 - STRAT-HA-BB8-2025-09-03T06:50Z-001: MQTT/BLE integration validation
 - BB8-STP5-MVP trace-bb8-2f0c9e9a: FakeMQTT seam and wildcard policy
 - HANDOFF::STRATEGOS::HA-BB8::2025-09-03T06:50Z-001: Hardware requirements and patterns
+- **development/production-ready-20250928**: Milestone 1 operational validation
 
 ---
 

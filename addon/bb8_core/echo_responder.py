@@ -98,8 +98,10 @@ def _resolve_topic(opt_key: str, default_suffix: str, env_key: str = None) -> st
 
 
 # --- Resolved topics (single source of truth) ---
-MQTT_ECHO_CMD = _resolve_topic("mqtt_echo_cmd_topic", "echo/cmd", "MQTT_ECHO_CMD_TOPIC")
-MQTT_ECHO_ACK = _resolve_topic("mqtt_echo_ack_topic", "echo/ack", "MQTT_ECHO_ACK_TOPIC")
+MQTT_ECHO_CMD = _resolve_topic("mqtt_echo_cmd_topic", "echo/cmd", 
+                               "MQTT_ECHO_CMD_TOPIC")
+MQTT_ECHO_ACK = _resolve_topic("mqtt_echo_ack_topic", "echo/ack", 
+                               "MQTT_ECHO_ACK_TOPIC")
 MQTT_ECHO_STATE = _resolve_topic(
     "mqtt_echo_state_topic", "echo/state", "MQTT_ECHO_STATE_TOPIC"
 )
@@ -112,7 +114,8 @@ MQTT_BLE_READY_CMD = _resolve_topic(
     "mqtt_ble_ready_cmd_topic", "ble_ready/cmd", "MQTT_BLE_READY_CMD_TOPIC"
 )
 MQTT_BLE_READY_SUMMARY = _resolve_topic(
-    "mqtt_ble_ready_summary_topic", "ble_ready/summary", "MQTT_BLE_READY_SUMMARY_TOPIC"
+    "mqtt_ble_ready_summary_topic", "ble_ready/summary",
+      "MQTT_BLE_READY_SUMMARY_TOPIC"
 )
 
 LOG = logging.getLogger("echo_responder")
@@ -226,7 +229,7 @@ BLE_ADDR = os.environ.get("BLE_ADDR", None)
 BLE_TOUCH_CHAR = os.environ.get("BLE_TOUCH_CHAR", None)
 BLE_TOUCH_VALUE = os.environ.get("BLE_TOUCH_VALUE", "01")
 
-# NOTE: Logging configuration is now set only when running as a script, not on import.
+# NOTE: Logging config is now set only when running as a script, not on import.
 
 # -------- Concurrency guard (bounded inflight) --------
 MAX_INFLIGHT = int(os.environ.get("ECHO_MAX_INFLIGHT", "16"))

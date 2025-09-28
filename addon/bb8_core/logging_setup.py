@@ -41,9 +41,9 @@ class JsonRedactingHandler(logging.StreamHandler):
 LOG_LEVEL = _cfg.get("LOG_LEVEL") or os.environ.get("BB8_LOG_LEVEL", "DEBUG")
 logger = logging.getLogger("bb8_addon")
 bridge_logger = logging.getLogger("bb8.bridge")
-ble_logger = logging.getLogger("bb8.ble")
-
 import atexit
+
+ble_logger = logging.getLogger("bb8.ble")
 
 # Attach redacting handler to all loggers, deduplicate handlers
 handler = JsonRedactingHandler()
@@ -150,7 +150,8 @@ def init_file_handler(
         )
         # Log explicit fallback
         print(
-            f"[LOGGING WARNING] Log file not writable, using fallback: {candidate or 'stderr'}"
+            f"[LOGGING WARNING] Log file not writable, using fallback: "
+            f"{candidate or 'stderr'}"
         )
     if candidate:
         return logging.FileHandler(candidate)

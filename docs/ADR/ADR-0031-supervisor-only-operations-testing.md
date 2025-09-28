@@ -282,13 +282,50 @@ reports/bleep_run_*.log                      # FakeMQTT test logs
 - Release pipeline end-to-end with version bumping and deployment
 - Health monitoring cadence validation over extended periods
 
+**Milestone 1 Operational Validation (28 Sep 2025):**
+
+**Container Stability Evidence:**
+```bash
+# 3+ Hour Uptime Validation
+sudo docker ps | grep bb8
+# 473cb39bb39a ... Up 3 hours ... addon_local_beep_boop_bb8
+
+# Health Monitoring Validation  
+sudo docker logs addon_local_beep_boop_bb8 --tail 5
+# 2025-09-28T23:29:13+01:00 [BB-8] HEALTH_SUMMARY main_age=4.8s echo_age=0.7s interval=15s
+# Pattern confirms: dual heartbeat operational, no crash loops
+```
+
+**Alternative Access Methods (Supervisor CLI 401 Workaround):**
+```bash
+# When ha CLI fails with 401 authentication:
+ha addons info local_beep_boop_bb8
+# unexpected server response. Status code: 401
+
+# Use direct Docker access instead:
+sudo docker logs addon_local_beep_boop_bb8 --since="10m"
+sudo docker ps | grep bb8
+# Provides equivalent validation capability
+```
+
+**Production MQTT Connectivity Validation:**
+```bash
+# Echo Roundtrip Test
+ssh home-assistant "mosquitto_sub -h 192.168.0.129 -u mqtt_bb8 -P mqtt_bb8 -t bb8/echo/ack & sleep 1; mosquitto_pub -h 192.168.0.129 -u mqtt_bb8 -P mqtt_bb8 -t bb8/echo/cmd -m '{\"test\": true}'; sleep 2; pkill mosquitto_sub"
+# Response: {"ts": 1759098629.0950077, "value": 1}
+# Confirms: MQTT integration fully operational post-deployment
+```
+
 **Session References:**
 - `STRAT-HA-BB8-2025-09-03T06:50Z-001`: Supervisor verification and attestation
 - `BB8-STP5-MVP trace-bb8-2f0c9e9a`: CI validation and testing protocols
 - `HANDOFF::STRATEGOS::HA-BB8::2025-09-03T06:50Z-001`: Deployment and release automation
+- **development/production-ready-20250928**: Milestone 1 deployment validation
 
 ---
 
 **Extraction Date:** 28 September 2025
 **Session ID/Reference:** Synthesis of multiple operational validation sessions
-**Evidence Quality:** Complete for operational protocols; Partial for BLE readiness and rollback automation
+**Evidence Quality:** Complete for operational protocols; Complete for Milestone 1 deployment validation; Partial for BLE readiness and rollback automation
+
+**TOKEN_MILESTONE1_VALIDATED**: Operational stability foundation confirmed through 3+ hour uptime, successful MQTT roundtrip, and dual heartbeat monitoring

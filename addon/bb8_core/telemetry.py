@@ -111,7 +111,7 @@ class Telemetry:
                     cb_rssi = getattr(self.bridge, "publish_rssi", None)
                 if callable(cb_rssi) and dbm is not None:
                     try:
-                        if isinstance(dbm, (int, float, str)):
+                        if isinstance(dbm, int | float | str):
                             cb_rssi(int(dbm))
                         else:
                             logger.warning(
