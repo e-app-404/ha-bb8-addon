@@ -5,7 +5,7 @@ date: 2025-09-14
 status: Accepted
 author:
   - Evert Appels
-  - Github Copilot
+  - Github Copilot GPT 5 mini
 related:
   - ADR-0001
   - ADR-0004
@@ -52,6 +52,10 @@ This project maintains a canonical add-on code root at `addon/`. Prior drift pro
   - otherwise → `scripts/`
 
 ## 3. Assignation Rules (programmatic)
+- **ADR documents** → **`docs/ADR/`** ONLY (canonical location, no subfolders).
+  - Format: `docs/ADR/ADR-XXXX-<slug>.md`
+  - ❌ FORBIDDEN: `docs/ADR/architecture/`, `docs/ADR/legacy/`, or any ADR subfolders
+  - All ADRs must comply with ADR-0009 formatting and governance standards
 - Python files importing `addon.bb8_core` → **`addon/`** (runtime or add-on bundled tools).
 - Python files importing docker, paho, git, HA CLI, cloud SDKs, or performing audits/releases → **`ops/`**.
 - Python files with CLI `if __name__ == "__main__"` but no runtime imports:
@@ -65,7 +69,10 @@ This project maintains a canonical add-on code root at `addon/`. Prior drift pro
   - root `services.d/`
   - bare `bb8_core` imports (must be `addon.bb8_core`)
   - Python under `tools/` at repo root (must be rehomed)
+  - **ADRs in subfolders** (must be directly in `docs/ADR/`)
+  - **ADRs without proper ADR-0009 formatting** (YAML front-matter, TOKEN_BLOCK required)
 - CI job runs repo-shape audit and fails on violations.
+- ADR governance validation ensures all ADRs are in canonical location with proper structure.
 
 ## 5. Consequences
 - No duplicate code trees.
@@ -78,6 +85,7 @@ TOKEN_BLOCK:
   accepted:
     - WORKSPACE_TAXONOMY_OK
     - FOLDER_ASSIGNATION_OK
+    - ADR_CANONICAL_PATH_ENFORCED
     - TOKEN_BLOCK_OK
   requires:
     - ADR_SCHEMA_V1
@@ -89,4 +97,6 @@ TOKEN_BLOCK:
     - DRIFT: bare_bb8_core_import
     - DRIFT: python_tools_root
     - DRIFT: folder_taxonomy_violation
+    - DRIFT: adr_subfolder_violation
+    - DRIFT: adr_formatting_noncompliant
 ```

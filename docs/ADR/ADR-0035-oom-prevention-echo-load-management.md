@@ -6,6 +6,7 @@ status: Accepted
 author:
   - Operational Evidence Analysis
   - Infrastructure Reconnaissance (Session SESS-8F2C7C94)
+  - Copilot Claude
 related: ["ADR-0010", "ADR-0031", "ADR-0032", "ADR-0034"]
 supersedes: []
 last_updated: 2025-09-28
@@ -26,7 +27,7 @@ references:
 
 ## Context
 
-**Problem Statement:** The HA-BB8 add-on has experienced Out of Memory (OOM) incidents where the kernel killed processes due to memory pressure, specifically related to high-frequency echo response workloads and unstable MQTT broker interactions causing excessive threading and memory consumption.
+**Problem Statement:** The HA-BB8 add-on has experienced Out of Memory (OOM) incidents where the kernel killed processes due to memory pressure. The primary cause was recursive generation of tombstone entities bloating the entity database, with secondary contributing factors including high-frequency echo response workloads and unstable MQTT broker interactions causing excessive threading and memory consumption.
 
 **Investigation Method:**
 - Analysis of kernel OOM messages: "Out of memory: Killed process ..." with photo documentation
@@ -350,3 +351,28 @@ ha addons info local_beep_boop_bb8 | jq '.state' # Confirm add-on recovery
 **Evidence Quality:** Complete for OOM incident documentation and recovery procedures
 **Implementation Priority:** HIGH - Addresses production stability risk
 **Maintenance:** Update memory thresholds based on hardware-specific testing and long-term monitoring data
+
+## TOKEN_BLOCK
+
+```yaml
+TOKEN_BLOCK:
+  accepted:
+    - OOM_PREVENTION_STRATEGY_IMPLEMENTED
+    - ECHO_LOAD_MANAGEMENT_CONFIGURED
+    - MEMORY_MONITORING_ACTIVE
+    - EMERGENCY_PROCEDURES_DOCUMENTED
+    - DEFAULT_SAFE_CONFIGURATION
+    - TOMBSTONE_ENTITY_ISSUE_ACKNOWLEDGED
+  produces:
+    - PRODUCTION_STABILITY_ENHANCED
+    - CONTROLLED_TESTING_PROTOCOLS
+    - OOM_RECOVERY_CAPABILITY
+  requires:
+    - ADR_SCHEMA_V1
+    - ADR_FORMAT_OK
+    - HA_OS_INFRASTRUCTURE_MAPPED
+  drift:
+    - DRIFT: memory-threshold-tuning-needed
+    - DRIFT: hardware-specific-optimization-pending
+    - DRIFT: automated-testing-integration-required
+```

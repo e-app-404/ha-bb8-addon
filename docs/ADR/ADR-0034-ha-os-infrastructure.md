@@ -1,9 +1,22 @@
-# ADR-0034: Home Assistant OS Development Environment Infrastructure
+---
+id: ADR-0034
+title: "Home Assistant OS Development Environment Infrastructure"
+date: 2025-09-28
+status: Accepted
+author:
+  - Operational Evidence Analysis
+  - Infrastructure Reconnaissance (P0 Implementation)
+  - Copilot Claude
+related: ["ADR-0031", "ADR-0032", "ADR-0010", "ADR-0035"]
+supersedes: []
+last_updated: 2025-09-28
+tags: ["infrastructure", "alpine-linux", "docker", "bluetooth", "ble", "supervisor", "authentication", "diagnostics", "ha-os"]
+references:
+  - P0 critical fixes implementation and diagnostics collection
+  - development/workspace-intake-20250928 session evidence
+---
 
-**Status:** Accepted  
-**Date:** 2025-09-28  
-**Session:** development/workspace-intake-20250928  
-**Evidence Source:** P0 critical fixes implementation and diagnostics collection  
+# ADR-0034: Home Assistant OS Development Environment Infrastructure  
 
 ## Context
 
@@ -223,3 +236,25 @@ c358ba8b9c4f   homeassistant/aarch64-addon-matter-server:8.1.1   "/init"
 **Evidence Quality:** Complete  
 **Session Impact:** Enables reliable P1/P2 development phases  
 **Maintenance:** Update when HA OS version changes or new infrastructure patterns discovered
+
+## TOKEN_BLOCK
+
+```yaml
+TOKEN_BLOCK:
+  accepted:
+    - HA_OS_INFRASTRUCTURE_MAPPED
+    - ALPINE_LINUX_CONFIRMED
+    - DOCKER_PATHS_VALIDATED
+    - BLE_INFRASTRUCTURE_RESTORED
+    - DIAGNOSTICS_ENHANCED
+    - SUPERVISOR_AUTH_DOCUMENTED
+  produces:
+    - HA_OS_FOUNDATION_COMPLETE
+    - P1_P2_DEVELOPMENT_ENABLED
+  requires:
+    - ADR_SCHEMA_V1
+    - ADR_FORMAT_OK
+  drift:
+    - DRIFT: supervisor-401-unresolved
+    - DRIFT: platform-specific-knowledge-required
+```
