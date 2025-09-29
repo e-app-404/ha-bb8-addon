@@ -53,11 +53,28 @@ def _get_scanner_publisher():
     log.info("scanner_pub_source=module id=%s", id(_pub))
     # If _pub is a coroutine function, wrap it to run synchronously
     import asyncio
+    import concurrent.futures
 
     if inspect.iscoroutinefunction(_pub):
 
         def sync_pub(*args, **kwargs):
-            asyncio.run(_pub(*args, **kwargs))
+            try:
+                # Check if we're in an event loop
+                asyncio.get_running_loop()
+                # We're in an event loop, run in separate thread
+
+                def run_in_thread():
+                    return asyncio.run(_pub(*args, **kwargs))
+                
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(run_in_thread)
+                    return future.result(timeout=5.0)
+                    
+            except RuntimeError:
+                # No event loop running, safe to use asyncio.run()
+                asyncio.run(_pub(*args, **kwargs))
+            except Exception as e:
+                log.warning("sync_pub failed: %s", e)
             return None
 
         return sync_pub
@@ -66,7 +83,23 @@ def _get_scanner_publisher():
         result = _pub(*args, **kwargs)
         # If the function returns a coroutine, run it
         if inspect.iscoroutine(result):
-            asyncio.run(result)
+            try:
+                # Check if we're in an event loop
+                asyncio.get_running_loop()
+                # We're in an event loop, run in separate thread
+
+                def run_in_thread():
+                    return asyncio.run(result)
+                
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(run_in_thread)
+                    return future.result(timeout=5.0)
+                    
+            except RuntimeError:
+                # No event loop running, safe to use asyncio.run()
+                asyncio.run(result)
+            except Exception as e:
+                log.warning("wrapper failed: %s", e)
             return None
         return result
 
