@@ -14,3 +14,7 @@
 ## 2025-09-29 — 2025.8.21.48
 - bump: add-on version to 2025.8.21.48
 - chore: synchronized config.yaml and Dockerfile
+
+## 2025-09-29 — 2025.8.21.49
+- bump: add-on version to 2025.8.21.49
+- chore: synchronized config.yaml and Dockerfile
