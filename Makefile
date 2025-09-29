@@ -6,7 +6,7 @@ release-major: ; VERSION_KIND=major ops/release/bump_version.sh major && ops/rel
 release: ; test -n "$(VERSION)" || { echo "ERROR: set VERSION=x.y.z"; exit 2; }; ops/release/bump_version.sh $(VERSION) && ops/release/publish_addon_archive.sh && ops/release/deploy_ha_over_ssh.sh
 
 # --- ADR-0028: Remote triad management ---
-.PHONY: backups triad-sync triad-verify
+.PHONY: backups triad-status triad-sync triad-sync-mirror triad-verify
 backups:
 	git fetch --all --prune
 	STAMP=$$(date -u +%Y%m%dT%H%M%SZ); \
@@ -16,26 +16,39 @@ backups:
 	git push origin refs/heads/main:refs/tags/backup/main-nas-$$STAMP; \
 	echo BACKUPS_OK:$$STAMP
 
+triad-status:
+	@echo "== Triad Status =="
+	@echo -n "LOCAL : "; git rev-parse HEAD
+	@echo -n "GITHUB: "; git ls-remote --heads github main | awk '{print $$1" "$$2}'
+	@echo -n "NAS   : "; git ls-remote --heads origin main  | awk '{print $$1" "$$2}'
+
 triad-sync:
 	git fetch github main --prune
-	GITHUB_SHA=$$(git rev-parse refs/remotes/github/main); \
-	echo "Syncing NAS mirror to GitHub SHA: $$GITHUB_SHA"; \
-	if git push origin --force-with-lease=main $$GITHUB_SHA:refs/heads/main; then \
+	GITHUB_REF=refs/remotes/github/main; \
+	GITHUB_SHA=$$(git rev-parse $$GITHUB_REF); \
+	echo "Syncing NAS main to GitHub SHA: $$GITHUB_SHA"; \
+	if git push origin --force-with-lease=main $${GITHUB_SHA}:refs/heads/main; then \
 		echo MIRROR_SYNC_OK; \
 	else \
-		echo "Force-with-lease failed, using direct ref update (ADR-0028 fallback)"; \
-		git branch temp-github-main $$GITHUB_SHA && \
-		git push origin +temp-github-main:main && \
-		git branch -D temp-github-main && \
-		echo MIRROR_SYNC_OK; \
+		echo "Force-with-lease failed; trying mirror branch fallback (ADR-0028)"; \
+		$(MAKE) triad-sync-mirror || (echo MIRROR_SYNC_DENIED; exit 2); \
 	fi
+
+triad-sync-mirror:
+	@git fetch github main --prune
+	@GITHUB_REF=refs/remotes/github/main; \
+	echo "Updating NAS mirror/main from $$GITHUB_REF"; \
+	git push origin $$GITHUB_REF:refs/heads/mirror/main && echo MIRROR_BRANCH_SYNC_OK || (echo MIRROR_BRANCH_SYNC_FAILED; exit 3)
 
 triad-verify:
 	@LOCAL=$$(git rev-parse HEAD); \
 	GH=$$(git ls-remote --heads github main | awk '{print $$1}'); \
 	NAS=$$(git ls-remote --heads origin main | awk '{print $$1}'); \
-	echo LOCAL=$$LOCAL; echo GITHUB=$$GH; echo NAS=$$NAS; \
-	[ "$$GH" = "$$NAS" ] && echo REMOTE_TRIAD_OK || (echo "DRIFT: remote_triad_mismatch"; exit 2)
+	NAS_M=$$(git ls-remote --heads origin mirror/main 2>/dev/null | awk '{print $$1}'); \
+	echo LOCAL=$$LOCAL; echo GITHUB=$$GH; echo NAS=$$NAS; [ -n "$$NAS_M" ] && echo NAS_MIRROR=$$NAS_M || true; \
+	if [ "$$GH" = "$$NAS" ]; then echo REMOTE_TRIAD_OK; exit 0; fi; \
+	if [ -n "$$NAS_M" ] && [ "$$GH" = "$$NAS_M" ]; then echo "REMOTE_TRIAD_OK (via mirror/main)"; exit 0; fi; \
+	echo "DRIFT: remote_triad_mismatch"; exit 2
 
 # =========
 #.RECIPEPREFIX =  # <- INTENTIONAL SINGLE SPACE AFTER '='

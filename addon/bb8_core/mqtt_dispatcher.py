@@ -65,11 +65,11 @@ def _get_scanner_publisher():
 
                 def run_in_thread():
                     return asyncio.run(_pub(*args, **kwargs))
-                
+
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     future = executor.submit(run_in_thread)
                     return future.result(timeout=5.0)
-                    
+
             except RuntimeError:
                 # No event loop running, safe to use asyncio.run()
                 asyncio.run(_pub(*args, **kwargs))
@@ -90,11 +90,11 @@ def _get_scanner_publisher():
 
                 def run_in_thread():
                     return asyncio.run(result)
-                
+
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     future = executor.submit(run_in_thread)
                     return future.result(timeout=5.0)
-                    
+
             except RuntimeError:
                 # No event loop running, safe to use asyncio.run()
                 asyncio.run(result)
@@ -888,23 +888,17 @@ def start_mqtt_dispatcher(
     # ---- Callbacks ----
     def _on_connect(client, userdata, flags, rc, properties=None):
         # Handle both integer (v1) and ReasonCode (v2) formats
-        rc_value = rc.value if hasattr(rc, 'value') else rc
+        rc_value = rc.value if hasattr(rc, "value") else rc
         reason = REASONS.get(rc_value, f"unknown_{rc_value}")
         if rc_value == 0:
-            logger.info(
-                {"event": "mqtt_connected", "rc": rc_value, "reason": reason}
-            )
-            client.publish(
-                status_topic, payload="online", qos=qos, retain=False
-            )
+            logger.info({"event": "mqtt_connected", "rc": rc_value, "reason": reason})
+            client.publish(status_topic, payload="online", qos=qos, retain=False)
             # Authoritative seam invocation at call time
             # (thread-safe & testable)
             _trigger_discovery_connected()
             if hasattr(controller, "attach_mqtt"):
                 try:
-                    controller.attach_mqtt(
-                        client, mqtt_topic, qos=qos, retain=retain
-                    )
+                    controller.attach_mqtt(client, mqtt_topic, qos=qos, retain=retain)
                 except Exception as e:
                     logger.error(
                         {

@@ -92,9 +92,11 @@ def test_telemetry_run_presence_and_rssi(mock_logger):
     t._stop.is_set.side_effect = [False, True] + [
         True
     ] * 10  # ensure enough values for all loop calls
-    with patch("time.sleep"), patch.object(
-        bridge, "publish_presence"
-    ) as mock_presence, patch.object(bridge, "publish_rssi") as mock_rssi:
+    with (
+        patch("time.sleep"),
+        patch.object(bridge, "publish_presence") as mock_presence,
+        patch.object(bridge, "publish_rssi") as mock_rssi,
+    ):
         t._run()
         mock_presence.assert_called_once_with(True)
         mock_rssi.assert_called_once_with(55)

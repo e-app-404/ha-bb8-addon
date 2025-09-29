@@ -104,11 +104,7 @@ def run_bleep(dry_run: bool = True) -> int:
 
     state_topic = f"{base}/{device}/state/led"
     published = getattr(client, "published", [])
-    state_pubs = [
-        (t, p, r)
-        for (t, p, r, _q) in published
-        if t == state_topic
-    ]
+    state_pubs = [(t, p, r) for (t, p, r, _q) in published if t == state_topic]
     ok = len(state_pubs) >= 1
 
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -118,7 +114,7 @@ def run_bleep(dry_run: bool = True) -> int:
         f"base={base}",
         f"device={device}",
     ]
-    for (t, p, r, _q) in published:
+    for t, p, r, _q in published:
         lines.append(
             f"pub: {t} -> {p} (retain={r})",
         )
