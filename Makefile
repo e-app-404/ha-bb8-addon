@@ -1,9 +1,9 @@
 # --- Strategos release shortcuts ---
 .PHONY: release-patch release-minor release-major release VERSION
-release-patch: ; VERSION_KIND=patch ops/release/bump_version.sh patch && ops/workspace/publish_addon_archive.sh && ops/release/deploy_ha_over_ssh.sh
-release-minor: ; VERSION_KIND=minor ops/release/bump_version.sh minor && ops/workspace/publish_addon_archive.sh && ops/release/deploy_ha_over_ssh.sh
-release-major: ; VERSION_KIND=major ops/release/bump_version.sh major && ops/workspace/publish_addon_archive.sh && ops/release/deploy_ha_over_ssh.sh
-release: ; test -n "$(VERSION)" || { echo "ERROR: set VERSION=x.y.z"; exit 2; }; ops/release/bump_version.sh $(VERSION) && ops/workspace/publish_addon_archive.sh && ops/release/deploy_ha_over_ssh.sh
+release-patch: ; VERSION_KIND=patch ops/release/bump_version.sh patch && ops/release/publish_addon_archive.sh && ops/release/deploy_ha_over_ssh.sh
+release-minor: ; VERSION_KIND=minor ops/release/bump_version.sh minor && ops/release/publish_addon_archive.sh && ops/release/deploy_ha_over_ssh.sh
+release-major: ; VERSION_KIND=major ops/release/bump_version.sh major && ops/release/publish_addon_archive.sh && ops/release/deploy_ha_over_ssh.sh
+release: ; test -n "$(VERSION)" || { echo "ERROR: set VERSION=x.y.z"; exit 2; }; ops/release/bump_version.sh $(VERSION) && ops/release/publish_addon_archive.sh && ops/release/deploy_ha_over_ssh.sh
 # =========
 #.RECIPEPREFIX =  # <- INTENTIONAL SINGLE SPACE AFTER '='
 # Strategos: allow space-indented recipe lines (fixes 'missing separator' from GNU make).
