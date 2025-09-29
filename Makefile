@@ -4,6 +4,39 @@ release-patch: ; VERSION_KIND=patch ops/release/bump_version.sh patch && ops/rel
 release-minor: ; VERSION_KIND=minor ops/release/bump_version.sh minor && ops/release/publish_addon_archive.sh && ops/release/deploy_ha_over_ssh.sh
 release-major: ; VERSION_KIND=major ops/release/bump_version.sh major && ops/release/publish_addon_archive.sh && ops/release/deploy_ha_over_ssh.sh
 release: ; test -n "$(VERSION)" || { echo "ERROR: set VERSION=x.y.z"; exit 2; }; ops/release/bump_version.sh $(VERSION) && ops/release/publish_addon_archive.sh && ops/release/deploy_ha_over_ssh.sh
+
+# --- ADR-0028: Remote triad management ---
+.PHONY: backups triad-sync triad-verify
+backups:
+	git fetch --all --prune
+	STAMP=$$(date -u +%Y%m%dT%H%M%SZ); \
+	git push github refs/heads/main:refs/heads/backup/main-github-$$STAMP; \
+	git push github refs/heads/main:refs/tags/backup/main-github-$$STAMP; \
+	git push origin refs/heads/main:refs/heads/backup/main-nas-$$STAMP; \
+	git push origin refs/heads/main:refs/tags/backup/main-nas-$$STAMP; \
+	echo BACKUPS_OK:$$STAMP
+
+triad-sync:
+	git fetch github main --prune
+	GITHUB_SHA=$$(git rev-parse refs/remotes/github/main); \
+	echo "Syncing NAS mirror to GitHub SHA: $$GITHUB_SHA"; \
+	if git push origin --force-with-lease=main $$GITHUB_SHA:refs/heads/main; then \
+		echo MIRROR_SYNC_OK; \
+	else \
+		echo "Force-with-lease failed, using direct ref update (ADR-0028 fallback)"; \
+		git branch temp-github-main $$GITHUB_SHA && \
+		git push origin +temp-github-main:main && \
+		git branch -D temp-github-main && \
+		echo MIRROR_SYNC_OK; \
+	fi
+
+triad-verify:
+	@LOCAL=$$(git rev-parse HEAD); \
+	GH=$$(git ls-remote --heads github main | awk '{print $$1}'); \
+	NAS=$$(git ls-remote --heads origin main | awk '{print $$1}'); \
+	echo LOCAL=$$LOCAL; echo GITHUB=$$GH; echo NAS=$$NAS; \
+	[ "$$GH" = "$$NAS" ] && echo REMOTE_TRIAD_OK || (echo "DRIFT: remote_triad_mismatch"; exit 2)
+
 # =========
 #.RECIPEPREFIX =  # <- INTENTIONAL SINGLE SPACE AFTER '='
 # Strategos: allow space-indented recipe lines (fixes 'missing separator' from GNU make).
