@@ -2,7 +2,30 @@
 <!-- markdownlint-disable MD022 MD032 MD024 -->
 <!-- Refer to meta schema section at the end of this document for changelog entry format guidance -->
 # Changelog
-<!-- Version [2025.8.21.1] for updating starts here -->
+<!-- Version [1.2.1] for updating starts here -->
+
+## [1.2.1] — 2025-09-29
+
+### Summary
+Critical P0 fix for BLE presence monitor coroutine TypeError that was causing log spam every 60 seconds. Implemented ThreadPoolExecutor wrapper to safely execute async functions from synchronous context.
+
+### Fixed
+- **P0 Critical**: Resolved `TypeError("'coroutine' object is not iterable")` in BLE presence monitor occurring every 60 seconds
+- **BLE Stability**: Added ThreadPoolExecutor wrapper in `mqtt_dispatcher.py` to handle async/sync context conflicts
+- **Event Loop Management**: Proper detection of running event loops with fallback to `asyncio.run()` when safe
+- **Error Handling**: Enhanced error handling with 5-second timeout for BLE operations
+
+### Added
+- ThreadPoolExecutor implementation in `_get_scanner_publisher()` function
+- Event loop detection using `asyncio.get_running_loop()`
+- Manual deployment documentation (`MANUAL_DEPLOYMENT_P0_FIX.md`)
+- Production deployment validation and rollback procedures
+
+### Technical Details
+- **Files Modified**: `addon/bb8_core/mqtt_dispatcher.py`
+- **Root Cause**: `asyncio.run()` called from within existing event loop context
+- **Solution**: Isolate coroutine execution in separate thread when event loop detected
+- **Deployment**: Successfully deployed to production `/addons/local/beep_boop_bb8/bb8_core/`
 
 <!-- Current version for updating ends here -->
 ## [2025.8.21] — 2025-08-21
