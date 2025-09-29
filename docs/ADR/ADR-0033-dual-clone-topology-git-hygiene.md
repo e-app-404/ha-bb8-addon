@@ -14,8 +14,8 @@ tags: ["deployment", "topology", "git", "hygiene", "tokens", "governance", "auto
 # ADR-0033: Dual-Clone Deployment Topology & Git Hygiene
 
 **Session Evidence Sources:**
-- WS-RESTORE-ADDON-DUAL-CLONE (ws-restore-2025-08-21) - Complete dual-clone implementation
-- STP4-STRICT pre-execution briefing - Rollback and deployment strategies
+- `WS-RESTORE-ADDON-DUAL-CLONE` (`ws-restore-2025-08-21`) - Complete dual-clone implementation
+- `STP4-STRICT` pre-execution briefing - Rollback and deployment strategies
 - Multiple tokenized deployment confirmations with Git SHA verification
 
 ## Context

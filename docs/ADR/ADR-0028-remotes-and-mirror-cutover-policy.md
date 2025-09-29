@@ -10,7 +10,7 @@ related:
   - ADR-0026
 supersedes: []
 last_updated: 2025-09-27
-tags: ["remote", "mirror", "cutover", "policy", "governance", "tokens", "backup", "synchronization"]
+tags: ["remote", "mirror", "cutover", "policy", "governance", "tokens", "backup", "synchronization", "git"]
 ---
 
 # ADR-0028: Remote triad, backups, and mirror cutover policy
