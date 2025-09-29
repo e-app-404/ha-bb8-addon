@@ -1,9 +1,20 @@
 #!/bin/bash
+# ADR-0033: Dual-clone deployment with portable paths
 set -euo pipefail
 
-WS="/Users/evertappels/Projects/HA-BB8"
+# Portable workspace detection
+WS="$(git rev-parse --show-toplevel)"
 ADDON="$WS/addon"
-RUNTIME="/Volumes/HA/addons/local/beep_boop_bb8"
+
+# Runtime path detection (ADR-0033 compliant)
+if [ -d "/Volumes/HA/addons/local/beep_boop_bb8" ]; then
+    RUNTIME="/Volumes/HA/addons/local/beep_boop_bb8"
+elif [ -d "/addons/local/beep_boop_bb8" ]; then
+    RUNTIME="/addons/local/beep_boop_bb8" 
+else
+    echo "ERROR: Runtime path not found. Check ADR-0033 dual-clone setup." >&2
+    exit 1
+fi
 
 # Get current branch name
 BR="$(git -C "$ADDON" branch --show-current 2>/dev/null || git -C "$ADDON" rev-parse --abbrev-ref HEAD)"

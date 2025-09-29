@@ -3,7 +3,12 @@
 
 # Hardened deterministic health check script
 set -eo pipefail
-REPO="/Users/evertappels/Projects/HA-BB8"
+# Portable repository detection
+if git rev-parse --show-toplevel >/dev/null 2>&1; then
+    REPO="$(git rev-parse --show-toplevel)"
+else
+    REPO="$(pwd)"
+fi
 cd "$REPO" || { echo "repo path not found: $REPO"; exit 1; }
 export RPROMPT=""
 

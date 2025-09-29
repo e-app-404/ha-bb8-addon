@@ -8,9 +8,20 @@ set -euo pipefail
 # Example: ./ws_ops.sh push
 # ------------------------------------------------------
 
-WS="/Users/evertappels/Projects/HA-BB8"
+# Portable workspace detection
+WS="$(git rev-parse --show-toplevel)"
 ADDON="$WS/addon"
-RUNTIME="/Volumes/HA/addons/local/beep_boop_bb8"
+
+# Runtime path detection (ADR-0033 compliant) 
+if [ -d "/Volumes/HA/addons/local/beep_boop_bb8" ]; then
+    RUNTIME="/Volumes/HA/addons/local/beep_boop_bb8"
+elif [ -d "/addons/local/beep_boop_bb8" ]; then
+    RUNTIME="/addons/local/beep_boop_bb8"
+else
+    echo "ERROR: Runtime path not found. Check ADR-0033 dual-clone setup." >&2
+    exit 1
+fi
+
 BR="$(git -C "$ADDON" branch --show-current 2>/dev/null || git -C "$ADDON" rev-parse --abbrev-ref HEAD)"
 
 function help() {
@@ -28,8 +39,15 @@ EOF
 }
 
 function push() {
-  echo "Pushing local changes to remote branch: $BR"
-  git -C "$ADDON" push origin "HEAD:refs/heads/${BR}"
+  # ADR-0019: Prefer GitHub as source of truth
+  if git -C "$ADDON" remote get-url github >/dev/null 2>&1; then
+    REMOTE="github"
+    echo "Pushing to GitHub (source of truth): $BR"
+  else
+    REMOTE="origin" 
+    echo "WARNING: Using origin remote (GitHub preferred per ADR-0019): $BR"
+  fi
+  git -C "$ADDON" push "$REMOTE" "HEAD:refs/heads/${BR}"
 }
 
 function sync() {

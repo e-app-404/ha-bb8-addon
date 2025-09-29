@@ -1,13 +1,27 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# --- constants ---
-export WORKSPACE_ROOT="/Users/evertappels/Projects/HA-BB8"
-export REPORT_ROOT="/Users/evertappels/Projects/HA-BB8/reports"
-WS="${WORKSPACE_ROOT}"
+# --- constants (ADR-0033 compliant) ---
+WS="$(git rev-parse --show-toplevel)"
+export WORKSPACE_ROOT="$WS"
+export REPORT_ROOT="$WS/reports"
 ADDON="${WS}/addon"
-RUNTIME="/Volumes/HA/addons/local/beep_boop_bb8"
-REMOTE="git@github.com:e-app-404/ha-bb8-addon.git"
+
+# Runtime path detection
+if [ -d "/Volumes/HA/addons/local/beep_boop_bb8" ]; then
+    RUNTIME="/Volumes/HA/addons/local/beep_boop_bb8"
+elif [ -d "/addons/local/beep_boop_bb8" ]; then
+    RUNTIME="/addons/local/beep_boop_bb8"
+else
+    echo "[fail] runtime not found. Check ADR-0033 dual-clone setup."; exit 2
+fi
+
+# ADR-0019: Detect GitHub remote dynamically
+if git -C "$ADDON" remote get-url github >/dev/null 2>&1; then
+    REMOTE="$(git -C "$ADDON" remote get-url github)"
+else
+    REMOTE="$(git -C "$ADDON" remote get-url origin)"
+fi
 
 # --- safety: capture runtime state before changing anything ---
 BK="${WS}/_backup_$(date -u +%Y%m%d_%H%M%S)Z_runtime_canon"

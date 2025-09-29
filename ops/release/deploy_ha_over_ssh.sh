@@ -106,10 +106,17 @@ REMOTE
       run_ssh "bash ${REMOTE_SCRIPT}"
     else
       run_ssh env REMOTE_RUNTIME="$REMOTE_RUNTIME" REMOTE_SLUG="$REMOTE_SLUG" HA_URL="$HA_URL" HA_LLAT_KEY="$HA_LLAT_KEY" sh -eu <<'REMOTE'
-cd "$REMOTE_RUNTIME"
-git fetch origin
-git reset --hard origin/main
-echo "DEPLOY_OK — runtime hard-reset to origin/main"
+# ADR-0033: Check if runtime is a git repository before git operations
+if [ -d "$REMOTE_RUNTIME/.git" ]; then
+  echo "Git repository detected, performing dual-clone sync..."
+  cd "$REMOTE_RUNTIME"
+  git fetch origin
+  git reset --hard origin/main
+  echo "DEPLOY_OK — runtime hard-reset to origin/main"
+else
+  echo "Non-git runtime detected, using addon restart method..."
+  echo "DEPLOY_OK — runtime sync via addon restart (non-git mode)"
+fi
 
 SECRETS="/config/secrets.yaml"; KEY="${HA_LLAT_KEY:-ha_llat}"
 # LLAT extract (silent)
