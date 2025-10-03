@@ -13,7 +13,7 @@ related:
   - ADR-0009
   - ADR-0017
   - ADR-0018
-last_updated: 2025-09-14
+last_updated: 2025-09-30
 supersedes: []
 ---
 
@@ -43,7 +43,8 @@ This project maintains a canonical add-on code root at `addon/`. Prior drift pro
   - Subfolders: `ops/audit`, `ops/diagnostics`, `ops/qa`, `ops/release`, `ops/evidence`, `ops/guardrails`, etc.
   - `ops/tools/` — operator-facing tools (docker, git, CI helpers, data audits); **never imported at runtime**.
 - `scripts/`: **Repo developer scripts** (small glue, bootstrap, repo maintenance; no runtime semantics).
-- `reports/`: **Generated artifacts only** (logs, coverage, audits, evidence). No source files.
+- `reports/`: **Important documentation for long-term retention** (checkpoints, governance docs, development plans). Git-tracked selective content.
+- `logs/`: **Temporary outputs and automated artifacts** (diagnostic dumps, receipts, evidence collection). Git-ignored completely.
 - `docs/`: **Documentation** (ADR, guides, prompts, patches, legacy).
 - `services.d/` at repo root: **FORBIDDEN**. All services must live under `addon/services.d/`.
 - `tools/` at repo root: **Discouraged**. Code tools must be rehomed:
@@ -71,7 +72,9 @@ This project maintains a canonical add-on code root at `addon/`. Prior drift pro
   - operational CLIs → `ops/tools/`
   - developer convenience → `scripts/`
 - s6 services (`<name>/run` [+ `log/run`]) → **`addon/services.d/`** (executable).
-- Generated outputs, logs, coverage, dumps → **`reports/`** only.
+- Important documentation for retention (checkpoints, governance) → **`reports/`** (git-tracked).
+- Temporary outputs (diagnostic dumps, receipts, evidence, logs) → **`logs/`** (git-ignored).
+- Coverage files and addon-specific test config → **`addon/`** (`.coverage*`, `pytest.ini`, `pyproject.toml`).
 
 ## 4. Enforcement
 - Pre-commit hook rejects:

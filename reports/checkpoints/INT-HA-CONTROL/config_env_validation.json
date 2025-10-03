@@ -1,0 +1,29 @@
+{
+  "validation_metadata": {
+    "timestamp": "2025-10-03T19:47:34.642239",
+    "validator": "emit_config_env_validation.py",
+    "acceptance_criteria": "MQTT_BASE=bb8, REQUIRE_DEVICE_ECHO=1, PUBLISH_LED_DISCOVERY=0"
+  },
+  "environment_validation": {
+    "MQTT_BASE": {
+      "expected": "bb8",
+      "actual": "bb8",
+      "correct": true
+    },
+    "REQUIRE_DEVICE_ECHO": {
+      "expected": "1",
+      "actual": "1",
+      "correct": true
+    },
+    "PUBLISH_LED_DISCOVERY": {
+      "expected": "0",
+      "actual": "0",
+      "correct": true
+    }
+  },
+  "compliance_status": {
+    "all_defaults_correct": true,
+    "violations": []
+  },
+  "overall_pass": true
+}

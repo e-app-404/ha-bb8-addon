@@ -32,6 +32,7 @@ ScalarCallback = Callable[
 # ---------------------------
 # Minimal external client surfaces
 # ---------------------------
+@runtime_checkable
 class MqttClient(Protocol):
     def publish(
         self, topic: str, payload: str, qos: int = ..., retain: bool = ...

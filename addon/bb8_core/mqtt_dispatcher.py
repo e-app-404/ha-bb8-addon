@@ -319,11 +319,19 @@ def _norm_mac(mac: str | None) -> str:
 
 
 def _device_block() -> dict[str, Any]:
-    did = f"bb8-{_norm_mac(CONFIG.get('bb8_mac'))}"
+    mac = CONFIG.get("bb8_mac")
+    if not mac or mac == "UNKNOWN":
+        # Fallback to a consistent device ID when MAC is not available
+        did = "bb8-sphero-robot"
+    else:
+        did = f"bb8-{_norm_mac(mac)}"
     return {
-        "ids": [did],
-        "name": "BB-8",
-        "mf": "Sphero",
+        "identifiers": [did],
+        "name": "BB-8 Sphero Robot",
+        "manufacturer": "Sphero",
+        "model": "BB-8 App-Enabled Droid",
+        "sw_version": CONFIG.get("ADDON_VERSION", "1.0.0"),
+        "suggested_area": "living_room",
     }
 
 
@@ -380,7 +388,7 @@ def publish_bb8_discovery(publish_fn) -> None:
             "pl_avail": pa,
             "pl_not_avail": po,
             "qos": qos,
-            "dev": dev,
+            "device": dev,
         },
     )
 
@@ -397,7 +405,7 @@ def publish_bb8_discovery(publish_fn) -> None:
             "pl_avail": pa,
             "pl_not_avail": po,
             "qos": qos,
-            "dev": dev,
+            "device": dev,
         },
     )
 
@@ -414,7 +422,7 @@ def publish_bb8_discovery(publish_fn) -> None:
             "pl_avail": pa,
             "pl_not_avail": po,
             "qos": qos,
-            "dev": dev,
+            "device": dev,
         },
     )
 
@@ -434,7 +442,7 @@ def publish_bb8_discovery(publish_fn) -> None:
             "pl_avail": pa,
             "pl_not_avail": po,
             "qos": qos,
-            "dev": dev,
+            "device": dev,
         },
     )
 
@@ -454,7 +462,7 @@ def publish_bb8_discovery(publish_fn) -> None:
             "pl_avail": pa,
             "pl_not_avail": po,
             "qos": qos,
-            "dev": dev,
+            "device": dev,
         },
     )
 
@@ -470,7 +478,7 @@ def publish_bb8_discovery(publish_fn) -> None:
             "pl_avail": pa,
             "pl_not_avail": po,
             "qos": qos,
-            "dev": dev,
+            "device": dev,
         },
     )
 
@@ -486,7 +494,7 @@ def publish_bb8_discovery(publish_fn) -> None:
             "pl_avail": pa,
             "pl_not_avail": po,
             "qos": qos,
-            "dev": dev,
+            "device": dev,
         },
     )
 
@@ -505,7 +513,7 @@ def publish_bb8_discovery(publish_fn) -> None:
             "pl_avail": pa,
             "pl_not_avail": po,
             "qos": qos,
-            "dev": dev,
+            "device": dev,
         },
     )
 
@@ -556,7 +564,7 @@ def _maybe_publish_bb8_discovery() -> None:
                 "pl_avail": pa,
                 "pl_not_avail": po,
                 "qos": qos,
-                "dev": dev,
+                "device": dev,
             },
         ),
         (
@@ -571,7 +579,7 @@ def _maybe_publish_bb8_discovery() -> None:
                 "pl_avail": pa,
                 "pl_not_avail": po,
                 "qos": qos,
-                "dev": dev,
+                "device": dev,
             },
         ),
         (
@@ -586,7 +594,7 @@ def _maybe_publish_bb8_discovery() -> None:
                 "pl_avail": pa,
                 "pl_not_avail": po,
                 "qos": qos,
-                "dev": dev,
+                "device": dev,
             },
         ),
         (
@@ -604,7 +612,7 @@ def _maybe_publish_bb8_discovery() -> None:
                 "pl_avail": pa,
                 "pl_not_avail": po,
                 "qos": qos,
-                "dev": dev,
+                "device": dev,
             },
         ),
         (
@@ -622,7 +630,7 @@ def _maybe_publish_bb8_discovery() -> None:
                 "pl_avail": pa,
                 "pl_not_avail": po,
                 "qos": qos,
-                "dev": dev,
+                "device": dev,
             },
         ),
         (
@@ -636,7 +644,7 @@ def _maybe_publish_bb8_discovery() -> None:
                 "pl_avail": pa,
                 "pl_not_avail": po,
                 "qos": qos,
-                "dev": dev,
+                "device": dev,
             },
         ),
         (
@@ -650,7 +658,7 @@ def _maybe_publish_bb8_discovery() -> None:
                 "pl_avail": pa,
                 "pl_not_avail": po,
                 "qos": qos,
-                "dev": dev,
+                "device": dev,
             },
         ),
         (
@@ -667,7 +675,7 @@ def _maybe_publish_bb8_discovery() -> None:
                 "pl_avail": pa,
                 "pl_not_avail": po,
                 "qos": qos,
-                "dev": dev,
+                "device": dev,
             },
         ),
     ]

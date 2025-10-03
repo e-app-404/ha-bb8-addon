@@ -11,7 +11,15 @@ _backups/**
 !_backups/inventory/**
 !_backups/.snapshot_state.json
 tarballs/**
+# Workspace organization: logs/ (untracked) vs reports/ (tracked important docs)
+logs/
+logs/**
+# Keep reports/ tracked for important documentation
 reports/**
+!reports/
+!reports/checkpoints/
+!reports/checkpoints/**
+!reports/*.md
 .trash/**
 .quarantine/**
 .venv*/
@@ -38,11 +46,16 @@ htmlcov/**
 *.code-workspace
 coverage.json
 pytest-report.xml
+# Coverage files (generated, location: addon/)
+addon/.coverage
+addon/.coverage.*
+.coverage
+.coverage.*
 
 # common caches you may bump into locally
 .mypy_cache/
 .idea/
 
 .git.DISABLED/
-.env
+*.env
 .ssh/

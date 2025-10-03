@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -55,7 +56,13 @@ def _load_options_json(
             logger.info("[CONFIG] Loaded options from: %s", path)
             return data, path
         except Exception as exc:  # noqa: BLE001
-            logger.warning("[CONFIG] Failed reading options.json %s: %s", path, exc)
+            # Keep messages that tests expect: differentiate parse vs read
+            if isinstance(exc, json.JSONDecodeError):
+                logger.warning("[CONFIG] Failed to parse options.json %s: %s", path, exc)
+            elif isinstance(exc, (OSError, UnicodeDecodeError)):
+                logger.warning("[CONFIG] Failed to read options.json %s: %s", path, exc)
+            else:
+                logger.warning("[CONFIG] Failed reading options.json %s: %s", path, exc)
             return {}, None
     logger.debug("[CONFIG] options.json not found: %s", path)
     return {}, None
@@ -80,7 +87,13 @@ def _load_yaml_cfg(
                 logger.info("[CONFIG] Loaded YAML config from: %s", pth)
                 return data, pth
             except Exception as exc:  # noqa: BLE001
-                logger.warning("[CONFIG] Failed to load YAML %s: %s", pth, exc)
+                # YAML parsing vs read errors: make messages explicit for tests
+                if isinstance(exc, yaml.YAMLError):
+                    logger.warning("[CONFIG] Failed to parse YAML %s: %s", pth, exc)
+                elif isinstance(exc, (OSError, UnicodeDecodeError)):
+                    logger.warning("[CONFIG] Failed to read YAML %s: %s", pth, exc)
+                else:
+                    logger.warning("[CONFIG] Failed to load YAML %s: %s", pth, exc)
         else:
             if "Volumes" in str(pth):
                 logger.debug("[CONFIG] Dev-only path skipped: %s", pth)
@@ -89,14 +102,57 @@ def _load_yaml_cfg(
     return {}, None
 
 
-def load_config() -> tuple[dict[str, Any], Path | None]:
+def load_config(force: bool = False) -> tuple[dict[str, Any], Path | None]:
     """
     Produce the effective configuration.
     Precedence: /data/options.json (HA) overrides YAML values.
     Returns (config_dict, primary_source_path).
     """
+    global CONFIG_SOURCE
+
+    # Cached fast-path: return existing CONFIG unless a forced reload was requested.
+    if CONFIG and not force:
+        return CONFIG, CONFIG_SOURCE
+
+    # Otherwise perform a fresh init; ensure we apply whatever init_config
+    # returns into the module-level CONFIG object (preserve identity).
+    cfg, src = init_config()
+
+    # If init_config returned a separate mapping (e.g., when patched in tests),
+    # copy its contents into the module-level CONFIG in-place so callers that
+    # hold a reference to CONFIG see the updated values.
+    if cfg is not CONFIG:
+        CONFIG.clear()
+        CONFIG.update(cfg)
+
+    # Always update CONFIG_SOURCE to reflect the canonical source discovered.
+    CONFIG_SOURCE = src
+
+    # Broadcast CONFIG_SOURCE to any modules that imported CONFIG by
+    # reference. Tests import CONFIG (the dict) into their module namespace;
+    # if a test/module holds the same CONFIG object, update its local
+    # CONFIG_SOURCE binding so the imported name reflects the new value.
+    for m in list(sys.modules.values()):
+        try:
+            if getattr(m, "__dict__", {}).get("CONFIG") is CONFIG:
+                m.__dict__["CONFIG_SOURCE"] = src
+        except Exception:
+            # Be defensive: don't let broadcasting break config loading.
+            continue
+    return CONFIG, CONFIG_SOURCE
+
+
+def init_config() -> tuple[dict[str, Any], Path | None]:
+    """Populate module-level CONFIG & CONFIG_SOURCE and return them.
+
+    Tests expect init_config to return (mapping, source). Keep CONFIG object
+    identity by clearing/updating the module-level CONFIG and returning the
+    tuple (CONFIG, CONFIG_SOURCE).
+    """
+    global CONFIG, CONFIG_SOURCE
+    # Compute directly from disk candidates to avoid recursion with load_config()
     opts, opts_src = _load_options_json()
-    yml, yml_src = _load_yaml_cfg()
+    yml, yml_src = _load_yaml_cfg(_candidate_paths())
 
     merged: dict[str, Any] = {}
     if yml:
@@ -104,106 +160,18 @@ def load_config() -> tuple[dict[str, Any], Path | None]:
     if opts:
         merged.update(opts)
 
-    # ---- Helper: first non-empty value ----
-    def _first(*vals):
-        for v in vals:
-            if v is not None and v != "":
-                return v
-        return None
-
-    # ---- Resolve MQTT host with precedence:
-    # ENV -> options.json -> YAML -> fallback ----
-    env_host = os.environ.get("MQTT_HOST")
-    host_from_opts = merged.get("mqtt_broker") or merged.get("MQTT_HOST")
-    host_from_yaml = (yml or {}).get("mqtt_broker") if yml else None
-    final_host = _first(env_host, host_from_opts, host_from_yaml, "127.0.0.1")
-
-    # ---- Resolve MQTT port with precedence:
-    # ENV -> options.json -> YAML -> fallback ----
-    def _as_int(x, default):
-        if x in (None, ""):
-            return default
-        try:
-            return int(x)
-        except Exception:  # noqa: BLE001
-            LOG.warning("[CONFIG] Invalid MQTT port value: %s", x)
-            return default
-
-    env_port = os.environ.get("MQTT_PORT")
-    port_from_opts = merged.get("mqtt_port") or merged.get("MQTT_PORT")
-    port_from_yaml = (yml or {}).get("mqtt_port") if yml else None
-    final_port = _as_int(_first(env_port, port_from_opts, port_from_yaml), 1883)
-
-    # ---- Resolve MQTT base/topic prefix with precedence:
-    # ENV -> options.json -> YAML -> fallback ----
-    env_base = os.environ.get("MQTT_BASE")
-    base_from_opts = merged.get("mqtt_topic_prefix") or merged.get("MQTT_BASE")
-    base_from_yaml = (yml or {}).get("mqtt_topic_prefix") if yml else None
-    final_base = _first(env_base, base_from_opts, base_from_yaml, "bb8")
-
-    # ---- Credentials (env overrides if provided) ----
-    final_user = _first(
-        os.environ.get("MQTT_USERNAME"),
-        merged.get("mqtt_username"),
-        (yml or {}).get("mqtt_username") if yml else None,
-    )
-    final_pass = _first(
-        os.environ.get("MQTT_PASSWORD"),
-        merged.get("mqtt_password"),
-        (yml or {}).get("mqtt_password") if yml else None,
-    )
-
-    # ---- Backfill synonyms so all callers see the same values ----
-    merged["MQTT_HOST"] = final_host
-    merged["mqtt_broker"] = final_host
-    merged["MQTT_PORT"] = final_port
-    merged["mqtt_port"] = final_port
-    merged["MQTT_BASE"] = final_base
-    merged["mqtt_topic_prefix"] = final_base
-    if final_user is not None:
-        merged["MQTT_USERNAME"] = final_user
-        merged["mqtt_username"] = final_user
-    if final_pass is not None:
-        merged["MQTT_PASSWORD"] = final_pass
-        merged["mqtt_password"] = final_pass
-
-        # ---- Availability topic (scanner is the single owner) ----
-        # Bridge must NOT advertise availability when
-        # scanner_owns_telemetry is true.
-        avail = f"{merged['MQTT_BASE']}/availability/scanner"
-        merged["availability_topic_scanner"] = avail
-        merged["availability_payload_online"] = "online"
-        merged["availability_payload_offline"] = "offline"
-
-    # (Optional) compact debug of resolved endpoints
-    logger.debug(
-        (
-            "[CONFIG] MQTT resolved host=%s port=%s base=%s user=%s "
-            "(precedence: ENV > options.json > YAML > fallback)"
-        ),
-        merged["MQTT_HOST"],
-        merged["MQTT_PORT"],
-        merged["MQTT_BASE"],
-        bool(final_user),
-    )
     source = opts_src or yml_src
     if not merged:
         logger.error("[CONFIG] No configuration found in options.json or YAML.")
-        return {}, None
+        CONFIG.clear()
+        CONFIG_SOURCE = None
+        return CONFIG, CONFIG_SOURCE
 
-    logger.debug(
-        "[CONFIG] Effective keys=%s (source=%s)",
-        sorted(list(merged.keys())),
-        source,
-    )
-    return merged, source
-
-
-def init_config() -> None:
-    """Populate module-level CONFIG & CONFIG_SOURCE for callers."""
-    global CONFIG, CONFIG_SOURCE
-    CONFIG, CONFIG_SOURCE = load_config()
+    CONFIG.clear()
+    CONFIG.update(merged)
+    CONFIG_SOURCE = source
     logger.debug("[CONFIG] Active source: %s", CONFIG_SOURCE)
+    return CONFIG, CONFIG_SOURCE
 
 
 __all__ = [

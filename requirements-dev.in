@@ -10,3 +10,4 @@ black
 pytest-cov
 bandit
 safety
+monkeytype

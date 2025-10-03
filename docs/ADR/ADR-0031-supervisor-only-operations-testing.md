@@ -33,11 +33,11 @@ last_updated: 2025-09-28
 ### Core Operational Evidence
 - **Add-on Configuration:** `startup: services`, `host_dbus: true`, `apparmor: disable`, device `/dev/hci0`
 - **Health Banner Pattern (15s intervals):**
-  ```
+  ```log
   2025-09-03T10:24:36+01:00 [BB-8] HEALTH_SUMMARY main_age=1.4s echo_age=0.7s interval=15s
   ```
 - **Process Supervision Logs:**
-  ```
+  ```log
   [BB-8] run.sh entry (version=2025.8.21.28) wd=/usr/src/app LOG=/data/reports/ha_bb8_addon.log HEALTH=1 ECHO=true
   [BB-8] RUNLOOP attempt #1
   [BB-8] Started bb8_core.main PID=131
@@ -208,7 +208,7 @@ options:
 ### Log Patterns Observed
 
 # Startup Sequence
-```
+```log
 [BB-8] run.sh entry (version=X.X.X) wd=/usr/src/app LOG=/data/reports/ha_bb8_addon.log HEALTH=1 ECHO=true
 [BB-8] RUNLOOP attempt #1
 [BB-8] Started bb8_core.main PID=131
@@ -216,12 +216,12 @@ options:
 ```
 
 # Health Monitoring
-```
+```log
 [BB-8] HEALTH_SUMMARY main_age=4.1s echo_age=4.1s interval=15s
 ```
 
 # MQTT Integration
-```
+```log
 Connected to MQTT broker with rc=Success
 Subscribed to bb8/echo/cmd
 Received message on bb8/echo/cmd: b'{"value":1}'
@@ -234,7 +234,7 @@ Received message on bb8/echo/cmd: b'{"value":1}'
 
 ### Artifact Paths Verified
 
-```
+```ini
 /config/reports/stp5_runs/<timestamp>/        # STP5 attestation results
 /data/reports/ha_bb8_addon.log               # Add-on runtime logs  
 /tmp/bb8_heartbeat_main                      # Main process heartbeat

@@ -19,7 +19,7 @@ external_related:
 alignment_dependencies:
   - "ha-config:ADR-0024"
 supersedes: []
-last_updated: 2025-09-28
+last_updated: 2025-09-30
 tags: ["adr", "cross-repository", "linking", "alignment", "governance", "tokens", "workspace-hygiene", "backups", "ci", "enforcement"]
 ---
 
@@ -117,8 +117,96 @@ node_modules/
 - Receipts: Restoration receipts live under `_backups/inventory/restore_receipts/`.
 - Rollback: use `stable/*` tags and backup branches when performing cutovers.
 
+## Amendment A: Workspace Organization and Canonical File Placement (2025-09-30)
+
+Building on the base hygiene policy, we establish **clear separation of tracked documentation vs temporary outputs** and **canonical locations for operational artifacts**.
+
+### A1. logs/ vs reports/ Separation
+
+#### A1.1 logs/ Directory (Git-ignored temporary outputs)
+- **Purpose**: Automated tool outputs, temporary artifacts, diagnostic dumps
+- **Git tracking**: Completely ignored (`logs/` and `logs/**` in .gitignore)
+- **Content types**:
+  - Diagnostic tarballs (`ha_bb8_diagnostics_*.tar.gz`)
+  - Timestamped evidence collection (`stp4_*` directories)  
+  - Receipt files (`*_receipt.txt`)
+  - Log files (`*.log`)
+  - Verification outputs (`*_verification_*.txt`)
+  - Temporary JSON/XML artifacts from automated tools
+- **Retention**: Auto-cleanup after 90 days, no git pollution
+
+#### A1.2 reports/ Directory (Git-tracked important documentation)  
+- **Purpose**: Important documentation meant for long-term retention
+- **Git tracking**: Selective tracking with explicit includes
+- **Content types**:
+  - `checkpoints/` — Milestone validation frameworks (e.g., INT-HA-CONTROL)
+  - `governance/` — Compliance and audit documentation
+  - `*.md` files — Development plans, assessments, documentation
+- **Forbidden**: Timestamped outputs, temporary tool dumps, logs
+
+#### A1.3 Updated .gitignore Configuration
+```gitignore
+# Workspace organization: logs/ (untracked) vs reports/ (tracked important docs)
+logs/
+logs/**
+# Keep reports/ tracked for important documentation  
+reports/**
+!reports/
+!reports/checkpoints/
+!reports/checkpoints/**
+!reports/*.md
+# Coverage files (generated, location: addon/)
+addon/.coverage
+addon/.coverage.*
+.coverage
+.coverage.*
+```
+
+### A2. Canonical File Placements
+
+#### A2.1 Operational Scripts
+- **Diagnostics collection**: `ops/diag/collect_ha_bb8_diagnostics.sh`
+- **Diagnostic output**: `logs/ha_bb8_diagnostics_*` (auto-created by script)
+- **Status reporting**: `reports/checkpoints/INT-HA-CONTROL/` (framework artifacts)
+
+#### A2.2 Testing and Coverage
+- **Coverage configuration**: `addon/.coveragerc` (addon-specific test config)
+- **Coverage database**: `addon/.coverage` (generated, git-ignored)
+- **Test configuration**: `addon/pytest.ini` (addon-specific)
+- **Project configuration**: `addon/pyproject.toml` (addon-specific)
+
+#### A2.3 Evidence and Validation  
+- **Evidence configuration**: `.evidence.env` (root-level MQTT config)
+- **Evidence collection output**: `logs/stp4_*` (timestamped artifacts)
+- **Validation frameworks**: `reports/checkpoints/` (tracked milestones)
+
+### A3. Script Output Path Requirements
+
+All operational scripts **MUST** output to appropriate canonical locations:
+- Diagnostic tools → `logs/` directory (create if needed: `mkdir -p logs`)
+- Status/framework artifacts → `reports/checkpoints/` (for tracking)
+- Temporary receipts/logs → `logs/` (not repo root)
+
+### A4. Enforcement Extensions
+
+Beyond base ADR-0024 hygiene gates:
+- **Misplaced outputs**: Scripts outputting to repo root instead of `logs/`
+- **Coverage file pollution**: `.coverage*` files at repo root (should be in `addon/`)
+- **Reports contamination**: Temporary files in `reports/` (should be in `logs/`)
+
+### A5. Migration Compliance
+
+This amendment formalizes workspace reorganization completed 2025-09-30:
+- ✅ Moved 19 restored test files to proper locations
+- ✅ Relocated coverage files to `addon/` directory  
+- ✅ Established `logs/` vs `reports/` separation
+- ✅ Updated script output paths to canonical locations
+- ✅ Cleaned repo root of misplaced artifacts
+
 ## Notes
 This ADR adopts the main HA config repo's ADR-0024 verbatim as the baseline. If the upstream ADR-0024 changes, this repo follows it unless an explicit override is added here in a new "Amendment" section.
+
+**Amendment A Status**: Implemented 2025-09-30, enforced via updated .gitignore and canonical file placement guidelines.
 
 ## Token Block
 
@@ -128,9 +216,17 @@ TOKEN_BLOCK:
     - WORKSPACE_HYGIENE_OK
     - BACKUP_RETENTION_OK
     - HYGIENE_GATE_ENFORCED_OK
+    - WORKSPACE_ORGANIZATION_OK
+    - CANONICAL_PLACEMENT_OK
+    - LOGS_REPORTS_SEPARATION_OK
+    - SCRIPT_OUTPUT_PATHS_OK
   drift:
     - DRIFT: tracked_archives
     - DRIFT: legacy_backup_suffix
     - DRIFT: hygiene_gate_failed
+    - DRIFT: misplaced_outputs
+    - DRIFT: coverage_file_pollution
+    - DRIFT: reports_contamination
+    - DRIFT: canonical_violation
 ```
 

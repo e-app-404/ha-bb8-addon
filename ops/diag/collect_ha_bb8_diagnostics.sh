@@ -24,7 +24,9 @@ fi
 
 ADDON_SLUG="local_beep_boop_bb8"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DIAG_DIR="ha_bb8_diagnostics_${TIMESTAMP}"
+# Create logs directory if it doesn't exist
+mkdir -p logs
+DIAG_DIR="logs/ha_bb8_diagnostics_${TIMESTAMP}"
 ADDON_VERSION=$(grep '^version:' addon/config.yaml | awk '{print $2}' 2>/dev/null || echo "unknown")
 
 echo "🔍 HA BB-8 Add-on Diagnostics Collection"

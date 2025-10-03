@@ -3,6 +3,20 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     pass
 import inspect
+import re
+
+_MAC_RE = re.compile(r"^(?:[0-9A-Fa-f]{2}(?:[:-]|$)){6}")
+
+
+def is_valid_mac(mac: str) -> bool:
+    """Return True if the provided string looks like a MAC address.
+
+    This is a permissive check used by tests — it accepts common separators
+    (colon or hyphen) and hex octets.
+    """
+    if not isinstance(mac, str):
+        return False
+    return bool(_MAC_RE.match(mac))
 
 
 async def resolve_services(client: Any) -> Any | None:

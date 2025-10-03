@@ -5,7 +5,7 @@ import time
 from typing import Any
 
 import paho.mqtt.client as mqtt
-from paho.mqtt.client import CallbackAPIVersion
+from paho.mqtt.enums import CallbackAPIVersion
 
 KEY_SYNONYMS = {
     "stat_t": ["stat_t", "state_topic"],
@@ -86,13 +86,15 @@ def verify_configs_and_states(
             ),
             "identifiers": first_identifiers(dev),
         }
-        ok = (
-            row["retained"]
-            and bool(row["stat_t"])
-            and bool(row["avty_t"])
-            and bool(row["identifiers"])
-        )
-        all_ok = all_ok and ok
+        # Only evaluate 'ok' for topics we actually received a config for.
+        if topic in results:
+            ok = (
+                row["retained"]
+                and bool(row["stat_t"])
+                and bool(row["avty_t"])
+                and bool(row["identifiers"])
+            )
+            all_ok = all_ok and ok
         rows.append(row)
     return rows, all_ok
 

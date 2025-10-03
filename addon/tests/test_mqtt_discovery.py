@@ -24,7 +24,7 @@ class StubMQTTPublishFn:
 
 
 def test_gate_on_publishes():
-    from ..bb8_core import mqtt_dispatcher as md
+    from addon.bb8_core import mqtt_dispatcher as md
 
     md.CONFIG["dispatcher_discovery_enabled"] = True
     md._DISCOVERY_PUBLISHED = set()
@@ -46,11 +46,11 @@ def test_gate_on_publishes():
         assert isinstance(payload, str)
         obj = json.loads(payload)
         assert "uniq_id" in obj
-        assert "dev" in obj and "ids" in obj["dev"]
+        assert "device" in obj and "identifiers" in obj["device"]
 
 
 def test_idempotency():
-    from ..bb8_core import mqtt_dispatcher as md
+    from addon.bb8_core import mqtt_dispatcher as md
 
     md.CONFIG["dispatcher_discovery_enabled"] = True
     md._DISCOVERY_PUBLISHED = set()
@@ -64,7 +64,7 @@ def test_idempotency():
 
 
 def test_force_republish():
-    from ..bb8_core import mqtt_dispatcher as md
+    from addon.bb8_core import mqtt_dispatcher as md
 
     md.CONFIG["dispatcher_discovery_enabled"] = True
     md._DISCOVERY_PUBLISHED = set()
@@ -79,7 +79,7 @@ def test_force_republish():
 
 
 def test_json_payload():
-    from ..bb8_core import mqtt_dispatcher as md
+    from addon.bb8_core import mqtt_dispatcher as md
 
     md.CONFIG["dispatcher_discovery_enabled"] = True
     md._DISCOVERY_PUBLISHED = set()
@@ -91,7 +91,7 @@ def test_json_payload():
 
 
 def test_gate_off():
-    from ..bb8_core import mqtt_dispatcher as md
+    from addon.bb8_core import mqtt_dispatcher as md
 
     md.CONFIG["dispatcher_discovery_enabled"] = False
     md._DISCOVERY_PUBLISHED = set()
