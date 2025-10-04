@@ -1,7 +1,7 @@
 # AI Coding Agent Instructions: HA-BB8 Add-on
 
 ## Project Overview
-Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT. This codebase follows a layered architecture with comprehensive ADR governance, extensive testing, and operational evidence collection.
+Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT. This codebase follows a layered architecture with comprehensive ADR governance, extensive testing, and operational evidence collection. Uses Alpine Linux v3.22 runtime with centralized configuration management and verified deployment pipeline.
 
 ## Architecture & Service Boundaries
 
@@ -86,6 +86,23 @@ make evidence-stp4  # End-to-end MQTT roundtrip attestation
 - `led` (light): RGB color control
 - `drive`, `heading`, `speed`, `stop`, `sleep` (various types)
 
+### MQTT Discovery Device Block Compliance (ADR-0037)
+**CRITICAL**: All discovery messages MUST include proper device blocks:
+```json
+{
+  "device": {
+    "identifiers": ["bb8_S33_BB84_LE"],
+    "connections": [["mac", "ED:ED:87:D7:27:50"]],
+    "name": "BB-8 (S33 BB84 LE)",  
+    "manufacturer": "Sphero",
+    "model": "BB-8"
+  }
+}
+```
+- **Never use empty device blocks**: `{"device": {}}` causes entity registration failure
+- **Always include identifiers AND connections**: Both required for proper device registry
+- **Derive from config**: Use `bb8_mac` and `bb8_name` from addon configuration
+
 ## Operational Patterns
 
 ### Environment Detection
@@ -98,11 +115,25 @@ make evidence-stp4  # End-to-end MQTT roundtrip attestation
 - Diagnostics via `ops/diag/collect_ha_bb8_diagnostics.sh`
 - Attestation via STP4 protocol for MQTT roundtrip validation
 
-### Release Workflow
+### Deployment Pipeline (ADR-0008)
 ```bash
-make release-patch    # Auto-increment, publish, deploy
-make release VERSION=1.4.2  # Explicit version
+# Verified end-to-end deployment (PREFERRED)
+make release-patch    # Version bump + GitHub publish + rsync deploy + HA API restart
+make release-minor    # Minor version increment with full pipeline
+make release VERSION=1.4.2  # Explicit version with full pipeline
+
+# Manual deployment (current state)  
+REMOTE_HOST_ALIAS=home-assistant ops/release/deploy_ha_over_ssh.sh
+
+# Deployment verification
+ssh home-assistant 'grep version: /addons/local/beep_boop_bb8/config.yaml'
 ```
+
+### Configuration Management (ADR-0041)
+- **Centralized config**: All settings in `.env` file (auto-sourced by deployment scripts)
+- **Required settings**: `HA_URL="http://192.168.0.129:8123"` for HTTP restart functionality
+- **Secrets management**: Use `addon/secrets.yaml` (synced to HA system, accessible to SSH user)
+- **No hardcoded values**: SSH hosts, paths, API endpoints all configurable via `.env`
 
 ## ADR Governance
 
@@ -112,20 +143,37 @@ make release VERSION=1.4.2  # Explicit version
 - `docs/ADR/architecture/historical/`: Raw evidence and research archive
 
 ### Key ADRs
+- **ADR-0008**: End-to-end deployment flow with verified pipeline (rsync, Alpine compatibility)
 - **ADR-0019**: Workspace folder taxonomy
 - **ADR-0031**: Supervisor-only operations & testing protocol  
 - **ADR-0032**: MQTT/BLE integration architecture
-- **ADR-0034**: HA OS infrastructure knowledge
+- **ADR-0034**: HA OS infrastructure knowledge (Alpine v3.22, Docker paths)
 - **ADR-0035**: OOM prevention and echo load management
+- **ADR-0036**: AI model selection governance (this document's source)
+- **ADR-0037**: MQTT discovery device block compliance (critical entity registration fix)
+- **ADR-0041**: Centralized environment configuration & accessible secrets management
 
 ## Common Pitfalls
 
+### Deployment & Infrastructure
+- **File synchronization**: Deployment requires actual file copying (rsync), not just addon restart
+- **Alpine packages**: Use `apk add python3 py3-pip python3-dev` NOT `py3-venv` (doesn't exist in Alpine 3.22)
 - **Docker paths**: Use `/usr/local/bin/docker` not `/usr/bin/docker` on HA OS
-- **Package manager**: Alpine uses `apk`, not `apt-get`
-- **BLE tools**: Install `bluez-deprecated`, standard `bluez-utils` insufficient
+- **Package manager**: Alpine uses `apk`, not `apt-get` - HA Supervisor overrides Dockerfile BUILD_FROM
+- **Environment config**: Use centralized `.env` file, ensure `HA_URL` is set for HTTP restart
+- **Version sync**: Always use `make release-patch` for consistent versioning across files
+
+### MQTT & Discovery
+- **Device blocks**: MQTT discovery MUST have proper `device` blocks with `identifiers` and `connections`
+- **Empty device blocks**: `{"device": {}}` causes entity registration failures in Home Assistant
 - **MQTT wildcards**: Avoid in production, sanitize all user inputs
+- **Topic derivation**: Never hardcode MQTT topics, always derive from config
+
+### Development & Testing  
+- **BLE tools**: Install `bluez-deprecated`, standard `bluez-utils` insufficient
 - **Logging**: Never use multiple file handlers, centralize in `logging_setup.py`
 - **Motion tests**: Skip unless `ALLOW_MOTION_TESTS=1` environment variable set
+- **Import structure**: Use `addon.bb8_core` never `bb8_core` at root level
 
 ## AI Model Selection & Guardrails
 
