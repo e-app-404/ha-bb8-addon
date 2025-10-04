@@ -9,9 +9,12 @@ related:
   - ADR-0001
   - ADR-0003
   - ADR-0004
+  - ADR-0034
   - docs/OPERATIONS_OVERVIEW.md
 supersedes: []
-last_updated: 2025-08-27
+last_updated: 2025-10-04
+evidence_sessions:
+  - 2025-10-04: "Verified deployment pipeline with file sync fixes, Alpine package compatibility, and HTTP API restart resolution"
 ---
 
 # ADR‑0008: End‑to‑End Development → Deploy Flow (Dual‑Clone & HA Supervisor)
@@ -61,7 +64,7 @@ Each lane emits **greppable tokens*- and/or **JSON contracts*- under `reports/`.
     image: "ghcr.io/your-org/ha-bb8-{arch}"
     # build: (optional/not used when pulling)
     ```
-  - `addon/Dockerfile` (Debian base, venv at `/opt/venv`, no `apk`).
+  - `addon/Dockerfile` (Alpine-compatible, venv at `/opt/venv`, use `apk add` not `apt-get`).
   - `addon/services.d/ble_bridge/run` → exec `/usr/bin/env bash /usr/src/app/run.sh`.
   - `addon/run.sh` → exec `"${VIRTUAL_ENV:-/opt/venv}/bin/python" -m bb8_core.main`.
 - HA CLI available on the HA host (`ha ...`).
@@ -242,59 +245,124 @@ TOKEN: SUBTREE_PUBLISH_OK
 - Runners in `ops/` can emit the tokens above automatically.
 
 
-## 12. Addendum: Centralized Configuration & Accessible Secrets (2025-10-04)
+## 12. Addendum: Verified Deployment Pipeline (2025-10-04)
 
-### **Issue Resolved**
-The SSH deployment user `babylon-babes` cannot access `/config/secrets.yaml` due to Home Assistant security restrictions, causing LLAT (Long-Lived Access Token) verification to fail.
+### **Critical Issues Resolved**
 
-### **Solution Implemented**
-1. **Centralized Configuration**: All deployment settings moved to `.env` file
-2. **Accessible Secrets**: Secrets stored in `addon/secrets.yaml` (synced to `/addons/local/beep_boop_bb8/secrets.yaml`)
-3. **Enhanced Script**: `ops/release/deploy_ha_over_ssh.sh` loads from `.env` automatically
+#### **Issue 1: File Synchronization Failure**
+**Problem**: Deployment script claimed success but was NOT copying files to remote system.
+- Remote system showed old version (2025.8.21.50) while local had (2025.10.4.55+)
+- Script only checked git status and restarted addon without file sync
 
-### **New .env Configuration**
+**Root Cause**: `ops/release/deploy_ha_over_ssh.sh` checked for git repository but didn't copy files in "non-git runtime" mode.
+
+**Solution**: Implemented robust `rsync` file synchronization with proper excludes:
+```bash
+# Create remote directory if needed
+run_ssh "mkdir -p $REMOTE_RUNTIME"
+
+# Robust file sync with cache exclusions
+rsync -avz --delete \
+  --exclude='.git*' --exclude='__pycache__' --exclude='*.pyc' \
+  --exclude='.ruff_cache' --exclude='.pytest_cache' --exclude='.coverage' \
+  --exclude='htmlcov' --exclude='.mypy_cache' \
+  "$PROJECT_ROOT/addon/" "$REMOTE_HOST_ALIAS:$REMOTE_RUNTIME/"
+```
+
+#### **Issue 2: Alpine Package Compatibility**
+**Problem**: Docker build failed with `py3-venv (no such package)` in Alpine Linux v3.22.
+
+**Root Cause**: Package `py3-venv` doesn't exist in Alpine 3.22; modern Python3 includes venv by default.
+
+**Solution**: Updated Dockerfile packages:
+```dockerfile
+# Before (BROKEN)
+RUN apk add --no-cache python3 py3-pip py3-venv python3-dev build-base ca-certificates bash jq
+
+# After (WORKING)  
+RUN apk add --no-cache python3 py3-pip python3-dev build-base ca-certificates bash jq
+```
+
+#### **Issue 3: HTTP Fallback API Failures**
+**Problem**: HTTP restart API calls failing with truncated URLs and wrong response validation.
+
+**Root Cause**: 
+- Empty `HA_URL` caused malformed candidate generation
+- Script expected `"result": "ok"` but HA API returns `[]` on success
+
+**Solution**: 
+1. **Fixed HA_URL**: Set `HA_URL="http://192.168.0.129:8123"` in `.env`
+2. **Simplified URL logic**: Use single primary URL instead of broken candidate iteration
+3. **Fixed response validation**: Accept HTTP 200 as success for service calls
+
+### **Verified Deployment Pipeline** 
+
+#### **Automated Release Flow (PREFERRED)**
+```bash
+# Complete end-to-end release with version bump
+make release-patch
+
+# What happens internally:
+# 1. ops/release/bump_version.sh patch      → version bump + git commit
+# 2. ops/release/publish_addon_archive.sh  → GitHub subtree publish  
+# 3. ops/release/deploy_ha_over_ssh.sh     → file sync + HA API restart
+```
+
+#### **Manual Deployment Flow**
+```bash
+# Deploy current state without version bump
+REMOTE_HOST_ALIAS=home-assistant ops/release/deploy_ha_over_ssh.sh
+
+# Diagnostic mode
+REMOTE_HOST_ALIAS=home-assistant ops/release/deploy_ha_over_ssh.sh diagnose
+```
+
+#### **Configuration Requirements (.env)**
 ```bash
 # HA DEPLOYMENT CONFIG
 export HA_SSH_HOST_ALIAS=home-assistant
-export HA_SSH_USER=babylon-babes
-export HA_REMOTE_RUNTIME=/addons/local/beep_boop_bb8
+export HA_REMOTE_RUNTIME=/addons/local/beep_boop_bb8  
 export HA_REMOTE_SLUG=local_beep_boop_bb8
 export HA_SECRETS_PATH=/addons/local/beep_boop_bb8/secrets.yaml
+export HA_URL="http://192.168.0.129:8123"  # CRITICAL: Must be set
 export HA_LLAT_KEY=HA_LLAT_KEY
 ```
 
-### **New Secrets File Format**
+#### **Secrets File Format**
 ```yaml
-# addon/secrets.yaml
-HA_LLAT_KEY: eyJhbGciOiJIUzI1NiIs...  # JWT token (unquoted)
+# addon/secrets.yaml (synced to /addons/local/beep_boop_bb8/secrets.yaml)
+HA_LLAT_KEY: eyJhbGciOiJIUzI1NiIs...  # Long-lived access token (unquoted)
 ```
 
-### **Updated Deployment Flow**
-```bash
-# 1. Release with version bump
-make release-patch
-
-# 2. Sync code including secrets
-rsync -av --delete addon/ home-assistant:/addons/local/beep_boop_bb8/
-
-# 3. Verify LLAT detection
-./ops/release/deploy_ha_over_ssh.sh test-llat
-# Expected: SSH_HA_OK + LLAT_PRESENT + DEPLOY_SSH_OK
-
-# 4. Manual restart (API restart may fail due to URL parsing)
-# HA UI → Settings → Add-ons → BB-8 → RESTART
+### **Verified Success Indicators**
+```
+✅ SSH_HA_OK                        # SSH connection established
+✅ Files synchronized successfully   # rsync completed without errors
+✅ DEPLOY_OK — runtime sync via direct file copy
+✅ Using HA Core API for restart at http://192.168.0.129:8123...
+✅ HA API restart -> 200           # HTTP success
+✅ VERIFY_OK — add-on restarted via HA API (HTTP 200)
+✅ DEPLOY_SSH_OK                   # Complete deployment success
 ```
 
-### **Security Improvements**
-- **No hardcoded PII**: SSH user info moved to .env
-- **Accessible secrets**: Stored in addon directory with proper permissions
-- **Configurable paths**: All deployment paths centralized and configurable
+### **Docker Build Guardrails**
+- **Alpine Compatibility**: Use only packages available in Alpine 3.22
+- **No py3-venv**: Python3 includes venv by default in modern Alpine
+- **Base Image**: HA Supervisor uses `ghcr.io/home-assistant/aarch64-base` (Alpine) regardless of Dockerfile BUILD_FROM
+- **Package Manager**: Always use `apk add` not `apt-get` for HA Supervisor builds
+
+### **Deployment Troubleshooting**
+1. **Version Not Updating**: Check file sync with `ssh home-assistant 'grep version: /addons/local/beep_boop_bb8/config.yaml'`
+2. **HTTP Restart Fails**: Ensure `HA_URL` is set correctly in `.env`
+3. **Docker Build Fails**: Check Alpine package names and remove non-existent packages
+4. **Permission Errors**: Use proper rsync excludes to skip cache directories
 
 ## 13. Appendix — Minimal File Invariants
 
-- `addon/Dockerfile` (Debian, `apt-get`, venv at `/opt/venv`)
+- `addon/Dockerfile` (Alpine-compatible, `apk add` commands, venv at `/opt/venv`)
 - `addon/services.d/ble_bridge/run` → `/usr/bin/env bash /usr/src/app/run.sh`
 - `addon/run.sh` → exec venv python `-m bb8_core.main`
-- `addon/config.yaml` → `image:` local + `build:` present
-- `addon/secrets.yaml` → LLAT token for API access (NEW)
+- `addon/config.yaml` → `image:` local + `build:` present, version synced
+- `addon/secrets.yaml` → LLAT token for API access
+- `.env` → HA_URL and deployment configuration
 

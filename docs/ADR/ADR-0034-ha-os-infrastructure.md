@@ -7,13 +7,15 @@ author:
   - Operational Evidence Analysis
   - Infrastructure Reconnaissance (P0 Implementation)
   - Copilot Claude
-related: ["ADR-0031", "ADR-0032", "ADR-0010", "ADR-0035"]
+related: ["ADR-0031", "ADR-0032", "ADR-0010", "ADR-0035", "ADR-0008"]
 supersedes: []
-last_updated: 2025-09-28
+last_updated: 2025-10-04
 tags: ["infrastructure", "alpine-linux", "docker", "bluetooth", "ble", "supervisor", "authentication", "diagnostics", "ha-os"]
 references:
   - P0 critical fixes implementation and diagnostics collection
   - development/workspace-intake-20250928 session evidence
+evidence_sessions:
+  - 2025-10-04: "Alpine package compatibility verification - py3-venv removal, Docker build fixes, deployment pipeline resolution"
 ---
 
 # ADR-0034: Home Assistant OS Development Environment Infrastructure  
@@ -57,6 +59,27 @@ PRETTY_NAME="Alpine Linux v3.22"
 - ✅ Package Manager: `apk` (Alpine Package Keeper)
 - ❌ NOT available: `apt-get`, `yum`, `dnf`, `systemctl`, `usermod`
 - ✅ Service Management: s6 overlay system (not systemd)
+
+**Alpine Package Compatibility (Critical for Dockerfile):**
+```bash
+# Available Alpine 3.22 packages for Python development
+python3           # Core Python 3 interpreter
+py3-pip          # Python package installer
+python3-dev      # Python development headers
+build-base       # GCC, make, libc-dev (equivalent to build-essential)
+ca-certificates  # SSL certificate bundle
+bash             # Bash shell (not always default in minimal Alpine)
+jq               # JSON processor
+
+# REMOVED packages (do not exist in Alpine 3.22):
+py3-venv         # ❌ NOT AVAILABLE - Python3 includes venv by default
+python3-venv     # ❌ NOT AVAILABLE - use python3 -m venv instead
+```
+
+**Docker Build Implications:**
+- **HA Supervisor Override**: Always uses Alpine base regardless of Dockerfile BUILD_FROM
+- **Package Manager**: Must use `apk add` not `apt-get` in Dockerfiles
+- **Python Venv**: Use `python3 -m venv` (py3-venv package doesn't exist)
 
 **Docker Infrastructure:**
 ```bash
