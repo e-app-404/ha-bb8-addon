@@ -304,9 +304,10 @@ WS_READY addon_ws=git_clone_ok runtime=git_clone_ok reports=ok wrappers=ok ops=o
 - WS-RESTORE-ADDON-DUAL-CLONE: Complete implementation and validation
 - STP4-STRICT pre-execution briefing: Rollback strategies and environment toggles
 - Multiple deployment confirmations: Token sequences and SHA verification
+- 2025-10-04: Active workspace content merge strategy implementation (see ADR-0017)
 
 ---
 
-**Extraction Date:** 28 September 2025
+**Extraction Date:** 28 September 2025, Updated: 4 October 2025
 **Session ID/Reference:** Synthesis of dual-clone deployment validation sessions
 **Evidence Quality:** Complete for deployment topology; Partial for CI integration and concurrent operations
