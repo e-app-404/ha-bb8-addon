@@ -1,0 +1,11 @@
+Log details (ERROR)
+Logger: homeassistant.components.mqtt.entity
+Source: components/mqtt/entity.py:159
+integration: MQTT (documentation, issues)
+First occurred: 3 October 2025 at 05:27:53 (4 occurrences)
+Last logged: 3 October 2025 at 05:27:54
+
+Error 'Device must have at least one identifying value in 'identifiers' and/or 'connections' for dictionary value @ data['device']' when processing MQTT discovery message topic: 'homeassistant/button/bb8_sleep/config', message: '{'unique_id': 'bb8_sleep', 'command_topic': 'bb8/sleep/press', 'state_topic': 'bb8/sleep/state', 'availability_topic': 'bb8/status', 'entity_category': 'config', 'device': {}, 'name': 'BB-8 Sleep'}'
+Error 'Device must have at least one identifying value in 'identifiers' and/or 'connections' for dictionary value @ data['device']' when processing MQTT discovery message topic: 'homeassistant/button/bb8_drive/config', message: '{'unique_id': 'bb8_drive', 'command_topic': 'bb8/drive/press', 'state_topic': 'bb8/drive/state', 'availability_topic': 'bb8/status', 'device': {}, 'name': 'BB-8 Drive'}'
+Error 'Device must have at least one identifying value in 'identifiers' and/or 'connections' for dictionary value @ data['device']' when processing MQTT discovery message topic: 'homeassistant/number/bb8_heading/config', message: '{'unique_id': 'bb8_heading', 'command_topic': 'bb8/heading/set', 'state_topic': 'bb8/heading/state', 'availability_topic': 'bb8/status', 'device': {}, 'name': 'BB-8 Heading', 'max': 359, 'mode': 'slider', 'min': 0, 'step': 1}'
+Error 'Device must have at least one identifying value in 'identifiers' and/or 'connections' for dictionary value @ data['device']' when processing MQTT discovery message topic: 'homeassistant/number/bb8_speed/config', message: '{'unique_id': 'bb8_speed', 'command_topic': 'bb8/speed/set', 'state_topic': 'bb8/speed/state', 'availability_topic': 'bb8/status', 'device': {}, 'name': 'BB-8 Speed', 'max': 255, 'mode': 'slider', 'min': 0, 'step': 1}'

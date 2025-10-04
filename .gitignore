@@ -22,6 +22,9 @@ reports/**
 !reports/checkpoints/
 !reports/checkpoints/**
 !reports/*.md
+# Keep ops/scratch logs tracked for operational documentation
+!ops/scratch/
+!ops/scratch/**
 .trash/**
 .quarantine/**
 .venv*/
