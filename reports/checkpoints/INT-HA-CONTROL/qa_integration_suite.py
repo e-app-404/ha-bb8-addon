@@ -92,9 +92,9 @@ def main():
             "Import validation",
             True,
         ),
-        ("python -m pytest -xvs", "Unit test execution", True),
+        ("PYTHONPATH=/Users/evertappels/actions-runner/Projects/HA-BB8 python -m pytest -xvs", "Unit test execution", True),
         (
-            "python -m pytest --cov=bb8_core --cov-report=json --cov-fail-under=80",
+            "PYTHONPATH=/Users/evertappels/actions-runner/Projects/HA-BB8 python -m pytest --cov=bb8_core --cov-report=json --cov-fail-under=80",
             "Coverage analysis (80% threshold)",
             True,
         ),

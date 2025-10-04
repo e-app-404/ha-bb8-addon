@@ -194,16 +194,18 @@ class TestConfigLoading:
     def test_load_config_cached(self):
         """Test load_config with cached configuration."""
         global CONFIG, CONFIG_SOURCE
-        CONFIG.update({"cached_key": "cached_value"})
-        CONFIG_SOURCE = Path("/cached/config.yaml")
-
-        # Should not call init_config again
+        # First load to populate cache
         with patch("addon.bb8_core.addon_config.init_config") as mock_init:
+            mock_init.return_value = ({"cached_key": "cached_value"}, Path("/cached/config.yaml"))
             config, source = load_config()
+        
+        # Second load should use cache
+        with patch("addon.bb8_core.addon_config.init_config") as mock_init:
+            config_cached, source_cached = load_config()
 
         mock_init.assert_not_called()
-        assert config == {"cached_key": "cached_value"}
-        assert source == Path("/cached/config.yaml")
+        assert config_cached == {"cached_key": "cached_value"}
+        assert source_cached == Path("/cached/config.yaml")
 
     def test_load_config_force_reload(self):
         """Test load_config with forced reload."""

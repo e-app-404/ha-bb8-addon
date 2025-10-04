@@ -11,21 +11,32 @@ _backups/**
 !_backups/inventory/**
 !_backups/.snapshot_state.json
 tarballs/**
+.trash/**
 # Workspace organization: logs/ (untracked) vs reports/ (tracked important docs)
 logs/
 logs/**
 !logs/ha_bb8_addon.log  # Keep main runtime log tracked
 !logs/ha_bb8_addon.log.*  # Keep rotated logs tracked
-# Keep reports/ tracked for important documentation
+
+# .trash/ directory for temporary files (gitignored, emptied at session end)
+.trash/
+.trash/**
+
+# Keep reports/ tracked for important documentation and analysis
 reports/**
 !reports/
 !reports/checkpoints/
 !reports/checkpoints/**
+!reports/analysis/
+!reports/analysis/**
+!reports/sessions/
+!reports/sessions/**
 !reports/*.md
+
 # Keep ops/scratch logs tracked for operational documentation
 !ops/scratch/
 !ops/scratch/**
-.trash/**
+
 .quarantine/**
 .venv*/
 .pytest_cache/

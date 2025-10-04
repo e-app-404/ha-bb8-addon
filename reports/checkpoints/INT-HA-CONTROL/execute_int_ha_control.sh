@@ -34,7 +34,7 @@ echo
 
 # Run coverage against the real package (mandatory for PASS)
 echo "=== Running pytest with coverage (mandatory) ==="
-PYTHONPATH="$PWD" python -m pytest --maxfail=1 -q \
+PYTHONPATH="$PWD" python3 -m pytest --maxfail=1 -q \
     --cov=addon/bb8_core --cov-report=json:"$ART/coverage.json" \
     addon/tests/ || {
     echo "✗ pytest failed - creating minimal coverage"
@@ -45,7 +45,7 @@ import importlib
 def test_imports():
     assert importlib.import_module("addon.bb8_core")
 EOF
-    PYTHONPATH="$PWD" python -m pytest --maxfail=1 -q \
+    PYTHONPATH="$PWD" python3 -m pytest --maxfail=1 -q \
         --cov=addon/bb8_core --cov-report=json:"$ART/coverage.json" \
         tests/test_sanity.py
 }
@@ -56,13 +56,13 @@ echo
 echo "=== MQTT-dependent tests (optional) ==="
 if [ "${MQTT_HOST:-}" != "" ]; then
     echo "Running health echo test..."
-    python "$ART/mqtt_health_echo_test.py" || echo "⚠️ Health echo test failed (broker unavailable)"
+    python3 "$ART/mqtt_health_echo_test.py" || echo "⚠️ Health echo test failed (broker unavailable)"
     
     echo "Running discovery ownership audit..."
-    python "$ART/discovery_ownership_audit.py" || echo "⚠️ Discovery audit failed (broker unavailable)"
+    python3 "$ART/discovery_ownership_audit.py" || echo "⚠️ Discovery audit failed (broker unavailable)"
     
     echo "Running LED entity alignment test..."
-    python "$ART/led_entity_alignment_test.py" || echo "⚠️ LED test failed (broker unavailable)"
+    python3 "$ART/led_entity_alignment_test.py" || echo "⚠️ LED test failed (broker unavailable)"
 else
     echo "⚠️ MQTT_HOST not set - skipping MQTT-dependent tests"
     echo "   To run: MQTT_HOST=192.168.0.129 $0"
@@ -71,7 +71,7 @@ echo
 
 # Block "COMPLETE" unless mandatory artifacts exist & PASS
 echo "=== Final QA Integration & Gate ==="
-python "$ART/qa_integration_suite.py"
+python3 "$ART/qa_integration_suite.py"
 exit_code=$?
 
 if [ $exit_code -eq 0 ]; then
