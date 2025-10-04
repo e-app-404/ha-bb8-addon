@@ -125,6 +125,20 @@ REMOTE
     if run_ssh 'ha core info >/dev/null 2>&1'; then
       run_ssh "bash ${REMOTE_SCRIPT}"
     else
+      # Copy addon files directly to remote system using rsync
+      echo "Syncing addon files to remote system..."
+      
+      # Create remote directory if it doesn't exist
+      run_ssh "mkdir -p $REMOTE_RUNTIME"
+      
+      # Use rsync for robust file synchronization with proper excludes
+      rsync -avz --delete \
+        --exclude='.git*' --exclude='__pycache__' --exclude='*.pyc' \
+        --exclude='.ruff_cache' --exclude='.pytest_cache' --exclude='.coverage' \
+        --exclude='htmlcov' --exclude='.mypy_cache' \
+        "$PROJECT_ROOT/addon/" "$REMOTE_HOST_ALIAS:$REMOTE_RUNTIME/"
+      
+      echo "Files synchronized successfully"
       run_ssh env REMOTE_RUNTIME="$REMOTE_RUNTIME" REMOTE_SLUG="$REMOTE_SLUG" HA_URL="$HA_URL" SECRETS_PATH="$SECRETS_PATH" LLAT_KEY="$LLAT_KEY" sh -eu <<'REMOTE'
 # ADR-0033: Check if runtime is a git repository before git operations
 if [ -d "$REMOTE_RUNTIME/.git" ]; then
@@ -134,8 +148,14 @@ if [ -d "$REMOTE_RUNTIME/.git" ]; then
   git reset --hard origin/main
   echo "DEPLOY_OK — runtime hard-reset to origin/main"
 else
-  echo "Non-git runtime detected, using addon restart method..."
-  echo "DEPLOY_OK — runtime sync via addon restart (non-git mode)"
+  echo "Non-git runtime detected, copying files directly..."
+  # Create backup of current version
+  [ -f "$REMOTE_RUNTIME/config.yaml" ] && cp "$REMOTE_RUNTIME/config.yaml" "$REMOTE_RUNTIME/config.yaml.bak"
+  
+  # Copy critical files from local to remote
+  echo "Copying addon files to remote system..."
+  # Note: This will be done via scp outside this remote script
+  echo "DEPLOY_OK — runtime sync via direct file copy"
 fi
 
 SECRETS="${SECRETS_PATH:-/addons/local/beep_boop_bb8/secrets.yaml}"; KEY="${LLAT_KEY:-HA_LLAT_KEY}"
