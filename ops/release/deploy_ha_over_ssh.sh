@@ -67,17 +67,18 @@ else
   TOKEN_OK=0
 fi
 
-# URL candidates (Core via Core proxy)
-CANDS=""
-[ -n "${HA_URL:-}" ] && CANDS="$HA_URL"
-# Standard HA API candidates
-CANDS="${CANDS}
+# Use primary HA_URL if set, otherwise use standard candidate
+if [ -n "${HA_URL:-}" ]; then
+  MAIN_URL="$HA_URL"
+else
+  MAIN_URL="http://192.168.0.129:8123"
+fi
+# Additional candidates for diagnostics
+CANDS="$MAIN_URL
 http://homeassistant:8123
 https://homeassistant:8123
 http://homeassistant.local:8123
-https://homeassistant.local:8123
-http://172.30.32.1:8123
-https://172.30.32.1:8123"
+https://homeassistant.local:8123"
 
 # Test reachability & services exposure with LLAT (codes only)
 if [ "$TOKEN_OK" -eq 1 ]; then
@@ -140,50 +141,53 @@ fi
 SECRETS="${SECRETS_PATH:-/addons/local/beep_boop_bb8/secrets.yaml}"; KEY="${LLAT_KEY:-HA_LLAT_KEY}"
 # LLAT extract (silent) - handles quoted and unquoted keys
 TOKEN="$(awk -v k="$KEY" 'BEGIN{FS=":"} /^[[:space:]]*#/ {next} $0 ~ "^[[:space:]]*[\"'\'']*"k"[\"'\'']*[[:space:]]*:" {line=$0; sub(/^[^:]*:[ \t]*/,"",line); sub(/[ \t]*#.*$/,"",line); gsub(/^[ \t]+|[ \t]+$/,"",line); gsub(/^'\''|^"/,"",line); gsub(/'\''$|"$/,"",line); print line; exit}' "$SECRETS" 2>/dev/null || true)"
-# URL candidates for Core
-CANDS=""
-[ -n "${HA_URL:-}" ] && CANDS="$HA_URL"
-# Standard HA API candidates
-CANDS="${CANDS}
-http://homeassistant:8123
-https://homeassistant:8123
-http://homeassistant.local:8123
-https://homeassistant.local:8123
-http://172.30.32.1:8123
-https://172.30.32.1:8123"
-
-# Attempt restart via Core (services API, then hassio API), printing codes only (no secrets)
-ok=0
-IFS='\n'
-if [ -n "$TOKEN" ]; then
-  for base in $CANDS; do
-    base="$(echo "$base" | tr -d '[:space:]')"; [ -n "$base" ] || continue
-    code=$(curl -k -sS -o /tmp/resp.json -w "%{http_code}" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST "$base/api/services/hassio/addon_restart" -d "{\"addon\":\"$REMOTE_SLUG\"}" 2>/dev/null || true)
-    echo "TRY services $base -> $code"
-    if [ "$code" = "200" ] && grep -q '"result"[[:space:]]*:[[:space:]]*"ok"' /tmp/resp.json; then
-      echo "VERIFY_OK — add-on restarted via Services API ($base)"
-      ok=1; break
-    fi
-    code=$(curl -k -sS -o /tmp/resp.json -w "%{http_code}" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -X POST "$base/api/hassio/addons/$REMOTE_SLUG/restart" 2>/dev/null || true)
-    echo "TRY supervisor-proxy $base -> $code"
-    if [ "$code" = "200" ] && grep -q '"result"[[:space:]]*:[[:space:]]*"ok"' /tmp/resp.json; then
-      echo "VERIFY_OK — add-on restarted via Supervisor API ($base)"
-      ok=1; break
-    fi
-  done
+# Use primary HA_URL if set, otherwise try standard candidates
+if [ -n "${HA_URL:-}" ]; then
+  PRIMARY_URL="$HA_URL"
+else
+  # Standard HA API candidates - use first reachable one
+  PRIMARY_URL="http://192.168.0.129:8123"
 fi
 
-# Supervisor token direct path (if available)
-if [ "$ok" -ne 1 ] && [ -n "${SUPERVISOR_TOKEN:-}" ]; then
-  code=$(curl -sS -o /tmp/resp.json -w "%{http_code}" -H "Authorization: Bearer $SUPERVISOR_TOKEN" -H "Content-Type: application/json" -X POST "http://supervisor/addons/$REMOTE_SLUG/restart" 2>/dev/null || true)
-  echo "TRY supervisor-socket http://supervisor -> $code"
-  if [ "$code" = "200" ] && grep -q '"result"[[:space:]]*:[[:space:]]*"ok"' /tmp/resp.json; then
-    echo "VERIFY_OK — add-on restarted via Supervisor socket"
-    ok=1
+# Use Supervisor API directly (preferred in SSH context)
+ok=0
+if [ -n "${SUPERVISOR_TOKEN:-}" ]; then
+  echo "Using Supervisor API for restart..."
+  if curl -fsS -H "Authorization: Bearer $SUPERVISOR_TOKEN" \
+       http://supervisor/ping >/dev/null 2>&1; then
+    code=$(curl -sS -o /tmp/resp.json -w "%{http_code}" \
+           -H "Authorization: Bearer $SUPERVISOR_TOKEN" \
+           -H "Content-Type: application/json" \
+           -X POST "http://supervisor/addons/$REMOTE_SLUG/restart" 2>/dev/null || true)
+    echo "Supervisor restart -> $code"
+    if [ "$code" = "200" ] && grep -q '"result"[[:space:]]*:[[:space:]]*"ok"' /tmp/resp.json; then
+      echo "VERIFY_OK — add-on restarted via Supervisor API"
+      ok=1
+    fi
+  else
+    echo "Supervisor ping failed, falling back to HA API..."
   fi
 fi
 
-[ "$ok" -eq 1 ] || { echo "ERROR: HTTP fallback restart failed across all paths"; exit 1; }
+# Fallback to HA API if Supervisor not available
+if [ "$ok" -ne 1 ] && [ -n "$TOKEN" ]; then
+  echo "Using HA Core API for restart at $PRIMARY_URL..."
+  code=$(curl -k -sS -o /tmp/resp.json -w "%{http_code}" \
+         -H "Authorization: Bearer $TOKEN" \
+         -H "Content-Type: application/json" \
+         -X POST "$PRIMARY_URL/api/services/hassio/addon_restart" \
+         -d "{\"addon\":\"$REMOTE_SLUG\"}" 2>/dev/null || true)
+  echo "HA API restart -> $code"
+  if [ "$code" = "200" ]; then
+    # HA API returns empty array [] on successful service call, not "result": "ok"
+    echo "VERIFY_OK — add-on restarted via HA API (HTTP 200)"
+    ok=1
+  else
+    echo "HA API response: $(cat /tmp/resp.json 2>/dev/null || echo 'no response file')"
+  fi
+fi
+
+[ "$ok" -eq 1 ] || { echo "ERROR: Add-on restart failed (no valid API path)"; exit 1; }
 REMOTE
     fi
     echo "DEPLOY_SSH_OK"

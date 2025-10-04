@@ -160,7 +160,7 @@ deploy-ssh:
 	REMOTE_HOST_ALIAS=home-assistant ops/release/deploy_ha_over_ssh.sh
 
 publish:
-	REMOTE_HOST_ALIAS=home-assistant ops/release/publish_and_deploy.sh
-
+	REMOTE_HOST_ALIAS=home-assistant ops/release/publish_and_deploy.sh 
+# TODO: check correct script name vs publish_addon_archive.sh
 quiet:
 	sh ops/check_workspace_quiet.sh .

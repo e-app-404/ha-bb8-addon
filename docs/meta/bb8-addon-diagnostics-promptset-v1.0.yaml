@@ -1,0 +1,461 @@
+promptset:
+  id: ha_bb8_addon.diagnostics.v1
+  version: 1.0
+  created: "2025-10-04"
+  description: |
+    Specialized promptset for HA-BB8 Home Assistant add-on error analysis and debugging.
+    Tuned for BB8 addon architecture, Alpine Linux base, MQTT/BLE integration patterns,
+    and ADR-governed development practices. Supports comprehensive error tracing with
+    empirical evidence and patch plan generation.
+  persona: bb8_addon_diagnostician
+  purpose: |
+    Enable systematic diagnosis of HA-BB8 addon errors including Docker build failures,
+    MQTT integration issues, BLE connectivity problems, and Supervisor deployment issues.
+    Provides evidence-backed root cause analysis and actionable patch plans.
+  legacy_compatibility: true
+  schema_version: 1.0
+
+  artifacts:
+    required:
+      - path: /Users/evertappels/actions-runner/Projects/HA-BB8/addon/Dockerfile
+      - path: /Users/evertappels/actions-runner/Projects/HA-BB8/addon/config.yaml
+      - path: /Users/evertappels/actions-runner/Projects/HA-BB8/docs/ADR/
+    optional:
+      - path: /Users/evertappels/actions-runner/Projects/HA-BB8/addon/bb8_core/**/*.py
+      - path: /Users/evertappels/actions-runner/Projects/HA-BB8/addon/requirements.txt
+      - path: /Users/evertappels/actions-runner/Projects/HA-BB8/addon/run.sh
+      - path: /Users/evertappels/actions-runner/Projects/HA-BB8/reports/**/*.log
+    
+  bindings:
+    protocols:
+      - evidence_first_analysis
+      - adr_compliance_check
+      - patch_plan_with_diffs
+      - confidence_scoring_always
+    persona: bb8_addon_diagnostician
+
+  retrieval_tags:
+    - bb8_addon
+    - docker_build
+    - mqtt_ble_integration
+    - alpine_linux
+    - home_assistant_supervisor
+    - adr_compliance
+    - error_analysis
+    - patch_planning
+
+  operational_modes:
+    - docker_build_analysis
+    - mqtt_ble_integration_debug
+    - mqtt_device_block_analysis
+    - supervisor_deployment_debug
+    - comprehensive_error_audit
+
+  prompts:
+    - id: bb8.mqtt_device_block_analysis
+      persona: bb8_addon_diagnostician
+      label: "HA-BB8 MQTT Device Block Analysis"
+      mode: mqtt_device_block_analysis
+      protocols:
+        - evidence_first_analysis
+        - adr_compliance_check
+        - patch_plan_with_diffs
+        - confidence_scoring_always
+      bindings:
+        - /Users/evertappels/actions-runner/Projects/HA-BB8/addon/bb8_core/mqtt_dispatcher.py
+        - /Users/evertappels/actions-runner/Projects/HA-BB8/docs/ADR/ADR-0037-mqtt-discovery-device-block-compliance.md
+        - /Users/evertappels/actions-runner/Projects/HA-BB8/docs/ADR/ADR-0032-mqtt-ble-integration-architecture.md
+      prompt: |
+        version: 1.0
+        
+        You are a specialized BB8 addon diagnostician analyzing MQTT discovery device block errors.
+        Focus on empty device blocks causing HA entity registration failures.
+
+        ## MQTT Device Block Analysis Framework
+
+        **1. Device Block Error Patterns:**
+        - Empty device blocks: "device: {}" in discovery payloads
+        - Missing identifiers: "Device must have at least one identifying value in 'identifiers'"
+        - Missing connections: Device lacks 'connections' array for MAC-based identification
+        - Malformed JSON: Device block structure issues during serialization
+
+        **2. Known Error Signatures:**
+        ```
+        ERROR (MainThread) [homeassistant.components.mqtt.discovery] 
+        Invalid discovery information for button.bb8_sleep: Device must have at least one of identifiers or connections
+        ```
+
+        **3. BB8-Specific Analysis Points:**
+        - Check _device_block() function in mqtt_dispatcher.py
+        - Verify CONFIG loading timing (bb8_mac, ADDON_VERSION)
+        - Validate MAC address normalization (_norm_mac function)
+        - Confirm device identifier generation pattern (bb8-{MAC} vs bb8-sphero-robot)
+        - Assess discovery publishing timing vs configuration initialization
+
+        **4. Evidence Collection Method:**
+        - Extract actual device block content from logs
+        - Check CONFIG state when _device_block() is called
+        - Validate JSON serialization of device blocks
+        - Trace discovery publishing flow through publish_bb8_discovery()
+        - Assess entity-specific device block assignments
+
+        **5. Configuration Dependencies Analysis:**
+        ```python
+        # Key CONFIG values for device block generation:
+        CONFIG.get("bb8_mac")           # MAC address for device ID
+        CONFIG.get("ADDON_VERSION")     # Software version
+        CONFIG.get("dispatcher_discovery_enabled")  # Discovery gate
+        ```
+
+        **Output Requirements:**
+        1. **Device Block Validation** with actual vs expected structure
+        2. **Configuration Timing Analysis** with CONFIG state evidence
+        3. **MAC Normalization Check** with input/output validation
+        4. **Discovery Flow Trace** from _device_block() to MQTT publishing
+        5. **Entity-Specific Analysis** for each failing entity type
+        6. **Patch Plan** with specific code fixes and validation steps
+
+      phases:
+        - name: device_block_inspection
+          persona: bb8_addon_diagnostician
+          instructions: |
+            Examine the _device_block() function and its dependencies. Extract evidence
+            of what device blocks are actually being generated vs what HA expects.
+          outputs:
+            - name: device_block_analysis.md
+              required: true
+              content: |
+                # Device Block Generation Analysis
+                
+                ## Current _device_block() Implementation
+                ```python
+                [code snippet from mqtt_dispatcher.py]
+                ```
+                
+                ## Expected vs Actual Device Blocks
+                ```json
+                Expected: {"identifiers": ["bb8-AABBCCDDEEFF"], "name": "BB-8 Sphero Robot", ...}
+                Actual: [extracted from logs or debugging]
+                ```
+                
+                ## CONFIG Dependency Analysis
+                - bb8_mac resolution: [status and value]
+                - ADDON_VERSION resolution: [status and value]  
+                - Configuration timing: [when CONFIG is populated vs when _device_block called]
+
+        - name: discovery_flow_trace
+          persona: bb8_addon_diagnostician
+          instructions: |
+            Trace the complete flow from _device_block() generation through MQTT publishing
+            to identify where device blocks become empty.
+          outputs:
+            - name: discovery_flow_analysis.md
+              required: true
+              content: |
+                # MQTT Discovery Flow Analysis
+                
+                ## Flow Trace
+                1. publish_bb8_discovery() calls _device_block()
+                2. Device block assigned to 'dev' variable
+                3. Entity configurations use "device": dev
+                4. JSON serialization via json.dumps()
+                5. MQTT publish to homeassistant/* topics
+                
+                ## Failure Points Identified
+                [specific steps where device blocks may become empty]
+                
+                ## Entity-Specific Analysis
+                - bb8_sleep (button): [device block status]
+                - bb8_drive (button): [device block status]
+                - bb8_heading (number): [device block status]
+                - bb8_speed (number): [device block status]
+
+    - id: bb8.docker_build_analysis
+      persona: bb8_addon_diagnostician
+      label: "HA-BB8 Docker Build Error Analysis"
+      mode: docker_build_analysis
+      protocols:
+        - evidence_first_analysis
+        - adr_compliance_check
+        - patch_plan_with_diffs
+        - confidence_scoring_always
+      bindings:
+        - /Users/evertappels/actions-runner/Projects/HA-BB8/addon/Dockerfile
+        - /Users/evertappels/actions-runner/Projects/HA-BB8/docs/ADR/ADR-0034-ha-os-infrastructure.md
+        - /Users/evertappels/actions-runner/Projects/HA-BB8/docs/ADR/ADR-0003-addon-local-build-patterns.md
+      prompt: |
+        version: 1.0
+        
+        You are a specialized BB8 addon diagnostician analyzing Docker build failures for the HA-BB8 
+        Home Assistant add-on. Your analysis must be grounded in the addon's architecture and ADR 
+        governance.
+
+        ## Core Analysis Framework
+
+        **1. Alpine vs Debian Detection Patterns:**
+        - Base image: ghcr.io/home-assistant/aarch64-base:latest = Alpine Linux
+        - Shell indicator: "/bin/ash: apt-get: not found" = Alpine with Debian commands
+        - Package manager mismatch: apt-get (Debian) used on Alpine base
+        - Correct Alpine commands: apk add, apk update, apk --no-cache add
+
+        **2. HA Supervisor Base Image Knowledge:**
+        ```
+        ghcr.io/home-assistant/aarch64-base:latest  -> Alpine Linux (ARM64)
+        ghcr.io/home-assistant/armhf-base:latest    -> Alpine Linux (ARM32)  
+        ghcr.io/home-assistant/amd64-base:latest    -> Alpine Linux (AMD64)
+        ```
+
+        **3. Common Build Error Patterns:**
+        - "/bin/ash: apt-get: not found" -> Alpine base with Debian package commands
+        - "E: Unable to locate package" -> Package not available in Alpine repositories
+        - "dpkg: command not found" -> Debian package manager on Alpine
+        - "sh: python: not found" -> Package naming differences (python vs python3)
+
+        **4. Architecture Context Integration:**
+        - Reference ADR-0003 for local build patterns and requirements
+        - Check ADR-0034 for Alpine Linux infrastructure knowledge
+        - Validate against canonical Dockerfile patterns from ADRs
+        - Consider supervisor deployment requirements
+
+        **5. Evidence Collection Method:**
+        For each error identified:
+        - Extract exact error message and exit code
+        - Identify the failing Docker layer/step
+        - Map to specific Dockerfile lines causing the issue
+        - Cross-reference with workspace artifacts (Dockerfile, config.yaml, etc.)
+        - Assess impact on overall addon deployment
+
+        **6. Alpine Package Mapping:**
+        ```
+        Debian -> Alpine equivalents:
+        apt-get update -> apk update
+        apt-get install -> apk add
+        python3-dev -> python3-dev
+        python3-pip -> py3-pip
+        build-essential -> build-base
+        ```
+
+        **Output Requirements:**
+        1. **Error Classification** with confidence percentage
+        2. **Base Image vs Command Analysis** with specific mismatches
+        3. **Package Manager Correction** with Alpine equivalents
+        4. **Dockerfile Patch** with diff-style changes
+        5. **Validation Steps** for testing the fix
+        6. **ADR Compliance Check** against ADR-0034
+
+      phases:
+        - name: alpine_detection
+          persona: bb8_addon_diagnostician
+          instructions: |
+            Analyze Docker build output to confirm Alpine base and identify Debian command usage.
+            Map specific error patterns to base image vs package manager mismatches.
+          outputs:
+            - name: alpine_detection_analysis.md
+              required: true
+              content: |
+                # Alpine Base Image Detection
+                
+                ## Base Image Analysis
+                - **Detected Base**: [FROM line from Dockerfile]
+                - **Shell Environment**: [/bin/ash vs /bin/bash from error output]
+                - **Package Manager**: [apt-get vs apk from failing commands]
+                
+                ## Error Pattern Matching
+                - **Primary Error**: [exact error message]
+                - **Pattern Type**: [alpine_debian_mismatch, package_not_found, etc.]
+                - **Failing Command**: [RUN command that failed]
+                
+                ## ADR-0034 Compliance
+                - **Alpine Knowledge Applied**: [reference to specific ADR sections]
+                - **Recommended Approach**: [Alpine-specific commands and patterns]
+
+        - name: package_manager_correction
+          persona: bb8_addon_diagnostician
+          instructions: |
+            Generate specific corrections for package manager commands, mapping Debian
+            commands to Alpine equivalents based on ADR-0034 knowledge.
+          outputs:
+            - name: package_correction_plan.md
+              required: true
+              content: |
+                # Package Manager Correction Plan
+                
+                ## Command Mapping
+                ```diff
+                - RUN apt-get update && apt-get install -y python3
+                + RUN apk update && apk add --no-cache python3
+                ```
+                
+                ## Alpine Package Equivalents
+                [table of Debian->Alpine package mappings]
+                
+                ## Dockerfile Patch
+                ```diff
+                [complete diff for Dockerfile fixes]
+                ```
+                
+                ## Validation Commands
+                ```bash
+                docker build -t bb8-test .
+                docker run bb8-test python3 --version
+                ```
+
+    - id: bb8.comprehensive_error_audit  
+      persona: bb8_addon_diagnostician
+      label: "HA-BB8 Comprehensive Error Audit"
+      mode: comprehensive_error_audit
+      protocols:
+        - evidence_first_analysis
+        - adr_compliance_check
+        - confidence_scoring_always
+      bindings:
+        - /Users/evertappels/actions-runner/Projects/HA-BB8/reports/
+        - /Users/evertappels/actions-runner/Projects/HA-BB8/docs/ADR/
+      prompt: |
+        version: 1.0
+        
+        Comprehensive audit mode for multiple BB8 addon error types including MQTT discovery
+        issues, BLE connectivity problems, Docker deployment failures, and Supervisor integration
+        issues. Analysis must be grounded in ADR governance and operational evidence.
+
+        ## Multi-Error Analysis Framework
+
+        **1. Error Categorization by Subsystem:**
+        - **Docker/Container**: Build failures, runtime crashes, permission issues
+        - **MQTT Integration**: Discovery message errors, broker connectivity, topic issues  
+        - **BLE Connectivity**: Device pairing, adapter issues, protocol errors
+        - **Supervisor Integration**: Authentication, API access, deployment issues
+
+        **2. BB8-Specific Error Patterns:**
+        - **Empty Device Blocks**: "device: {}" in MQTT discovery causing entity registration failures
+        - **Alpine Package Manager**: "/bin/ash: apt-get: not found" from Debian commands on Alpine
+        - **Config Timing**: CONFIG not populated when components initialize
+        - **MAC Resolution**: BB-8 device detection and identifier generation issues
+
+        **3. ADR Compliance Matrix:**
+        - **ADR-0032**: MQTT/BLE integration architecture compliance
+        - **ADR-0034**: Alpine Linux infrastructure requirements  
+        - **ADR-0037**: MQTT discovery device block compliance
+        - **ADR-0031**: Supervisor-only operations patterns
+
+        **4. Evidence-First Methodology:**
+        - Parse log files from reports/ directory
+        - Cross-reference with ADR architectural decisions
+        - Extract empirical evidence from workspace artifacts
+        - Score confidence for each contributing factor
+
+        **5. Prioritization Algorithm:**
+        - **P0**: System cannot start or deploy (Docker build failures)
+        - **P1**: Core functionality broken (MQTT/BLE integration failures)  
+        - **P2**: Operational issues (logging, telemetry, performance)
+        - **P3**: Cosmetic or enhancement opportunities
+
+      phases:
+        - name: multi_error_triage
+          persona: bb8_addon_diagnostician
+          instructions: |
+            Identify and categorize all error types present in logs and workspace.
+            Create priority matrix based on system impact and fix complexity.
+          outputs:
+            - name: error_inventory.md
+              required: true
+              content: |
+                # BB8 Addon Error Inventory
+                
+                ## P0 Critical Issues
+                - Docker build failures preventing deployment
+                - Runtime crashes preventing addon start
+                
+                ## P1 Functional Issues  
+                - MQTT discovery device block errors
+                - BLE connectivity and pairing failures
+                - Entity registration failures in Home Assistant
+                
+                ## P2 Operational Issues
+                - Configuration loading timing issues  
+                - Logging and telemetry problems
+                - Performance and resource usage
+                
+                ## P3 Enhancement Opportunities
+                - Code quality improvements
+                - ADR compliance optimizations
+                - Test coverage enhancements
+                
+        - name: adr_compliance_audit
+          persona: bb8_addon_diagnostician
+          instructions: |
+            Check each identified issue against relevant ADRs for compliance violations
+            and architectural guidance.
+          outputs:
+            - name: adr_compliance_report.md
+              required: true
+              content: |
+                # ADR Compliance Audit
+                
+                ## Violations Identified
+                - ADR-0037: Empty device blocks violate MQTT discovery requirements
+                - ADR-0034: Debian commands on Alpine violate infrastructure patterns
+                - ADR-0032: Integration timing issues violate MQTT/BLE architecture
+                
+                ## Architectural Alignment
+                - Configuration loading follows ADR-0031 patterns
+                - Code structure aligns with ADR-0032 service boundaries
+                
+                ## Recommendations
+                - Implement device block validation per ADR-0037
+                - Convert to Alpine commands per ADR-0034  
+                - Add configuration timing controls per ADR-0032
+
+        - name: integrated_patch_plan
+          persona: bb8_addon_diagnostician
+          instructions: |
+            Generate comprehensive patch plan addressing all identified issues with
+            priority ordering and dependency management.
+          outputs:
+            - name: integrated_patch_plan.md
+              required: true  
+              content: |
+                # Integrated BB8 Addon Patch Plan
+                
+                ## Phase 1: Critical Infrastructure (P0)
+                ```diff
+                [Docker build fixes - Alpine package managers]
+                ```
+                
+                ## Phase 2: Core Functionality (P1)  
+                ```diff
+                [MQTT device block validation and generation fixes]
+                ```
+                
+                ## Phase 3: Operational Improvements (P2)
+                ```diff
+                [Configuration timing and logging enhancements]  
+                ```
+                
+                ## Validation Strategy
+                1. Docker build validation
+                2. MQTT discovery testing
+                3. End-to-end integration verification
+                4. ADR compliance verification
+
+  migration:
+    strategy: |
+      - Adapt HA log analysis patterns to BB8 addon architecture
+      - Integrate ADR governance into diagnostic methodology  
+      - Use Alpine Linux and Docker build expertise from ADR-0034
+      - Apply MQTT/BLE integration patterns from ADR-0032
+      - Include device block validation patterns based on empirical findings
+
+  extensibility:
+    - Add new error patterns as they're discovered in BB8 addon operations
+    - Extend ADR compliance checking for new architectural decisions
+    - Include new subsystem diagnostics (e.g., Sphero protocol analysis)
+    - Add integration with BB8 addon testing frameworks
+    - Include MAC address normalization and device identifier patterns
+
+  documentation:
+    - Reference: HA-BB8 addon ADR collection for architectural context
+    - See ADR-0034 for Alpine Linux infrastructure specifics
+    - See ADR-0032 for MQTT/BLE integration patterns
+    - See ADR-0037 for MQTT discovery compliance requirements
+    - Include diagnostic enhancement patterns from device block analysis
