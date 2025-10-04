@@ -17,7 +17,7 @@ RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build conte
 
 # Base deps (Alpine base image - updated for Supervisor compatibility)
 RUN apk add --no-cache \
-    python3 py3-pip py3-venv python3-dev build-base ca-certificates bash jq
+    python3 py3-pip python3-dev build-base ca-certificates bash jq
 
 # Create venv and install deps into venv
 RUN python3 -m venv "/opt/venv" \
@@ -33,11 +33,11 @@ RUN printf '%s\n' \
     'export VIRTUAL_ENV=/opt/venv' \
     'export PATH="/opt/venv/bin:$PATH"' \
     > /etc/profile.d/venv_path.sh
-  RUN chmod 0644 /etc/profile.d/venv_path.sh
+RUN chmod 0644 /etc/profile.d/venv_path.sh
 
-# (Optional) also export venv PATH early for s6 services that don’t source profile
+# (Optional) also export venv PATH early for s6 services that don't source profile
 # This is safe even if your service uses run.sh (which already prefers the venv).
-  RUN mkdir -p /etc/cont-init.d \
+RUN mkdir -p /etc/cont-init.d \
     && printf '%s\n' \
     '#!/usr/bin/with-contenv sh' \
     'export VIRTUAL_ENV=/opt/venv' \
