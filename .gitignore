@@ -14,6 +14,8 @@ tarballs/**
 # Workspace organization: logs/ (untracked) vs reports/ (tracked important docs)
 logs/
 logs/**
+!logs/ha_bb8_addon.log  # Keep main runtime log tracked
+!logs/ha_bb8_addon.log.*  # Keep rotated logs tracked
 # Keep reports/ tracked for important documentation
 reports/**
 !reports/

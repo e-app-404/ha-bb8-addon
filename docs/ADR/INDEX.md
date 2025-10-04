@@ -37,6 +37,14 @@ This directory contains all architectural decision records for the HA-BB8 Home A
 - [ADR-0031] Supervisor-only Operations & Testing Protocol
 - [ADR-0032] MQTT/BLE Integration Architecture
 - [ADR-0033] Dual-Clone Deployment Topology & Git Hygiene
+- [ADR-0034] HA OS Infrastructure Knowledge & Runtime Environment
+- [ADR-0035] OOM Prevention & Echo Load Management
+- [ADR-0036] AI Model Selection & Governance Framework
+- [ADR-0037] MQTT Discovery Device Block Compliance
+- [ADR-0038] Test Coverage Measurement Framework
+- [ADR-0039] Functional Coverage Framework
+- [ADR-0040] Layered Deployment Model for Testing & Version Provenance
+- [ADR-0041] Centralized Environment Configuration & Accessible Secrets Management
 
 ## Status Legend
 
@@ -84,3 +92,11 @@ Use [ADR-template.md](ADR-template.md) for new ADRs.
 [ADR-0031]: ADR-0031-supervisor-only-operations-testing.md
 [ADR-0032]: ADR-0032-mqtt-ble-integration-architecture.md
 [ADR-0033]: ADR-0033-dual-clone-topology-git-hygiene.md
+[ADR-0034]: ADR-0034-ha-os-infrastructure.md
+[ADR-0035]: ADR-0035-oom-prevention-echo-load-management.md
+[ADR-0036]: ADR-0036-ai-model-selection-governance.md
+[ADR-0037]: ADR-0037-mqtt-discovery-device-block-compliance.md
+[ADR-0038]: ADR-0038-test-coverage-measurement-framework.md
+[ADR-0039]: ADR-0039-functional-coverage-framework.md
+[ADR-0040]: ADR-0040-layered-deployment-model-for-testing.md
+[ADR-0041]: ADR-0041-centralized-environment-configuration.md

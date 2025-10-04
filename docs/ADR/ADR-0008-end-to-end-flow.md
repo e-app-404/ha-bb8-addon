@@ -242,10 +242,59 @@ TOKEN: SUBTREE_PUBLISH_OK
 - Runners in `ops/` can emit the tokens above automatically.
 
 
-## 12. Appendix — Minimal File Invariants
+## 12. Addendum: Centralized Configuration & Accessible Secrets (2025-10-04)
+
+### **Issue Resolved**
+The SSH deployment user `babylon-babes` cannot access `/config/secrets.yaml` due to Home Assistant security restrictions, causing LLAT (Long-Lived Access Token) verification to fail.
+
+### **Solution Implemented**
+1. **Centralized Configuration**: All deployment settings moved to `.env` file
+2. **Accessible Secrets**: Secrets stored in `addon/secrets.yaml` (synced to `/addons/local/beep_boop_bb8/secrets.yaml`)
+3. **Enhanced Script**: `ops/release/deploy_ha_over_ssh.sh` loads from `.env` automatically
+
+### **New .env Configuration**
+```bash
+# HA DEPLOYMENT CONFIG
+export HA_SSH_HOST_ALIAS=home-assistant
+export HA_SSH_USER=babylon-babes
+export HA_REMOTE_RUNTIME=/addons/local/beep_boop_bb8
+export HA_REMOTE_SLUG=local_beep_boop_bb8
+export HA_SECRETS_PATH=/addons/local/beep_boop_bb8/secrets.yaml
+export HA_LLAT_KEY=HA_LLAT_KEY
+```
+
+### **New Secrets File Format**
+```yaml
+# addon/secrets.yaml
+HA_LLAT_KEY: eyJhbGciOiJIUzI1NiIs...  # JWT token (unquoted)
+```
+
+### **Updated Deployment Flow**
+```bash
+# 1. Release with version bump
+make release-patch
+
+# 2. Sync code including secrets
+rsync -av --delete addon/ home-assistant:/addons/local/beep_boop_bb8/
+
+# 3. Verify LLAT detection
+./ops/release/deploy_ha_over_ssh.sh test-llat
+# Expected: SSH_HA_OK + LLAT_PRESENT + DEPLOY_SSH_OK
+
+# 4. Manual restart (API restart may fail due to URL parsing)
+# HA UI → Settings → Add-ons → BB-8 → RESTART
+```
+
+### **Security Improvements**
+- **No hardcoded PII**: SSH user info moved to .env
+- **Accessible secrets**: Stored in addon directory with proper permissions
+- **Configurable paths**: All deployment paths centralized and configurable
+
+## 13. Appendix — Minimal File Invariants
 
 - `addon/Dockerfile` (Debian, `apt-get`, venv at `/opt/venv`)
 - `addon/services.d/ble_bridge/run` → `/usr/bin/env bash /usr/src/app/run.sh`
 - `addon/run.sh` → exec venv python `-m bb8_core.main`
 - `addon/config.yaml` → `image:` local + `build:` present
+- `addon/secrets.yaml` → LLAT token for API access (NEW)
 

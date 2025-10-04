@@ -4,26 +4,44 @@
 #   - test-llat (reports presence only; never prints token)
 set -euo pipefail
 
+# Load configuration from central .env file
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    # Source .env file with bash compatibility
+    set -a  # automatically export all variables
+    source "$PROJECT_ROOT/.env"
+    set +a  # disable auto-export
+fi
+
 CMD="${1:-deploy}"
 
-REMOTE_HOST_ALIAS="${REMOTE_HOST_ALIAS:-home-assistant}"    # SSH alias (user: babylon-babes)
-REMOTE_SCRIPT="${REMOTE_SCRIPT:-/config/domain/shell_commands/addons_runtime_fetch.sh}"
-REMOTE_RUNTIME="${REMOTE_RUNTIME:-/addons/local/beep_boop_bb8}"
-REMOTE_SLUG="${REMOTE_SLUG:-local_beep_boop_bb8}"
-HA_URL="${HA_URL:-}"                                        # if empty, remote tries smart defaults
-HA_LLAT_KEY="${HA_LLAT_KEY:-ha_llat}"
+# Use environment variables from .env with fallbacks for backward compatibility
+REMOTE_HOST_ALIAS="${HA_SSH_HOST_ALIAS:-${REMOTE_HOST_ALIAS:-home-assistant}}"
+REMOTE_SCRIPT="${HA_REMOTE_SCRIPT:-${REMOTE_SCRIPT:-/config/domain/shell_commands/addons_runtime_fetch.sh}}"
+REMOTE_RUNTIME="${HA_REMOTE_RUNTIME:-${REMOTE_RUNTIME:-/addons/local/beep_boop_bb8}}"
+REMOTE_SLUG="${HA_REMOTE_SLUG:-${REMOTE_SLUG:-local_beep_boop_bb8}}"
+SECRETS_PATH="${HA_SECRETS_PATH:-/config/secrets.yaml}"
+LLAT_KEY="${HA_LLAT_KEY:-ha_llat}"
 
 run_ssh() { ssh "$REMOTE_HOST_ALIAS" "$@"; }
 
-# Silent presence check (no secrets printed)
+# Silent presence check (no secrets printed) - using addon secrets file
 remote_llat_probe() {
-  run_ssh env HA_LLAT_KEY="$HA_LLAT_KEY" sh -eu <<'REMOTE'
-SECRETS="/config/secrets.yaml"; KEY="${HA_LLAT_KEY:-ha_llat}"
-awk -v k="$KEY" '
-  /^[[:space:]]*#/ {next}
-  $1 ~ "^[[:space:]]*"k"[[:space:]]*$" {found=1; exit}
-  END{exit found?0:1}
-' "$SECRETS" >/dev/null 2>&1 && echo "LLAT_PRESENT" || { echo "LLAT_MISSING"; exit 2; }
+  run_ssh env SECRETS_PATH="$SECRETS_PATH" LLAT_KEY="$LLAT_KEY" sh -eu <<'REMOTE'
+SECRETS="${SECRETS_PATH:-/addons/local/beep_boop_bb8/secrets.yaml}"; KEY="${LLAT_KEY:-HA_LLAT_KEY}"
+# Check if the secrets file exists and is readable
+if [ ! -r "$SECRETS" ]; then
+  echo "LLAT_NO_ACCESS (secrets file not found at $SECRETS)"
+  exit 2
+fi
+# Simple pattern to match key followed by colon (format: HA_LLAT_KEY: value)
+if grep -E "^[[:space:]]*${KEY}[[:space:]]*:" "$SECRETS" >/dev/null 2>&1; then
+  echo "LLAT_PRESENT"
+else
+  echo "LLAT_MISSING (key '$KEY' not found in $SECRETS)"
+  exit 2
+fi
 REMOTE
 }
 
@@ -36,12 +54,12 @@ case "$CMD" in
 
   diagnose)
     # Prints connectivity + HTTP codes for each candidate + whether hassio service is exposed
-    run_ssh env REMOTE_RUNTIME="$REMOTE_RUNTIME" REMOTE_SLUG="$REMOTE_SLUG" HA_URL="$HA_URL" HA_LLAT_KEY="$HA_LLAT_KEY" sh -eu <<'REMOTE'
+    run_ssh env REMOTE_RUNTIME="$REMOTE_RUNTIME" REMOTE_SLUG="$REMOTE_SLUG" HA_URL="$HA_URL" SECRETS_PATH="$SECRETS_PATH" LLAT_KEY="$LLAT_KEY" sh -eu <<'REMOTE'
 echo "SSH_HA_OK"
-SECRETS="/config/secrets.yaml"; KEY="${HA_LLAT_KEY:-ha_llat}"
+SECRETS="${SECRETS_PATH:-/addons/local/beep_boop_bb8/secrets.yaml}"; KEY="${LLAT_KEY:-HA_LLAT_KEY}"
 
 # Discover token presence (no value printed)
-if awk -v k="$KEY" '/^[[:space:]]*#/ {next} $1 ~ "^[[:space:]]*"k"[[:space:]]*$" {found=1; exit} END{exit found?0:1}' "$SECRETS" >/dev/null 2>&1; then
+if awk -v k="$KEY" '/^[[:space:]]*#/ {next} $0 ~ "^[[:space:]]*[\"'\'']*"k"[\"'\'']*[[:space:]]*:" {found=1; exit} END{exit found?0:1}' "$SECRETS" >/dev/null 2>&1; then
   echo "LLAT_PRESENT"
   TOKEN_OK=1
 else
@@ -49,9 +67,10 @@ else
   TOKEN_OK=0
 fi
 
-# URL candidates (Core via Core proxy) – both http/https possibilities
+# URL candidates (Core via Core proxy)
 CANDS=""
 [ -n "${HA_URL:-}" ] && CANDS="$HA_URL"
+# Standard HA API candidates
 CANDS="${CANDS}
 http://homeassistant:8123
 https://homeassistant:8123
@@ -105,7 +124,7 @@ REMOTE
     if run_ssh 'ha core info >/dev/null 2>&1'; then
       run_ssh "bash ${REMOTE_SCRIPT}"
     else
-      run_ssh env REMOTE_RUNTIME="$REMOTE_RUNTIME" REMOTE_SLUG="$REMOTE_SLUG" HA_URL="$HA_URL" HA_LLAT_KEY="$HA_LLAT_KEY" sh -eu <<'REMOTE'
+      run_ssh env REMOTE_RUNTIME="$REMOTE_RUNTIME" REMOTE_SLUG="$REMOTE_SLUG" HA_URL="$HA_URL" SECRETS_PATH="$SECRETS_PATH" LLAT_KEY="$LLAT_KEY" sh -eu <<'REMOTE'
 # ADR-0033: Check if runtime is a git repository before git operations
 if [ -d "$REMOTE_RUNTIME/.git" ]; then
   echo "Git repository detected, performing dual-clone sync..."
@@ -118,12 +137,13 @@ else
   echo "DEPLOY_OK — runtime sync via addon restart (non-git mode)"
 fi
 
-SECRETS="/config/secrets.yaml"; KEY="${HA_LLAT_KEY:-ha_llat}"
-# LLAT extract (silent)
-TOKEN="$(awk -v k="$KEY" 'BEGIN{FS=":"} /^[[:space:]]*#/ {next} $1 ~ "^[[:space:]]*"k"[[:space:]]*$" {line=$0; sub(/^[^:]*:[ \t]*/,"",line); sub(/[ \t]*#.*$/,"",line); gsub(/^[ \t]+|[ \t]+$/,"",line); gsub(/^'\''|^"/,"",line); gsub(/'\''$|"$/,"",line); print line; exit}' "$SECRETS" 2>/dev/null || true)"
+SECRETS="${SECRETS_PATH:-/addons/local/beep_boop_bb8/secrets.yaml}"; KEY="${LLAT_KEY:-HA_LLAT_KEY}"
+# LLAT extract (silent) - handles quoted and unquoted keys
+TOKEN="$(awk -v k="$KEY" 'BEGIN{FS=":"} /^[[:space:]]*#/ {next} $0 ~ "^[[:space:]]*[\"'\'']*"k"[\"'\'']*[[:space:]]*:" {line=$0; sub(/^[^:]*:[ \t]*/,"",line); sub(/[ \t]*#.*$/,"",line); gsub(/^[ \t]+|[ \t]+$/,"",line); gsub(/^'\''|^"/,"",line); gsub(/'\''$|"$/,"",line); print line; exit}' "$SECRETS" 2>/dev/null || true)"
 # URL candidates for Core
 CANDS=""
 [ -n "${HA_URL:-}" ] && CANDS="$HA_URL"
+# Standard HA API candidates
 CANDS="${CANDS}
 http://homeassistant:8123
 https://homeassistant:8123

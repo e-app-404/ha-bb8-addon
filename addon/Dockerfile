@@ -15,11 +15,9 @@ COPY requirements.txt* /usr/src/app/
 RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build context' >&2; exit 53)
 RUN test -x /usr/src/app/run.sh || (echo 'FATAL: run.sh missing from build context' >&2; exit 53)
 
-# Base deps (Debian BUILD_FROM) — Alpine is NOT supported here
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-    python3 python3-venv python3-pip ca-certificates bash jq --fix-missing \
-  && rm -rf /var/lib/apt/lists/*
+# Base deps (Alpine base image - updated for Supervisor compatibility)
+RUN apk add --no-cache \
+    python3 py3-pip py3-venv python3-dev build-base ca-certificates bash jq
 
 # Create venv and install deps into venv
 RUN python3 -m venv "/opt/venv" \
@@ -53,7 +51,7 @@ ARG BUILD_VERSION
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV ADDON_VERSION=${BUILD_VERSION}
 ENV PYTHONPATH="/usr/src/app:${PYTHONPATH}"
-RUN echo "2025.08.21" > /usr/src/app/VERSION
+RUN echo "2025.10.4.52" > /usr/src/app/VERSION
 
 
 # Wire S6 services from repo root into image

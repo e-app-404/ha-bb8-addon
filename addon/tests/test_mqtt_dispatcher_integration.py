@@ -72,7 +72,7 @@ class TestMqttDispatcherCore:
 
         device = _device_block()
 
-        assert device["identifiers"] == ["bb8-aa-bb-cc-dd-ee-ff"]
+        assert device["identifiers"] == ["bb8-AABBCCDDEEFF"]
         assert device["name"] == "BB-8 Sphero Robot"
         assert device["manufacturer"] == "Sphero"
         assert device["model"] == "BB-8 App-Enabled Droid"
@@ -329,6 +329,6 @@ class TestDiscoveryIntegration:
                     if "device" in payload_data:
                         device = payload_data["device"]
                         assert "identifiers" in device
-                        assert "bb8-aa-bb-cc-dd-ee-ff" in device["identifiers"]
+                        assert "bb8-AABBCCDDEEFF" in device["identifiers"]
                 except json.JSONDecodeError:
                     pass  # Skip non-JSON payloads

@@ -320,19 +320,29 @@ def _norm_mac(mac: str | None) -> str:
 
 def _device_block() -> dict[str, Any]:
     mac = CONFIG.get("bb8_mac")
+    version = CONFIG.get("ADDON_VERSION", "1.0.0")
+    
+    # Debug logging to track actual values
+    log.debug(f"_device_block: mac={mac}, version={version}, CONFIG_keys={list(CONFIG.keys()) if CONFIG else 'None'}")
+    
     if not mac or mac == "UNKNOWN":
         # Fallback to a consistent device ID when MAC is not available
         did = "bb8-sphero-robot"
     else:
         did = f"bb8-{_norm_mac(mac)}"
-    return {
+    
+    device_block = {
         "identifiers": [did],
         "name": "BB-8 Sphero Robot",
         "manufacturer": "Sphero",
         "model": "BB-8 App-Enabled Droid",
-        "sw_version": CONFIG.get("ADDON_VERSION", "1.0.0"),
+        "sw_version": version,
         "suggested_area": "living_room",
     }
+    
+    # Debug logging of final device block
+    log.debug(f"_device_block returning: {device_block}")
+    return device_block
 
 
 def publish_bb8_discovery(publish_fn) -> None:
@@ -352,6 +362,13 @@ def publish_bb8_discovery(publish_fn) -> None:
     po = CONFIG.get("availability_payload_offline", "offline")
     qos = int(CONFIG.get("qos", 1))
     dev = _device_block()
+    
+    # Validation of device block before proceeding
+    if not dev or not dev.get("identifiers"):
+        log.error(f"Invalid device block generated: {dev}, CONFIG state: {dict(CONFIG) if CONFIG else 'None'}")
+        return
+    
+    log.info(f"Discovery using device block: identifiers={dev.get('identifiers')}, name='{dev.get('name')}'")
 
     def cfg(uid_key: str, topic: str, payload: dict) -> None:
         # skip if already published (idempotent per unique_id)

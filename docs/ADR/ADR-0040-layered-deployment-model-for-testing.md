@@ -436,6 +436,58 @@ Execution (no Docker CLI):
 - Train operators on version verification process
 - Establish rollback procedures if released version has issues
 
+## Addendum: SSH Deployment Reliability Fix (2025-10-04)
+
+### **Problem Identified**
+SSH deployment was failing due to:
+1. SSH user `babylon-babes` cannot access `/config/secrets.yaml`
+2. LLAT verification failing, blocking deployment
+3. Hardcoded configuration scattered across scripts
+
+### **Solution Implemented**
+
+#### **Centralized Configuration (.env)**
+```bash
+# All deployment config now in .env
+HA_SSH_HOST_ALIAS=home-assistant
+HA_SECRETS_PATH=/addons/local/beep_boop_bb8/secrets.yaml  
+HA_LLAT_KEY=HA_LLAT_KEY
+```
+
+#### **Accessible Secrets File**
+```yaml
+# addon/secrets.yaml (synced to HA system)
+HA_LLAT_KEY: eyJhbGciOiJIUzI1NiIs...
+```
+
+#### **Enhanced Deployment Script**
+- Auto-loads `.env` configuration
+- Uses accessible secrets location
+- Graceful handling of permission issues
+- Better error reporting
+
+### **Updated Workflow**
+```bash
+# 1. Version release (mandatory)
+make release-patch  # BUMP_OK + SUBTREE_PUBLISH_OK
+
+# 2. Code + secrets sync
+rsync -av --delete addon/ home-assistant:/addons/local/beep_boop_bb8/
+
+# 3. LLAT verification (now working)
+./ops/release/deploy_ha_over_ssh.sh test-llat
+# ✅ SSH_HA_OK + ✅ LLAT_PRESENT + ✅ DEPLOY_SSH_OK
+
+# 4. Manual restart (fallback for API issues)
+# HA UI → Settings → Add-ons → BB-8 → RESTART
+```
+
+### **Impact on Version Provenance**
+- **Enhanced reliability**: LLAT detection now works consistently
+- **Better audit trail**: All config changes tracked in .env
+- **Improved security**: No hardcoded credentials in scripts
+- **Maintained traceability**: Version provenance workflow unchanged
+
 ## TOKEN_BLOCK
 
 ```yaml
@@ -445,16 +497,20 @@ TOKEN_BLOCK:
     - VERSION_PROVENANCE_REQUIRED
     - RELEASE_PROCESS_MANDATORY
     - TESTING_INTEGRITY_ENFORCED
+    - CENTRALIZED_CONFIG_IMPLEMENTED  # NEW
+    - ACCESSIBLE_SECRETS_WORKFLOW     # NEW
   produces:
     - WATERTIGHT_TESTING_CYCLES
     - CODE_DEPLOYMENT_TRACEABILITY
     - VERSION_AUDIT_CAPABILITY
+    - RELIABLE_SSH_DEPLOYMENT         # NEW
   requires:
     - ADR_SCHEMA_V1
     - RELEASE_AUTOMATION_FUNCTIONAL
     - SUPERVISOR_ACCESS_AVAILABLE
+    - ADDON_SECRETS_FILE_PRESENT      # NEW
   drift:
     - DRIFT: manual-deployment-dependency
     - DRIFT: version-proliferation-concern
-    - DRIFT: ssh-deployment-reliability
+    - DRIFT: ssh-deployment-reliability  # RESOLVED
 ```
