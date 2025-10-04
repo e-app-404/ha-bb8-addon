@@ -1,0 +1,10 @@
+[run]
+source = bb8_core
+omit =
+    */tests/*
+    **/__pycache__/*
+    addon/tools/*
+
+[report]
+skip_empty = true
+fail_under = 80

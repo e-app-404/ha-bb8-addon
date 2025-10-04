@@ -1,0 +1,4 @@
+#
+# Disable the separate s6 echo_responder service; run.sh supervises echo_responder
+# when enable_echo=true. This removes dual supervision and flapping.
+## service is down by default; toggled by enable_echo logic in run script
