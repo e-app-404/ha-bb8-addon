@@ -255,26 +255,46 @@ class TestAddonConfigCoverage:
 
     def test_env_var_export_success(self):
         """Test environment variable export functionality (Lines 173-176)."""
-        test_config = {
-            "mqtt_host": "test.broker.com",
-            "mqtt_port": 1883,
-            "nested": {"key": "value"},
-        }
+        # Store original config state
+        original_config = CONFIG.copy()
+        import addon.bb8_core.addon_config as ac
+        original_source = ac.CONFIG_SOURCE
+        
+        try:
+            test_config = {
+                "mqtt_host": "test.broker.com",
+                "mqtt_port": 1883,
+                "nested": {"key": "value"},
+            }
 
-        # Mock init_config and os.environ
-        with patch(
-            "addon.bb8_core.addon_config.init_config",
-            return_value=(test_config, Path("/test")),
-        ):
-            with patch.dict(os.environ, {}, clear=True):
-                config, source = load_config()
+            # Clear cache first to force fresh load
+            CONFIG.clear()
+            ac.CONFIG_SOURCE = None
 
-                # Check that config values were exported to environment
-                assert "MQTT_HOST" in os.environ or "mqtt_host" in config
-                # The exact behavior depends on the implementation
+            # Mock init_config and os.environ
+            with (
+                patch(
+                    "addon.bb8_core.addon_config.init_config",
+                    return_value=(test_config, Path("/test")),
+                ),
+                patch.dict(os.environ, {}, clear=True),
+            ):
+                config, source = load_config(force=True)
+
+                # Check that config values were loaded correctly
+                # Since we mocked init_config, should get our test_config
+                assert "mqtt_host" in config
+                assert config["mqtt_host"] == "test.broker.com"
+                assert source == Path("/test")
+
+        finally:
+            # Restore original config state
+            CONFIG.clear()
+            CONFIG.update(original_config)
+            ac.CONFIG_SOURCE = original_source
 
     def test_env_var_export_error_handling(self):
-        """Test error handling in environment variable export (Lines 191-192)."""
+        """Test error handling in env var export (Lines 191-192)."""
         test_config = {"test_key": "test_value"}
 
         import addon.bb8_core.addon_config as ac
@@ -285,12 +305,14 @@ class TestAddonConfigCoverage:
             ac.CONFIG.clear()
             ac.CONFIG.update(test_config)
             ac.CONFIG_SOURCE = Path("/test")
-            with patch.dict(os.environ, {}, clear=True):
-                with patch.object(
+            with (
+                patch.dict(os.environ, {}, clear=True),
+                patch.object(
                     os.environ, "update", side_effect=Exception("Env error")
-                ):
-                    config, source = ac.load_config()
-                    assert config["test_key"] == "test_value"
+                ),
+            ):
+                config, source = ac.load_config()
+                assert config["test_key"] == "test_value"
         finally:
             os.environ.clear()
             os.environ.update(original_env)

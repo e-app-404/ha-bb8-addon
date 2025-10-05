@@ -16,6 +16,15 @@ from paho.mqtt.enums import CallbackAPIVersion
 
 from .addon_config import load_config
 
+# Global MQTT configuration variables
+MQTT_HOST = "localhost"
+MQTT_PORT = 1883
+
+# Global module-level defaults for CLI options (to support testing/import usage)
+_DEFAULT_QUIET = False
+_DEFAULT_JSON = False
+_DEFAULT_VERBOSE = False
+
 
 class RgbTD(TypedDict):
     r: int
@@ -23,9 +32,12 @@ class RgbTD(TypedDict):
     b: int
 
 
-def read_version_or_default() -> str:
+def read_version_or_default(version_file_path: str | None = None) -> str:
     try:
-        VERSION_FILE: Final = Path(__file__).resolve().parents[1] / "VERSION"
+        if version_file_path:
+            VERSION_FILE = Path(version_file_path)
+        else:
+            VERSION_FILE: Final = Path(__file__).resolve().parents[1] / "VERSION"
         txt = VERSION_FILE.read_text(encoding="utf-8").strip()
         return txt or "addon:dev"
     except Exception:
@@ -387,6 +399,7 @@ MQTT_PASSWORD = CFG.get("MQTT_PASSWORD", None)
 
 
 def _connect_mqtt(client):
+    global MQTT_HOST, MQTT_PORT
     client.connect(MQTT_HOST, MQTT_PORT, keepalive=60)
     client.loop_start()
 
@@ -874,6 +887,7 @@ def _parse_led_payload(raw: bytes | str):
 # ──────────────────────────────────────────────────────────────────────────────
 # MQTT connection helper
 def _connect_mqtt(client):
+    global MQTT_HOST, MQTT_PORT
     client.connect(MQTT_HOST, MQTT_PORT, keepalive=60)
     client.loop_start()
 
@@ -1097,11 +1111,22 @@ def publish_discovery_old(
 
 # Logging helpers
 # -----------------------------------------------------------------------------
-def tick_log(found: bool, name: str, addr: str | None, rssi):
+def tick_log(found: bool, name: str, addr: str | None, rssi, args=None):
     ts = time.strftime("%Y-%m-%dT%H:%M:%S%z")
-    if args.quiet:
+    # Use provided args, global args, or module defaults
+    if args is not None:
+        quiet = getattr(args, 'quiet', _DEFAULT_QUIET)
+        json_output = getattr(args, 'json', _DEFAULT_JSON)
+        verbose = getattr(args, 'verbose', _DEFAULT_VERBOSE)
+    else:
+        global_args = globals().get('args')
+        quiet = getattr(global_args, 'quiet', _DEFAULT_QUIET) if global_args else _DEFAULT_QUIET
+        json_output = getattr(global_args, 'json', _DEFAULT_JSON) if global_args else _DEFAULT_JSON
+        verbose = getattr(global_args, 'verbose', _DEFAULT_VERBOSE) if global_args else _DEFAULT_VERBOSE
+    
+    if quiet:
         return
-    if args.json:
+    if json_output:
         print(
             json.dumps(
                 {
@@ -1116,5 +1141,5 @@ def tick_log(found: bool, name: str, addr: str | None, rssi):
     else:
         if found:
             print(f"[{ts}] found name={name} addr={addr} rssi={rssi}")
-        elif args.verbose:
+        elif verbose:
             print(f"[{ts}] not_found name={name}")

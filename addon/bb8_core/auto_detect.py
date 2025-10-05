@@ -478,6 +478,32 @@ class Candidate:
         self.rssi = rssi
 
 
+def _valid_mac(mac: str | None) -> bool:
+    """
+    Validate MAC address format.
+    Args:
+        mac (str|None): MAC address to validate
+    Returns:
+        bool: True if valid MAC format (XX:XX:XX:XX:XX:XX)
+    """
+    if not mac:
+        return False
+    if not isinstance(mac, str):
+        return False
+    # Check for XX:XX:XX:XX:XX:XX format
+    parts = mac.split(":")
+    if len(parts) != 6:
+        return False
+    for part in parts:
+        if len(part) != 2:
+            return False
+        try:
+            int(part, 16)  # Check if hexadecimal
+        except ValueError:
+            return False
+    return True
+
+
 def is_probable_bb8(name: str | None) -> bool:
     """
     Heuristic: is this device likely a BB-8?
@@ -489,7 +515,7 @@ def is_probable_bb8(name: str | None) -> bool:
     if not name:
         return False
     name_l = name.lower()
-    return any(t in name_l for t in ("bb-8", "droid", "sphero"))
+    return any(t in name_l for t in ("bb-8", "bb8", "droid", "sphero"))
 
 
 async def async_scan_for_bb8(scan_seconds: int) -> list[Candidate]:
@@ -591,6 +617,74 @@ def save_mac_to_cache(mac: str) -> None:
         logger.warning({"event": "auto_detect_cache_write_error", "error": repr(e)})
 
 
+class CacheEntry:
+    """Cache entry for BB-8 device information."""
+    
+    def __init__(self, mac: str, advertised_name: str = "", last_seen_epoch: float = 0):
+        self.mac = mac
+        self.advertised_name = advertised_name
+        self.last_seen_epoch = last_seen_epoch
+
+
+def save_cache(mac: str, name: str, cache_path: str) -> None:
+    """
+    Save BB-8 device info to cache file.
+    Args:
+        mac (str): Device MAC address
+        name (str): Advertised name
+        cache_path (str): Cache file path
+    """
+    try:
+        os.makedirs(os.path.dirname(cache_path) or ".", exist_ok=True)
+        cache_data = {
+            "mac": mac,
+            "advertised_name": name,
+            "last_seen_epoch": time.time()
+        }
+        with open(cache_path, "w", encoding="utf-8") as f:
+            json.dump(cache_data, f)
+    except Exception as e:
+        logger.warning({"event": "cache_save_error", "error": repr(e)})
+
+
+def load_cache(now: float, ttl_hours: int, cache_path: str) -> CacheEntry | None:
+    """
+    Load BB-8 device info from cache file.
+    Args:
+        now (float): Current timestamp
+        ttl_hours (int): Cache TTL in hours
+        cache_path (str): Cache file path
+    Returns:
+        CacheEntry|None: Cache entry if valid, None if expired or invalid
+    """
+    try:
+        if not os.path.exists(cache_path):
+            return None
+            
+        with open(cache_path, encoding="utf-8") as f:
+            data = json.load(f)
+            
+        # Must have a valid MAC address to be valid
+        mac = data.get("mac")
+        if not mac or not _valid_mac(mac):
+            return None
+            
+        last_seen = data.get("last_seen_epoch", 0)
+        age_hours = (now - last_seen) / 3600.0
+        
+        if age_hours > ttl_hours:
+            return None
+            
+        return CacheEntry(
+            mac=mac,
+            advertised_name=data.get("advertised_name", ""),
+            last_seen_epoch=last_seen
+        )
+    except Exception as e:
+        logger.warning({"event": "cache_load_error", "error": repr(e)})
+        return None
+
+
 # Restore missing scan_for_bb8, pick_bb8_mac, and Options class
 
 
@@ -624,20 +718,20 @@ def scan_for_bb8(scan_seconds: int = 5, adapter: str | None = None) -> list[dict
     return out
 
 
-def pick_bb8_mac(devices: list[dict]) -> str:
+def pick_bb8_mac(devices: list[dict]) -> str | None:
     """
     Pick the most probable BB-8 MAC from scanned devices.
     Args:
         devices (list[dict]): Devices from scan
     Returns:
-        str: MAC address of best candidate
+        str|None: MAC address of best candidate, or None if none found
     """
     """
     Pick the most probable BB-8 MAC from scanned devices.
     """
     candidates = [d for d in devices if is_probable_bb8(d.get("name"))]
     if not candidates:
-        return ""
+        return None
     # Prefer exact name, then strongest RSSI
     candidates.sort(
         key=lambda d: (d.get("name", "").lower() == "bb-8", d.get("rssi", -999)),

@@ -1,0 +1,60 @@
+# DECISION & GOVERNANCE — Operational-First path APPROVED (formalized)
+
+planned_change: "Decouple unit-test coverage from INT-HA-CONTROL acceptance"
+deliverable: "INT-HA-CONTROL PASS based solely on operational evidence (persistence, single-owner, LED schema, config defaults, P0 stability)"
+action_needed: "Run operational validation now; defer coverage ≥80% to a separate quality gate"
+rationale: "Coverage gap originates from API drift + restored legacy tests. Milestone success criteria do not require coverage; blocking on it delays risk reduction on live system."
+status: "APPROVED"
+RACI_matrix: { A: "Strategos", R: "Pythagoras/Copilot", C: "QA", I: "Operator" }
+acceptance_criteria:
+  - P0 stability: 0 TypeError/coroutine errors over 120 min (post add-on restart)
+  - MQTT persistence: presence+rssi recover ≤10s after broker AND HA Core restart
+  - Single-owner discovery: duplicates_detected == 0
+  - LED alignment: toggle-gated; strict {r,g,b}; same device block
+  - Config defaults: MQTT_BASE=bb8, REQUIRE_DEVICE_ECHO=1, PUBLISH_LED_DISCOVERY=0
+risk_assessment:
+  - risk: "Operational drift if tests ignored long-term"  
+    mitigation: "Introduce QG-TEST-80 quality gate, time-boxed (≤7 days), with compatibility shims + focused tests"
+rollback: "Reinstate coverage as blocking gate if any operational acceptance fails"
+
+# NEW GATE STRUCTURE
+gate_a: "INT-HA-CONTROL — operational evidence only (coverage informative, non-blocking)"
+gate_b: "QG-TEST-80 — ≥80% measured coverage (no core-module exclusions), due within 7 calendar days post Gate A PASS"
+
+# EXECUTION STATUS
+drift_score: 81/100  # improving
+timeline_adherence: 84
+quality_gates: 70
+scope_creep: 92
+technical_debt: 70
+stakeholder_alignment: 92
+
+# AUTHORIZATION
+greenlight: true
+evidence_env_validated: true
+broker_ha_restarts_authorized: true
+execution_mode: "operational-first immediate"
+
+# ARTIFACTS REQUIRED FOR SIGN-OFF
+required_artifacts:
+  - error_count_comparison.json
+  - mqtt_roundtrip.log
+  - mqtt_persistence.log  
+  - entity_persistence_test.log
+  - entity_audit.json
+  - discovery_ownership_audit.json
+  - discovery_ownership_check.txt
+  - led_entity_schema_validation.json
+  - device_block_audit.log
+  - config_env_validation.json
+  - qa_report.json
+
+# QG-TEST-80 FOLLOW-UP (non-blocking for Gate A)
+follow_up_gate:
+  objective: "≥80% measured coverage without excluding core modules"
+  timeline: "≤7 days after INT-HA-CONTROL PASS"
+  tactics:
+    - "Quarantine legacy tests with @pytest.mark.xfail"
+    - "Add compatibility shims in addon/bb8_core/compat_test_shims.py"
+    - "Focus on 6-8 high-ROI test specs"
+  escalation: "If coverage <80% at T+7d, provide remediation mini-plan"

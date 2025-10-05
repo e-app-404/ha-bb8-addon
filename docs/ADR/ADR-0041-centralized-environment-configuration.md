@@ -49,7 +49,7 @@ Create `addon/secrets.yaml` that syncs to the addon directory (accessible to SSH
 
 ```yaml
 # addon/secrets.yaml - synced to /addons/local/beep_boop_bb8/secrets.yaml
-HA_LLAT_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI2ZjNjMmE2YTc5NWQ0ODE1ODI4ZjBhNjgxYmYyZmYzMiIsImlhdCI6MTc1Mzc3NTY4OSwiZXhwIjoyMDY5MTM1Njg5fQ.KoxNPipk0INgbdbSZOZOQUt17x8LOLQrgcoSgzXAQ5M
+HA_LLAT_KEY: string.string.string
 ```
 
 ### **Enhanced Deployment Script**
@@ -79,8 +79,8 @@ SECRETS_PATH="${HA_SECRETS_PATH:-/addons/local/beep_boop_bb8/secrets.yaml}"
 
 ### **File Structure**
 ```
-.env                           # Centralized configuration
-addon/secrets.yaml            # Accessible secrets file  
+.env                               # Centralized configuration
+addon/secrets.yaml                 # Accessible secrets file  
 ops/release/deploy_ha_over_ssh.sh  # Enhanced deployment script
 ```
 
