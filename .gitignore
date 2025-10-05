@@ -75,3 +75,4 @@ addon/.coverage.*
 .git.DISABLED/
 *.env
 .ssh/
+secrets.yaml

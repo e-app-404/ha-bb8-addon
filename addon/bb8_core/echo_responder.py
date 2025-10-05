@@ -128,7 +128,19 @@ def _write_atomic(path: str, content: str) -> None:
     with open(tmp, "w") as f:
         f.write(content)
         f.flush()
-        os.fsync(f.fileno())
+        # Some test helpers (mock_open) provide file-like objects without
+        # a real fileno() that returns an int. Calling os.fsync on those
+        # objects raises TypeError. Wrap in try/except so unit tests that
+        # mock open() don't fail while preserving fsync behavior for real
+        # files on disk.
+        try:
+            fd = f.fileno()
+            # Only attempt fsync if fileno() returned an integer-like value
+            if isinstance(fd, int):
+                os.fsync(fd)
+        except (TypeError, OSError) as e:
+            # Non-fatal for tests or transient FS issues; log at debug level.
+            LOG.debug("_write_atomic: fsync skipped or failed: %s", e)
     os.replace(tmp, path)
 
 

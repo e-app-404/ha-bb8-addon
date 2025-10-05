@@ -1,6 +1,6 @@
 {
   "validation_metadata": {
-    "timestamp": "2025-10-05T12:24:17.792234",
+    "timestamp": "2025-10-05T13:14:20.704891",
     "validator": "emit_config_env_validation.py",
     "acceptance_criteria": "MQTT_BASE=bb8, REQUIRE_DEVICE_ECHO=1, PUBLISH_LED_DISCOVERY=0"
   },
