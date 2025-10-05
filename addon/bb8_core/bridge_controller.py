@@ -472,6 +472,11 @@ def start_bridge_controller(
     logger.info({"event": "ble_bridge_init", "target_mac": target_mac})
     facade = BB8Facade(bridge)
     ensure_dispatcher_started()
+    
+    # Hard-enable echo responder when REQUIRE_DEVICE_ECHO=1 (Gate A unblock)
+    from .echo_startup import start_echo_if_required
+    start_echo_if_required(cfg)
+    
     logger.info({"event": "bridge_controller_ready"})
     return facade
 

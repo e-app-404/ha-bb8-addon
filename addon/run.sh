@@ -120,6 +120,17 @@ PY="${VIRTUAL_ENV}/bin/python"
 if [ ! -x "$PY" ]; then PY="$(command -v python3 || command -v python)"; fi
 export PATH="${VIRTUAL_ENV}/bin:${PATH}"
 
+# ---------- Runtime package installation (emergency fix) ----------
+# Check if paho-mqtt is missing and install from requirements.txt if needed
+if ! "$PY" -c "import paho.mqtt.client" 2>/dev/null; then
+  diag_emit "MISSING DEPS: paho-mqtt not found, installing from requirements.txt"
+  if [ -f /usr/src/app/requirements.txt ]; then
+    "${VIRTUAL_ENV}/bin/pip" install --no-cache-dir -r /usr/src/app/requirements.txt 2>&1 | head -10
+    diag_emit "RUNTIME INSTALL: requirements.txt installation attempted"
+  else
+    diag_emit "WARNING: requirements.txt not found, cannot install missing dependencies"
+  fi
+fi
 
 # ---------- Single control-plane guard for echo_responder ----------
 S6_ECHO_RUN="/etc/services.d/echo_responder/run"
