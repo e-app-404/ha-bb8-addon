@@ -1,12 +1,14 @@
 # DIAG-BEGIN IMPORTS
 import atexit
 import contextlib
+import logging
 import os
+import signal
 import sys
 import threading
 import time
 
-from addon.bb8_core.logging_setup import logger
+logger = logging.getLogger(__name__)
 
 # DIAG-END IMPORTS
 
@@ -80,39 +82,53 @@ atexit.register(_flush_logs)
 # DIAG-END STARTUP-AND-FLUSH
 
 
-def main():
-    logger.info("bb8_core.main started")
-    try:
-        from addon.bb8_core.bridge_controller import start_bridge_controller
-
-        start_bridge_controller()
-        logger.info("bridge_controller started; entering run loop")
-        # Block main thread until SIGTERM/SIGINT
-        import signal
-
+def main() -> None:
+    print("DEBUG: main() function starting", flush=True)
+    logger.info("main() starting minimal loop")
+    
+    try:        
         stop_evt = False
 
         def _on_signal(signum, frame):
-            logger.info(f"signal_received signum={signum}")
             nonlocal stop_evt
+            print(f"DEBUG: signal {signum} received", flush=True)
+            logger.info(f"Signal {signum} received, stopping")
             stop_evt = True
 
         signal.signal(signal.SIGTERM, _on_signal)
         signal.signal(signal.SIGINT, _on_signal)
+        print("DEBUG: entering signal loop", flush=True)
+        logger.info("Entering main loop")
+        
+        counter = 0
         while not stop_evt:
-            time.sleep(1)
-        logger.info("main exiting after signal")
+            time.sleep(5)
+            counter += 1 
+            if counter % 6 == 0:  # Every 30 seconds
+                logger.info(f"Main process alive, counter={counter}")
+                print(f"DEBUG: main alive counter={counter}", flush=True)
+                
+        print("DEBUG: main exiting after signal", flush=True)
+        logger.info("Main exiting after signal")
     except Exception as e:
-        logger.exception(f"fatal error in main: {e}")
-        _flush_logs()
+        print(f"DEBUG: fatal error in main: {e}", flush=True)
+        logger.exception(f"Fatal error in main: {e}")
         sys.exit(1)
 
 
+print(f"DEBUG: __name__ = {__name__}", flush=True)
+print(f"DEBUG: __file__ = {__file__}", flush=True)
+
 if __name__ == "__main__":
+    print("DEBUG: entering __main__ block", flush=True)
     try:
         main()
+        print("DEBUG: main() completed normally", flush=True)
         logger.info("main.py exited normally")
     except Exception as e:
+        print(f"DEBUG: top-level exception: {e}", flush=True)
         logger.exception(f"main.py top-level exception: {e}")
         _flush_logs()
         sys.exit(1)
+else:
+    print(f"DEBUG: __name__ is not __main__, it's {__name__}", flush=True)

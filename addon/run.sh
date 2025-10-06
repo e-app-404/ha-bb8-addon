@@ -162,16 +162,17 @@ while true; do
 
   diag_emit "RUNLOOP attempt #$RESTART_COUNT"
 
-  # Start main
-  "$PY" -u -m bb8_core.main &  MAIN_PID=$!
-  diag_emit "Started bb8_core.main PID=$MAIN_PID"
+  # Start main (TEMPORARILY DISABLED FOR ECHO DEBUG)
+  # "$PY" -u -m bb8_core.main &  MAIN_PID=$!
+  MAIN_PID=0
+  diag_emit "Started bb8_core.main PID=$MAIN_PID (DISABLED FOR ECHO TEST)"
 
   # Start echo if enabled and not s6-managed
   ECHO_PID=0
   if [ "$ENABLE_ECHO_RAW" = "true" ] && [ "$RUNSH_MUST_SPAWN_ECHO" = "1" ]; then
-    "$PY" -u -m bb8_core.echo_responder &  ECHO_PID=$!
+    /usr/src/app/bb8_core/test_shell.sh &  ECHO_PID=$!
     # NOTE: DIAG grep depends on this exact token
-    diag_emit "Started bb8_core.echo_responder PID=$ECHO_PID"
+    diag_emit "Started test_shell.sh PID=$ECHO_PID"
   else
     reason="echo_responder disabled"
     [ "$ENABLE_ECHO_RAW" = "true" ] && [ "$RUNSH_MUST_SPAWN_ECHO" = "0" ] && reason="echo_responder supervised by s6"
