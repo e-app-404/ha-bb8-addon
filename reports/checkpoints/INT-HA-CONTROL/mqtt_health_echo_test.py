@@ -25,7 +25,7 @@ PING_TOPIC = f"{MQTT_BASE}/health/ping"
 ECHO_TOPIC = f"{MQTT_BASE}/health/echo"
 # Alternative: use existing echo infrastructure
 ALT_PING_TOPIC = f"{MQTT_BASE}/echo/cmd"
-ALT_ECHO_TOPIC = f"{MQTT_BASE}/echo/state"
+ALT_ECHO_TOPIC = f"{MQTT_BASE}/echo/ack"  # Fixed: responder publishes to ack, not state
 
 CHECKPOINT_DIR = "/Users/evertappels/Projects/HA-BB8/reports/checkpoints/INT-HA-CONTROL"
 SLA_THRESHOLD_SEC = 1.0
