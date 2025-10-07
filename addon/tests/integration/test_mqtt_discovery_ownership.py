@@ -3,9 +3,9 @@ Integration test for MQTT dispatcher discovery ownership
 Part of QG-TEST-80 coverage milestone
 """
 import json
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from addon.bb8_core.mqtt_dispatcher import start_mqtt_dispatcher
 from addon.bb8_core.facade import BB8Facade
 
 
@@ -43,6 +43,7 @@ class TestMQTTDiscoveryOwnership:
         
         # Track published messages
         published_messages = []
+
         def capture_publish(topic, payload, **kwargs):
             published_messages.append((topic, payload))
         
@@ -105,6 +106,7 @@ class TestMQTTDiscoveryOwnership:
             mock_client.connect.return_value = 0
             
             published_messages = []
+
             def capture_publish(topic, payload, **kwargs):
                 published_messages.append((topic, payload))
             
@@ -132,6 +134,7 @@ class TestMQTTDiscoveryOwnership:
         
         # After reconnect, state should be republished
         state_topics = []
+
         def capture_state_publish(topic, payload, **kwargs):
             if '/state' in topic:
                 state_topics.append((topic, payload))
