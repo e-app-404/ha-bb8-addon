@@ -1,8 +1,8 @@
 [run]
 branch = True
-# Only exclude truly untestable entrypoints; justify each:
+source = addon/bb8_core
 omit =
-    addon/bb8_core/main.py          # process entry shim; behavior covered via integration harness
+    addon/bb8_core/main.py          # Entry shim; exercised via integration harness
 [report]
 fail_under = 60
 show_missing = True
