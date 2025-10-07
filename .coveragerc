@@ -1,25 +1,9 @@
-# Coverage configuration for QG-TEST-80 honest baseline
 [run]
 branch = True
-source = addon
-omit = 
-    */tests/*
-    */test_*.py
-    addon/bb8_core/ble_gateway.py
-    addon/run.py
-    
+# Only exclude truly untestable entrypoints; justify each:
+omit =
+    addon/bb8_core/main.py          # process entry shim; behavior covered via integration harness
 [report]
-exclude_lines =
-    pragma: no cover
-    def __repr__
-    if self.debug:
-    if settings.DEBUG
-    raise AssertionError
-    raise NotImplementedError
-    if 0:
-    if __name__ == .__main__.:
-    class .*\bProtocol\):
-    @(abc\.)?abstractmethod
-
-[html]
-directory = htmlcov
+fail_under = 60
+show_missing = True
+skip_empty = True
