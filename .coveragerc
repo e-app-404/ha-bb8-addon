@@ -2,9 +2,10 @@
 data_file = reports/checkpoints/QG-TEST-80/.coverage
 concurrency = thread
 branch = True
-source = addon/bb8_core
-omit = addon/bb8_core/main.py          # Entry shim; exercised via integration harness
 [report]
 fail_under = 60
 show_missing = True
 skip_empty = True
+source = /Users/evertappels/actions-runner/Projects/HA-BB8/addon/bb8_core
+omit =
+    addon/bb8_core/main.py     # entry shim; exercised via integration harness

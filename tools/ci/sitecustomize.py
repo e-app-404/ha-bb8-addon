@@ -1,8 +1,5 @@
-# Ensures addon package is importable and measured identically in all runners.
-import pathlib
-import sys
-
-root = pathlib.Path(__file__).resolve().parents[2]  # repo root
-pkg = root / "addon"
+import sys, pathlib
+repo = pathlib.Path(__file__).resolve().parents[2]
+pkg  = repo / "addon"
 if str(pkg) not in sys.path:
     sys.path.insert(0, str(pkg))
