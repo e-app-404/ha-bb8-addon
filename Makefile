@@ -164,3 +164,16 @@ publish:
 # TODO: check correct script name vs publish_addon_archive.sh
 quiet:
 	sh ops/check_workspace_quiet.sh .
+
+# =====================
+# ENV Governance (ADR-0024)
+# =====================
+
+.PHONY: env-print env-validate
+
+env-print:
+	@echo "CONFIG_ROOT=$${CONFIG_ROOT:-/config}"
+	@grep -E '^(export )?[A-Z0-9_]+=' .env | sed 's/^export //'
+
+env-validate:
+	@bash ops/env/env_governance_check.sh | tee reports/checkpoints/ENV-GOV/env_validate.out

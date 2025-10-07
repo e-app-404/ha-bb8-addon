@@ -13,20 +13,21 @@ related:
   - ADR-0009
   - ADR-0017
   - ADR-0018
-last_updated: 2025-09-30
+last_updated: 2025-10-07
+tags: ["workspace", "organization", "taxonomy", "folder structure", "ADR", "layout", "archive", "logs", "reports"]
 supersedes: []
 ---
 
 # ADR-0019: Workspace folder taxonomy and assignation rules
 
 ## Table of Contents
-1. Context
-2. Decision
-3. Canonical roots
-4. Assignation Rules (programmatic)
-5. Enforcement
-6. Consequences
-7. Token Block
+1. [Context](#1-context)
+2. [Decision](#2-decision)
+3. [Assignation Rules (programmatic)](#3-assignation-rules-programmatic)
+4. [Enforcement](#4-enforcement)
+5. [Consequences](#5-consequences)
+6. [Addendum A: Time-Based Log Organization Pattern (2025-10-07)](#addendum-a-time-based-log-organization-pattern-2025-10-07)
+7. [Token Block](#6-token-block)
 
 ## 1. Context
 This project maintains a canonical add-on code root at `addon/`. Prior drift produced duplicate or misplaced content at the repository root (e.g., `bb8_core/`, `services.d/`, and `tools/`). This ADR defines categorical purposes and programmatic assignation rules per folder to prevent drift.
@@ -91,6 +92,99 @@ This project maintains a canonical add-on code root at `addon/`. Prior drift pro
 - Clear separation of runtime vs ops/dev artifacts.
 - Automated guardrails prevent regression.
 
+## Addendum A: Time-Based Log Organization Pattern (2025-10-07)
+
+### Context
+During Gate A INT-HA-CONTROL operations, the workspace accumulated significant operational artifacts in checkpoint directories and root locations. The original taxonomy provided general guidance for logs/ vs reports/ separation but lacked specific organizational patterns for temporal log management and topic-based archival.
+
+### Enhanced Organization Pattern
+
+**Implemented Structure:**
+```
+logs/{ISOWEEK}/{topic}/{$TS-logtitle}
+reports/{topic}/{meaningful-report-title}
+```
+
+**ISO Week-Based Log Archival (`logs/`):**
+```
+logs/2025-W41/                    # ISO week format for temporal organization
+├── int-ha-control/               # Topic: INT-HA-CONTROL operational logs
+│   ├── 20241007_030000-addon_restart.log
+│   ├── 20241007_030000-mqtt_roundtrip.log
+│   ├── Gate-A-Echo-Unblock-Harness.sh
+│   └── discovery_ownership_audit.py
+├── coverage/                     # Topic: Test coverage measurement
+│   ├── coverage.json
+│   └── coverage_final_80.json
+├── deployment/                   # Topic: Deployment operations
+│   ├── 20241007_030000-deploy_receipt.txt
+│   └── 20241007_030000-publish_receipt.txt
+├── diagnostics/                  # Topic: System diagnostics
+│   └── ha_bb8_diagnostics_*.tar.gz
+├── general/                      # Topic: General operational logs
+│   └── (timestamped operational files)
+└── stp4/                        # Topic: STP4 attestation
+    └── stp4_* directories
+```
+
+**Topic-Based Report Organization (`reports/`):**
+```
+reports/
+├── int-ha-control/               # Permanent INT-HA-CONTROL insights
+│   ├── GATE_A_COMPLETION_SUMMARY.md
+│   ├── ESCALATION_REPORT.md
+│   └── REMEDIATION_STATUS.md
+├── infrastructure/               # Infrastructure analysis & decisions
+│   ├── INFRASTRUCTURE_BLOCKER_REPORT.md
+│   ├── reconnaissance_analysis_20250928.md
+│   └── WORKSPACE_ORGANIZATION_COMPLETED.md
+├── coverage-analysis/            # Coverage measurement insights
+├── deployment-status/            # Deployment status & provenance
+│   └── version_provenance_2025-10-03.md
+└── (existing report categories)
+```
+
+### Implementation Benefits
+
+**Temporal Organization:**
+- **ISO Week Structure**: `logs/YYYY-WWW/` provides natural weekly archival boundaries
+- **Timestamp Prefixing**: `YYYYMMDD_HHMMSS-` ensures chronological ordering within topics
+- **Automatic Cleanup**: Weekly boundaries enable systematic log rotation
+
+**Topic-Based Categorization:**  
+- **Operational Separation**: Logs by operational domain (int-ha-control, deployment, coverage)
+- **Context Preservation**: Related artifacts grouped together for investigation
+- **Scalable Structure**: New topics can be added without restructuring
+
+**Clear Retention Policy:**
+- **Logs**: Temporary artifacts with weekly archival, subject to rotation
+- **Reports**: Permanent insights, findings, and decisions tracked in git
+
+### Migration Pattern
+When checkpoint directories or operational artifacts accumulate:
+
+1. **Classify by Purpose**:
+   - Operational logs, scripts, data files → `logs/YYYY-WWW/topic/`
+   - Insights, reports, decisions, summaries → `reports/topic/`
+
+2. **Apply Temporal Structure**:
+   - Use current ISO week for log organization
+   - Add timestamp prefixes for chronological ordering
+   - Group by operational topic/domain
+
+3. **Preserve Evidence**:
+   - Maintain operational audit trails in logs
+   - Keep permanent insights in reports
+   - Document organizational decisions (like this addendum)
+
+### Enforcement Updates
+- **Weekly Cleanup**: Systematic log organization using ISO week boundaries
+- **Topic Validation**: Operational artifacts must be categorized by topic
+- **Retention Policy**: Logs subject to rotation, reports permanently tracked
+- **Migration Protocol**: Standard pattern for cleanup operations
+
+This addendum formalizes the workspace organization pattern implemented during 2025-W41 INT-HA-CONTROL operations, establishing a scalable model for future operational artifact management.
+
 ## 6. Token Block
 ```yaml
 TOKEN_BLOCK:
@@ -99,6 +193,9 @@ TOKEN_BLOCK:
     - FOLDER_ASSIGNATION_OK
     - ADR_THREE_TIER_STRUCTURE
     - ADR_CANONICAL_SEGREGATION
+    - TIME_BASED_LOG_ORGANIZATION
+    - ISO_WEEK_ARCHIVAL_PATTERN
+    - TOPIC_BASED_CATEGORIZATION
     - TOKEN_BLOCK_OK
   requires:
     - ADR_SCHEMA_V1
@@ -106,6 +203,7 @@ TOKEN_BLOCK:
     - ADR_GENERATION_OK
     - ADR_REDACTION_OK
     - THREE_TIER_ADR_FOLDER_DISCIPLINE
+    - WORKSPACE_ORGANIZATION_PATTERN
   drift:
     - DRIFT: root_services_d_present
     - DRIFT: adr_canonical_supporting_confusion
@@ -114,4 +212,6 @@ TOKEN_BLOCK:
     - DRIFT: folder_taxonomy_violation
     - DRIFT: adr_subfolder_violation
     - DRIFT: adr_formatting_noncompliant
+    - DRIFT: temporal_log_organization_missing
+    - DRIFT: topic_categorization_absent
 ```

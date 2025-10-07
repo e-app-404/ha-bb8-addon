@@ -1,0 +1,105 @@
+--- .env.original	2025-10-07 00:00:00.000000000 +0000
++++ .env.adr0024	2025-10-07 00:00:00.000000000 +0000
+@@ -4,6 +4,10 @@
+ # =====================================================================
+ 
+ # -----------------------------
++# [ADR-0024 CANONICAL PATHS]
++# -----------------------------
++export CONFIG_ROOT=/config
++
+ # [GLOBAL HOST / PATH ROOTS]
+ # -----------------------------
+ # Canonical projects root (local default)
+@@ -19,9 +23,6 @@
+ # HA SSH 
+ export HA_SSH_HASS="ssh hass"
+ 
+-# -----------------------------
+-# [HOME ASSISTANT CONFIG / HESTIA]
+-# -----------------------------
+-# Neutral autofs mount; operator fallback identical (no literal ~)
+-export HA_MOUNT="${HA_MOUNT:-$HOME/hass}"
+-export HA_MOUNT_OPERATOR="${HA_MOUNT_OPERATOR:-$HOME/hass}"
+-export CONFIG_MOUNT="$HA_MOUNT"
++# DEPRECATED: Replaced by CONFIG_ROOT=/config per ADR-0024
++# export HA_MOUNT="${HA_MOUNT:-$HOME/hass}"
++# export HA_MOUNT_OPERATOR="${HA_MOUNT_OPERATOR:-$HOME/hass}"
++# export CONFIG_MOUNT="$HA_MOUNT"
+ 
+ # Hestia canonical roots
+-export DIR_HESTIA="$CONFIG_MOUNT/hestia"
+-export DIR_PACKAGES="$CONFIG_MOUNT/packages"
+-export DIR_DOMAINS="$CONFIG_MOUNT/domains"
+-export TEMPLATE_CANONICAL="$CONFIG_MOUNT/custom_templates/template.library.jinja"
++export DIR_HESTIA="$CONFIG_ROOT/hestia"
++export DIR_PACKAGES="$CONFIG_ROOT/packages"
++export DIR_DOMAIN="$CONFIG_ROOT/domain"
++export TEMPLATE_CANONICAL="$CONFIG_ROOT/custom_templates/template.library.jinja"
+ 
+ # Four-pillar layout
+ export HESTIA_CONFIG="$DIR_HESTIA/config"
+@@ -40,7 +40,7 @@
+ # Hestia key subdirs
+ export HESTIA_ADR="$HESTIA_LIBRARY/docs/ADR"
+ export HESTIA_PLAYBOOKS="$HESTIA_LIBRARY/docs/playbooks"
+-export HESTIA_BLUEPRINTS="$HESTIA_LIBRARY/templates/blueprints"
++export HESTIA_BLUEPRINTS="$HESTIA_LIBRARY/blueprints"
+ export HESTIA_DEVICES="$HESTIA_CONFIG/devices"
+ export HESTIA_NETWORK="$HESTIA_CONFIG/network"
+ export HESTIA_VAULT="$HESTIA_WORKSPACE/archive/vault"
+@@ -82,7 +82,7 @@
+ export HA_SSH_USER=babylon-babes
+ 
+ # HA Add-on deployment paths
+-export HA_REMOTE_SCRIPT=/config/domain/shell_commands/addons_runtime_fetch.sh
++export HA_REMOTE_SCRIPT=/config/hestia/tools/addons_runtime_fetch.sh
+ export HA_REMOTE_RUNTIME=/addons/local/beep_boop_bb8
+ export HA_REMOTE_SLUG=local_beep_boop_bb8
+ export HA_SECRETS_PATH=/addons/local/beep_boop_bb8/secrets.yaml
+@@ -96,22 +96,11 @@
+ export WORKSPACE_ROOT="$BB8_ROOT"
+ export CHECKPOINT_DIR="$BB8_ROOT/reports/checkpoints/INT-HA-CONTROL"
+ 
+-# -------------------------------------
+-# [HA BB-8 ADDON MQTT EVIDENCE CREDS]
+-# -------------------------------------
+-# Evidence runner environment
+-MQTT_HOST=192.168.0.129
+-MQTT_PORT=1883
+-MQTT_USER=mqtt_bb8
+-MQTT_PASSWORD=mqtt_bb8
+-MQTT_BASE=bb8
+-REQUIRE_DEVICE_ECHO=1
+-ENABLE_BRIDGE_TELEMETRY=1
+-EVIDENCE_TIMEOUT_SEC=3.0
+-
+-# -------------------------------------
+-# [HA BB-8 ADDON VARIOUS]
+-# -------------------------------------
++# MOVED TO .evidence.env per ADR-0024: Keep secrets separate
++# MQTT_HOST, MQTT_PORT, MQTT_USER, MQTT_PASSWORD, MQTT_BASE
++# REQUIRE_DEVICE_ECHO, ENABLE_BRIDGE_TELEMETRY, EVIDENCE_TIMEOUT_SEC
++
++# [HA BB-8 ADDON REPOSITORY CONFIG]
+ 
+ export REMOTE="${REMOTE:-git@github.com:e-app-404/ha-bb8-addon.git}"
+ 
+@@ -127,4 +116,17 @@
+ export WORKSPACE_ROOT="$BB8_ROOT"
+ export CHECKPOINT_DIR="$BB8_ROOT/reports/checkpoints/INT-HA-CONTROL"
+ 
++# -----------------------------
++# [BACKUP - ORIGINAL VALUES]
++# -----------------------------
++# Commented for reference; remove after validation
++# export HA_MOUNT="${HA_MOUNT:-$HOME/hass}"
++# export HA_MOUNT_OPERATOR="${HA_MOUNT_OPERATOR:-$HOME/hass}"
++# export CONFIG_MOUNT="$HA_MOUNT"
++# export DIR_DOMAINS="$CONFIG_MOUNT/domains"  # renamed to DIR_DOMAIN
++# export HESTIA_BLUEPRINTS="$HESTIA_LIBRARY/templates/blueprints"  # fixed path
++# export HA_REMOTE_SCRIPT=/config/domain/shell_commands/addons_runtime_fetch.sh  # moved to hestia/tools
++# MQTT_* variables moved to .evidence.env
++# REQUIRE_DEVICE_ECHO, ENABLE_BRIDGE_TELEMETRY, EVIDENCE_TIMEOUT_SEC moved to .evidence.env
++
+ # End of file

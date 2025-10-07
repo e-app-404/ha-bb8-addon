@@ -1,0 +1,155 @@
+{
+  "assessment_date": "2025-10-07",
+  "adr_compliance": "ADR-0024",
+  "env_file": ".env",
+  "violations": {
+    "secrets_in_env": [
+      {
+        "variable": "MQTT_HOST",
+        "value": "192.168.0.129",
+        "severity": "HIGH",
+        "action": "MOVE_TO_EVIDENCE_ENV"
+      },
+      {
+        "variable": "MQTT_PORT", 
+        "value": "1883",
+        "severity": "HIGH",
+        "action": "MOVE_TO_EVIDENCE_ENV"
+      },
+      {
+        "variable": "MQTT_USER",
+        "value": "mqtt_bb8", 
+        "severity": "HIGH",
+        "action": "MOVE_TO_EVIDENCE_ENV"
+      },
+      {
+        "variable": "MQTT_PASSWORD",
+        "value": "mqtt_bb8",
+        "severity": "CRITICAL",
+        "action": "MOVE_TO_EVIDENCE_ENV"
+      },
+      {
+        "variable": "MQTT_BASE",
+        "value": "bb8",
+        "severity": "MEDIUM",
+        "action": "MOVE_TO_EVIDENCE_ENV"
+      },
+      {
+        "variable": "REQUIRE_DEVICE_ECHO",
+        "value": "1",
+        "severity": "MEDIUM", 
+        "action": "MOVE_TO_EVIDENCE_ENV"
+      },
+      {
+        "variable": "ENABLE_BRIDGE_TELEMETRY",
+        "value": "1",
+        "severity": "MEDIUM",
+        "action": "MOVE_TO_EVIDENCE_ENV"
+      },
+      {
+        "variable": "EVIDENCE_TIMEOUT_SEC",
+        "value": "3.0",
+        "severity": "MEDIUM",
+        "action": "MOVE_TO_EVIDENCE_ENV"
+      }
+    ],
+    "non_canonical_roots": [
+      {
+        "variable": "HA_MOUNT",
+        "value": "$HOME/hass",
+        "severity": "HIGH",
+        "action": "REPLACE_WITH_CONFIG_ROOT",
+        "canonical": "CONFIG_ROOT=/config"
+      },
+      {
+        "variable": "HA_MOUNT_OPERATOR", 
+        "value": "$HOME/hass",
+        "severity": "HIGH",
+        "action": "REPLACE_WITH_CONFIG_ROOT",
+        "canonical": "CONFIG_ROOT=/config"
+      },
+      {
+        "variable": "CONFIG_MOUNT",
+        "value": "$HA_MOUNT",
+        "severity": "HIGH", 
+        "action": "REPLACE_WITH_CONFIG_ROOT",
+        "canonical": "CONFIG_MOUNT=$CONFIG_ROOT"
+      },
+      {
+        "variable": "PROJECTS_ROOT",
+        "value": "host-dependent fallback",
+        "severity": "MEDIUM",
+        "action": "DOCUMENT_WORKSPACE_ONLY",
+        "note": "Keep for repo operations but not HA config paths"
+      }
+    ],
+    "path_typos": [
+      {
+        "variable": "DIR_DOMAINS",
+        "current_value": "$CONFIG_MOUNT/domains",
+        "severity": "MEDIUM",
+        "action": "RENAME_TO_DIR_DOMAIN", 
+        "canonical": "DIR_DOMAIN=$CONFIG_ROOT/domain"
+      },
+      {
+        "variable": "HESTIA_BLUEPRINTS",
+        "current_value": "$HESTIA_LIBRARY/templates/blueprints",
+        "severity": "MEDIUM",
+        "action": "FIX_PATH",
+        "canonical": "HESTIA_BLUEPRINTS=$HESTIA_LIBRARY/blueprints"
+      }
+    ],
+    "remote_script_locations": [
+      {
+        "variable": "HA_REMOTE_SCRIPT",
+        "current_value": "/config/domain/shell_commands/addons_runtime_fetch.sh",
+        "severity": "HIGH",
+        "action": "MOVE_TO_HESTIA_TOOLS",
+        "canonical": "HA_REMOTE_SCRIPT=/config/hestia/tools/addons_runtime_fetch.sh",
+        "note": "Scripts should live under hestia/tools; shell_commands/*.yaml should only declare HA entries"
+      }
+    ]
+  },
+  "compliance_status": {
+    "secrets_separation": "FAIL - 8 secrets found in .env",
+    "canonical_paths": "FAIL - 4 non-canonical root variables",
+    "path_accuracy": "FAIL - 2 path typos identified", 
+    "script_organization": "FAIL - 1 script in wrong location",
+    "overall": "NON_COMPLIANT"
+  },
+  "migration_impact": {
+    "breaking_changes": false,
+    "variables_to_remove": [
+      "HA_MOUNT",
+      "HA_MOUNT_OPERATOR", 
+      "MQTT_HOST",
+      "MQTT_PORT", 
+      "MQTT_USER",
+      "MQTT_PASSWORD",
+      "MQTT_BASE",
+      "REQUIRE_DEVICE_ECHO",
+      "ENABLE_BRIDGE_TELEMETRY", 
+      "EVIDENCE_TIMEOUT_SEC"
+    ],
+    "variables_to_add": [
+      "CONFIG_ROOT=/config"
+    ],
+    "variables_to_rename": [
+      "DIR_DOMAINS -> DIR_DOMAIN"
+    ],
+    "path_corrections": [
+      "HESTIA_BLUEPRINTS path fix",
+      "HA_REMOTE_SCRIPT location change"
+    ]
+  },
+  "validation_checklist": [
+    "✗ No secrets in .env",
+    "✗ CONFIG_ROOT=/config defined", 
+    "✗ No HA_MOUNT* variables",
+    "✗ DIR_DOMAIN (not DIR_DOMAINS)",
+    "✗ HESTIA_BLUEPRINTS correct path",
+    "✗ HA_REMOTE_SCRIPT in hestia/tools",
+    "✓ BB8 checkpoint paths correct",
+    "✓ WORKSPACE_ROOT defined for repo ops"
+  ]
+}
