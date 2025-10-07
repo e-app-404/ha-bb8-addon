@@ -1,2 +1,0 @@
-owners_seen=0
-duplicates=0

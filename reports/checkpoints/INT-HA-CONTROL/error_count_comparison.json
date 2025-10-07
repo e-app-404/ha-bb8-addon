@@ -1,7 +1,0 @@
-{
-  "window_minutes": 120,
-  "errors": {
-    "TypeError": 0,
-    "coroutine": 0
-  }
-}
