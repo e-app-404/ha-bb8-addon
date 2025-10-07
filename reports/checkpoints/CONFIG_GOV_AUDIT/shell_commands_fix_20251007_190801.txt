@@ -1,0 +1,43 @@
+# Shell Commands Normalization Summary
+# Generated: 2025-10-07 19:08:01 UTC
+# Part of: CONFIG_GOV_AUDIT
+
+## Normalization Actions
+
+### 1. Shell Commands Relocation
+- **Source**: `/System/Volumes/Data/homeassistant/domain/shell_commands/` (simulated)
+- **Target**: `/config/hestia/tools/evidence/ha_shell/`
+- **Archive**: `/config/hestia/workspace/archive/bleedthrough/20251007_190801/domain_shell_commands/`
+
+### 2. Files Processed
+- `ha_bb8_verification.sh` → Moved and normalized
+
+### 3. YAML Configuration Update Required
+**File**: `includes/shell_command.yaml`
+**Required Entry**:
+```yaml
+bb8_verification: "/config/hestia/tools/evidence/ha_shell/ha_bb8_verification.sh"
+```
+
+### 4. Validation
+- ✅ Executable permissions preserved
+- ✅ Archive created with timestamp
+- ✅ Target directory structure established
+- ⚠️  YAML config update needed manually
+
+### 5. Rollback Plan
+If issues occur, restore from archive:
+```bash
+cp /config/hestia/workspace/archive/bleedthrough/20251007_190801/domain_shell_commands/* \
+   /System/Volumes/Data/homeassistant/domain/shell_commands/
+```
+
+## Next Steps
+1. Update `includes/shell_command.yaml` with normalized paths
+2. Test shell command execution from HA
+3. Verify no broken references in configuration
+
+---
+**Process**: CONFIG_GOV_AUDIT shell commands normalization  
+**Status**: COMPLETE (YAML update pending)  
+**Evidence**: This file serves as audit trail
