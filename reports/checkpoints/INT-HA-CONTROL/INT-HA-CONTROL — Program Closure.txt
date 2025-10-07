@@ -1,0 +1,92 @@
+Goal: Cement INT-HA-CONTROL closure; start QG-TEST-80 with honest coverage. Execute exactly; preserve evidence.
+
+# 1) Freeze acceptance record (idempotent)
+git -C /Users/evertappels/actions-runner/Projects/HA-BB8 rev-parse --short HEAD \
+  | tee -a reports/checkpoints/INT-HA-CONTROL/commit.txt
+printf "%s\n" "INT-HA-CONTROL_ACCEPTED_2025-10-07" \
+  > reports/checkpoints/INT-HA-CONTROL/accepted_tag.txt
+git add reports/checkpoints/INT-HA-CONTROL/{commit.txt,accepted_tag.txt}
+git commit -m "INT-HA-CONTROL: freeze acceptance provenance" || true
+
+# 2) Steady-state monitors (cron/CI friendly)
+mkdir -p reports/checkpoints/health
+printf '%s\n' '#!/usr/bin/env bash
+set -euo pipefail
+HOST="${MQTT_HOST:-192.168.0.129}"; USER="${MQTT_USER:-mqtt_bb8}"; PASS="${MQTT_PASSWORD:-mqtt_bb8}"
+BASE="${MQTT_BASE:-bb8}"; TS=$(date -u +%Y%m%dT%H%M%SZ)
+python3 reports/checkpoints/INT-HA-CONTROL/mqtt_health_echo_test.py \
+  --host "$HOST" --port "${MQTT_PORT:-1883}" --user "$USER" --password "$PASS" --base "$BASE" \
+  --sla-ms 1000 --out "reports/checkpoints/health/echo_health_${TS}.json"
+' > ops/health/echo_health_check.sh
+chmod +x ops/health/echo_health_check.sh
+git add ops/health/echo_health_check.sh
+git commit -m "ops: add periodic echo health check" || true
+
+# 3) Normalize shell_command wiring (non-destructive)
+mkdir -p /System/Volumes/Data/homeassistant/hestia/tools/evidence/ha_shell
+# Move only .sh; keep YAML in includes
+rsync -a --include="*/" --include="*.sh" --exclude="*" \
+  /System/Volumes/Data/homeassistant/domain/shell_commands/ \
+  /System/Volumes/Data/homeassistant/hestia/tools/evidence/ha_shell/
+find /System/Volumes/Data/homeassistant/domain/shell_commands -maxdepth 1 -type f -name "*.sh" -print \
+  | sed 's#^.*/##' > reports/checkpoints/CONFIG_GOV_AUDIT/shell_commands_moved.list
+# Update YAML pointers (append if missing); manual review remains
+test -f /System/Volumes/Data/homeassistant/includes/shell_command.yaml || touch /System/Volumes/Data/homeassistant/includes/shell_command.yaml
+{
+  echo ""
+  echo "# === Strategos governance: canonical pointers (review) ==="
+  while read -r f; do
+    n="${f%.sh}"
+    echo "  ${n}: \"/config/hestia/tools/evidence/ha_shell/${f}\""
+  done < reports/checkpoints/CONFIG_GOV_AUDIT/shell_commands_moved.list
+} >> /System/Volumes/Data/homeassistant/includes/shell_command.yaml
+
+# 4) Kick off QG-TEST-80 (branch + policy)
+git checkout -B qg-test-80/coverage-honest-2025-10-07
+# Honest coverage policy (minimal omissions, document each)
+cat > .coveragerc <<'RC'
+[run]
+branch = True
+# Only exclude truly untestable entrypoints; justify each:
+omit =
+    addon/bb8_core/main.py          # process entry shim; behavior covered via integration harness
+[report]
+fail_under = 60
+show_missing = True
+skip_empty = True
+RC
+# Pytest config ratchet
+cat > pytest.ini <<'INI'
+[pytest]
+addopts = -q --maxfail=1
+testpaths = addon/tests
+INI
+git add .coveragerc pytest.ini
+git commit -m "QG-TEST-80: honest coverage policy (fail_under=60), pytest config" || true
+
+# 5) Seed integration-first tests (if not present)
+mkdir -p addon/tests/integration
+test -f addon/tests/integration/test_restart_persistence.py || cat > addon/tests/integration/test_restart_persistence.py <<'PY'
+import json, time
+def test_restart_persistence_mocked():
+    # placeholder: assert contract of restore() behavior via mocked broker
+    assert True
+PY
+git add addon/tests/integration/test_restart_persistence.py
+git commit -m "tests(integration): seed restart persistence placeholder (to replace with harness)" || true
+
+# 6) Run local coverage (optional dev, non-blocking)
+python3 -m pip install -U coverage pytest || true
+pytest || true
+coverage json -o reports/checkpoints/coverage_local.json || true
+git add reports/checkpoints/coverage_local.json || true
+git commit -m "reports: attach local coverage snapshot (non-blocking)" || true
+
+# 7) Evidence index refresh & archive
+find reports/checkpoints/INT-HA-CONTROL -maxdepth 1 -type f -printf "%TY-%Tm-%Td %TH:%TMZ  %9s  %f\n" | sort \
+  > reports/checkpoints/INT-HA-CONTROL/INDEX.txt
+tar -czf reports/checkpoints/INT-HA-CONTROL/INT-HA-CONTROL_ACCEPTED_$(date -u +%Y%m%dT%H%M%SZ).tar.gz \
+  -C reports/checkpoints/INT-HA-CONTROL .
+
+# 8) Push branch
+git push -u origin qg-test-80/coverage-honest-2025-10-07

@@ -27,6 +27,7 @@ Oct 7 16:57  354  reports/checkpoints/INT-HA-CONTROL/mqtt_persistence.log
 Oct 7 17:42  1740  reports/checkpoints/INT-HA-CONTROL/qa_report.json
 Oct 7 17:42  7580  reports/checkpoints/INT-HA-CONTROL/qa_rollup.sh
 Oct 7 17:43  6051  reports/checkpoints/INT-HA-CONTROL/entity_persistence_test_modified.sh
-Oct 7 19:17  8  reports/checkpoints/INT-HA-CONTROL/commit.txt
 Oct 7 20:08  4002  reports/checkpoints/INT-HA-CONTROL/ACCEPTANCE.md
-Oct 7 20:40  0  reports/checkpoints/INT-HA-CONTROL/INDEX.txt
+Oct 7 20:56  16  reports/checkpoints/INT-HA-CONTROL/commit.txt
+Oct 7 20:56  35  reports/checkpoints/INT-HA-CONTROL/accepted_tag.txt
+Oct 7 21:34  0  reports/checkpoints/INT-HA-CONTROL/INDEX.txt
