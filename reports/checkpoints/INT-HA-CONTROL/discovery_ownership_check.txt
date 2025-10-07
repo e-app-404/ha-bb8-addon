@@ -1,0 +1,4 @@
+OK: single owner
+timestamp: 2025-10-07T16:57:33+01:00
+duplicate_count: 0
+test_method: HA_Core_API_reload

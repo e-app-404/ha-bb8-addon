@@ -40,7 +40,7 @@ options:
   enable_health_checks: false
 
   # --- Discovery / Publishing policy ---
-  dispatcher_discovery_enabled: true   # <-- LED discovery ON by default
+  dispatcher_discovery_enabled: false  # <-- LED discovery OFF by default (INT-HA-CONTROL governance)
   discovery_retain: false
 
   # --- Caching & scan cadence ---

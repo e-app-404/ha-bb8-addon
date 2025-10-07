@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-10-07T12:19:57+01:00",
+  "publish_led_discovery": 0,
+  "strict_rgb": true,
+  "toggle_default": 0,
+  "violations": [],
+  "led_discovery_gated": true,
+  "status": "PASS"
+}

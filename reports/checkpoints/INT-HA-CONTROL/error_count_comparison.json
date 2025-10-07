@@ -1,0 +1,10 @@
+{
+  "window_minutes": 2,
+  "start_errors": 1,
+  "end_errors": 1,
+  "new_errors": 0,
+  "result": "OK",
+  "status": "PASS",
+  "samples_taken": 4,
+  "monitoring_complete": "2025-10-07T07:27:54+01:00"
+}

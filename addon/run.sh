@@ -31,4 +31,14 @@ fi
 
 # Default: echo foreground process
 log_ts "ECHO: launching bb8_core.echo_responder (foreground exec)"
+
+# Set internal MQTT broker hostname for container environment
+export MQTT_HOST="core-mosquitto"
+export MQTT_PORT="${MQTT_PORT:-1883}"
+export MQTT_USER="${MQTT_USER:-mqtt_bb8}"
+export MQTT_PASSWORD="${MQTT_PASSWORD:-mqtt_bb8}"
+export MQTT_BASE="${MQTT_BASE:-bb8}"
+
+log_ts "MQTT config: host=core-mosquitto port=${MQTT_PORT} user=${MQTT_USER} base=${MQTT_BASE}"
+
 exec python3 -m bb8_core.echo_responder
