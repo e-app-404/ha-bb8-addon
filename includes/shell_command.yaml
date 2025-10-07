@@ -1,0 +1,7 @@
+# Shell commands configuration
+# Updated by INT-HA-CONTROL normalization
+
+# === Strategos governance: canonical pointers (review) ===
+  demo_script: "/config/hestia/tools/evidence/ha_shell/demo_script.sh"
+  bb8_verification: "/config/hestia/tools/evidence/ha_shell/bb8_verification.sh"
+  echo_test: "/config/hestia/tools/evidence/ha_shell/echo_test.sh"
