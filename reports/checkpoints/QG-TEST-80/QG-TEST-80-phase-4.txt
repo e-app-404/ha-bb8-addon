@@ -1,0 +1,187 @@
+QG-TEST-80 — Phase-4 (targeted uplift) plan
+
+Context
+- Honest coverage infra fixed (97 files, 7,561 stmts measured). Net coverage = 26.2%. Foundation is now correct; gap to 60% = +33.8%.
+
+Objective (Phase-4, 1 sprint)
+- Raise honest coverage to ≥45% with low-risk, high-yield tests that do not touch runtime code paths used in production.
+
+Rules & constraints
+- Keep omissions minimal (retain `addon/bb8_core/main.py` only).  
+- No behavioral changes to production logic.  
+- Prefer unit/functional tests over end-to-end; mock external I/O (paho, OS env, time, HA API).
+
+Targeted uplift strategy (data-driven)
+1) Exploit “cheap lines”: pure/mostly-pure helpers and topic/config builders.  
+2) Cover “on_connect/on_message” routing branches with fake client/broker.  
+3) Validate discovery ownership and duplicate-pruning decisions with table-driven vectors.  
+4) Exercise LED schema/path gating with boundary cases and env toggles.  
+5) Hit config loader defaults and env coercion.
+
+Milestones & success criteria
+- M1 (T+1): add ≥6 unit tests across mqtt_dispatcher, addon_config, led_discovery; +8–12% coverage uplift.  
+- M2 (T+2): add ≥6 table-driven tests for discovery ownership & pruning; +6–8%.  
+- M3 (T+3): add dispatcher on_message routing matrix; +4–6%.  
+- Exit Phase-4 at **≥45%** (json shows ≥3,402/7,561 covered lines), files measured ≥97, omissions still 1.
+
+RACI
+- Strategos = A (approve/govern).  
+- Pythagoras/Copilot = R (author tests, wire CI).  
+- QA = C (review assertions & flakiness).  
+- Operator = I (kept informed; no runtime changes required).
+
+Risks & mitigations
+- Flaky time/env tests → freeze time & env via fixtures.  
+- Over-mocking → keep assertions on outcomes (topics/payloads), not implementation details.  
+- Scope creep → limit to bb8_core; defer BLE/hardware surfaces.
+
+Please execute the `copilot` block to (a) auto-select top targets from coverage.json, (b) generate focused tests, (c) run/commit/push, and (d) report new coverage and a short delta table (top 10 files by new lines covered).
+
+
+```copilot
+# QG-TEST-80 — Phase-4 targeted uplift: generate tests for high-yield paths and raise coverage
+
+set -euo pipefail
+cd /Users/evertappels/actions-runner/Projects/HA-BB8
+git checkout qg-test-80/coverage-honest-2025-10-07
+python3 -m venv .venv && source .venv/bin/activate
+python -m pip install -U pip pytest coverage pytest-mock
+
+# 0) Ensure coverage data exists and read it
+COV_JSON="reports/checkpoints/QG-TEST-80/coverage.json"
+if [ ! -f "$COV_JSON" ]; then
+  echo "Missing $COV_JSON; running a quick baseline to produce it"
+  PYTHONPATH="tools/ci:${PYTHONPATH:-}" coverage erase
+  PYTHONPATH="tools/ci:${PYTHONPATH:-}" coverage run -m pytest || true
+  coverage combine || true
+  mkdir -p reports/checkpoints/QG-TEST-80
+  coverage json -o "$COV_JSON"
+fi
+
+# 1) Pick high-yield targets from coverage.json (top by statements, low covered%)
+python - <<'PY'
+import json, pathlib
+p = pathlib.Path("reports/checkpoints/QG-TEST-80/coverage.json")
+cov = json.loads(p.read_text())
+rows=[]
+for path,info in cov.get("files",{}).items():
+    s=info["summary"]
+    total=s["num_statements"]; covered=s["covered_lines"]; missing=s["missing_lines"]
+    if total>=80 and path.startswith("addon/bb8_core/") and not path.endswith("/main.py"):
+        pct = 0 if total==0 else 100*covered/total
+        rows.append((pct,total,missing,path))
+# sort by lowest pct then highest total
+rows.sort(key=lambda r:(r[0],-r[1]))
+targets=[r[3] for r in rows[:10]]
+pathlib.Path("reports/checkpoints/QG-TEST-80/TARGETS.txt").write_text("\n".join(targets)+"\n")
+print("Selected targets:")
+for t in targets: print(" -",t)
+PY
+
+# 2) Create focused tests (idempotent) — adjust imports to actual module names present in repo.
+
+mkdir -p addon/tests/unit
+
+# 2a) mqtt_dispatcher: topic build, on_connect map, on_message routes
+cat > addon/tests/unit/test_mqtt_dispatcher_routes.py <<'PY'
+import types
+from typing import List, Tuple
+
+subs: List[Tuple[str,int]] = []
+published = []
+class FakeClient:
+    def __init__(self): self.connected=False
+    def connect(self,*a,**kw): self.connected=True; return 0
+    def subscribe(self, topic, qos=0): subs.append((topic,qos)); return (0,1)
+    def publish(self, topic, payload=None, qos=0, retain=False): published.append((topic,payload,qos,retain)); return types.SimpleNamespace(rc=0)
+    def loop_start(self): pass
+
+def test_connect_and_subscribe(monkeypatch):
+    from addon.bb8_core import mqtt_dispatcher as md
+    monkeypatch.setattr(md,"new_paho_client", lambda: FakeClient(), raising=False)
+    md.init_echo_paths(base="bb8")
+    c = md.new_paho_client()
+    assert c.connect()==0
+    md.on_connect(c,None,None,0)
+    assert any(t.endswith("/echo/cmd") for t,_ in subs)
+
+def test_on_message_echo_roundtrip(monkeypatch):
+    from addon.bb8_core import mqtt_dispatcher as md
+    published.clear()
+    payload_seen=[]
+    def fake_publish(client, topic, payload, **kw):
+        published.append((topic,payload))
+    monkeypatch.setattr(md,"_publish_echo_ack", lambda client, payload: fake_publish(client,f"bb8/echo/ack", payload))
+    # simulate message to /echo/cmd
+    msg=types.SimpleNamespace(topic="bb8/echo/cmd", payload=b'{"value":1}')
+    md.on_message(FakeClient(), None, msg)
+    assert any(t.endswith("/echo/ack") for t,_ in published)
+PY
+
+# 2b) addon_config: env/defaults and coercion
+cat > addon/tests/unit/test_addon_config_defaults.py <<'PY'
+def test_defaults_and_env(monkeypatch):
+    from addon.bb8_core.addon_config import load_config
+    monkeypatch.delenv("PUBLISH_LED_DISCOVERY", raising=False)
+    cfg = load_config()
+    assert cfg.get("publish_led_discovery") in (0, False)
+    monkeypatch.setenv("PUBLISH_LED_DISCOVERY","1")
+    cfg2 = load_config()
+    assert cfg2.get("publish_led_discovery") in (1, True)
+PY
+
+# 2c) led_discovery: payload clamp and device block alignment
+cat > addon/tests/unit/test_led_discovery_payload.py <<'PY'
+import json, os
+def test_led_payload_bounds(monkeypatch):
+    from addon.bb8_core.led_discovery import build_led_config
+    monkeypatch.setenv("PUBLISH_LED_DISCOVERY","1")
+    monkeypatch.setenv("LED_DEFAULT",'{"r":-1,"g":999,"b":"7"}')
+    cfg=build_led_config("bb8")
+    payload=json.loads(cfg["payload"])
+    assert payload["r"]==0 and payload["g"]==255 and payload["b"]==7
+    assert "device" in cfg and isinstance(cfg["device"], dict)
+PY
+
+# 2d) discovery ownership: duplicate pruning (table-driven)
+cat > addon/tests/unit/test_discovery_ownership_pruning.py <<'PY'
+def test_single_owner_pruning():
+    from addon.bb8_core.discovery import select_owner
+    entries=[
+        {"owner":"bb8","ts":10},
+        {"owner":"bb8","ts":11},  # newer same owner
+        {"owner":"other","ts":9}
+    ]
+    sel=select_owner(entries)
+    assert sel["owner"]=="bb8" and sel["ts"]==11
+PY
+
+# 3) Run coverage and export
+PYTHONPATH="tools/ci:${PYTHONPATH:-}" coverage erase
+PYTHONPATH="tools/ci:${PYTHONPATH:-}" coverage run -m pytest addon/tests/unit addon/tests/integration -q || true
+coverage combine || true
+coverage json -o reports/checkpoints/QG-TEST-80/coverage.json
+coverage html -d reports/checkpoints/QG-TEST-80/html || true
+
+python - <<'PY'
+import json, pathlib
+p = pathlib.Path("reports/checkpoints/QG-TEST-80/coverage.json")
+cov = json.loads(p.read_text())
+files = cov.get("files",{})
+tot = sum(f["summary"]["num_statements"] for f in files.values()) or 1
+covd= sum(f["summary"]["covered_lines"] for f in files.values())
+pct = round(100*covd/tot,1)
+ranking = sorted(((v["summary"]["covered_lines"],k) for k,v in files.items()), reverse=True)[:10]
+pathlib.Path("reports/checkpoints/QG-TEST-80/INDEX.txt").write_text(
+    f"coverage={pct}%\ncovered={covd}\ntotal={tot}\nfiles={len(files)}\n" +
+    "top10_files_by_covered_lines:\n" + "\n".join(f"- {k}: {c}" for c,k in ranking) + "\n"
+)
+print(f"[QG-TEST-80] Phase-4 interim coverage: {pct}%  ({covd}/{tot}) files={len(files)}")
+PY
+
+git add addon/tests/unit reports/checkpoints/QG-TEST-80/coverage.json reports/checkpoints/QG-TEST-80/html reports/checkpoints/QG-TEST-80/INDEX.txt reports/checkpoints/QG-TEST-80/TARGETS.txt
+git commit -m "QG-TEST-80 Phase-4: targeted unit tests for dispatcher/config/LED/ownership; updated coverage artifacts" || true
+git push -u origin qg-test-80/coverage-honest-2025-10-07
+
+echo "Done. Post the printed interim coverage line and attach the first 10 lines of INDEX.txt."
+```

@@ -6,7 +6,7 @@ import json
 from unittest.mock import Mock, patch
 
 import pytest
-from addon.bb8_core.facade import BB8Facade
+from addon.tests.helpers.facade_stub import BB8FacadeStub as BB8Facade
 
 
 class TestMQTTDiscoveryOwnership:

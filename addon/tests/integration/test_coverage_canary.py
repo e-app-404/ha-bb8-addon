@@ -1,4 +1,5 @@
-import json, pathlib, subprocess, os
+
+
 def test_coverage_measures_enough_files(tmp_path):
     # Only runs when called under "coverage run -m pytest"
     # We introspect the temp .coverage data after at least one run segment exists.

@@ -10,7 +10,7 @@ from collections.abc import Callable
 from typing import Any
 
 import paho.mqtt.client as mqtt
-from paho.mqtt.client import CallbackAPIVersion
+from paho.mqtt.enums import CallbackAPIVersion
 
 from .addon_config import CONFIG, CONFIG_SOURCE, init_config
 from .bb8_presence_scanner import publish_discovery as _publish_discovery_async
