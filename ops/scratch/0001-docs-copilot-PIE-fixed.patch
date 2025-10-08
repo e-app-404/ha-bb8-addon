@@ -5,22 +5,22 @@ index 1111111..2222222 100644
 @@ -1,4 +1,4 @@
 -# AI Coding Agent Instructions: HA-BB8 Add-on
 +# AI Coding Agent Instructions: HA-BB8 Add-on (Governed, PIE-Optimized)
- 
+
  ## Project Overview
  Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT. This codebase follows a layered architecture with comprehensive ADR governance, extensive testing, and operational evidence collection. Uses Alpine Linux v3.22 runtime with centralized configuration management and verified deployment pipeline.
 @@ -12,10 +12,19 @@ Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT. This codeb
  - **facade.py**: BB8Facade - unified interface between MQTT dispatcher and BLE bridge
  - **addon_config.py**: Configuration loader with provenance (options.json → env → YAML fallback)
- 
+
  ### Service Flow
  ```
--run.sh → bridge_controller.py → start_bridge_controller() → 
--  resolve_bb8_mac() → BleGateway → BLEBridge → BB8Facade → 
+-run.sh → bridge_controller.py → start_bridge_controller() →
+-  resolve_bb8_mac() → BleGateway → BLEBridge → BB8Facade →
 +run.sh → bridge_controller.py → start_bridge_controller() →
 +  resolve_bb8_mac() → BleGateway → BLEBridge → BB8Facade →
    mqtt_dispatcher.start_mqtt_dispatcher()
  ```
- 
+
 +### Runtime Model Policy (PIE: P3 — Prevent)
 +**Do not mix supervision models.**
 +* **Foreground single-proc (Gate A/B):** `run.sh` must `exec` the target (echo/bridge). Keep conflicting `services.d/*` entries **down**.
@@ -34,9 +34,9 @@ index 1111111..2222222 100644
  - **Config**: `/data/options.json` → environment vars → structured config with provenance logging
  - **MQTT**: Commands (`bb8/*/set`) → facade → BLE bridge → device, Status (`bb8/*/state`) published on changes
 @@ -23,11 +32,32 @@ Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT. This codeb
- 
+
  ## Critical Development Practices
- 
+
 -### Import & Module Structure
 -- **Runtime imports**: Use `bb8_core.*` when running from `addon/` directory (matches `python -m bb8_core.echo_responder`)
 -- **Test imports**: Use `addon.bb8_core.*` in test files that run from workspace root
@@ -69,13 +69,13 @@ index 1111111..2222222 100644
 +    client.subscribe(f"{base}/echo/cmd")
 +```
 +ADR alignment: 0032, 0035.
- 
+
  ### Configuration System
  ```python
 @@ -45,6 +75,21 @@ logger.info({"event": "structured_event", "key": "value"})
  - Auto-redaction of secrets (password, token, apikey patterns)
  - NO print statements or `logging.basicConfig()` elsewhere
- 
+
 +**Masked Keys (PIE: P5 — Prevent)**
 +* Always mask: `MQTT_PASSWORD`, `HA_TOKEN`, `API_KEY`, any `*_SECRET`.
 +* Use exact placeholder: `[MASKED]` for diff-friendly evidence.
@@ -93,12 +93,12 @@ index 1111111..2222222 100644
 +Rationale: Faster grepping and evidence parsing.
 +
  ## Testing & Quality
- 
+
  ### Test Organization (addon/tests/)
 @@ -62,6 +107,12 @@ make evidence-stp4  # End-to-end MQTT roundtrip attestation
  - Use `# pragma: no cover` for unreachable/external integration code
  - 200+ tests target for comprehensive validation
- 
+
 +### Test Runtime Policy (PIE: I3 — Improve)
 +* Mark hardware/long BLE tests with `@pytest.mark.slow`.
 +* Default local runs deselect slow tests: `pytest -q -k 'not slow'`.
@@ -106,15 +106,15 @@ index 1111111..2222222 100644
 +* `pytest-xdist` can be used locally for parallel-safe modules.
 +
  ## Home Assistant Integration
- 
+
  ### MQTT Topics & Discovery
 @@ -95,9 +146,18 @@ Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT. This codeb
- 
+
  ### Evidence Collection
  - Runtime telemetry via `EvidenceRecorder` (150 lines max)
  - Diagnostics via `ops/diag/collect_ha_bb8_diagnostics.sh`
  - Attestation via STP4 protocol for MQTT roundtrip validation
- 
+
 +#### Evidence Contract (Governed) (PIE: P2 — Prevent)
 +* Only **governed harness/tests** may write under `reports/checkpoints/**`.
 +* Exploratory/ad-hoc scripts must write to `sandbox/` or `tmp/`, **never** to `reports/checkpoints/**`.
@@ -128,7 +128,7 @@ index 1111111..2222222 100644
 @@ -207,6 +267,17 @@ CONTEXT_HANDOFF:
    next_actions: [<prioritized tasks>]
  ```
- 
+
 +**Workspace Map Refresh (PIE: E2 — Extend)**
 +* On new branches or file moves, refresh `tools/index.jsonl` (workspace map) and commit it.
 +* Agents should read this index first to target changes precisely.
@@ -159,10 +159,10 @@ index 1111111..2222222 100644
 +* **Release patch** — `make release-patch`
 +
  ### Common Anti-Patterns by Model
- 
+
  **GPT-4o mini Anti-Patterns:**
 @@ -223,6 +294,8 @@ python3 -m venv .venv && source .venv/bin/activate
- pip install -r addon/requirements.txt -r addon/requirements-dev.txt  
+ pip install -r addon/requirements.txt -r addon/requirements-dev.txt
  pytest -q addon/tests                    # Run tests
  make qa                                   # Full quality suite
  ```
@@ -342,8 +342,8 @@ index 0000000..6666666
 +    { "label": "Evidence: STP4", "type": "shell", "command": "make evidence-stp4", "group": "test" },
 +    { "label": "Release: patch", "type": "shell", "command": "make release-patch", "group": "build" }
 +  ],
-+  "presentation": { 
-+    "reveal": "always", "panel": "shared" 
++  "presentation": {
++    "reveal": "always", "panel": "shared"
 +  }
 +}
 diff --git a/addon/CHANGELOG.md b/addon/CHANGELOG.md
@@ -352,7 +352,7 @@ index 7777777..8888888 100644
 +++ b/addon/CHANGELOG.md
 @@ -1,3 +1,11 @@
  # Add-on Changelog
- 
+
 +## 2025-10-08
 +### Docs & Tooling
 +- Optimize `copilot-instructions.md` using PIE methodology:
