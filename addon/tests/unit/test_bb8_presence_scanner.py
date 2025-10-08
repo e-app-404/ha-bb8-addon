@@ -3,18 +3,22 @@ Unit tests for bb8_presence_scanner module functions.
 Target: +322 lines coverage from 27.3%
 """
 
-import pytest
-from unittest.mock import Mock, patch
 import logging
 import sys
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 # Add addon to path for testing
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from addon.bb8_core.bb8_presence_scanner import (
-    read_version_or_default, _device_block, make_device_id, make_base,
-    log_config, _parse_led_payload, _clamp
+    _clamp,
+    _device_block,
+    _parse_led_payload,
+    log_config,
+    make_base,
+    make_device_id,
+    read_version_or_default,
 )
 
 

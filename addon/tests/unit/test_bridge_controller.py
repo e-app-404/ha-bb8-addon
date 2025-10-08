@@ -5,13 +5,14 @@ Target: +242 lines coverage from 20.1%
 
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 # Add addon to path for testing
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from addon.bb8_core.bridge_controller import (
-    start_bridge_controller, resolve_bb8_mac
+    resolve_bb8_mac,
+    start_bridge_controller,
 )
 
 

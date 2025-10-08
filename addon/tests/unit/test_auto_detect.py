@@ -3,7 +3,6 @@ Unit tests for auto_detect module functions.
 Target: +270 lines coverage from 19.2%
 """
 
-import logging
 import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -28,12 +27,10 @@ class TestAutoDetect:
         mock_scanner.start = Mock()
         mock_scanner.stop = Mock()
         
-        try:
-            result = scan_for_bb8()
+        import contextlib
+        with contextlib.suppress(AttributeError, TypeError):
+            scan_for_bb8()
             # Should return something or handle gracefully
-        except (AttributeError, TypeError):
-            # Exception acceptable for missing dependencies
-            pass
     
     @patch('addon.bb8_core.auto_detect.BleakScanner')
     def test_scan_for_bb8_with_timeout(self, mock_scanner_class):
@@ -45,12 +42,10 @@ class TestAutoDetect:
         mock_scanner.start = Mock()
         mock_scanner.stop = Mock()
         
-        try:
+        import contextlib
+        with contextlib.suppress(AttributeError, TypeError):
             result = scan_for_bb8(timeout=5.0)
             # Should handle timeout parameter
-        except (AttributeError, TypeError):
-            # Exception acceptable for missing dependencies
-            pass
     
     @patch('addon.bb8_core.auto_detect.BleakScanner')
     def test_scan_for_bb8_with_discovered_devices(self, mock_scanner_class):
@@ -68,12 +63,10 @@ class TestAutoDetect:
         mock_scanner.start = Mock()
         mock_scanner.stop = Mock()
         
-        try:
+        import contextlib
+        with contextlib.suppress(AttributeError, TypeError):
             result = scan_for_bb8()
             # Should handle discovered devices
-        except (AttributeError, TypeError):
-            # Exception acceptable for missing dependencies
-            pass
     
     @patch('addon.bb8_core.auto_detect.BleakScanner')
     def test_scan_for_bb8_scanner_exception(self, mock_scanner_class):
@@ -86,12 +79,10 @@ class TestAutoDetect:
         mock_scanner.start = Mock()
         mock_scanner.stop = Mock()
         
-        try:
+        import contextlib
+        with contextlib.suppress(Exception):
             result = scan_for_bb8()
             # Should handle scanner exceptions gracefully
-        except Exception:
-            # Exception is acceptable for scanner errors
-            pass
     
     @patch('addon.bb8_core.auto_detect.BleakScanner')
     def test_scan_for_bb8_no_devices_found(self, mock_scanner_class):

@@ -1,0 +1,15 @@
+coverage=47.4%
+covered=1547
+total=3262
+files=47
+top10_files_by_covered_lines:
+- addon/bb8_core/mqtt_dispatcher.py: 177
+- addon/bb8_core/auto_detect.py: 156
+- addon/bb8_core/bb8_presence_scanner.py: 147
+- addon/tests/unit/test_mqtt_dispatcher.py: 108
+- addon/bb8_core/bridge_controller.py: 88
+- addon/tests/unit/test_bb8_presence_scanner.py: 84
+- addon/bb8_core/logging_setup.py: 83
+- addon/bb8_core/ble_link.py: 69
+- addon/tests/unit/test_auto_detect.py: 61
+- addon/tests/unit/test_facade.py: 59

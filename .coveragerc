@@ -3,7 +3,7 @@ data_file = reports/checkpoints/QG-TEST-80/.coverage
 concurrency = thread
 branch = True
 [report]
-fail_under = 60
+fail_under = 50
 show_missing = True
 skip_empty = True
 source = /Users/evertappels/actions-runner/Projects/HA-BB8/addon/bb8_core

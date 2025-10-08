@@ -3,19 +3,23 @@ Unit tests for mqtt_dispatcher module functions.
 Target: +309 lines coverage from 25.7%
 """
 
-import pytest
-from unittest.mock import Mock, patch
-import json
 import sys
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 # Add addon to path for testing
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from addon.bb8_core.mqtt_dispatcher import (
-    start_mqtt_dispatcher, publish_discovery, _resolve_mqtt_host,
-    _norm_mac, _device_block, is_dispatcher_started,
-    ensure_dispatcher_started, turn_on_bb8, turn_off_bb8
+    _device_block,
+    _norm_mac,
+    _resolve_mqtt_host,
+    ensure_dispatcher_started,
+    is_dispatcher_started,
+    publish_discovery,
+    start_mqtt_dispatcher,
+    turn_off_bb8,
+    turn_on_bb8,
 )
 
 
