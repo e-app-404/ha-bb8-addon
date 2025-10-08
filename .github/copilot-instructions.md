@@ -1,4 +1,4 @@
-# AI Coding Agent Instructions: HA-BB8 Add-on
+# AI Coding Agent Instructions: HA-BB8 Add-on (Governed, PIE-Optimized)
 
 ## Project Overview
 Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT. This codebase follows a layered architecture with comprehensive ADR governance, extensive testing, and operational evidence collection. Uses Alpine Linux v3.22 runtime with centralized configuration management and verified deployment pipeline.
@@ -15,10 +15,19 @@ Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT. This codebas
 
 ### Service Flow
 ```
-run.sh → bridge_controller.py → start_bridge_controller() → 
-  resolve_bb8_mac() → BleGateway → BLEBridge → BB8Facade → 
+run.sh → bridge_controller.py → start_bridge_controller() →
+  resolve_bb8_mac() → BleGateway → BLEBridge → BB8Facade →
   mqtt_dispatcher.start_mqtt_dispatcher()
 ```
+
+### Runtime Model Policy (PIE: P3 — Prevent)
+**Do not mix supervision models.**
+* **Foreground single-proc (Gate A/B):** `run.sh` must `exec` the target (echo/bridge). Keep conflicting `services.d/*` entries **down**.
+* **s6-managed (multi-service):** `run.sh` starts `s6-svscan`; only services **without** `down` run.
+* Emit on startup:
+  - `RUNTIME_MODEL=foreground|s6`
+  - `SERVICE_LIST=[...]` (when s6)
+ADR alignment: 0031.
 
 ### Data Flow Patterns
 - **Config**: `/data/options.json` → environment vars → structured config with provenance logging
@@ -27,12 +36,32 @@ run.sh → bridge_controller.py → start_bridge_controller() →
 
 ## Critical Development Practices
 
-### Import & Module Structure
-- **Runtime imports**: Use `bb8_core.*` when running from `addon/` directory (matches `python -m bb8_core.echo_responder`)
-- **Test imports**: Use `addon.bb8_core.*` in test files that run from workspace root
-- Use `from __future__ import annotations` for forward compatibility
-- Suppress paho-mqtt deprecation warnings: `warnings.filterwarnings("ignore", "Callback API version 1 is deprecated")`
-- All modules use `__all__` exports for explicit public interface
+### Import & Module Structure (PIE: P4 — Prevent)
+* **Runtime imports:** Use `bb8_core.*` when the working dir is `addon/` and entrypoint is `python -m bb8_core.<module>`.
+* **Tests (workspace root):** Use `addon.bb8_core.*`. Ensure pytest adds repo root to `PYTHONPATH` (via `pytest.ini`).
+* **Do not mix** import styles in the same run.
+* **Guardrail:** Do not mutate `sys.path` inside production modules.
+* Use `from __future__ import annotations` where helpful; export `__all__` explicitly.
+
+### MQTT Client Initialization (PAHO v2) (PIE: P1 — Prevent)
+Use the correct API rather than suppressing warnings.
+```python
+import paho.mqtt.client as mqtt
+# Prefer MQTTv5 if broker supports it; otherwise use MQTTv311.
+client = mqtt.Client(
+    callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
+    protocol=mqtt.MQTTv5  # or mqtt.MQTTv311
+)
+def on_connect(client, userdata, flags, reasonCode, properties=None):
+    client.subscribe(f"{base}/echo/cmd")
+client.on_connect = on_connect
+```
+If using MQTTv311, adapt the signature:
+```python
+def on_connect(client, userdata, flags, rc):
+    client.subscribe(f"{base}/echo/cmd")
+```
+ADR alignment: 0032, 0035.
 
 ### Configuration System
 ```python
@@ -53,6 +82,22 @@ logger.info({"event": "structured_event", "key": "value"})
 - Auto-redaction of secrets (password, token, apikey patterns)
 - NO print statements or `logging.basicConfig()` elsewhere
 
+**Masked Keys (PIE: P5 — Prevent)**
+* Always mask: `MQTT_PASSWORD`, `HA_TOKEN`, `API_KEY`, any `*_SECRET`.
+* Use exact placeholder: `[MASKED]` for diff-friendly evidence.
+* Emit a single masked preview on startup:
+```json
+{"event":"startup_env_preview","MQTT_HOST":"...","MQTT_PORT":1883,"MQTT_USER":"[MASKED]","MQTT_PASSWORD":"[MASKED]"}
+```
+ADR alignment: 0041.
+
+**Standardized MQTT Lifecycle Events (PIE: I5 — Improve)**
+* `mqtt_connect_success`: `{"host":"...","port":1883}`
+* `mqtt_subscribed`: `{"topic":"..."}`
+* `mqtt_publish`: `{"topic":"...","len":123}`
+* `mqtt_disconnect`: `{"reason":"..."}`
+Rationale: Faster grepping and evidence parsing.
+
 ## Testing & Quality
 
 ### Test Organization (addon/tests/)
@@ -71,6 +116,12 @@ make evidence-stp4  # End-to-end MQTT roundtrip attestation
 - Minimum 80% test coverage enforced
 - Use `# pragma: no cover` for unreachable/external integration code
 - 200+ tests target for comprehensive validation
+
+### Test Runtime Policy (PIE: I3 — Improve)
+* Mark hardware/long BLE tests with `@pytest.mark.slow`.
+* Default local runs deselect slow tests: `pytest -q -k 'not slow'`.
+* CI gates run full suite; local dev uses fast set for iteration.
+* `pytest-xdist` can be used locally for parallel-safe modules.
 
 ## Home Assistant Integration
 
@@ -115,6 +166,13 @@ make evidence-stp4  # End-to-end MQTT roundtrip attestation
 - Runtime telemetry via `EvidenceRecorder` (150 lines max)
 - Diagnostics via `ops/diag/collect_ha_bb8_diagnostics.sh`
 - Attestation via STP4 protocol for MQTT roundtrip validation
+
+#### Evidence Contract (Governed) (PIE: P2 — Prevent)
+* Only **governed harness/tests** may write under `reports/checkpoints/**`.
+* Exploratory/ad-hoc scripts must write to `sandbox/` or `tmp/`, **never** to `reports/checkpoints/**`.
+* Any startup/config mutation must emit a timestamped backup under `/config/hestia/workspace/archive/**`.
+* Include `manifest.sha256` for every checkpoint directory.
+ADR alignment: 0008, 0031, 0041.
 
 ### Deployment Pipeline (ADR-0008)
 ```bash
@@ -246,6 +304,35 @@ CONTEXT_HANDOFF:
   next_actions: [<prioritized tasks>]
 ```
 
+**Workspace Map Refresh (PIE: E2 — Extend)**
+* On new branches or file moves, refresh `tools/index.jsonl` (workspace map) and commit it.
+* Agents should read this index first to target changes precisely.
+ADR alignment: 0019.
+
+## Editing Protocol for the AI Agent (PIE: I4 — Improve)
+1. **PLAN**: List files to touch, risks, expected artifacts.
+2. **DIFF**: Produce unified diffs; do not modify ADRs without explicit approval.
+3. **RUN**: Use governed commands (`make qa`, harness tests). No ad-hoc writes to `reports/checkpoints/**`.
+4. **EVIDENCE**: Attach logs and updated `manifest.sha256`. Stop on failure and record it.
+ADR alignment: 0009, 0031.
+
+## VSCode Profile (recommended) (PIE: I2 — Improve)
+Create `.vscode/settings.json`, `.vscode/tasks.json`, and `.vscode/extensions.json` (see repo files).
+Rationale: Fewer editor-induced errors; faster QA/deploy loops.
+
+## Workspace Hygiene (PIE: I1 — Improve)
+Add a `.dockerignore` to speed builds and avoid shipping dev artifacts (see repo file).
+ADR alignment: 0008.
+
+## Optional: Devcontainer (local dev only) (PIE: E1 — Extend)
+Provide a devcontainer for local lint/type/test only. **Do not** use it for Supervisor-governed operational tests (ADR-0031).
+
+## Command Palette Cheatsheet (PIE: E3 — Extend)
+* **Tests: fast** — `pytest -q addon/tests -k 'not slow'`
+* **QA** — `make qa`
+* **Evidence (STP4)** — `make evidence-stp4`
+* **Release patch** — `make release-patch`
+
 ### Common Anti-Patterns by Model
 
 **GPT-4o mini Anti-Patterns:**
@@ -267,3 +354,5 @@ pip install -r addon/requirements.txt -r addon/requirements-dev.txt
 pytest -q addon/tests                    # Run tests
 make qa                                   # Full quality suite
 ```
+
+> Note: local fast cycle is `pytest -q -k 'not slow'`. CI uses full suite for coverage gates.

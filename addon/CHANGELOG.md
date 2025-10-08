@@ -1,4 +1,14 @@
 
+# Add-on Changelog
+
+## 2025-10-08
+### Docs & Tooling
+- Optimize `copilot-instructions.md` using PIE methodology:
+  * P: PAHO v2 init (no blanket warning suppression), evidence-only writes policy, single runtime model, import/path policy, masked keys.
+  * I: VSCode profile (settings/tasks/extensions), workspace hygiene via `.dockerignore`, test runtime policy, PLAN→DIFF→RUN→EVIDENCE, MQTT lifecycle log schema.
+  * E: Optional devcontainer note, workspace map refresh, command palette cheatsheet.
+- ADR alignment: 0008, 0009, 0031, 0032, 0035, 0037, 0041. No runtime behavior changes.
+
 ## 2025-09-29 — 2025.8.21.45
 - bump: add-on version to 2025.8.21.45
 - chore: synchronized config.yaml and Dockerfile
