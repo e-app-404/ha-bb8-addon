@@ -28,7 +28,8 @@ run.sh → bridge_controller.py → start_bridge_controller() →
 ## Critical Development Practices
 
 ### Import & Module Structure
-- **NO** root-level imports of `bb8_core` - always use `addon.bb8_core` 
+- **Runtime imports**: Use `bb8_core.*` when running from `addon/` directory (matches `python -m bb8_core.echo_responder`)
+- **Test imports**: Use `addon.bb8_core.*` in test files that run from workspace root
 - Use `from __future__ import annotations` for forward compatibility
 - Suppress paho-mqtt deprecation warnings: `warnings.filterwarnings("ignore", "Callback API version 1 is deprecated")`
 - All modules use `__all__` exports for explicit public interface
@@ -173,7 +174,7 @@ ssh home-assistant 'grep version: /addons/local/beep_boop_bb8/config.yaml'
 - **BLE tools**: Install `bluez-deprecated`, standard `bluez-utils` insufficient
 - **Logging**: Never use multiple file handlers, centralize in `logging_setup.py`
 - **Motion tests**: Skip unless `ALLOW_MOTION_TESTS=1` environment variable set
-- **Import structure**: Use `addon.bb8_core` never `bb8_core` at root level
+- **Import structure**: Use `addon.bb8_core` in tests that run from workspace root level, `bb8_core` for runtime from addon directory
 
 ## AI Model Selection & Guardrails
 

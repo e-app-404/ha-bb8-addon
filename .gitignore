@@ -72,6 +72,9 @@ addon/.coverage.*
 .mypy_cache/
 .idea/
 
+# Python build artifacts
+*.egg-info/
+
 .git.DISABLED/
 *.env
 .ssh/
