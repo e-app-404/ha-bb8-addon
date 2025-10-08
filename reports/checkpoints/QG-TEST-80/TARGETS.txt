@@ -1,0 +1,7 @@
+addon/bb8_core/facade.py
+addon/bb8_core/ble_bridge.py
+addon/bb8_core/ble_link.py
+addon/bb8_core/bb8_presence_scanner.py
+addon/bb8_core/mqtt_dispatcher.py
+addon/bb8_core/addon_config.py
+addon/bb8_core/logging_setup.py
