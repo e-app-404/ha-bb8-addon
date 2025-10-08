@@ -1,6 +1,4 @@
-Oct 7 22:37  4864  reports/checkpoints/QG-TEST-80/QG-TEST-80
-Oct 7 22:51  8059  reports/checkpoints/QG-TEST-80/QG-TEST-80
-Oct 7 23:13  504  reports/checkpoints/QG-TEST-80/GAP_MAP.txt
-Oct 7 23:43  295435  reports/checkpoints/QG-TEST-80/coverage.json
-Oct 7 23:43  98304  reports/checkpoints/QG-TEST-80/.coverage
-Oct 7 23:51  0  reports/checkpoints/QG-TEST-80/INDEX.txt
+coverage=26.2%
+covered=1981
+total=7561
+files=97
