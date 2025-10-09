@@ -32,6 +32,8 @@ reports/**
 !reports/sessions/
 !reports/sessions/**
 !reports/*.md
+# Exception: allow evidence tarballs in checkpoints
+!reports/checkpoints/*.tar.gz
 
 # Keep ops/scratch logs tracked for operational documentation
 !ops/scratch/
@@ -60,13 +62,16 @@ htmlcov/**
 .DS_Store
 .vscode/
 *.code-workspace
+# Coverage files (transient, except in checkpoints/)
 coverage.json
 pytest-report.xml
-# Coverage files (generated, location: addon/)
 addon/.coverage
 addon/.coverage.*
 .coverage
 .coverage.*
+# Exception: preserve coverage files in evidence checkpoints
+!reports/checkpoints/**/coverage.json
+!reports/checkpoints/**/.coverage
 
 # common caches you may bump into locally
 .mypy_cache/

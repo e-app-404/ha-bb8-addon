@@ -1,5 +1,7 @@
 # bb8_core
 
+![Coverage ≥60% (main)](https://img.shields.io/badge/coverage-≥60%25-brightgreen)
+
 Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT.
 
 ## Features
