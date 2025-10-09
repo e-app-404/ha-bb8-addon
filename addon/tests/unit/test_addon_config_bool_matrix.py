@@ -1,17 +1,22 @@
 def _coerce(v):
-    from addon.bb8_core import addon_config as ac
     import os
-    k="PUBLISH_LED_DISCOVERY"
-    old=os.environ.get(k)
+
+    from addon.bb8_core import addon_config as ac
+
+    k = "PUBLISH_LED_DISCOVERY"
+    old = os.environ.get(k)
     try:
         if v is None:
             os.environ.pop(k, None)
         else:
-            os.environ[k]=v
+            os.environ[k] = v
         return ac.load_effective_config().get("PUBLISH_LED_DISCOVERY")
     finally:
-        if old is None: os.environ.pop(k, None)
-        else: os.environ[k]=old
+        if old is None:
+            os.environ.pop(k, None)
+        else:
+            os.environ[k] = old
+
 
 def test_bool_matrix_and_unknown_types(monkeypatch):
     # Typical truthy/falsy strings
