@@ -1,0 +1,19 @@
+#!/usr/bin/with-contenv bash
+set -euo pipefail
+
+# Honor options.json (enable_echo) or env override
+EN="${ENABLE_ECHO:-}"
+if [ -z "$EN" ] && [ -f /data/options.json ]; then
+  EN="$(jq -r '.enable_echo // false' /data/options.json 2>/dev/null || echo false)"
+fi
+if [ "$EN" != "true" ]; then
+  echo "[echo_responder] disabled (enable_echo=false) — sleeping indefinitely"
+  exec sleep infinity
+fi
+
+# Map limits with safe defaults
+export ECHO_MAX_INFLIGHT="${ECHO_MAX_INFLIGHT:-4}"
+export ECHO_MIN_INTERVAL_MS="${ECHO_MIN_INTERVAL_MS:-50}"
+
+cd /usr/src/app
+exec /opt/venv/bin/python -m bb8_core.echo_responder

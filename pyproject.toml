@@ -1,0 +1,14 @@
+# Authoritative; duplicate section removed on 18 August 2025.
+
+[project]
+name = "ha-bb8"
+version = "0.0.0"
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["bb8_core*"]
