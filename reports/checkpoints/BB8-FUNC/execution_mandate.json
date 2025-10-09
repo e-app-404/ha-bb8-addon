@@ -1,0 +1,29 @@
+{
+  "target_paths": [
+    "addon/bb8_core/facade.py",
+    "addon/bb8_core/ble_session.py",
+    "addon/bb8_core/bridge_controller.py",
+    "addon/tests/integration/test_ble_session.py",
+    "reports/checkpoints/BB8-FUNC/b1_ble_health.json"
+  ],
+  "objective": "Implement reliable, supervised BLE session lifecycle for Sphero BB-8 using spherov2 + bleak with watchdog metrics; expose wake/sleep/battery and movement primitives behind a single async facade; prove 3/3 connect-wake-sleep cycles under 5s mean connect time.",
+  "acceptance": {
+    "gate": "B1_BLE_LINK_OK",
+    "criteria": [
+      "3/3 consecutive connect→wake→sleep cycles succeed",
+      "mean connect time <= 5.0s",
+      "health JSON emitted with battery percentage and reconnect attempts",
+      "foreground-supervised (no unsignaled daemons), clean exit codes"
+    ],
+    "artifacts": [
+      "reports/checkpoints/BB8-FUNC/b1_ble_health.json",
+      "reports/checkpoints/BB8-FUNC/b1_connect_log.txt"
+    ]
+  },
+  "risk": [
+    "BLE adapter/permissions in HA add-on sandbox",
+    "Radio noise/timeout instability",
+    "Library API mismatch (spherov2 versions)"
+  ],
+  "rollback": "If BLE fails, keep echo_responder path active; guard all BLE actions behind connection checks and fail closed with explicit acks; no motion commands issued without a valid session."
+}

@@ -17,11 +17,12 @@ Home Assistant add-on for controlling Sphero BB-8 via BLE and MQTT.
 
 ## Architecture & Governance
 
-This repository follows a comprehensive ADR (Architectural Decision Record) governance system documented in [`docs/ADR/`](docs/ADR/). 
+This repository follows a comprehensive ADR (Architectural Decision Record) governance system documented in [`docs/ADR/`](docs/ADR/).
 
 **Cross-Repository Alignment**: This project coordinates architectural decisions with other repositories in the ecosystem using the standards defined in [ADR-0030: Cross-Repository ADR Alignment and Linking Standard](docs/ADR/ADR-0030-cross-repository-adr-alignment.md).
 
 **Key ADRs:**
+
 - [ADR-0024](docs/ADR/ADR-0024-workspace-hygiene-bb8-addon.md): Workspace hygiene (adopts standards from main HA config repo)
 - [ADR-0025](docs/ADR/ADR-0025-canonical-repo-layout-bb8-addon.md): Canonical repository layout
 - [ADR-0030](docs/ADR/ADR-0030-cross-repository-adr-alignment.md): Cross-repository alignment system
@@ -39,11 +40,12 @@ This workspace supports a fully automated release workflow for the Home Assistan
 ```
 make release-patch
 ```
-* Increments the patch version in `addon/config.yaml` and `addon/Dockerfile`.
-* Appends a changelog entry to `addon/CHANGELOG.md`.
-* Publishes the `addon/` subtree to the remote repository (idempotent: skips if no changes).
-* Deploys the add-on to Home Assistant via SSH and the Core Services API.
-* Prints tokens: `BUMP_OK:<version>`, `SUBTREE_PUBLISH_OK:main@<sha>`, and HA deploy tokens (`AUTH_OK`, `CLEAN_RUNTIME_OK`, `DEPLOY_OK`, `VERIFY_OK`, `RUNTIME_TOPOLOGY_OK`).
+
+- Increments the patch version in `addon/config.yaml` and `addon/Dockerfile`.
+- Appends a changelog entry to `addon/CHANGELOG.md`.
+- Publishes the `addon/` subtree to the remote repository (idempotent: skips if no changes).
+- Deploys the add-on to Home Assistant via SSH and the Core Services API.
+- Prints tokens: `BUMP_OK:<version>`, `SUBTREE_PUBLISH_OK:main@<sha>`, and HA deploy tokens (`AUTH_OK`, `CLEAN_RUNTIME_OK`, `DEPLOY_OK`, `VERIFY_OK`, `RUNTIME_TOPOLOGY_OK`).
 
 ### Minor/major bump + publish + deploy
 
@@ -51,34 +53,36 @@ make release-patch
 make release-minor
 make release-major
 ```
-* Same as above, but increments the minor or major version.
+
+- Same as above, but increments the minor or major version.
 
 ### Explicit version bump + publish + deploy
 
 ```
 make release VERSION=1.4.2
 ```
-* Sets the version to `1.4.2` (or any valid semver) and runs the full release workflow.
+
+- Sets the version to `1.4.2` (or any valid semver) and runs the full release workflow.
 
 ### Manual steps (if needed)
 
-* You can run the individual scripts directly:
-   - `ops/release/bump_version.sh <patch|minor|major|x.y.z>` — bump version and update changelog/Dockerfile
-   - `ops/workspace/publish_addon_archive.sh` — publish only the `addon/` subtree
-   - `ops/release/deploy_ha_over_ssh.sh` — deploy the add-on to Home Assistant
+- You can run the individual scripts directly:
+  - `ops/release/bump_version.sh <patch|minor|major|x.y.z>` — bump version and update changelog/Dockerfile
+  - `ops/workspace/publish_addon_archive.sh` — publish only the `addon/` subtree
+  - `ops/release/deploy_ha_over_ssh.sh` — deploy the add-on to Home Assistant
 
 ### Acceptance tokens
 
-* The release workflow prints tokens for CI and manual verification:
-   - `BUMP_OK:<version>` — version bump succeeded
-   - `SUBTREE_PUBLISH_OK:main@<sha>` — subtree publish succeeded
-   - `AUTH_OK`, `CLEAN_RUNTIME_OK`, `DEPLOY_OK`, `VERIFY_OK`, `RUNTIME_TOPOLOGY_OK` — Home Assistant deploy and verification steps
+- The release workflow prints tokens for CI and manual verification:
+  - `BUMP_OK:<version>` — version bump succeeded
+  - `SUBTREE_PUBLISH_OK:main@<sha>` — subtree publish succeeded
+  - `AUTH_OK`, `CLEAN_RUNTIME_OK`, `DEPLOY_OK`, `VERIFY_OK`, `RUNTIME_TOPOLOGY_OK` — Home Assistant deploy and verification steps
 
 ### Notes
 
-* All release scripts are located in `ops/release/` and `ops/workspace/`.
-* The workflow is idempotent: publishing is skipped if no changes are present in `addon/`.
-* Makefile targets are tab-indented and ready for one-command releases.
+- All release scripts are located in `ops/release/` and `ops/workspace/`.
+- The workflow is idempotent: publishing is skipped if no changes are present in `addon/`.
+- Makefile targets are tab-indented and ready for one-command releases.
 
 ## Configuration System
 
@@ -115,10 +119,12 @@ action:
 ## BB-8 Add-on End-to-End Startup Flow
 
 1. **Container Startup**
+
    - S6 supervisor starts the add-on container.
    - `run.sh` is executed as the entrypoint.
 
 2. **Shell Entrypoint (`run.sh`)**
+
    - Loads config from `/data/options.json`.
    - Exports environment variables for all options (including `BB8_MAC_OVERRIDE`).
    - Prints startup diagnostics and environment.
@@ -127,6 +133,7 @@ action:
      - `python -m bb8_core.bridge_controller --bb8-mac "$BB8_MAC_OVERRIDE" --scan-seconds "$BB8_SCAN_SECONDS" --rescan-on-fail "$BB8_RESCAN_ON_FAIL" --cache-ttl-hours "$BB8_CACHE_TTL_HOURS"`
 
 3. **Python Entrypoint (`bb8_core/bridge_controller.py`)**
+
    - Parses CLI/environment for all options.
    - Calls `start_bridge_controller(...)`:
      - Initializes BLE gateway.
@@ -134,11 +141,13 @@ action:
      - Starts MQTT dispatcher.
 
 4. **MAC Address Handling & Auto-Detect**
+
    - If a MAC is provided (`--bb8-mac`), it is used directly.
    - If empty/missing, the controller **calls `auto_detect.resolve_bb8_mac()`** to scan/cache/resolve the MAC.
    - Auto-detect logs: scan start, cache hits, discovery result, cache writes.
 
 5. **MQTT Dispatcher**
+
    - Connects to broker, subscribes to command topics.
    - Publishes availability (`bb8/status`), presence and RSSI (if available).
 
@@ -147,6 +156,7 @@ action:
    - All actions and errors are logged with structured JSON lines.
 
 ## MQTT Library Version Policy
+
 - Runtime dependency: **paho-mqtt >= 2.0, < 3.0** (pinned in `requirements.txt`).
 - The code explicitly selects `CallbackAPIVersion.VERSION1` when creating `mqtt.Client(...)`
   to preserve v1 callback signatures while running on paho-mqtt v2.
@@ -154,6 +164,7 @@ action:
   signatures accordingly.
 
 ### Local development quickstart
+
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 python -m pip install -U pip setuptools wheel
@@ -172,6 +183,7 @@ pytest -q addon/tests
 from bb8_core.logging_setup import logger
 logger.info("your message")
 ```
+
 - Do not set up additional file handlers or use `logging.basicConfig` elsewhere; this avoids duplicate log entries and handler conflicts.
 - The log file path can be customized via the `log_path` option in `config.yaml`.
 - All logs are structured and redact sensitive fields automatically.
@@ -181,4 +193,3 @@ logger.info("your message")
 **Operational topology:** see `./workspace_ops_export.yaml`
 
 ---
-

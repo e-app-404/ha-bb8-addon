@@ -26,13 +26,13 @@ run.sh → bridge_controller.py → start_bridge_controller() →
 ### Runtime Model Policy (PIE: P3 — Prevent)
 
 **Do not mix supervision models.**
+**Chosen model for production:** **Foreground single-proc**.
+`run.sh` must **exec** the target (echo/bridge) and remain in the foreground. Keep any `services.d/*` entries **down** unless ADR-governed migration to s6 is explicitly approved.
+Emit on startup:
 
-- **Foreground single-proc (Gate A/B):** `run.sh` must `exec` the target (echo/bridge). Keep conflicting `services.d/*` entries **down**.
-- **s6-managed (multi-service):** `run.sh` starts `s6-svscan`; only services **without** `down` run.
-- Emit on startup:
-  - `RUNTIME_MODEL=foreground|s6`
-  - `SERVICE_LIST=[...]` (when s6)
-    ADR alignment: 0031.
+- `RUNTIME_MODEL=foreground`
+- `SERVICE_LIST=[]`
+  ADR alignment: 0031.
 
 ### Data Flow Patterns
 
@@ -85,6 +85,7 @@ cfg, src = load_config()  # Returns (config_dict, source_path)
 - Config provenance tracked and logged
 - Environment variables auto-exported by run.sh
 - No hardcoded MQTT topics/clients - always derive from config
+- MQTT host inside container must use the Supervisor internal hostname **`core-mosquitto`**.
 
 ### Logging Standards
 
@@ -124,6 +125,12 @@ ADR alignment: 0041.
 - `mqtt_disconnect`: `{"reason":"..."}`
   Rationale: Faster grepping and evidence parsing.
 
+### Motion Safety & Emergency Stop (PIE: P6 — Prevent)
+
+- Implement and honor **rate limits**, **max drive duration**, and **speed caps** in the motion path.
+- Provide **emergency stop** topic (`bb8/cmd/estop`) that latches until cleared via (`bb8/cmd/clear_estop`).
+- Telemetry must publish `estop` state under `bb8/status/telemetry`.
+
 ## Testing & Quality
 
 ### Test Organization (addon/tests/)
@@ -135,16 +142,16 @@ ADR alignment: 0041.
 ### Quality Gates
 
 ```bash
-make qa          # Full QA suite: format, lint, types, testcov, security
-make testcov     # Pytest with coverage (≥80% threshold)
-make evidence-stp4  # End-to-end MQTT roundtrip attestation
+make qa             # Full QA suite: format, lint, types, tests, security
+make testcov        # Pytest with coverage (threshold comes from .coveragerc)
+make evidence-stp4  # End-to-end MQTT roundtrip attestation (governed)
 ```
 
-### Coverage Requirements
+### Coverage Policy (Honest, Dynamic)
 
-- Minimum 80% test coverage enforced
-- Use `# pragma: no cover` for unreachable/external integration code
-- 200+ tests target for comprehensive validation
+- **Feature branches**: threshold **50%** (current `.coveragerc`)
+- **Main branch / PR to main**: CI **auto-applies 60%** by copying `.coveragerc.pr60` → `.coveragerc`
+- Keep omissions minimal (justify inline); prefer integration-meaningful tests over synthetic inflation.
 
 ### Test Runtime Policy (PIE: I3 — Improve)
 
@@ -157,8 +164,14 @@ make evidence-stp4  # End-to-end MQTT roundtrip attestation
 
 ### MQTT Topics & Discovery
 
-- Commands: `{base_topic}/{entity}/set` (e.g., `bb8/power/set`)
-- States: `{base_topic}/{entity}/state` (e.g., `bb8/power/state`)
+- **Command surface (standardized):** `bb8/cmd/*`
+  - `bb8/cmd/drive` → `{"speed":0..255,"heading":0..359,"ms":0..5000}`
+  - `bb8/cmd/stop` → `{}`
+  - `bb8/cmd/led` → `{"r":0..255,"g":0..255,"b":0..255}` (presets allowed)
+  - `bb8/cmd/power` → `{"action":"wake|sleep"}`
+  - `bb8/cmd/estop` / `bb8/cmd/clear_estop`
+- **Acknowledgements & errors:** `bb8/ack/*` with correlation ids.
+- **States/telemetry:** `{base_topic}/status`, `{base_topic}/status/telemetry`
 - Discovery: Auto-published to `homeassistant/{component}/{device_id}/{entity}/config`
 - Status: `{base_topic}/status` (online/offline with LWT)
 
@@ -215,7 +228,7 @@ make evidence-stp4  # End-to-end MQTT roundtrip attestation
 ### Deployment Pipeline (ADR-0008)
 
 ```bash
-# Verified end-to-end deployment (PREFERRED)
+# Verified end-to-end deployment (PREFERRED; triggers container rebuild)
 make release-patch    # Version bump + GitHub publish + rsync deploy + HA API restart
 make release-minor    # Minor version increment with full pipeline
 make release VERSION=1.4.2  # Explicit version with full pipeline
@@ -256,21 +269,23 @@ ssh home-assistant 'grep version: /addons/local/beep_boop_bb8/config.yaml'
 
 ## Common Pitfalls
 
-### Deployment & Infrastructure
+**Deployment & Infrastructure**
 
-- **File synchronization**: Deployment requires actual file copying (rsync), not just addon restart
-- **Alpine packages**: Use `apk add python3 py3-pip python3-dev` NOT `py3-venv` (doesn't exist in Alpine 3.22)
+- **Rebuilds**: Changes to `run.sh` or Python dependencies **require a full container rebuild** (use the release pipeline).
+- **File synchronization**: Plain rsync without rebuild will not update the running image.
+- **Alpine packages**: Use `apk add python3 py3-pip python3-dev` (note: `py3-venv` is not a separate package on Alpine 3.22; `python3 -m venv` is available).
 - **Docker paths**: Use `/usr/local/bin/docker` not `/usr/bin/docker` on HA OS
 - **Package manager**: Alpine uses `apk`, not `apt-get` - HA Supervisor overrides Dockerfile BUILD_FROM
 - **Environment config**: Use centralized `.env` file, ensure `HA_URL` is set for HTTP restart
 - **Version sync**: Always use `make release-patch` for consistent versioning across files
 
-### MQTT & Discovery
+**MQTT & Discovery**
 
 - **Device blocks**: MQTT discovery MUST have proper `device` blocks with `identifiers` and `connections`
 - **Empty device blocks**: `{"device": {}}` causes entity registration failures in Home Assistant
-- **MQTT wildcards**: Avoid in production, sanitize all user inputs
-- **Topic derivation**: Never hardcode MQTT topics, always derive from config
+- **MQTT wildcards**: Avoid in production; sanitize all user inputs.
+- **Topic derivation**: Never hardcode topics; always derive from config.
+- **Broker address in-container**: use **`core-mosquitto`**.
 
 ### Development & Testing
 
@@ -318,14 +333,14 @@ make evidence-stp4        # Evidence collection issues
 - Comprehensive codebase analysis and refactoring
 - Documentation requiring deep technical understanding
 
-### Model-Specific Guardrails
+### Model-Specific Guardrails (aligned to current governance)
 
 **GPT-4o mini Constraints:**
 
-- **Scope limitation**: Max 3-file changes per session
-- **ADR prohibition**: Cannot create/modify canonical ADRs without explicit override
-- **Architecture freeze**: No changes to core service boundaries (bridge_controller, mqtt_dispatcher, facade)
-- **Evidence verification**: Must run `make evidence-stp4` for MQTT changes
+- **Scope limitation**: Max 3-file changes per session.
+- **ADR prohibition**: Cannot create/modify canonical ADRs without explicit override.
+- **Architecture freeze**: No changes to core service boundaries (bridge_controller, mqtt_dispatcher, facade).
+- **Evidence verification**: Run `make evidence-stp4` for MQTT changes; store artifacts under `reports/checkpoints/**` per Evidence Contract.
 
 **Claude Sonnet 3.5 Constraints:**
 
@@ -413,8 +428,8 @@ Provide a devcontainer for local lint/type/test only. **Do not** use it for Supe
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r addon/requirements.txt -r addon/requirements-dev.txt
-pytest -q addon/tests                    # Run tests
-make qa                                   # Full quality suite
+pytest -q addon/tests -k 'not slow'      # Fast local cycle
+make qa                                  # Full quality suite
 ```
 
-> Note: local fast cycle is `pytest -q -k 'not slow'`. CI uses full suite for coverage gates.
+> CI enforces the active threshold from `.coveragerc`; PRs to `main` auto-apply `.coveragerc.pr60` to restore the 60% gate.

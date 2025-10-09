@@ -31,7 +31,7 @@ jobs:
           config = configparser.ConfigParser()
           config.read('.coveragerc')
           threshold = float(config.get('report', 'fail_under', fallback='50'))
-          
+
           cov=json.load(open('reports/checkpoints/QG-TEST-80/coverage.json'))
           tot=sum(f['summary']['num_statements'] for f in cov['files'].values()) or 1
           covd=sum(f['summary']['covered_lines'] for f in cov['files'].values())
