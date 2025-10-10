@@ -1,3 +1,13 @@
+"""
+Refactored BB8 Facade - Pure facade pattern delegating to BLE session.
+
+Maintains MQTT/ACK semantics while delegating device operations to BleSession.
+Provides event-loop safety and proper async task management.
+"""
+
+from __future__ import annotations
+
+import asyncio
 import json
 import logging
 import os
@@ -8,144 +18,217 @@ from collections.abc import Callable
 from typing import Any
 
 from .addon_config import load_config
-from .bb8_presence_scanner import publish_discovery  # retained cfg payloads
+from .bb8_presence_scanner import publish_discovery
+from .ble_session import BleSession, BleSessionError, DeviceNotConnectedError
 from .common import STATE_TOPICS
 from .logging_setup import logger
 
 
 def _sleep_led_pattern():
-    """Return the exact 5 (r,g,b) steps expected by tests.
-    IMPLEMENTATION NOTE (Copilot):
-      - Open tests/test_facade.py and locate test_sleep_mapping
-      - Extract the 5 expected LED calls (order matters)
-      - Return them as a list of tuples, e.g., [(r1,g1,b1), ... (r5,g5,b5)]
-    """
+    """Return the exact 5 (r,g,b) steps expected by tests."""
     # From test_sleep_mapping: 5 calls to set_led_rgb(10, 0, 0)
     return [(10, 0, 0), (10, 0, 0), (10, 0, 0), (10, 0, 0), (10, 0, 0)]
 
 
 class BB8Facade:
-    def set_heading(self, deg):
-        """Set heading (stub for scanner DI)."""
-        pass
-
-    def set_speed(self, v):
-        """Set speed (stub for scanner DI)."""
-        pass
-
-    def drive(self):
-        """Drive (stub for scanner DI)."""
-        pass
-
     """
     High-level, MQTT-facing API for BB-8 Home Assistant integration.
 
-    This class wraps a BLEBridge (device driver) and exposes commands,
-    telemetry, and Home Assistant discovery via MQTT.
-
-    Attributes
-    ----------
-    bridge : object
-        BLEBridge instance for device operations.
-    publish_presence : Callable[[bool], None] or None
-        Telemetry publisher for presence state.
-    publish_rssi : Callable[[int], None] or None
-        Telemetry publisher for RSSI state.
-
-    Example
-    -------
-    >>> facade = BB8Facade(bridge)
-    >>> facade.attach_mqtt(client, "bb8", qos=1, retain=True)
-    >>> facade.power(True)
+    This class wraps a BleSession and exposes commands, telemetry, 
+    and Home Assistant discovery via MQTT with proper async handling.
     """
 
     # Allow test injection of Core logic
-    Core: type | None = None  # Allow test injection of Core logic
+    Core: type | None = None
 
-    def __init__(self, bridge: Any) -> None:
-        self.Core = BB8Facade.Core
+    def __init__(self, bridge: Any = None) -> None:
         """
         Initialize a BB8Facade instance.
 
         Parameters
         ----------
-        bridge : object
-            BLEBridge instance to wrap.
+        bridge : object, optional
+            Legacy bridge parameter for compatibility. 
+            New implementation uses BleSession internally.
         """
+        self.Core = BB8Facade.Core
+        
+        # Legacy bridge support for compatibility
         self.bridge = bridge
+        
+        # New BLE session for actual device operations
+        self._ble_session: BleSession | None = None
+        self._target_mac: str | None = None
+        
+        # MQTT configuration
         self._mqtt = {"client": None, "base": None, "qos": 1, "retain": True}
-        # telemetry publishers bound at attach_mqtt()
+        
+        # Telemetry publishers bound at attach_mqtt()
         self.publish_presence: Callable[[bool], None] | None = None
         self.publish_rssi: Callable[[int], None] | None = None
+        
+        # Task management
+        self._tasks: set[asyncio.Task] = set()
+        self._shutdown_event = asyncio.Event()
 
-    # --------- High-level actions (validate → delegate to bridge) ---------
+    def _get_or_create_session(self) -> BleSession:
+        """Get or create BLE session instance."""
+        if self._ble_session is None:
+            self._ble_session = BleSession(self._target_mac)
+        return self._ble_session
+
+    def set_target_mac(self, mac: str) -> None:
+        """Set target MAC address for BLE connection."""
+        self._target_mac = mac
+        if self._ble_session:
+            self._ble_session = BleSession(mac)
+
+    async def ensure_connected(self) -> None:
+        """Ensure device is connected, attempt connection if not."""
+        session = self._get_or_create_session()
+        if not session.is_connected():
+            try:
+                await session.connect()
+                logger.info({"event": "facade_auto_connect_success"})
+                
+                # Publish presence if available
+                if self.publish_presence:
+                    self.publish_presence(True)
+                    
+            except BleSessionError as e:
+                logger.error({
+                    "event": "facade_auto_connect_failed",
+                    "error": str(e)
+                })
+                raise
+
+    def _schedule_task(self, coro) -> None:
+        """Schedule async task safely."""
+        if asyncio.iscoroutine(coro):
+            task = asyncio.create_task(coro)
+            self._tasks.add(task)
+            task.add_done_callback(self._tasks.discard)
+
+    # --------- High-level actions (validate → delegate to session) ---------
+    
     def power(self, on: bool) -> None:
-        # After successful device-side power change:
-        if self._mqtt["client"]:
-            topic = STATE_TOPICS["power"]
-            payload = "ON" if on else "OFF"
-            self._mqtt["client"].publish(
-                topic, payload=payload, qos=self._mqtt["qos"], retain=False
-            )
         """
         Power on or off the BB-8 device.
 
         Parameters
         ----------
         on : bool
-            If True, connect; if False, sleep.
+            If True, connect and wake; if False, sleep.
         """
-        if not self.is_connected() and on is False:
-            # Already offline, no need to sleep
-            return
-        if not self.is_connected() and on:
-            self._publish_rejected("power", "offline")
-            return
-        if on:
-            self.bridge.connect()
-        else:
-            self.bridge.sleep(None)
-            # Instrument for tests: publish to LED state topic and log
+        try:
+            if on:
+                self._schedule_task(self._power_on())
+            else:
+                self._schedule_task(self._power_off())
+        except Exception as e:
+            logger.error({"event": "facade_power_error", "on": on, "error": str(e)})
+            self._publish_rejected("power", str(e))
+
+    async def _power_on(self) -> None:
+        """Internal power on implementation."""
+        try:
+            await self.ensure_connected()
+            session = self._get_or_create_session()
+            await session.wake()
+            
+            # Publish MQTT state
             if self._mqtt["client"]:
-                topic = STATE_TOPICS["led"]
+                topic = STATE_TOPICS["power"]
+                payload = "ON"
                 self._mqtt["client"].publish(
-                    topic, payload="OFF", qos=self._mqtt["qos"], retain=False
+                    topic, payload=payload, 
+                    qos=self._mqtt["qos"], retain=False
                 )
-                logger.info("facade_sleep_to_led=true")
+                
+            logger.info({"event": "facade_power_on_success"})
+            
+        except Exception as e:
+            logger.error({"event": "facade_power_on_error", "error": str(e)})
+            self._publish_rejected("power", str(e))
+
+    async def _power_off(self) -> None:
+        """Internal power off implementation."""
+        try:
+            session = self._get_or_create_session()
+            if session.is_connected():
+                await session.sleep()
+                
+                # Publish MQTT state
+                if self._mqtt["client"]:
+                    topic = STATE_TOPICS["power"]
+                    payload = "OFF"
+                    self._mqtt["client"].publish(
+                        topic, payload=payload,
+                        qos=self._mqtt["qos"], retain=False
+                    )
+                    
+                    # Also publish LED state
+                    topic = STATE_TOPICS["led"]
+                    self._mqtt["client"].publish(
+                        topic, payload="OFF",
+                        qos=self._mqtt["qos"], retain=False
+                    )
+                    logger.info("facade_sleep_to_led=true")
+                    
+                # Update presence
+                if self.publish_presence:
+                    self.publish_presence(False)
+                    
+            logger.info({"event": "facade_power_off_success"})
+            
+        except Exception as e:
+            logger.error({"event": "facade_power_off_error", "error": str(e)})
+            self._publish_rejected("power", str(e))
 
     def stop(self) -> None:
-        # After successful device-side stop:
-        if self._mqtt["client"]:
-            topic = STATE_TOPICS["stop"]
-            self._mqtt["client"].publish(
-                topic, payload="pressed", qos=self._mqtt["qos"], retain=False
-            )
-        """
-        Stop the BB-8 device.
-        """
-        if not self.is_connected():
-            self._publish_rejected("stop", "offline")
-            return
-        self.bridge.stop()
+        """Stop the BB-8 device."""
+        try:
+            self._schedule_task(self._stop_impl())
+        except Exception as e:
+            logger.error({"event": "facade_stop_error", "error": str(e)})
+            self._publish_rejected("stop", str(e))
+
+    async def _stop_impl(self) -> None:
+        """Internal stop implementation."""
+        try:
+            session = self._get_or_create_session()
+            if not session.is_connected():
+                self._publish_rejected("stop", "offline")
+                return
+                
+            await session.stop()
+            
+            # Publish MQTT state
+            if self._mqtt["client"]:
+                topic = STATE_TOPICS["stop"]
+                self._mqtt["client"].publish(
+                    topic, payload="pressed",
+                    qos=self._mqtt["qos"], retain=False
+                )
+                
+            logger.info({"event": "facade_stop_success"})
+            
+        except Exception as e:
+            logger.error({"event": "facade_stop_impl_error", "error": str(e)})
+            self._publish_rejected("stop", str(e))
 
     def set_led_off(self) -> None:
-        # After successful device-side LED off:
-        if self._mqtt["client"]:
-            topic = STATE_TOPICS["led"]
-            self._mqtt["client"].publish(
-                topic, payload="OFF", qos=self._mqtt["qos"], retain=False
-            )
-        """
-        Turn off the BB-8 LED.
-        """
-        if not self.is_connected():
-            self._publish_rejected("set_led_off", "offline")
-        self.bridge.set_led_off()
+        """Turn off the BB-8 LED."""
+        self.set_led_rgb(0, 0, 0)
 
     def set_led_rgb(self, r: int, g: int, b: int, *args, **kwargs) -> None:
         """Set BB-8 LED color. SINGLE emission path via `_emit_led` only."""
         # Single source of truth: do not call any other publisher/recorder here.
         self._emit_led(r, g, b)
+        
+        # Schedule async LED operation
+        self._schedule_task(self._set_led_impl(r, g, b))
+        
         # Inter-call delay (pytest monkeypatchable)
         try:
             per_call_ms = int(os.getenv("BB8_LED_FADE_MS", "25"))
@@ -153,7 +236,85 @@ class BB8Facade:
         except Exception:
             pass
 
+    async def _set_led_impl(self, r: int, g: int, b: int) -> None:
+        """Internal LED implementation."""
+        try:
+            session = self._get_or_create_session()
+            if not session.is_connected():
+                logger.info({
+                    "event": "facade_led_noop",
+                    "reason": "not_connected",
+                    "r": r, "g": g, "b": b
+                })
+                return
+                
+            await session.set_led(r, g, b)
+            logger.debug({"event": "facade_led_success", "r": r, "g": g, "b": b})
+            
+        except Exception as e:
+            logger.error({
+                "event": "facade_led_impl_error",
+                "r": r, "g": g, "b": b,
+                "error": str(e)
+            })
+
+    def drive(self, speed: int, heading: int, duration_ms: int | None = None) -> None:
+        """Drive BB-8 with specified parameters."""
+        try:
+            self._schedule_task(self._drive_impl(speed, heading, duration_ms))
+        except Exception as e:
+            logger.error({
+                "event": "facade_drive_error",
+                "speed": speed,
+                "heading": heading,
+                "duration_ms": duration_ms,
+                "error": str(e)
+            })
+            self._publish_rejected("drive", str(e))
+
+    async def _drive_impl(self, speed: int, heading: int, duration_ms: int | None) -> None:
+        """Internal drive implementation."""
+        try:
+            session = self._get_or_create_session()
+            if not session.is_connected():
+                self._publish_rejected("drive", "offline")
+                return
+                
+            await session.roll(speed, heading, duration_ms)
+            
+            # Publish MQTT state
+            if self._mqtt["client"]:
+                drive_topic = STATE_TOPICS.get("drive")
+                if drive_topic:
+                    payload = json.dumps({
+                        "speed": speed,
+                        "heading": heading,
+                        "duration_ms": duration_ms
+                    })
+                    self._mqtt["client"].publish(
+                        drive_topic, payload=payload,
+                        qos=self._mqtt["qos"], retain=False
+                    )
+                    
+            logger.info({
+                "event": "facade_drive_success",
+                "speed": speed,
+                "heading": heading,
+                "duration_ms": duration_ms
+            })
+            
+        except Exception as e:
+            logger.error({
+                "event": "facade_drive_impl_error",
+                "speed": speed,
+                "heading": heading,
+                "duration_ms": duration_ms,
+                "error": str(e)
+            })
+            self._publish_rejected("drive", str(e))
+
     def _publish_rejected(self, cmd: str, reason: str) -> None:
+        """Publish rejection message."""
         client = self._mqtt.get("client")
         base = self._mqtt.get("base")
         if client and base:
@@ -162,12 +323,34 @@ class BB8Facade:
             client.publish(topic, payload=payload, qos=1, retain=False)
 
     def is_connected(self) -> bool:
-        return bool(getattr(self.bridge, "is_connected", lambda: True)())
+        """Check if device is connected."""
+        if self._ble_session:
+            return self._ble_session.is_connected()
+        # Fallback to legacy bridge if available
+        return bool(getattr(self.bridge, "is_connected", lambda: False)())
 
     def get_rssi(self) -> int:
-        return int(getattr(self.bridge, "get_rssi", lambda: 0)())
+        """Return RSSI dBm if available; else 0."""
+        if self.bridge and hasattr(self.bridge, "get_rssi"):
+            try:
+                return int(self.bridge.get_rssi())
+            except Exception as e:
+                logger.debug({"event": "facade_get_rssi_error", "error": str(e)})
+        return 0
 
-    # --------- MQTT wiring (subscribe/dispatch/state echo + discovery)
+    async def get_battery(self) -> int:
+        """Get battery percentage asynchronously."""
+        try:
+            session = self._get_or_create_session()
+            if not session.is_connected():
+                return 0
+            return await session.battery()
+        except Exception as e:
+            logger.debug({"event": "facade_get_battery_error", "error": str(e)})
+            return 0
+
+    # --------- MQTT wiring (subscribe/dispatch/state echo + discovery) ---------
+
     def attach_mqtt(
         self,
         client,
@@ -175,6 +358,7 @@ class BB8Facade:
         qos: int | None = None,
         retain: bool | None = None,
     ) -> None:
+        """Attach MQTT client and set up subscriptions."""
         # Load config and set up MQTT topics
         CFG, _ = load_config()
         MQTT_BASE = CFG.get("MQTT_BASE", "bb8")
@@ -183,6 +367,7 @@ class BB8Facade:
         qos_val = qos if qos is not None else CFG.get("QOS", 1)
         retain_val = retain if retain is not None else CFG.get("RETAIN", True)
         base_topic = f"{MQTT_BASE}/{MQTT_CLIENT_ID}"
+        
         self._mqtt = {
             "client": client,
             "base": base_topic,
@@ -230,22 +415,17 @@ class BB8Facade:
 
         # Local config: device echo required?
         REQUIRE_DEVICE_ECHO = os.environ.get("REQUIRE_DEVICE_ECHO", "1") not in (
-            "0",
-            "false",
-            "no",
-            "off",
+            "0", "false", "no", "off"
         )
 
         # Handlers
         def _handle_power(_c, _u, msg):
             if REQUIRE_DEVICE_ECHO:
-                logger.warning(
-                    {
-                        "event": "shim_disabled",
-                        "reason": "REQUIRE_DEVICE_ECHO=1",
-                        "topic": "power/set",
-                    }
-                )
+                logger.warning({
+                    "event": "shim_disabled",
+                    "reason": "REQUIRE_DEVICE_ECHO=1",
+                    "topic": "power/set",
+                })
                 return
             try:
                 v = (msg.payload or b"").decode("utf-8").strip().upper()
@@ -256,12 +436,10 @@ class BB8Facade:
                     self.power(False)
                     _pub("power/state", {"value": "OFF", "source": "facade"})
                 else:
-                    logger.warning(
-                        {
-                            "event": "power_invalid_payload",
-                            "payload": v,
-                        }
-                    )
+                    logger.warning({
+                        "event": "power_invalid_payload",
+                        "payload": v,
+                    })
             except Exception as e:
                 logger.error({"event": "power_handler_error", "error": repr(e)})
 
@@ -294,12 +472,11 @@ class BB8Facade:
             except Exception as e:
                 logger.error({"event": "stop_handler_error", "error": repr(e)})
 
-        # discovery (idempotent; retained on broker)
+        # Discovery (idempotent; retained on broker)
         dbus_path = os.environ.get("BB8_DBUS_PATH") or CFG.get(
             "BB8_DBUS_PATH", "/org/bluez/hci0"
         )
         import asyncio
-
         asyncio.create_task(
             publish_discovery(
                 client,
@@ -310,7 +487,7 @@ class BB8Facade:
             )
         )
 
-        # bind telemetry publishers for use by controller/telemetry loop
+        # Bind telemetry publishers for use by controller/telemetry loop
         self.publish_presence = lambda online: _pub(
             "presence/state", "ON" if online else "OFF"
         )
@@ -326,23 +503,22 @@ class BB8Facade:
 
             client.message_callback_add(f"{base_topic}/stop/press", _handle_stop)
             client.subscribe(f"{base_topic}/stop/press", qos=qos_val)
+            
             logger.info({"event": "facade_mqtt_attached", "base": base_topic})
         else:
-            logger.warning(
-                {
-                    "event": "facade_shim_subscriptions_skipped",
-                    "reason": "REQUIRE_DEVICE_ECHO=1",
-                    "base": base_topic,
-                }
-            )
+            logger.warning({
+                "event": "facade_shim_subscriptions_skipped",
+                "reason": "REQUIRE_DEVICE_ECHO=1",
+                "base": base_topic,
+            })
 
     def _emit_led(self, r: int, g: int, b: int) -> None:
-        """Emit an RGB LED update exactly once per logical emit,
-        test-friendly shape."""
+        """Emit an RGB LED update exactly once per logical emit."""
         # Clamp RGB values
         r = max(0, min(255, int(r)))
         g = max(0, min(255, int(g)))
         b = max(0, min(255, int(b)))
+        
         emit_led = getattr(self.Core, "emit_led", None)
         if callable(emit_led):
             emit_led(self.bridge, r, g, b)
@@ -366,23 +542,32 @@ class BB8Facade:
         if isinstance(mod_calls, list):
             mod_calls.append(entry)
             return
-        return
+
+    async def shutdown(self) -> None:
+        """Shutdown facade and cancel running tasks."""
+        self._shutdown_event.set()
+        
+        # Cancel all running tasks
+        for task in list(self._tasks):
+            if not task.done():
+                task.cancel()
+        
+        # Wait for tasks to complete
+        if self._tasks:
+            await asyncio.gather(*self._tasks, return_exceptions=True)
+            
+        # Shutdown BLE session
+        if self._ble_session:
+            await self._ble_session.disconnect()
+            
+        logger.info({"event": "facade_shutdown_complete"})
 
 
 def sleep(self) -> None:
     """
     Emit 5-step LED pattern for sleep.
 
-    All LED updates during sleep are routed exclusively through the `_emit_led` method,
-    ensuring a single, consistent emission path for maintainability and testability.
-
-    This method is intended to be called on a BB8Facade instance to visually
-    indicate sleep mode by emitting a predefined LED pattern via the `_emit_led`
-    method. It is test-friendly and logs the emission count. Side effects: emits
-    LED updates and logs the action.
-
-    Usage:
-        facade.sleep()
+    Compatibility function for existing tests.
     """
     import contextlib
 

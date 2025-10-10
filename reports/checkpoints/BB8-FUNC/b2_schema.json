@@ -1,0 +1,324 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BB-8 MQTT Command & Acknowledgment Schemas",
+  "version": "1.0",
+  "description": "Phase B2 command routing schemas with strict validation and correlation IDs",
+  "definitions": {
+    "acknowledgment_base": {
+      "type": "object",
+      "properties": {
+        "ok": {
+          "type": "boolean",
+          "description": "Command execution success status"
+        },
+        "cid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]{1,32}$",
+          "description": "Correlation ID from original command"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Error reason when ok=false, success details when ok=true"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of acknowledgment"
+        }
+      },
+      "required": ["ok"],
+      "additionalProperties": false
+    }
+  },
+  "commands": {
+    "bb8/cmd/drive": {
+      "type": "object",
+      "properties": {
+        "speed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Drive speed (0-255, clamped)"
+        },
+        "heading": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 359,
+          "description": "Drive heading in degrees (0-359, clamped)"
+        },
+        "ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000,
+          "description": "Drive duration in milliseconds (0-5000, clamped)"
+        },
+        "cid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]{1,32}$",
+          "description": "Optional correlation ID for command tracking"
+        }
+      },
+      "required": ["speed", "heading", "ms"],
+      "additionalProperties": false,
+      "examples": [
+        {
+          "speed": 100,
+          "heading": 90,
+          "ms": 2000
+        },
+        {
+          "speed": 50,
+          "heading": 180,
+          "ms": 1000,
+          "cid": "drive_001"
+        }
+      ]
+    },
+    "bb8/cmd/stop": {
+      "type": "object",
+      "properties": {
+        "cid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]{1,32}$",
+          "description": "Optional correlation ID for command tracking"
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {},
+        {
+          "cid": "stop_001"
+        }
+      ]
+    },
+    "bb8/cmd/led": {
+      "type": "object",
+      "properties": {
+        "r": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Red component (0-255, clamped)"
+        },
+        "g": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Green component (0-255, clamped)"
+        },
+        "b": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Blue component (0-255, clamped)"
+        },
+        "cid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]{1,32}$",
+          "description": "Optional correlation ID for command tracking"
+        }
+      },
+      "required": ["r", "g", "b"],
+      "additionalProperties": false,
+      "examples": [
+        {
+          "r": 255,
+          "g": 0,
+          "b": 0
+        },
+        {
+          "r": 0,
+          "g": 255,
+          "b": 128,
+          "cid": "led_green"
+        }
+      ]
+    },
+    "bb8/cmd/power": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": ["wake", "sleep"],
+          "description": "Power action to perform"
+        },
+        "cid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]{1,32}$",
+          "description": "Optional correlation ID for command tracking"
+        }
+      },
+      "required": ["action"],
+      "additionalProperties": false,
+      "examples": [
+        {
+          "action": "wake"
+        },
+        {
+          "action": "sleep",
+          "cid": "power_sleep"
+        }
+      ]
+    },
+    "bb8/cmd/estop": {
+      "type": "object",
+      "properties": {
+        "cid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]{1,32}$",
+          "description": "Optional correlation ID for command tracking"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Emergency stop - latches until clear_estop",
+      "examples": [
+        {},
+        {
+          "cid": "emergency_halt"
+        }
+      ]
+    },
+    "bb8/cmd/clear_estop": {
+      "type": "object",
+      "properties": {
+        "cid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]{1,32}$",
+          "description": "Optional correlation ID for command tracking"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Clear emergency stop latch",
+      "examples": [
+        {},
+        {
+          "cid": "clear_emergency"
+        }
+      ]
+    }
+  },
+  "acknowledgments": {
+    "bb8/ack/drive": {
+      "$ref": "#/definitions/acknowledgment_base",
+      "examples": [
+        {
+          "ok": true,
+          "timestamp": "2025-10-09T10:30:00Z"
+        },
+        {
+          "ok": false,
+          "cid": "drive_001",
+          "reason": "speed value 300 clamped to 255",
+          "timestamp": "2025-10-09T10:30:01Z"
+        }
+      ]
+    },
+    "bb8/ack/stop": {
+      "$ref": "#/definitions/acknowledgment_base",
+      "examples": [
+        {
+          "ok": true,
+          "cid": "stop_001",
+          "timestamp": "2025-10-09T10:30:02Z"
+        }
+      ]
+    },
+    "bb8/ack/led": {
+      "$ref": "#/definitions/acknowledgment_base",
+      "examples": [
+        {
+          "ok": true,
+          "reason": "LED set to RGB(0,255,128)",
+          "timestamp": "2025-10-09T10:30:03Z"
+        },
+        {
+          "ok": false,
+          "cid": "led_green",
+          "reason": "invalid JSON: missing required field 'b'",
+          "timestamp": "2025-10-09T10:30:04Z"
+        }
+      ]
+    },
+    "bb8/ack/power": {
+      "$ref": "#/definitions/acknowledgment_base",
+      "examples": [
+        {
+          "ok": true,
+          "cid": "power_sleep",
+          "reason": "device sleep initiated",
+          "timestamp": "2025-10-09T10:30:05Z"
+        },
+        {
+          "ok": false,
+          "reason": "invalid action 'hibernate' - must be 'wake' or 'sleep'",
+          "timestamp": "2025-10-09T10:30:06Z"
+        }
+      ]
+    },
+    "bb8/ack/estop": {
+      "$ref": "#/definitions/acknowledgment_base",
+      "examples": [
+        {
+          "ok": true,
+          "cid": "emergency_halt",
+          "reason": "emergency stop activated - all motion disabled",
+          "timestamp": "2025-10-09T10:30:07Z"
+        }
+      ]
+    },
+    "bb8/ack/clear_estop": {
+      "$ref": "#/definitions/acknowledgment_base",
+      "examples": [
+        {
+          "ok": true,
+          "cid": "clear_emergency",
+          "reason": "emergency stop cleared - motion enabled",
+          "timestamp": "2025-10-09T10:30:08Z"
+        },
+        {
+          "ok": false,
+          "reason": "cannot clear estop - no active emergency stop",
+          "timestamp": "2025-10-09T10:30:09Z"
+        }
+      ]
+    }
+  },
+  "validation_rules": {
+    "clamping": {
+      "description": "Values outside valid ranges are clamped to nearest boundary",
+      "examples": {
+        "speed": "speed=300 becomes speed=255",
+        "heading": "heading=400 becomes heading=40 (400 % 360)",
+        "rgb": "r=300 becomes r=255"
+      }
+    },
+    "required_fields": {
+      "description": "Missing required fields cause validation failure with clear error message",
+      "behavior": "Command rejected, ack sent with ok=false and detailed reason"
+    },
+    "extra_fields": {
+      "description": "Additional properties not in schema are rejected",
+      "behavior": "Command rejected, ack sent with ok=false listing invalid fields"
+    },
+    "correlation_tracking": {
+      "description": "cid field optional in commands, echoed in acknowledgments when present",
+      "behavior": "Enables request/response correlation for client tracking"
+    }
+  },
+  "safety_constraints": {
+    "motion_limits": {
+      "max_speed": 255,
+      "max_duration_ms": 5000,
+      "heading_wrap": "modulo 360"
+    },
+    "estop_behavior": {
+      "description": "Emergency stop latches until explicitly cleared",
+      "motion_blocking": "All drive commands rejected while estop active",
+      "clear_requirement": "Must send clear_estop command to resume motion"
+    },
+    "command_timeout": {
+      "description": "Commands must complete acknowledgment within 5 seconds",
+      "behavior": "Timeout triggers automatic ack with ok=false"
+    }
+  }
+}

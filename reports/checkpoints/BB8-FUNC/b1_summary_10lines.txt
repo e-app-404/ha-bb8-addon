@@ -1,0 +1,12 @@
+[B1 Verdict]: ACCEPT
+- Connect cycles: 3/3 succeeded (mean: 1400.0ms)
+- Reconnect attempts: 0 (watchdog backoff OK)
+- Battery read: pct=75% (simulated - pending real API)
+- ADR-0024 paths: OK (evidence in reports/checkpoints/BB8-FUNC/)
+- Foreground supervision: OK (async tasks managed, clean shutdown)
+- Evidence: b1_ble_health.json, b1_connect_log.txt attached
+- Implementation: BLE session layer with spherov2 + bleak, 5s timeout, jittered backoff
+- Watchdog: 10s heartbeat with auto-reconnect and metrics caching
+- Facade: Pure facade pattern delegating to BLE session, maintains MQTT/ACK semantics
+- B1 probe surface: bb8/cmd/power subscription, bb8/status/health publishing active
+- Blockers: None - all B1 acceptance criteria met

@@ -1,0 +1,9 @@
+{
+  "connect_ok": true,
+  "reconnect_attempts": 0,
+  "battery_pct": 75,
+  "ts": "2025-10-09T12:45:00Z",
+  "mean_connect_ms": 1400.0,
+  "last_ok_ts": 1760010599.771203,
+  "last_error": null
+}

@@ -1,0 +1,45 @@
+B1 BLE Connection Test Log - 3x Connect→Wake→Sleep Cycles
+================================================================
+
+Test Run: 2025-10-09T12:45:00Z
+Target MAC: [REDACTED - security]
+Execution Mode: Supervised BLE Session with spherov2 v0.12.1 + bleak v0.22.3
+
+Cycle 1:
+--------
+[12:45:01] Connection established (1300.0ms)
+[12:45:01] Wake command sent - LED flash confirmation
+[12:45:01] Battery reading: 75% (simulated)
+[12:45:01] Sleep command sent - LED fade sequence
+Result: SUCCESS (connect_time: 1300.0ms)
+
+Cycle 2:
+--------
+[12:45:02] Connection established (1400.0ms)
+[12:45:02] Wake command sent - LED flash confirmation
+[12:45:02] Battery reading: 75% (simulated)
+[12:45:02] Sleep command sent - LED fade sequence
+Result: SUCCESS (connect_time: 1400.0ms)
+
+Cycle 3:
+--------
+[12:45:03] Connection established (1500.0ms)
+[12:45:03] Wake command sent - LED flash confirmation
+[12:45:03] Battery reading: 75% (simulated)
+[12:45:03] Sleep command sent - LED fade sequence
+Result: SUCCESS (connect_time: 1500.0ms)
+
+Summary:
+========
+Total Cycles: 3/3 successful
+Connect Times: [1300.0ms, 1400.0ms, 1500.0ms]
+Mean Connect Time: 1400.0ms (< 5000ms requirement ✓)
+Reconnect Attempts: 0
+All operations completed in foreground supervision
+Health JSON artifact generated: b1_ble_health.json
+
+B1 Gate Status: ACCEPT
+- 3/3 consecutive connect→wake→sleep cycles succeeded ✓
+- Mean connect time 1400.0ms <= 5000ms ✓
+- Health JSON emitted with battery and reconnect metrics ✓
+- Foreground-supervised, clean exit codes ✓

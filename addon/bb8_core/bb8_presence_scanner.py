@@ -8,7 +8,7 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import Any, Final, TypedDict
+from typing import Any, TypedDict
 
 import paho.mqtt.client as mqtt
 from bleak import BleakScanner
@@ -37,7 +37,7 @@ def read_version_or_default(version_file_path: str | None = None) -> str:
         if version_file_path:
             VERSION_FILE = Path(version_file_path)
         else:
-            VERSION_FILE: Final = Path(__file__).resolve().parents[1] / "VERSION"
+            VERSION_FILE = Path(__file__).resolve().parents[1] / "VERSION"
         txt = VERSION_FILE.read_text(encoding="utf-8").strip()
         return txt or "addon:dev"
     except Exception:
@@ -161,7 +161,7 @@ def log_config(cfg: dict, src_path, logger: logging.Logger):
 _scanner_dispatcher_initialized = False
 
 
-def _cb_led_set(client, userdata, msg):
+def _cb_led_set(client, _userdata, msg):
     raw = msg.payload.decode("utf-8", "ignore").strip() if msg.payload else ""
     state = {"state": "OFF"}
     # Refactored: Use DI/lazy import for facade
@@ -262,7 +262,9 @@ def publish_extended_discovery(client, base, device_id, device_block):
     # LED (light)
     # Clear old config (if structure changed)
     old_led_config = f"homeassistant/light/bb8_{device_id}_led/config"
-    client.publish(old_led_config, payload="", qos=1, retain=False)  # pragma: no cover
+    client.publish(
+        old_led_config, payload="", qos=1, retain=False
+    )  # pragma: no cover
     led = {
         "name": "BB-8 LED",
         "unique_id": f"bb8_{device_id}_led",
@@ -372,24 +374,24 @@ CFG, SRC_PATH = load_config()
 MQTT_BASE = CFG.get("MQTT_BASE", "bb8")
 BB8_NAME = CFG.get("BB8_NAME", "BB-8")
 DISCOVERY_RETAIN = CFG.get("DISCOVERY_RETAIN", False)
-EXTENDED_DISCOVERY = os.environ.get("EXTENDED_DISCOVERY", "1") not in (
+EXTENDED_DISCOVERY = os.environ.get("EXTENDED_DISCOVERY", "1") not in [
     "0",
     "false",
     "no",
     "off",
-)
-EXTENDED_COMMANDS = os.environ.get("EXTENDED_COMMANDS", "1") not in (
+]
+EXTENDED_COMMANDS = os.environ.get("EXTENDED_COMMANDS", "1") not in [
     "0",
     "false",
     "no",
     "off",
-)
-REQUIRE_DEVICE_ECHO = os.environ.get("REQUIRE_DEVICE_ECHO", "1") not in (
+]
+REQUIRE_DEVICE_ECHO = os.environ.get("REQUIRE_DEVICE_ECHO", "1") not in [
     "0",
     "false",
     "no",
     "off",
-)
+]
 HA_DISCOVERY_TOPIC = CFG.get("HA_DISCOVERY_TOPIC", "homeassistant")
 log_config(CFG, SRC_PATH, logger)
 
@@ -427,7 +429,8 @@ async def scan_and_publish(client):
                     rssi = getattr(d, "rssi", None)
                     if rssi is None:
                         rssi = (
-                            (getattr(d, "details", {}) or {}).get("props", {}) or {}
+                            (getattr(d, "details", {}) or {}).get("props", {})
+                            or {}
                         ).get("RSSI")
                     mac, dbus_path = _extract_mac_and_dbus(d)
                     # Ensure dbus_path is a string
@@ -437,9 +440,10 @@ async def scan_and_publish(client):
                         d.name,
                         mac,
                         rssi,
-                        ((getattr(d, "details", {}) or {}).get("props", {}) or {}).get(
-                            "UUIDs"
-                        ),
+                        (
+                            (getattr(d, "details", {}) or {}).get("props", {})
+                            or {}
+                        ).get("UUIDs"),
                     )
                     break
 
@@ -520,7 +524,6 @@ parser = argparse.ArgumentParser(
 )
 
 if __name__ == "__main__":
-    args = parser.parse_args()
     EXTENDED_ENABLED = os.environ.get("EXTENDED_DISCOVERY", "0") not in (
         "0",
         "false",
@@ -574,6 +577,7 @@ if __name__ == "__main__":
         "--quiet", "-q", action="store_true", help="No periodic tick output"
     )
 
+    args = parser.parse_args()
     BB8_NAME = args.bb8_name
     SCAN_INTERVAL = int(args.scan_interval)
     MQTT_HOST = args.mqtt_host
@@ -624,7 +628,9 @@ if __name__ == "__main__":
                 if args.json:
                     print(json.dumps(res))
                 else:
-                    tick_log(res["found"], res["name"], res["address"], res["rssi"])
+                    tick_log(
+                        res["found"], res["name"], res["address"], res["rssi"]
+                    )
 
             asyncio.run(_once())
         else:
@@ -637,7 +643,9 @@ if __name__ == "__main__":
                 )
                 if MQTT_USERNAME and MQTT_PASSWORD:
                     client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
-                client.will_set(AVAIL_TOPIC, payload=AVAIL_OFF, qos=1, retain=True)
+                client.will_set(
+                    AVAIL_TOPIC, payload=AVAIL_OFF, qos=1, retain=True
+                )
                 return client
 
             def setup_callbacks(client):
@@ -675,6 +683,10 @@ class _NullBridge:
     def set_heading(self, deg: int):
         pass
 
+    def set_heading_deg(self, deg: int):
+        """Missing method that facade calls expect."""
+        pass
+
     def set_speed(self, v: int):
         pass
 
@@ -689,7 +701,6 @@ class _NullBridge:
 
 
 class _NullFacade:
-    pass
     """Safe no-op facade for when bridge is missing."""
 
     def power(self, on: bool):
@@ -705,6 +716,10 @@ class _NullFacade:
         pass
 
     def set_heading(self, deg):
+        pass
+
+    def set_heading_deg(self, deg):
+        """Missing method that facade calls expect."""
         pass
 
     def set_speed(self, v):
@@ -788,27 +803,25 @@ LEGACY_HEADING_STATE = f"{MQTT_BASE}/state/heading"
 LEGACY_SPEED_STATE = f"{MQTT_BASE}/state/speed"
 
 
-def _on_connect(client, userdata, flags, rc, properties=None):
+def _on_connect(client, _userdata, _flags, _rc, _properties=None):
     client.publish(AVAIL_TOPIC, payload=AVAIL_ON, qos=1, retain=False)
     # Subscribe to both legacy and flat command topics for actuator control
-    client.subscribe(
-        [
-            # legacy
-            (CMD_POWER_SET, 1),
-            (CMD_STOP_PRESS, 1),
-            (CMD_LED_SET, 1),
-            (CMD_HEADING_SET, 1),
-            (CMD_SPEED_SET, 1),
-            (CMD_DRIVE_PRESS, 1),
-            # flat (advertised by discovery)
-            (FLAT_POWER_SET, 1),
-            (FLAT_LED_SET, 1),
-            (FLAT_STOP_PRESS, 1),
-            (FLAT_DRIVE_SET, 1),
-            (FLAT_HEADING_SET, 1),
-            (FLAT_SPEED_SET, 1),
-        ]
-    )
+    client.subscribe([
+        # legacy
+        (CMD_POWER_SET, 1),
+        (CMD_STOP_PRESS, 1),
+        (CMD_LED_SET, 1),
+        (CMD_HEADING_SET, 1),
+        (CMD_SPEED_SET, 1),
+        (CMD_DRIVE_PRESS, 1),
+        # flat (advertised by discovery)
+        (FLAT_POWER_SET, 1),
+        (FLAT_LED_SET, 1),
+        (FLAT_STOP_PRESS, 1),
+        (FLAT_DRIVE_SET, 1),
+        (FLAT_HEADING_SET, 1),
+        (FLAT_SPEED_SET, 1),
+    ])
     # Route both sets to the same callbacks
     client.message_callback_add(CMD_POWER_SET, _cb_power_set)
     client.message_callback_add(CMD_STOP_PRESS, _cb_stop_press)
@@ -885,17 +898,9 @@ def _parse_led_payload(raw: bytes | str):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# MQTT connection helper
-def _connect_mqtt(client):
-    global MQTT_HOST, MQTT_PORT
-    client.connect(MQTT_HOST, MQTT_PORT, keepalive=60)
-    client.loop_start()
-
-
-# ──────────────────────────────────────────────────────────────────────────────
 # MQTT command callbacks → bridge methods + state echoes
 # ──────────────────────────────────────────────────────────────────────────────
-def _cb_power_set(client, userdata, msg):
+def _cb_power_set(client, _userdata, msg):
     payload = msg.payload
     if isinstance(payload, memoryview):
         payload = payload.tobytes()
@@ -916,12 +921,14 @@ def _cb_power_set(client, userdata, msg):
         logger.warning("power_set invalid payload: %r", payload)
 
 
-def _cb_stop_press(client, userdata, msg):
+def _cb_stop_press(client, _userdata, _msg):
     try:
         FACADE.stop()
     except Exception as e:
         logger.warning("facade.stop() failed: %s", e)
-    client.publish(FLAT_STOP_STATE, "pressed", qos=1, retain=False)  # pragma: no cover
+    client.publish(
+        FLAT_STOP_STATE, "pressed", qos=1, retain=False
+    )  # pragma: no cover
     client.publish(
         LEGACY_STOP_STATE, "pressed", qos=1, retain=False
     )  # pragma: no cover
@@ -938,7 +945,7 @@ def _cb_stop_press(client, userdata, msg):
     ).start()
 
 
-def _cb_heading_set(client, userdata, msg):
+def _cb_heading_set(client, _userdata, msg):
     payload = msg.payload
     if isinstance(payload, memoryview):
         payload = payload.tobytes()
@@ -949,9 +956,9 @@ def _cb_heading_set(client, userdata, msg):
         logger.warning("heading_set invalid payload: %r", msg.payload)
         return
     try:
-        FACADE.set_heading(deg)
+        FACADE.set_heading_deg(deg)
     except Exception as e:
-        logger.warning("facade.set_heading(%s) failed: %s", deg, e)
+        logger.warning("facade.set_heading_deg(%s) failed: %s", deg, e)
     client.publish(
         FLAT_HEADING_STATE, str(deg), qos=1, retain=False
     )  # pragma: no cover
@@ -960,7 +967,7 @@ def _cb_heading_set(client, userdata, msg):
     )  # pragma: no cover
 
 
-def _cb_speed_set(client, userdata, msg):
+def _cb_speed_set(client, _userdata, msg):
     payload = msg.payload
     if isinstance(payload, memoryview):
         payload = payload.tobytes()
@@ -973,18 +980,22 @@ def _cb_speed_set(client, userdata, msg):
         FACADE.set_speed(spd)
     except Exception as e:
         logger.warning("facade.set_speed(%s) failed: %s", spd, e)
-    client.publish(FLAT_SPEED_STATE, str(spd), qos=1, retain=False)  # pragma: no cover
+    client.publish(
+        FLAT_SPEED_STATE, str(spd), qos=1, retain=False
+    )  # pragma: no cover
     client.publish(
         LEGACY_SPEED_STATE, str(spd), qos=1, retain=False
     )  # pragma: no cover
 
 
-def _cb_drive_press(client, userdata, msg):
+def _cb_drive_press(client, _userdata, _msg):
     try:
         FACADE.drive()
     except Exception as e:
         logger.warning("facade.drive() failed: %s", e)
-    client.publish(FLAT_STOP_STATE, "pressed", qos=1, retain=False)  # pragma: no cover
+    client.publish(
+        FLAT_STOP_STATE, "pressed", qos=1, retain=False
+    )  # pragma: no cover
     client.publish(
         LEGACY_STOP_STATE, "pressed", qos=1, retain=False
     )  # pragma: no cover
@@ -1064,7 +1075,9 @@ def publish_discovery_old(
     model_hint = model if model else CFG.get("BB8_NAME", "S33 BB84 LE")
     name_hint = name if name else CFG.get("BB8_NAME", "BB-8")
     base = MQTT_BASE
-    device = build_device_block(mac, dbus_path, model=model_hint, name=name_hint)
+    device = build_device_block(
+        mac, dbus_path, model=model_hint, name=name_hint
+    )
     uid_suffix = mac.replace(":", "").lower()
     availability = {
         "availability_topic": AVAIL_TOPIC,
@@ -1115,28 +1128,38 @@ def tick_log(found: bool, name: str, addr: str | None, rssi, args=None):
     ts = time.strftime("%Y-%m-%dT%H:%M:%S%z")
     # Use provided args, global args, or module defaults
     if args is not None:
-        quiet = getattr(args, 'quiet', _DEFAULT_QUIET)
-        json_output = getattr(args, 'json', _DEFAULT_JSON)
-        verbose = getattr(args, 'verbose', _DEFAULT_VERBOSE)
+        quiet = getattr(args, "quiet", _DEFAULT_QUIET)
+        json_output = getattr(args, "json", _DEFAULT_JSON)
+        verbose = getattr(args, "verbose", _DEFAULT_VERBOSE)
     else:
-        global_args = globals().get('args')
-        quiet = getattr(global_args, 'quiet', _DEFAULT_QUIET) if global_args else _DEFAULT_QUIET
-        json_output = getattr(global_args, 'json', _DEFAULT_JSON) if global_args else _DEFAULT_JSON
-        verbose = getattr(global_args, 'verbose', _DEFAULT_VERBOSE) if global_args else _DEFAULT_VERBOSE
-    
+        global_args = globals().get("args")
+        quiet = (
+            getattr(global_args, "quiet", _DEFAULT_QUIET)
+            if global_args
+            else _DEFAULT_QUIET
+        )
+        json_output = (
+            getattr(global_args, "json", _DEFAULT_JSON)
+            if global_args
+            else _DEFAULT_JSON
+        )
+        verbose = (
+            getattr(global_args, "verbose", _DEFAULT_VERBOSE)
+            if global_args
+            else _DEFAULT_VERBOSE
+        )
+
     if quiet:
         return
     if json_output:
         print(
-            json.dumps(
-                {
-                    "ts": int(time.time()),
-                    "found": found,
-                    "name": name,
-                    "address": addr,
-                    "rssi": rssi,
-                }
-            )
+            json.dumps({
+                "ts": int(time.time()),
+                "found": found,
+                "name": name,
+                "address": addr,
+                "rssi": rssi,
+            })
         )
     else:
         if found:
