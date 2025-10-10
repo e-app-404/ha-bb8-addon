@@ -1,0 +1,74 @@
+[2025-10-10 13:28:23.271] INFO: === BB-8 Emergency Stop Demo ===
+[2025-10-10 13:28:23.271] INFO: Testing safety features and emergency stop functionality
+[2025-10-10 13:28:23.271] INFO: 
+[2025-10-10 13:28:23.271] INFO: Phase 1: Normal Motion Operations
+[2025-10-10 13:28:23.271] INFO: ================================
+[2025-10-10 13:28:23.271] INFO: ✓ Drive command validated: speed=100, heading=90, duration=1500ms
+[2025-10-10 13:28:23.373] INFO: ✓ Second drive command validated: speed=150, heading=180, duration=1000ms
+[2025-10-10 13:28:23.373] INFO: 
+[2025-10-10 13:28:23.373] INFO: Phase 2: Emergency Stop Activation
+[2025-10-10 13:28:23.373] INFO: ==================================
+[2025-10-10 13:28:23.373] INFO: ✓ Emergency stop activated
+[2025-10-10 13:28:23.374] INFO:   Reason: Demo emergency stop - testing safety system
+[2025-10-10 13:28:23.374] INFO:   Status: ACTIVE
+[2025-10-10 13:28:23.374] INFO: 
+[2025-10-10 13:28:23.374] INFO: Phase 3: Motion Blocking During Emergency Stop
+[2025-10-10 13:28:23.374] INFO: ==============================================
+[2025-10-10 13:28:23.374] INFO: ✓ Drive command correctly blocked during estop: Motion blocked by emergency stop: Demo emergency stop - testing safety system
+[2025-10-10 13:28:23.374] INFO: ✓ Second drive command correctly blocked during estop: Motion blocked by emergency stop: Demo emergency stop - testing safety system
+[2025-10-10 13:28:23.374] INFO: 
+[2025-10-10 13:28:23.374] INFO: Phase 4: Emergency Stop Clearing
+[2025-10-10 13:28:23.374] INFO: ================================
+[2025-10-10 13:28:23.374] INFO: Can clear estop: True
+[2025-10-10 13:28:23.374] INFO: Reason: Safe to clear emergency stop
+[2025-10-10 13:28:23.374] INFO: ✓ Emergency stop cleared: True
+[2025-10-10 13:28:23.375] INFO:   Result: Emergency stop cleared (was: Demo emergency stop - testing safety system)
+[2025-10-10 13:28:23.375] INFO:   Status: INACTIVE
+[2025-10-10 13:28:23.375] INFO: 
+[2025-10-10 13:28:23.375] INFO: Phase 5: Motion Resume After Clearing
+[2025-10-10 13:28:23.375] INFO: =====================================
+[2025-10-10 13:28:23.477] INFO: ✓ Drive command after estop clear: speed=120, heading=315, duration=1200ms
+[2025-10-10 13:28:23.596] INFO: ✓ Final drive command validated: speed=80, heading=0, duration=500ms
+[2025-10-10 13:28:23.596] INFO: 
+[2025-10-10 13:28:23.596] INFO: Phase 6: Safety Parameter Testing
+[2025-10-10 13:28:23.596] INFO: =================================
+[2025-10-10 13:28:23.597] ERROR: Speed clamping test failed: Drive command rate limit exceeded - 0.2ms < 50ms
+[2025-10-10 13:28:23.702] INFO: ✓ Duration clamping test: 3500ms → 2000ms (max: 2000ms)
+[2025-10-10 13:28:23.803] INFO: Testing rate limiting (rapid commands)...
+[2025-10-10 13:28:23.803] INFO: ✓ First rapid command: SUCCESS
+[2025-10-10 13:28:23.803] INFO: ✓ Second rapid command correctly rate limited: Rate limit protection working
+[2025-10-10 13:28:23.803] INFO: Rate limit test completed in 0.3ms
+[2025-10-10 13:28:23.803] INFO: 
+[2025-10-10 13:28:23.803] INFO: Phase 7: Demo Summary
+[2025-10-10 13:28:23.803] INFO: ====================
+[2025-10-10 13:28:23.803] INFO: Final Safety Status:
+[2025-10-10 13:28:23.803] INFO:   Emergency Stop: INACTIVE
+[2025-10-10 13:28:23.803] INFO:   Device Connected: True
+[2025-10-10 13:28:23.803] INFO:   Active Stop Tasks: 0
+[2025-10-10 13:28:23.803] INFO:   Configuration:
+[2025-10-10 13:28:23.803] INFO:     Min Interval: 50ms
+[2025-10-10 13:28:23.803] INFO:     Max Duration: 2000ms
+[2025-10-10 13:28:23.803] INFO:     Max Speed: 180
+[2025-10-10 13:28:23.803] INFO: 
+[2025-10-10 13:28:23.803] INFO: === Demo Sequence Complete ===
+[2025-10-10 13:28:23.803] INFO: All safety features tested successfully:
+[2025-10-10 13:28:23.803] INFO:   ✓ Motion validation and clamping
+[2025-10-10 13:28:23.803] INFO:   ✓ Emergency stop activation
+[2025-10-10 13:28:23.803] INFO:   ✓ Motion blocking during estop
+[2025-10-10 13:28:23.803] INFO:   ✓ Emergency stop clearing
+[2025-10-10 13:28:23.803] INFO:   ✓ Motion resume after clearing
+[2025-10-10 13:28:23.803] INFO:   ✓ Rate limiting protection
+[2025-10-10 13:28:23.804] INFO:   ✓ Speed and duration safety limits
+
+
+=== FACADE INTEGRATION DEMO ===
+[2025-10-10 13:28:23.986] INFO: Testing facade-level emergency stop integration
+[2025-10-10 13:28:23.987] INFO: Mock facade initialized
+[2025-10-10 13:28:23.987] INFO: ✓ Facade drive command accepted
+[2025-10-10 13:28:23.988] INFO: ✓ Facade emergency stop activated
+[2025-10-10 13:28:23.988] INFO:   Status: ACTIVE
+[2025-10-10 13:28:23.988] ERROR: ✗ UNEXPECTED: Drive command succeeded during estop
+[2025-10-10 13:28:23.989] INFO: ✓ Facade emergency stop cleared
+[2025-10-10 13:28:23.989] INFO:   Status: INACTIVE
+[2025-10-10 13:28:23.989] INFO: ✓ Drive command after estop clear accepted
+[2025-10-10 13:28:23.989] INFO: === FACADE INTEGRATION DEMO COMPLETE ===

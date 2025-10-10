@@ -19,9 +19,10 @@ from typing import Any
 
 from .addon_config import load_config
 from .bb8_presence_scanner import publish_discovery
-from .ble_session import BleSession, BleSessionError, DeviceNotConnectedError
+from .ble_session import BleSession, BleSessionError
 from .common import STATE_TOPICS
 from .logging_setup import logger
+from .safety import SafetyViolation, get_safety_controller
 
 
 def _sleep_led_pattern():
@@ -34,7 +35,7 @@ class BB8Facade:
     """
     High-level, MQTT-facing API for BB-8 Home Assistant integration.
 
-    This class wraps a BleSession and exposes commands, telemetry, 
+    This class wraps a BleSession and exposes commands, telemetry,
     and Home Assistant discovery via MQTT with proper async handling.
     """
 
@@ -48,28 +49,33 @@ class BB8Facade:
         Parameters
         ----------
         bridge : object, optional
-            Legacy bridge parameter for compatibility. 
+            Legacy bridge parameter for compatibility.
             New implementation uses BleSession internally.
         """
         self.Core = BB8Facade.Core
-        
+
         # Legacy bridge support for compatibility
         self.bridge = bridge
-        
+
         # New BLE session for actual device operations
         self._ble_session: BleSession | None = None
         self._target_mac: str | None = None
-        
+
         # MQTT configuration
         self._mqtt = {"client": None, "base": None, "qos": 1, "retain": True}
-        
+
         # Telemetry publishers bound at attach_mqtt()
         self.publish_presence: Callable[[bool], None] | None = None
         self.publish_rssi: Callable[[int], None] | None = None
-        
+
         # Task management
         self._tasks: set[asyncio.Task] = set()
         self._shutdown_event = asyncio.Event()
+
+        # Safety and telemetry
+        self._safety = get_safety_controller()
+        self._telemetry_task: asyncio.Task | None = None
+        self._last_cmd_timestamp: float = 0.0
 
     def _get_or_create_session(self) -> BleSession:
         """Get or create BLE session instance."""
@@ -90,15 +96,21 @@ class BB8Facade:
             try:
                 await session.connect()
                 logger.info({"event": "facade_auto_connect_success"})
-                
+
+                # Notify safety controller
+                self._safety.set_device_connected(True)
+
                 # Publish presence if available
                 if self.publish_presence:
                     self.publish_presence(True)
-                    
+
+                # Publish telemetry update
+                self._publish_telemetry_update()
+
             except BleSessionError as e:
                 logger.error({
                     "event": "facade_auto_connect_failed",
-                    "error": str(e)
+                    "error": str(e),
                 })
                 raise
 
@@ -110,7 +122,7 @@ class BB8Facade:
             task.add_done_callback(self._tasks.discard)
 
     # --------- High-level actions (validate → delegate to session) ---------
-    
+
     def power(self, on: bool) -> None:
         """
         Power on or off the BB-8 device.
@@ -126,7 +138,11 @@ class BB8Facade:
             else:
                 self._schedule_task(self._power_off())
         except Exception as e:
-            logger.error({"event": "facade_power_error", "on": on, "error": str(e)})
+            logger.error({
+                "event": "facade_power_error",
+                "on": on,
+                "error": str(e),
+            })
             self._publish_rejected("power", str(e))
 
     async def _power_on(self) -> None:
@@ -135,18 +151,17 @@ class BB8Facade:
             await self.ensure_connected()
             session = self._get_or_create_session()
             await session.wake()
-            
+
             # Publish MQTT state
             if self._mqtt["client"]:
                 topic = STATE_TOPICS["power"]
                 payload = "ON"
                 self._mqtt["client"].publish(
-                    topic, payload=payload, 
-                    qos=self._mqtt["qos"], retain=False
+                    topic, payload=payload, qos=self._mqtt["qos"], retain=False
                 )
-                
+
             logger.info({"event": "facade_power_on_success"})
-            
+
         except Exception as e:
             logger.error({"event": "facade_power_on_error", "error": str(e)})
             self._publish_rejected("power", str(e))
@@ -157,30 +172,34 @@ class BB8Facade:
             session = self._get_or_create_session()
             if session.is_connected():
                 await session.sleep()
-                
+
                 # Publish MQTT state
                 if self._mqtt["client"]:
                     topic = STATE_TOPICS["power"]
                     payload = "OFF"
                     self._mqtt["client"].publish(
-                        topic, payload=payload,
-                        qos=self._mqtt["qos"], retain=False
+                        topic,
+                        payload=payload,
+                        qos=self._mqtt["qos"],
+                        retain=False,
                     )
-                    
+
                     # Also publish LED state
                     topic = STATE_TOPICS["led"]
                     self._mqtt["client"].publish(
-                        topic, payload="OFF",
-                        qos=self._mqtt["qos"], retain=False
+                        topic,
+                        payload="OFF",
+                        qos=self._mqtt["qos"],
+                        retain=False,
                     )
                     logger.info("facade_sleep_to_led=true")
-                    
+
                 # Update presence
                 if self.publish_presence:
                     self.publish_presence(False)
-                    
+
             logger.info({"event": "facade_power_off_success"})
-            
+
         except Exception as e:
             logger.error({"event": "facade_power_off_error", "error": str(e)})
             self._publish_rejected("power", str(e))
@@ -200,19 +219,24 @@ class BB8Facade:
             if not session.is_connected():
                 self._publish_rejected("stop", "offline")
                 return
-                
+
             await session.stop()
-            
+
+            # Cancel any pending auto-stop
+            self._safety.cancel_auto_stop()
+
             # Publish MQTT state
             if self._mqtt["client"]:
                 topic = STATE_TOPICS["stop"]
                 self._mqtt["client"].publish(
-                    topic, payload="pressed",
-                    qos=self._mqtt["qos"], retain=False
+                    topic,
+                    payload="pressed",
+                    qos=self._mqtt["qos"],
+                    retain=False,
                 )
-                
+
             logger.info({"event": "facade_stop_success"})
-            
+
         except Exception as e:
             logger.error({"event": "facade_stop_impl_error", "error": str(e)})
             self._publish_rejected("stop", str(e))
@@ -225,10 +249,10 @@ class BB8Facade:
         """Set BB-8 LED color. SINGLE emission path via `_emit_led` only."""
         # Single source of truth: do not call any other publisher/recorder here.
         self._emit_led(r, g, b)
-        
+
         # Schedule async LED operation
         self._schedule_task(self._set_led_impl(r, g, b))
-        
+
         # Inter-call delay (pytest monkeypatchable)
         try:
             per_call_ms = int(os.getenv("BB8_LED_FADE_MS", "25"))
@@ -244,44 +268,83 @@ class BB8Facade:
                 logger.info({
                     "event": "facade_led_noop",
                     "reason": "not_connected",
-                    "r": r, "g": g, "b": b
+                    "r": r,
+                    "g": g,
+                    "b": b,
                 })
                 return
-                
+
             await session.set_led(r, g, b)
-            logger.debug({"event": "facade_led_success", "r": r, "g": g, "b": b})
-            
+            logger.debug({
+                "event": "facade_led_success",
+                "r": r,
+                "g": g,
+                "b": b,
+            })
+
         except Exception as e:
             logger.error({
                 "event": "facade_led_impl_error",
-                "r": r, "g": g, "b": b,
-                "error": str(e)
+                "r": r,
+                "g": g,
+                "b": b,
+                "error": str(e),
             })
 
-    def drive(self, speed: int, heading: int, duration_ms: int | None = None) -> None:
+    def drive(
+        self, speed: int, heading: int, duration_ms: int | None = None
+    ) -> None:
         """Drive BB-8 with specified parameters."""
         try:
-            self._schedule_task(self._drive_impl(speed, heading, duration_ms))
+            # Validate through safety controller
+            validated_speed, validated_heading, validated_duration = (
+                self._safety.validate_drive_command(speed, heading, duration_ms)
+            )
+
+            self._last_cmd_timestamp = time.time()
+            self._schedule_task(
+                self._drive_impl(
+                    validated_speed, validated_heading, validated_duration
+                )
+            )
+
+        except SafetyViolation as e:
+            logger.warning({
+                "event": "facade_drive_safety_violation",
+                "speed": speed,
+                "heading": heading,
+                "duration_ms": duration_ms,
+                "constraint": e.constraint,
+                "error": str(e),
+            })
+            self._publish_rejected("drive", str(e))
+
         except Exception as e:
             logger.error({
                 "event": "facade_drive_error",
                 "speed": speed,
                 "heading": heading,
                 "duration_ms": duration_ms,
-                "error": str(e)
+                "error": str(e),
             })
             self._publish_rejected("drive", str(e))
 
-    async def _drive_impl(self, speed: int, heading: int, duration_ms: int | None) -> None:
+    async def _drive_impl(
+        self, speed: int, heading: int, duration_ms: int | None
+    ) -> None:
         """Internal drive implementation."""
         try:
             session = self._get_or_create_session()
             if not session.is_connected():
                 self._publish_rejected("drive", "offline")
                 return
-                
+
             await session.roll(speed, heading, duration_ms)
-            
+
+            # Schedule auto-stop via safety controller
+            if duration_ms and duration_ms > 0:
+                self._safety.schedule_auto_stop(duration_ms, self._stop_impl)
+
             # Publish MQTT state
             if self._mqtt["client"]:
                 drive_topic = STATE_TOPICS.get("drive")
@@ -289,29 +352,76 @@ class BB8Facade:
                     payload = json.dumps({
                         "speed": speed,
                         "heading": heading,
-                        "duration_ms": duration_ms
+                        "duration_ms": duration_ms,
                     })
                     self._mqtt["client"].publish(
-                        drive_topic, payload=payload,
-                        qos=self._mqtt["qos"], retain=False
+                        drive_topic,
+                        payload=payload,
+                        qos=self._mqtt["qos"],
+                        retain=False,
                     )
-                    
+
             logger.info({
                 "event": "facade_drive_success",
                 "speed": speed,
                 "heading": heading,
-                "duration_ms": duration_ms
+                "duration_ms": duration_ms,
             })
-            
+
         except Exception as e:
             logger.error({
                 "event": "facade_drive_impl_error",
                 "speed": speed,
                 "heading": heading,
                 "duration_ms": duration_ms,
-                "error": str(e)
+                "error": str(e),
             })
             self._publish_rejected("drive", str(e))
+
+    def estop(self, reason: str = "Manual emergency stop") -> None:
+        """Activate emergency stop."""
+        try:
+            self._safety.activate_estop(reason)
+
+            # Stop device immediately
+            self._schedule_task(self._stop_impl())
+
+            # Publish telemetry update
+            self._publish_telemetry_update()
+
+            logger.warning({
+                "event": "facade_estop_activated",
+                "reason": reason,
+            })
+
+        except Exception as e:
+            logger.error({
+                "event": "facade_estop_error",
+                "reason": reason,
+                "error": str(e),
+            })
+            self._publish_rejected("estop", str(e))
+
+    def clear_estop(self) -> None:
+        """Clear emergency stop if safe."""
+        try:
+            cleared, reason = self._safety.clear_estop()
+
+            if cleared:
+                # Publish telemetry update
+                self._publish_telemetry_update()
+
+                logger.info({"event": "facade_estop_cleared", "reason": reason})
+            else:
+                logger.warning({
+                    "event": "facade_estop_clear_denied",
+                    "reason": reason,
+                })
+                self._publish_rejected("clear_estop", reason)
+
+        except Exception as e:
+            logger.error({"event": "facade_clear_estop_error", "error": str(e)})
+            self._publish_rejected("clear_estop", str(e))
 
     def _publish_rejected(self, cmd: str, reason: str) -> None:
         """Publish rejection message."""
@@ -335,7 +445,10 @@ class BB8Facade:
             try:
                 return int(self.bridge.get_rssi())
             except Exception as e:
-                logger.debug({"event": "facade_get_rssi_error", "error": str(e)})
+                logger.debug({
+                    "event": "facade_get_rssi_error",
+                    "error": str(e),
+                })
         return 0
 
     async def get_battery(self) -> int:
@@ -348,6 +461,70 @@ class BB8Facade:
         except Exception as e:
             logger.debug({"event": "facade_get_battery_error", "error": str(e)})
             return 0
+
+    def _publish_telemetry_update(self) -> None:
+        """Publish telemetry update immediately."""
+        if self._mqtt["client"] and self._mqtt["base"]:
+            self._schedule_task(self._publish_telemetry())
+
+    async def _publish_telemetry(self) -> None:
+        """Publish telemetry data."""
+        try:
+            client = self._mqtt["client"]
+            base = self._mqtt["base"]
+
+            if not client or not base:
+                return
+
+            # Get battery (with timeout to avoid blocking)
+            battery_pct = None
+            try:
+                battery_pct = await asyncio.wait_for(
+                    self.get_battery(), timeout=1.0
+                )
+            except (asyncio.TimeoutError, Exception):
+                battery_pct = None
+
+            # Build telemetry payload
+            telemetry = {
+                "connected": self.is_connected(),
+                "estop": self._safety.is_estop_active(),
+                "last_cmd_ts": time.strftime(
+                    "%Y-%m-%dT%H:%M:%S.%fZ",
+                    time.gmtime(self._last_cmd_timestamp),
+                )
+                if self._last_cmd_timestamp > 0
+                else None,
+                "battery_pct": battery_pct,
+                "ts": time.strftime("%Y-%m-%dT%H:%M:%S.%fZ", time.gmtime()),
+            }
+
+            # Publish telemetry
+            topic = f"{base}/status/telemetry"
+            payload = json.dumps(telemetry)
+            client.publish(topic, payload=payload, qos=1, retain=False)
+
+            logger.debug({
+                "event": "facade_telemetry_published",
+                "telemetry": telemetry,
+            })
+
+        except Exception as e:
+            logger.error({"event": "facade_telemetry_error", "error": str(e)})
+
+    async def _telemetry_heartbeat(self) -> None:
+        """Telemetry heartbeat task - publishes every 10 seconds."""
+        try:
+            while not self._shutdown_event.is_set():
+                await self._publish_telemetry()
+                await asyncio.sleep(10.0)
+        except asyncio.CancelledError:
+            logger.debug({"event": "facade_telemetry_heartbeat_cancelled"})
+        except Exception as e:
+            logger.error({
+                "event": "facade_telemetry_heartbeat_error",
+                "error": str(e),
+            })
 
     # --------- MQTT wiring (subscribe/dispatch/state echo + discovery) ---------
 
@@ -367,7 +544,7 @@ class BB8Facade:
         qos_val = qos if qos is not None else CFG.get("QOS", 1)
         retain_val = retain if retain is not None else CFG.get("RETAIN", True)
         base_topic = f"{MQTT_BASE}/{MQTT_CLIENT_ID}"
-        
+
         self._mqtt = {
             "client": client,
             "base": base_topic,
@@ -414,9 +591,9 @@ class BB8Facade:
             return None
 
         # Local config: device echo required?
-        REQUIRE_DEVICE_ECHO = os.environ.get("REQUIRE_DEVICE_ECHO", "1") not in (
-            "0", "false", "no", "off"
-        )
+        REQUIRE_DEVICE_ECHO = os.environ.get(
+            "REQUIRE_DEVICE_ECHO", "1"
+        ) not in ("0", "false", "no", "off")
 
         # Handlers
         def _handle_power(_c, _u, msg):
@@ -472,11 +649,80 @@ class BB8Facade:
             except Exception as e:
                 logger.error({"event": "stop_handler_error", "error": repr(e)})
 
+        def _handle_estop(_c, _u, msg):
+            try:
+                # Parse optional payload for reason/cid
+                reason = "MQTT emergency stop"
+                cid = None
+                try:
+                    payload = json.loads((msg.payload or b"").decode("utf-8"))
+                    if isinstance(payload, dict):
+                        reason = payload.get("reason", reason)
+                        cid = payload.get("cid")
+                except Exception:
+                    pass
+
+                self.estop(reason)
+
+                # Publish acknowledgment
+                ack_payload = {
+                    "ok": True,
+                    "reason": f"Emergency stop activated: {reason}",
+                    "timestamp": time.strftime(
+                        "%Y-%m-%dT%H:%M:%S.%fZ", time.gmtime()
+                    ),
+                }
+                if cid:
+                    ack_payload["cid"] = cid
+
+                _pub("ack/estop", ack_payload, r=False)
+
+            except Exception as e:
+                logger.error({"event": "estop_handler_error", "error": repr(e)})
+
+        def _handle_clear_estop(_c, _u, msg):
+            try:
+                # Parse optional payload for cid
+                cid = None
+                try:
+                    payload = json.loads((msg.payload or b"").decode("utf-8"))
+                    if isinstance(payload, dict):
+                        cid = payload.get("cid")
+                except Exception:
+                    pass
+
+                # Attempt to clear estop
+                cleared, reason = self._safety.clear_estop()
+
+                # Publish acknowledgment
+                ack_payload = {
+                    "ok": cleared,
+                    "reason": reason,
+                    "timestamp": time.strftime(
+                        "%Y-%m-%dT%H:%M:%S.%fZ", time.gmtime()
+                    ),
+                }
+                if cid:
+                    ack_payload["cid"] = cid
+
+                _pub("ack/clear_estop", ack_payload, r=False)
+
+                if cleared:
+                    # Publish telemetry update
+                    self._publish_telemetry_update()
+
+            except Exception as e:
+                logger.error({
+                    "event": "clear_estop_handler_error",
+                    "error": repr(e),
+                })
+
         # Discovery (idempotent; retained on broker)
         dbus_path = os.environ.get("BB8_DBUS_PATH") or CFG.get(
             "BB8_DBUS_PATH", "/org/bluez/hci0"
         )
         import asyncio
+
         asyncio.create_task(
             publish_discovery(
                 client,
@@ -495,16 +741,37 @@ class BB8Facade:
 
         # ---- Subscriptions ----
         if not REQUIRE_DEVICE_ECHO:
-            client.message_callback_add(f"{base_topic}/power/set", _handle_power)
+            client.message_callback_add(
+                f"{base_topic}/power/set", _handle_power
+            )
             client.subscribe(f"{base_topic}/power/set", qos=qos_val)
 
             client.message_callback_add(f"{base_topic}/led/set", _handle_led)
             client.subscribe(f"{base_topic}/led/set", qos=qos_val)
 
-            client.message_callback_add(f"{base_topic}/stop/press", _handle_stop)
+            client.message_callback_add(
+                f"{base_topic}/stop/press", _handle_stop
+            )
             client.subscribe(f"{base_topic}/stop/press", qos=qos_val)
-            
+
+            # Emergency stop subscriptions
+            client.message_callback_add(f"{MQTT_BASE}/cmd/estop", _handle_estop)
+            client.subscribe(f"{MQTT_BASE}/cmd/estop", qos=qos_val)
+
+            client.message_callback_add(
+                f"{MQTT_BASE}/cmd/clear_estop", _handle_clear_estop
+            )
+            client.subscribe(f"{MQTT_BASE}/cmd/clear_estop", qos=qos_val)
+
             logger.info({"event": "facade_mqtt_attached", "base": base_topic})
+
+            # Start telemetry heartbeat
+            if self._telemetry_task is None or self._telemetry_task.done():
+                self._telemetry_task = asyncio.create_task(
+                    self._telemetry_heartbeat()
+                )
+                self._tasks.add(self._telemetry_task)
+                self._telemetry_task.add_done_callback(self._tasks.discard)
         else:
             logger.warning({
                 "event": "facade_shim_subscriptions_skipped",
@@ -518,7 +785,7 @@ class BB8Facade:
         r = max(0, min(255, int(r)))
         g = max(0, min(255, int(g)))
         b = max(0, min(255, int(b)))
-        
+
         emit_led = getattr(self.Core, "emit_led", None)
         if callable(emit_led):
             emit_led(self.bridge, r, g, b)
@@ -546,20 +813,23 @@ class BB8Facade:
     async def shutdown(self) -> None:
         """Shutdown facade and cancel running tasks."""
         self._shutdown_event.set()
-        
+
         # Cancel all running tasks
         for task in list(self._tasks):
             if not task.done():
                 task.cancel()
-        
+
         # Wait for tasks to complete
         if self._tasks:
             await asyncio.gather(*self._tasks, return_exceptions=True)
-            
+
         # Shutdown BLE session
         if self._ble_session:
             await self._ble_session.disconnect()
-            
+
+        # Notify safety controller of disconnection
+        self._safety.set_device_connected(False)
+
         logger.info({"event": "facade_shutdown_complete"})
 
 
