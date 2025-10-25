@@ -1,74 +1,157 @@
-[2025-10-10 13:28:23.271] INFO: === BB-8 Emergency Stop Demo ===
-[2025-10-10 13:28:23.271] INFO: Testing safety features and emergency stop functionality
-[2025-10-10 13:28:23.271] INFO: 
-[2025-10-10 13:28:23.271] INFO: Phase 1: Normal Motion Operations
-[2025-10-10 13:28:23.271] INFO: ================================
-[2025-10-10 13:28:23.271] INFO: ✓ Drive command validated: speed=100, heading=90, duration=1500ms
-[2025-10-10 13:28:23.373] INFO: ✓ Second drive command validated: speed=150, heading=180, duration=1000ms
-[2025-10-10 13:28:23.373] INFO: 
-[2025-10-10 13:28:23.373] INFO: Phase 2: Emergency Stop Activation
-[2025-10-10 13:28:23.373] INFO: ==================================
-[2025-10-10 13:28:23.373] INFO: ✓ Emergency stop activated
-[2025-10-10 13:28:23.374] INFO:   Reason: Demo emergency stop - testing safety system
-[2025-10-10 13:28:23.374] INFO:   Status: ACTIVE
-[2025-10-10 13:28:23.374] INFO: 
-[2025-10-10 13:28:23.374] INFO: Phase 3: Motion Blocking During Emergency Stop
-[2025-10-10 13:28:23.374] INFO: ==============================================
-[2025-10-10 13:28:23.374] INFO: ✓ Drive command correctly blocked during estop: Motion blocked by emergency stop: Demo emergency stop - testing safety system
-[2025-10-10 13:28:23.374] INFO: ✓ Second drive command correctly blocked during estop: Motion blocked by emergency stop: Demo emergency stop - testing safety system
-[2025-10-10 13:28:23.374] INFO: 
-[2025-10-10 13:28:23.374] INFO: Phase 4: Emergency Stop Clearing
-[2025-10-10 13:28:23.374] INFO: ================================
-[2025-10-10 13:28:23.374] INFO: Can clear estop: True
-[2025-10-10 13:28:23.374] INFO: Reason: Safe to clear emergency stop
-[2025-10-10 13:28:23.374] INFO: ✓ Emergency stop cleared: True
-[2025-10-10 13:28:23.375] INFO:   Result: Emergency stop cleared (was: Demo emergency stop - testing safety system)
-[2025-10-10 13:28:23.375] INFO:   Status: INACTIVE
-[2025-10-10 13:28:23.375] INFO: 
-[2025-10-10 13:28:23.375] INFO: Phase 5: Motion Resume After Clearing
-[2025-10-10 13:28:23.375] INFO: =====================================
-[2025-10-10 13:28:23.477] INFO: ✓ Drive command after estop clear: speed=120, heading=315, duration=1200ms
-[2025-10-10 13:28:23.596] INFO: ✓ Final drive command validated: speed=80, heading=0, duration=500ms
-[2025-10-10 13:28:23.596] INFO: 
-[2025-10-10 13:28:23.596] INFO: Phase 6: Safety Parameter Testing
-[2025-10-10 13:28:23.596] INFO: =================================
-[2025-10-10 13:28:23.597] ERROR: Speed clamping test failed: Drive command rate limit exceeded - 0.2ms < 50ms
-[2025-10-10 13:28:23.702] INFO: ✓ Duration clamping test: 3500ms → 2000ms (max: 2000ms)
-[2025-10-10 13:28:23.803] INFO: Testing rate limiting (rapid commands)...
-[2025-10-10 13:28:23.803] INFO: ✓ First rapid command: SUCCESS
-[2025-10-10 13:28:23.803] INFO: ✓ Second rapid command correctly rate limited: Rate limit protection working
-[2025-10-10 13:28:23.803] INFO: Rate limit test completed in 0.3ms
-[2025-10-10 13:28:23.803] INFO: 
-[2025-10-10 13:28:23.803] INFO: Phase 7: Demo Summary
-[2025-10-10 13:28:23.803] INFO: ====================
-[2025-10-10 13:28:23.803] INFO: Final Safety Status:
-[2025-10-10 13:28:23.803] INFO:   Emergency Stop: INACTIVE
-[2025-10-10 13:28:23.803] INFO:   Device Connected: True
-[2025-10-10 13:28:23.803] INFO:   Active Stop Tasks: 0
-[2025-10-10 13:28:23.803] INFO:   Configuration:
-[2025-10-10 13:28:23.803] INFO:     Min Interval: 50ms
-[2025-10-10 13:28:23.803] INFO:     Max Duration: 2000ms
-[2025-10-10 13:28:23.803] INFO:     Max Speed: 180
-[2025-10-10 13:28:23.803] INFO: 
-[2025-10-10 13:28:23.803] INFO: === Demo Sequence Complete ===
-[2025-10-10 13:28:23.803] INFO: All safety features tested successfully:
-[2025-10-10 13:28:23.803] INFO:   ✓ Motion validation and clamping
-[2025-10-10 13:28:23.803] INFO:   ✓ Emergency stop activation
-[2025-10-10 13:28:23.803] INFO:   ✓ Motion blocking during estop
-[2025-10-10 13:28:23.803] INFO:   ✓ Emergency stop clearing
-[2025-10-10 13:28:23.803] INFO:   ✓ Motion resume after clearing
-[2025-10-10 13:28:23.803] INFO:   ✓ Rate limiting protection
-[2025-10-10 13:28:23.804] INFO:   ✓ Speed and duration safety limits
+[CONFIG] No configuration found in options.json or YAML.
+[CONFIG] No configuration found in options.json or YAML.
+[CONFIG] No configuration found in options.json or YAML.
+{"event": "safety_controller_init", "min_interval_ms": 50, "max_duration_ms": 2000, "max_speed": 180}
+============================================================
+🚀 B3 Emergency Stop Safety Demo - Post-Rework
+============================================================
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-10-10 17:07:24,039 INFO:bb8_core.logging_setup: {'event': 'safety_controller_init', 'min_interval_ms': 50, 'max_duration_ms': 2000, 'max_speed': 180}
+[CONFIG] No configuration found in options.json or YAML.
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-10-10 17:07:24,528 INFO:bb8_core.logging_setup: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "safety_speed_clamped", "original": 300, "clamped": 180, "max_allowed": 180}
+✅ Facade initialized with safety controller
 
+🧪 Test 1: Speed Clamping (separate from rate limiting)
+2025-10-10 17:07:24,537 WARNING:bb8_core.logging_setup: {'event': 'safety_speed_clamped', 'original': 300, 'clamped': 180, 'max_allowed': 180}
+{"event": "safety_estop_activated", "reason": "Demo emergency stop", "timestamp": 1760112444.537159}
+✅ Speed clamping: 300 → 180 (max: 180)
 
-=== FACADE INTEGRATION DEMO ===
-[2025-10-10 13:28:23.986] INFO: Testing facade-level emergency stop integration
-[2025-10-10 13:28:23.987] INFO: Mock facade initialized
-[2025-10-10 13:28:23.987] INFO: ✓ Facade drive command accepted
-[2025-10-10 13:28:23.988] INFO: ✓ Facade emergency stop activated
-[2025-10-10 13:28:23.988] INFO:   Status: ACTIVE
-[2025-10-10 13:28:23.988] ERROR: ✗ UNEXPECTED: Drive command succeeded during estop
-[2025-10-10 13:28:23.989] INFO: ✓ Facade emergency stop cleared
-[2025-10-10 13:28:23.989] INFO:   Status: INACTIVE
-[2025-10-10 13:28:23.989] INFO: ✓ Drive command after estop clear accepted
-[2025-10-10 13:28:23.989] INFO: === FACADE INTEGRATION DEMO COMPLETE ===
+🧪 Test 2: Rate Limiting (only affects execution)
+✅ First gate_drive() passed
+✅ Rate limit triggered: Drive command rate limit exceeded - 0.0ms < 50ms
+
+🧪 Test 3: Facade Authoritative Estop Gating
+2025-10-10 17:07:24,537 WARNING:bb8_core.logging_setup: {'event': 'safety_estop_activated', 'reason': 'Demo emergency stop', 'timestamp': 1760112444.537159}
+{"event": "facade_stop_success"}
+🛑 BB-8 stopped
+📡 MQTT Publish: bb8/stop/state = pressed
+2025-10-10 17:07:24,537 INFO:bb8_core.logging_setup: {'event': 'facade_stop_success'}
+{"event": "facade_estop_activated", "reason": "Demo emergency stop"}
+📡 MQTT Publish: bb8/status/telemetry = {
+  "connected": true,
+  "estop": true,
+  "last_cmd_ts": null,
+  "battery_pct": 0,
+  "ts": "2025-10-10T16:07:24.fZ"
+}
+2025-10-10 17:07:24,546 WARNING:bb8_core.logging_setup: {'event': 'facade_estop_activated', 'reason': 'Demo emergency stop'}
+{"event": "facade_drive_blocked_estop", "speed": 100, "heading": 90, "duration_ms": 1000, "reason": "Motion blocked by emergency stop: Demo emergency stop"}
+✅ Emergency stop activated
+2025-10-10 17:07:24,546 WARNING:bb8_core.logging_setup: {'event': 'facade_drive_blocked_estop', 'speed': 100, 'heading': 90, 'duration_ms': 1000, 'reason': 'Motion blocked by emergency stop: Demo emergency stop'}
+{"event": "safety_estop_cleared", "previous_reason": "Demo emergency stop", "timestamp": 1760112444.5469272}
+📡 MQTT Publish: bb8/event/rejected = {
+  "cmd": "drive",
+  "reason": "Motion blocked by emergency stop: Demo emergency stop"
+}
+✅ Drive command blocked during estop
+2025-10-10 17:07:24,546 INFO:bb8_core.logging_setup: {'event': 'safety_estop_cleared', 'previous_reason': 'Demo emergency stop', 'timestamp': 1760112444.5469272}
+{"event": "facade_estop_cleared", "reason": "Emergency stop cleared (was: Demo emergency stop)"}
+📡 MQTT Publish: bb8/status/telemetry = {
+  "connected": true,
+  "estop": false,
+  "last_cmd_ts": null,
+  "battery_pct": 0,
+  "ts": "2025-10-10T16:07:24.fZ"
+}
+2025-10-10 17:07:24,547 INFO:bb8_core.logging_setup: {'event': 'facade_estop_cleared', 'reason': 'Emergency stop cleared (was: Demo emergency stop)'}
+{"event": "facade_drive_success", "speed": 50, "heading": 180, "duration_ms": 500}
+✅ Emergency stop cleared
+🤖 BB-8 rolling: speed=50, heading=180°, duration=500ms
+📡 MQTT Publish: bb8/drive/state = {
+  "speed": 50,
+  "heading": 180,
+  "duration_ms": 500
+}
+2025-10-10 17:07:24,608 INFO:bb8_core.logging_setup: {'event': 'facade_drive_success', 'speed': 50, 'heading': 180, 'duration_ms': 500}
+{"event": "facade_drive_success", "speed": 75, "heading": 270, "duration_ms": 800}
+✅ Drive command works after estop cleared
+
+🧪 Test 4: Telemetry Publishing
+📡 MQTT Publish: bb8/status/telemetry = {
+  "connected": true,
+  "estop": false,
+  "last_cmd_ts": "2025-10-10T16:07:24.fZ",
+  "battery_pct": 85,
+  "ts": "2025-10-10T16:07:24.fZ"
+}
+✅ Telemetry published successfully (no coroutine errors)
+
+🧪 Test 5: Complete Safety Sequence
+🤖 BB-8 rolling: speed=75, heading=270°, duration=800ms
+📡 MQTT Publish: bb8/drive/state = {
+  "speed": 75,
+  "heading": 270,
+  "duration_ms": 800
+}
+2025-10-10 17:07:24,669 INFO:bb8_core.logging_setup: {'event': 'facade_drive_success', 'speed': 75, 'heading': 270, 'duration_ms': 800}
+{"event": "safety_estop_activated", "reason": "Complete sequence test", "timestamp": 1760112444.7427242}
+✅ Motion allowed before estop
+2025-10-10 17:07:24,742 WARNING:bb8_core.logging_setup: {'event': 'safety_estop_activated', 'reason': 'Complete sequence test', 'timestamp': 1760112444.7427242}
+{"event": "facade_stop_success"}
+🛑 BB-8 stopped
+📡 MQTT Publish: bb8/stop/state = pressed
+2025-10-10 17:07:24,743 INFO:bb8_core.logging_setup: {'event': 'facade_stop_success'}
+{"event": "facade_estop_activated", "reason": "Complete sequence test"}
+📡 MQTT Publish: bb8/status/telemetry = {
+  "connected": true,
+  "estop": true,
+  "last_cmd_ts": "2025-10-10T16:07:24.fZ",
+  "battery_pct": 85,
+  "ts": "2025-10-10T16:07:24.fZ"
+}
+2025-10-10 17:07:24,743 WARNING:bb8_core.logging_setup: {'event': 'facade_estop_activated', 'reason': 'Complete sequence test'}
+{"event": "facade_drive_blocked_estop", "speed": 100, "heading": 0, "duration_ms": 500, "reason": "Motion blocked by emergency stop: Complete sequence test"}
+✅ Estop activated, motion stopped
+2025-10-10 17:07:24,743 WARNING:bb8_core.logging_setup: {'event': 'facade_drive_blocked_estop', 'speed': 100, 'heading': 0, 'duration_ms': 500, 'reason': 'Motion blocked by emergency stop: Complete sequence test'}
+{"event": "facade_drive_blocked_estop", "speed": 50, "heading": 90, "duration_ms": 500, "reason": "Motion blocked by emergency stop: Complete sequence test"}
+📡 MQTT Publish: bb8/event/rejected = {
+  "cmd": "drive",
+  "reason": "Motion blocked by emergency stop: Complete sequence test"
+}
+✅ Motion attempt 1 rejected during estop
+2025-10-10 17:07:24,743 WARNING:bb8_core.logging_setup: {'event': 'facade_drive_blocked_estop', 'speed': 50, 'heading': 90, 'duration_ms': 500, 'reason': 'Motion blocked by emergency stop: Complete sequence test'}
+{"event": "facade_drive_blocked_estop", "speed": 25, "heading": 180, "duration_ms": 500, "reason": "Motion blocked by emergency stop: Complete sequence test"}
+📡 MQTT Publish: bb8/event/rejected = {
+  "cmd": "drive",
+  "reason": "Motion blocked by emergency stop: Complete sequence test"
+}
+✅ Motion attempt 2 rejected during estop
+2025-10-10 17:07:24,743 WARNING:bb8_core.logging_setup: {'event': 'facade_drive_blocked_estop', 'speed': 25, 'heading': 180, 'duration_ms': 500, 'reason': 'Motion blocked by emergency stop: Complete sequence test'}
+{"event": "safety_estop_cleared", "previous_reason": "Complete sequence test", "timestamp": 1760112444.7435899}
+📡 MQTT Publish: bb8/event/rejected = {
+  "cmd": "drive",
+  "reason": "Motion blocked by emergency stop: Complete sequence test"
+}
+✅ Motion attempt 3 rejected during estop
+2025-10-10 17:07:24,743 INFO:bb8_core.logging_setup: {'event': 'safety_estop_cleared', 'previous_reason': 'Complete sequence test', 'timestamp': 1760112444.7435899}
+{"event": "facade_estop_cleared", "reason": "Emergency stop cleared (was: Complete sequence test)"}
+📡 MQTT Publish: bb8/status/telemetry = {
+  "connected": true,
+  "estop": false,
+  "last_cmd_ts": "2025-10-10T16:07:24.fZ",
+  "battery_pct": 85,
+  "ts": "2025-10-10T16:07:24.fZ"
+}
+2025-10-10 17:07:24,743 INFO:bb8_core.logging_setup: {'event': 'facade_estop_cleared', 'reason': 'Emergency stop cleared (was: Complete sequence test)'}
+{"event": "facade_drive_success", "speed": 60, "heading": 45, "duration_ms": 600}
+✅ Estop cleared
+🤖 BB-8 rolling: speed=60, heading=45°, duration=600ms
+📡 MQTT Publish: bb8/drive/state = {
+  "speed": 60,
+  "heading": 45,
+  "duration_ms": 600
+}
+2025-10-10 17:07:24,804 INFO:bb8_core.logging_setup: {'event': 'facade_drive_success', 'speed': 60, 'heading': 45, 'duration_ms': 600}
+✅ Motion allowed after estop cleared
+
+============================================================
+🎉 B3 Safety Demo Complete
+✅ All core safety features working:
+  • Validation/clamping decoupled from rate limiting
+  • Authoritative estop gating at facade layer
+  • Fixed telemetry publishing (no coroutine errors)
+  • Complete motion safety lifecycle
+============================================================

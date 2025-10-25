@@ -1,0 +1,216 @@
+# BB-8 Device Configuration Profile
+# Generated from comprehensive BLE testing session on 2025-10-09
+# Contains all discovered device characteristics, services, and connection parameters
+
+[device]
+# Device identification
+model = "BB-8"
+manufacturer = "Sphero"
+manufacturer_id = 12339  # BLE manufacturer data ID
+verified_mac_address = "ED:ED:87:D7:27:50"  # Linux/HA OS MAC address for S33 BB84 LE interface
+project_integration_status = "active"  # Confirmed in use by HA-BB8 addon project
+
+[interfaces]
+# Primary BLE interface (command capable)
+[interfaces.primary]
+name = "BB-B54A"  # Device advertised name
+role = "administrative_command"
+ble_uuid_macos = "259ED00E-3026-2568-C410-4590C9A9297C"  # macOS-specific UUID
+signal_strength_range = [-44, -57]  # dBm range observed
+characteristics_writable = 14
+characteristics_total = 17
+wake_responsive = true
+wake_signal_boost = 9  # dBm improvement when wake button pressed
+connection_priority = 1
+
+# Secondary BLE interface (read-only)
+[interfaces.secondary]
+name = "S33 BB84 LE"  # Device advertised name
+role = "operational_status"
+ble_uuid_macos = "09C6CEBB-2743-A94A-73FC-A7B36E5F5864"  # macOS-specific UUID
+mac_address_linux = "ED:ED:87:D7:27:50"  # Linux/HA OS MAC address (verified from project config)
+signal_strength_range = [-61, -72]  # dBm range observed
+characteristics_writable = 0
+characteristics_total = 2  # Estimated based on limited scan data
+wake_responsive = false
+connection_priority = 2
+
+[services]
+# Primary Sphero Service
+[services.sphero_primary]
+uuid = "22bb746f-2ba0-7554-2d6f-726568705327"
+description = "Primary Sphero BLE service"
+interface = "primary"
+
+[services.sphero_primary.characteristics]
+command_tx = { uuid = "22bb746f-2ba1-7554-2d6f-726568705327", properties = ["write-without-response", "write"], description = "Primary command transmission" }
+response_rx = { uuid = "22bb746f-2ba6-7554-2d6f-726568705327", properties = ["notify"], description = "Command response notifications" }
+
+# Secondary Sphero Service (main command hub)
+[services.sphero_secondary]
+uuid = "22bb746f-2bb0-7554-2d6f-726568705327"
+description = "Secondary Sphero BLE service - main command hub"
+interface = "primary"
+
+[services.sphero_secondary.characteristics]
+config_rw = { uuid = "22bb746f-2bb1-7554-2d6f-726568705327", properties = ["read", "write"], description = "Configuration read/write" }
+command_w = { uuid = "22bb746f-2bb2-7554-2d6f-726568705327", properties = ["write"], description = "Command write only" }
+control_multi = { uuid = "22bb746f-2bb6-7554-2d6f-726568705327", properties = ["read", "write-without-response", "write", "notify"], description = "Multi-purpose control" }
+advanced_rw = { uuid = "22bb746f-2bb7-7554-2d6f-726568705327", properties = ["read", "write-without-response", "write"], description = "Advanced read/write" }
+status_r1 = { uuid = "22bb746f-2bb8-7554-2d6f-726568705327", properties = ["read"], description = "Status read 1" }
+status_r2 = { uuid = "22bb746f-2bb9-7554-2d6f-726568705327", properties = ["read"], description = "Status read 2" }
+status_r3 = { uuid = "22bb746f-2bba-7554-2d6f-726568705327", properties = ["read"], description = "Status read 3" }
+command_w2 = { uuid = "22bb746f-2bbd-7554-2d6f-726568705327", properties = ["write-without-response", "write"], description = "Secondary command write" }
+config_rw2 = { uuid = "22bb746f-2bbe-7554-2d6f-726568705327", properties = ["read", "write"], description = "Secondary config read/write" }
+advanced_rw2 = { uuid = "22bb746f-2bbf-7554-2d6f-726568705327", properties = ["read", "write-without-response", "write"], description = "Secondary advanced read/write" }
+extended_rw = { uuid = "22bb746f-3bba-7554-2d6f-726568705327", properties = ["read", "write-without-response", "write"], description = "Extended read/write" }
+
+# Control Service
+[services.control]
+uuid = "00001016-d102-11e1-9b23-00025b00a5a5"
+description = "Device control service"
+interface = "primary"
+
+[services.control.characteristics]
+control_rw = { uuid = "00001013-d102-11e1-9b23-00025b00a5a5", properties = ["read", "write"], description = "Control read/write" }
+control_w = { uuid = "00001017-d102-11e1-9b23-00025b00a5a5", properties = ["write"], description = "Control write only" }
+control_notify = { uuid = "00001014-d102-11e1-9b23-00025b00a5a5", properties = ["read", "notify"], description = "Control notifications" }
+
+# Device Information Service (Standard BLE)
+[services.device_info]
+uuid = "0000180a-0000-1000-8000-00805f9b34fb"
+description = "Standard BLE Device Information Service"
+interface = "primary"
+
+[services.device_info.characteristics]
+hardware_revision = { uuid = "00002a27-0000-1000-8000-00805f9b34fb", properties = ["read"], description = "Hardware Revision String" }
+serial_number = { uuid = "00002a25-0000-1000-8000-00805f9b34fb", properties = ["read"], description = "Serial Number String" }
+model_number = { uuid = "00002a24-0000-1000-8000-00805f9b34fb", properties = ["read"], description = "Model Number String" }
+manufacturer_name = { uuid = "00002a29-0000-1000-8000-00805f9b34fb", properties = ["read"], description = "Manufacturer Name String" }
+firmware_revision = { uuid = "00002a26-0000-1000-8000-00805f9b34fb", properties = ["read"], description = "Firmware Revision String" }
+
+[connection]
+# Connection parameters discovered during testing
+preferred_interface = "primary"  # BB-B54A
+connection_timeout = 15.0  # seconds
+command_timeout = 5.0  # seconds
+retry_attempts = 2
+backoff_factor = 1.5
+
+# Platform-specific connection strategies
+[connection.macos]
+discovery_method = "uuid"
+primary_identifier = "259ED00E-3026-2568-C410-4590C9A9297C"
+secondary_identifier = "09C6CEBB-2743-A94A-73FC-A7B36E5F5864"
+
+[connection.linux]
+discovery_method = "mac_address"  # Prefer MAC address for Linux/HA OS
+primary_mac = "TBD"  # To be discovered at runtime (BB-B54A interface)
+secondary_mac = "ED:ED:87:D7:27:50"  # S33 BB84 LE - verified from HA-BB8 project config
+fallback_method = "name"  # Fall back to device names if MAC discovery fails
+primary_name = "BB-B54A"
+secondary_name = "S33 BB84 LE"
+
+[commands]
+# Command characteristics identified during testing
+[commands.primary_channels]
+main_command = "22bb746f-2ba1-7554-2d6f-726568705327"  # Primary TX
+secondary_command = "22bb746f-2bb1-7554-2d6f-726568705327"  # Config RW
+write_only = "22bb746f-2bb2-7554-2d6f-726568705327"  # Write only
+multi_purpose = "22bb746f-2bb6-7554-2d6f-726568705327"  # Multi-function
+
+# Wake-up command sequences tested
+[commands.wake_sequences]
+basic_wake = [0x01]
+sphero_wake = [0x13]
+enhanced_wake = [0xFF, 0x01]
+sphero_packet_wake = [0xFF, 0xFE, 0x00, 0x01, 0x01, 0x00, 0xFD]
+
+# LED command formats tested
+[commands.led_commands]
+format = "RGB"
+red_on = [0x02, 0xFF, 0x00, 0x00]
+green_on = [0x02, 0x00, 0xFF, 0x00]
+blue_on = [0x02, 0x00, 0x00, 0xFF]
+white_on = [0x02, 0xFF, 0xFF, 0xFF]
+led_off = [0x02, 0x00, 0x00, 0x00]
+
+# Movement command formats tested
+[commands.movement_commands]
+format = "speed_heading"
+small_forward = [0x03, 0x20, 0x00]
+small_right = [0x03, 0x20, 0x5A]
+small_left = [0x03, 0x20, 0xB4]
+stop = [0x03, 0x00, 0x00]
+
+[testing]
+# Testing session metadata
+test_date = "2025-10-09"
+test_environment = "macOS development environment"
+ble_library = "bleak v0.22.3"
+sphero_library = "spherov2 v0.12.1"
+total_scenarios = 6
+total_tests = 5
+connection_success_rate = 1.0  # 100%
+command_transmission_success_rate = 1.0  # 100%
+
+[testing.scenarios_completed]
+scenario_1 = "BB-8 outside cradle, cradle powered"
+scenario_2 = "BB-8 outside cradle, cradle unpowered"
+scenario_3 = "BB-8 inside cradle, cradle powered"
+scenario_4 = "BB-8 inside cradle, cradle unpowered"
+scenario_5 = "BB-8 inside cradle, cradle powered + wake button"
+scenario_6 = "BB-8 outside cradle, cradle powered + wake button"
+
+[testing.rssi_measurements]
+# Signal strength measurements across all scenarios
+[testing.rssi_measurements.bb_b54a]
+strongest = -44  # dBm
+weakest = -57    # dBm
+average = -50.5  # dBm
+wake_boost = 9   # dBm improvement with wake button
+
+[testing.rssi_measurements.s33_bb84_le]
+strongest = -61  # dBm
+weakest = -72    # dBm
+average = -66.5  # dBm
+wake_boost = 0   # No significant change with wake button
+
+[configuration_reference]
+# SINGLE SOURCE OF TRUTH - Use these values in all implementations
+canonical_mac_address = "ED:ED:87:D7:27:50"  # S33 BB84 LE - verified across 50+ project files
+canonical_device_name = "S33 BB84 LE"  # Standard device name for Linux/HA OS
+primary_command_interface = "BB-B54A"  # Administrative/command capable interface
+secondary_status_interface = "S33 BB84 LE"  # Operational status interface
+
+# Platform-specific identifiers (DO NOT mix platforms)
+linux_mac_s33_bb84_le = "ED:ED:87:D7:27:50"
+macos_uuid_s33_bb84_le = "09C6CEBB-2743-A94A-73FC-A7B36E5F5864"
+macos_uuid_bb_b54a = "259ED00E-3026-2568-C410-4590C9A9297C"
+
+# HA-BB8 Addon Configuration Values
+ha_addon_bb8_mac = "ED:ED:87:D7:27:50"  # Use this in addon config
+ha_addon_bb8_name = "S33 BB84 LE"  # Use this in addon config
+ha_discovery_device_id = "bb8_S33_BB84_LE"  # Device registry identifier
+ha_discovery_mac_connection = ["mac", "ED:ED:87:D7:27:50"]  # MQTT discovery device block
+
+[integration]
+# Home Assistant integration recommendations
+ha_addon_config_primary_name = "BB-B54A"
+ha_addon_config_fallback_name = "S33 BB84 LE"
+ha_addon_config_mac_address = "ED:ED:87:D7:27:50"  # Verified MAC from HA-BB8 project
+discovery_strategy = "mac_preferred"  # Prefer MAC address on Linux/HA OS, fallback to names
+authentication_required = true  # Likely needs spherov2 SDK authentication
+wake_replication_feasible = true  # Technically possible via BLE commands
+recommended_sdk = "spherov2"
+cross_platform_validation = "ED:ED:87:D7:27:50 (Linux) ↔ 09C6CEBB-2743-A94A-73FC-A7B36E5F5864 (macOS)"
+
+[notes]
+# Important implementation notes
+ble_uuid_warning = "UUIDs shown are macOS-specific and will differ on Linux/HA systems"
+mac_address_format = "Traditional AA:BB:CC:DD:EE:FF format not observed in macOS BLE stack"
+cross_platform_strategy = "Prefer MAC addresses on Linux (ED:ED:87:D7:27:50), use UUIDs on macOS"
+wake_signal_status = "Commands sent successfully, visual response needs authentication"
+charging_cradle_finding = "Cradle has no BLE interface - both signals from BB-8 itself"
+mac_address_verification = "ED:ED:87:D7:27:50 confirmed in 50+ project files as S33 BB84 LE device"
+device_identity_mapping = "S33 BB84 LE is the secondary interface of the same BB-8 unit as BB-B54A"

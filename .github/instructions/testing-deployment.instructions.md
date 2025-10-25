@@ -1,8 +1,8 @@
-Deployment options for testing — clarity pass (no guesswork, binary steps)
+# Deployment options for testing — clarity pass (no guesswork, binary steps)
 
 You’ve got two clean paths to deploy and test the BB8 codebase:
 
-A) **Supervisor/HA OS path (preferred, production-like)**  
+A) **Supervisor/HA OS path (preferred, production-like)**
 B) **Standalone dev runner (no Supervisor; quick iteration)**
 
 Both produce the same PASS/FAIL artifacts under `reports/checkpoints/INT-HA-CONTROL/`. Coverage is informative only (per our delta contract); INT-HA-CONTROL acceptance is purely operational.

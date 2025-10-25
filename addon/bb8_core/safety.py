@@ -102,15 +102,23 @@ class MotionSafetyController:
         """Check if emergency stop is currently active."""
         return self._estop_latched
 
+    @property
+    def estop_latched(self) -> bool:
+        """Property access to emergency stop state."""
+        return self._estop_latched
+
     def get_estop_reason(self) -> str:
         """Get reason for current emergency stop."""
         return self._estop_reason
 
-    def validate_drive_command(
+    def normalize_drive(
         self, speed: int, heading: int, duration_ms: int | None
     ) -> tuple[int, int, int]:
         """
-        Validate and clamp drive command parameters.
+        Normalize and clamp drive command parameters without checking timing constraints.
+
+        This method MUST NOT update timestamps or check rate limits.
+        It only validates and clamps parameter values.
 
         Parameters
         ----------
@@ -124,40 +132,8 @@ class MotionSafetyController:
         Returns
         -------
         tuple[int, int, int]
-            Validated (speed, heading, duration_ms)
-
-        Raises
-        ------
-        SafetyViolation
-            If safety constraints are violated
+            Normalized (speed, heading, duration_ms)
         """
-        # Check emergency stop first
-        if self._estop_latched:
-            raise SafetyViolation(
-                f"Motion blocked by emergency stop: {self._estop_reason}",
-                "estop_active",
-            )
-
-        # Check device connection
-        if not self._device_connected:
-            raise SafetyViolation(
-                "Motion blocked - device not connected", "device_offline"
-            )
-
-        # Check rate limiting (but not on first command)
-        current_time = time.time()
-        if self._last_drive_time > 0:  # Skip rate limit check for first command
-            time_since_last = (
-                current_time - self._last_drive_time
-            ) * 1000  # Convert to ms
-
-            if time_since_last < self.config.min_drive_interval_ms:
-                raise SafetyViolation(
-                    f"Drive command rate limit exceeded - {time_since_last:.1f}ms < {self.config.min_drive_interval_ms}ms",
-                    "rate_limit",
-                    time_since_last,
-                )
-
         # Clamp speed
         original_speed = speed
         speed = max(0, min(self.config.max_drive_speed, speed))
@@ -195,17 +171,68 @@ class MotionSafetyController:
                     "max_allowed": self.config.max_drive_duration_ms,
                 })
 
-        # Update last drive time
-        self._last_drive_time = current_time
-
         logger.debug({
-            "event": "safety_drive_validated",
+            "event": "safety_drive_normalized",
             "speed": speed,
             "heading": heading,
             "duration_ms": duration_ms,
         })
 
         return speed, heading, duration_ms
+
+    def gate_drive(self, current_time: float | None = None) -> None:
+        """
+        Gate drive command execution with safety checks.
+
+        This method checks emergency stop, device connection, and rate limiting.
+        Only call this when the command will actually be executed.
+
+        Parameters
+        ----------
+        current_time : float | None
+            Current time in seconds. If None, uses time.time()
+
+        Raises
+        ------
+        SafetyViolation
+            If safety constraints are violated
+        """
+        if current_time is None:
+            current_time = time.time()
+
+        # Check emergency stop first
+        if self._estop_latched:
+            raise SafetyViolation(
+                f"Motion blocked by emergency stop: {self._estop_reason}",
+                "estop_active",
+            )
+
+        # Check device connection
+        if not self._device_connected:
+            raise SafetyViolation(
+                "Motion blocked - device not connected", "device_offline"
+            )
+
+        # Check rate limiting (but not on first command)
+        if self._last_drive_time > 0:  # Skip rate limit check for first command
+            time_since_last = (
+                current_time - self._last_drive_time
+            ) * 1000  # Convert to ms
+
+            if time_since_last < self.config.min_drive_interval_ms:
+                raise SafetyViolation(
+                    f"Drive command rate limit exceeded - {time_since_last:.1f}ms < {self.config.min_drive_interval_ms}ms",
+                    "rate_limit",
+                    time_since_last,
+                )
+
+        # Update last drive time only after all checks pass
+        self._last_drive_time = current_time
+
+        logger.debug({
+            "event": "safety_drive_gated",
+            "timestamp": current_time,
+        })
 
     def schedule_auto_stop(self, duration_ms: int, stop_callback) -> None:
         """
@@ -267,14 +294,24 @@ class MotionSafetyController:
 
         logger.debug({"event": "safety_auto_stop_cancelled"})
 
-    def activate_estop(self, reason: str = "Manual emergency stop") -> None:
+    def activate_estop(
+        self, reason: str = "Manual emergency stop"
+    ) -> tuple[bool, str]:
         """
         Activate emergency stop - latches until explicitly cleared.
+
+        Uses sticky-first semantics: once activated, the original reason is retained
+        until cleared, even if activate_estop is called again.
 
         Parameters
         ----------
         reason : str
             Reason for emergency stop activation
+
+        Returns
+        -------
+        tuple[bool, str]
+            (activated, message) - False if already active
         """
         if self._estop_latched:
             logger.warning({
@@ -282,7 +319,7 @@ class MotionSafetyController:
                 "current_reason": self._estop_reason,
                 "new_reason": reason,
             })
-            return
+            return False, f"Emergency stop already active: {self._estop_reason}"
 
         self._estop_latched = True
         self._estop_reason = reason
@@ -295,6 +332,8 @@ class MotionSafetyController:
             "reason": reason,
             "timestamp": time.time(),
         })
+
+        return True, f"Emergency stop activated: {reason}"
 
     def can_clear_estop(self) -> tuple[bool, str]:
         """

@@ -1,3 +1,6 @@
+---
+applyTo: '**'
+---
 # AI Coding Agent Instructions: HA-BB8 Add-on (Governed, PIE-Optimized)
 
 ## Project Overview
@@ -217,6 +220,24 @@ make evidence-stp4  # End-to-end MQTT roundtrip attestation (governed)
 - Diagnostics via `ops/diag/collect_ha_bb8_diagnostics.sh`
 - Attestation via STP4 protocol for MQTT roundtrip validation
 
+#### HA Host validation & path confinement (B5+)
+
+- All artifacts written on the HA Host must be confined under the base directory: `/config/ha-bb8`.
+- Standard B5 validation run via SSH helper: `ops/ha-host/run_b5_via_ssh.sh [<host-alias>]`.
+  - Behavior: SSH into HA Host, locate the BB‑8 add‑on container, execute the E2E sequence (wake → preset → drive → stop → sleep) and echo probe inside the container, write evidence to `/config/ha-bb8/checkpoints/BB8-FUNC/<UTC_TS>/`, and generate a `manifest.sha256` in that folder.
+  - After completion, artifacts are copied back to the local repo under `reports/checkpoints/BB8-FUNC/ssh_b5_<UTC_TS>/` for commit.
+- Never write outside `/config/ha-bb8` on HA Host. If additional subfolders are needed, place them beneath this base directory.
+
+Quick runbook (operator):
+
+1) Ensure the BB‑8 add‑on container is running on HA Host (name/image contains `bb8`).
+2) From the repo root, run:
+  - `chmod +x ops/ha-host/run_b5_via_ssh.sh`
+  - `bash ops/ha-host/run_b5_via_ssh.sh homeassistant`
+3) Confirm local capture under `reports/checkpoints/BB8-FUNC/ssh_b5_<UTC_TS>/` contains:
+  - `b5_e2e_demo.log`, `b5_summary.md`, and `manifest.sha256`.
+4) Commit evidence and include in PR if required by the gate.
+
 #### Evidence Contract (Governed) (PIE: P2 — Prevent)
 
 - Only **governed harness/tests** may write under `reports/checkpoints/**`.
@@ -259,6 +280,7 @@ ssh home-assistant 'grep version: /addons/local/beep_boop_bb8/config.yaml'
 
 - **ADR-0008**: End-to-end deployment flow with verified pipeline (rsync, Alpine compatibility)
 - **ADR-0019**: Workspace folder taxonomy
+- **ADR-0024**: Canonical config path management ( + expansion doc `ENV_GOVERNANCE`)
 - **ADR-0031**: Supervisor-only operations & testing protocol
 - **ADR-0032**: MQTT/BLE integration architecture
 - **ADR-0034**: HA OS infrastructure knowledge (Alpine v3.22, Docker paths)

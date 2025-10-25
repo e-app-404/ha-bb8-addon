@@ -21,6 +21,7 @@ from .addon_config import load_config
 from .bb8_presence_scanner import publish_discovery
 from .ble_session import BleSession, BleSessionError
 from .common import STATE_TOPICS
+from .lighting import get_lighting_controller
 from .logging_setup import logger
 from .safety import SafetyViolation, get_safety_controller
 
@@ -72,8 +73,9 @@ class BB8Facade:
         self._tasks: set[asyncio.Task] = set()
         self._shutdown_event = asyncio.Event()
 
-        # Safety and telemetry
+        # Safety, lighting, and telemetry
         self._safety = get_safety_controller()
+        self._lighting = get_lighting_controller()
         self._telemetry_task: asyncio.Task | None = None
         self._last_cmd_timestamp: float = 0.0
 
@@ -97,8 +99,9 @@ class BB8Facade:
                 await session.connect()
                 logger.info({"event": "facade_auto_connect_success"})
 
-                # Notify safety controller
+                # Notify safety and lighting controllers
                 self._safety.set_device_connected(True)
+                self._lighting.set_ble_session(self._ble_session)
 
                 # Publish presence if available
                 if self.publish_presence:
@@ -251,7 +254,7 @@ class BB8Facade:
         self._emit_led(r, g, b)
 
         # Schedule async LED operation
-        self._schedule_task(self._set_led_impl(r, g, b))
+        self._schedule_task(self._set_led_async(r, g, b))
 
         # Inter-call delay (pytest monkeypatchable)
         try:
@@ -260,7 +263,115 @@ class BB8Facade:
         except Exception:
             pass
 
-    async def _set_led_impl(self, r: int, g: int, b: int) -> None:
+    async def set_led_async(
+        self, r: int, g: int, b: int, cid: str | None = None
+    ) -> None:
+        """Async LED control with validation and ACK/NACK."""
+        try:
+            # Always cancel any active animation first (idempotent)
+            await self._lighting.cancel_active()
+
+            # Validate and clamp RGB values
+            r, g, b = self._lighting.clamp_rgb(r, g, b)
+
+            # Apply static color via lighting controller
+            await self._lighting.set_static(r, g, b)
+
+            # Publish a telemetry update after LED change
+            self._publish_telemetry_update()
+
+            # Publish ACK
+            self._publish_ack("led", True, cid, f"LED set to RGB({r},{g},{b})")
+
+            logger.info({
+                "event": "facade_led_async_success",
+                "rgb": [r, g, b],
+                "cid": cid,
+            })
+
+        except Exception as e:
+            self._publish_ack("led", False, cid, str(e))
+            logger.error({
+                "event": "facade_led_async_error",
+                "rgb": [r, g, b],
+                "cid": cid,
+                "error": str(e),
+            })
+
+    async def set_led_preset(
+        self, preset_name: str, cid: str | None = None
+    ) -> None:
+        """Run LED preset animation with estop checking."""
+        try:
+            # Always cancel any active animation first (idempotent)
+            await self._lighting.cancel_active()
+
+            # Check if estop is active
+            if self._safety.estop_latched:
+                # Only allow static presets during estop
+                if preset_name in ["off", "white"]:
+                    # Convert to static color
+                    if preset_name == "off":
+                        await self._lighting.set_static(0, 0, 0)
+                    elif preset_name == "white":
+                        await self._lighting.set_static(255, 255, 255)
+
+                    self._publish_ack(
+                        "led_preset",
+                        True,
+                        cid,
+                        f"Static preset '{preset_name}' applied during estop",
+                    )
+                    # Telemetry update for static LED under estop
+                    self._publish_telemetry_update()
+                else:
+                    # Reject animated presets during estop
+                    reason = (
+                        f"Animated preset '{preset_name}' blocked during estop"
+                    )
+                    self._publish_ack("led_preset", False, cid, reason)
+                    logger.warning({
+                        "event": "facade_preset_blocked_estop",
+                        "preset": preset_name,
+                        "cid": cid,
+                    })
+                return
+
+            # Run preset animation
+            await self._lighting.run_preset(preset_name)
+
+            self._publish_ack(
+                "led_preset", True, cid, f"Preset '{preset_name}' started"
+            )
+
+            # Publish telemetry after preset start (state update)
+            self._publish_telemetry_update()
+
+            logger.info({
+                "event": "facade_preset_success",
+                "preset": preset_name,
+                "cid": cid,
+            })
+
+        except ValueError as e:
+            # Invalid preset name
+            self._publish_ack("led_preset", False, cid, str(e))
+            logger.warning({
+                "event": "facade_preset_invalid",
+                "preset": preset_name,
+                "cid": cid,
+                "error": str(e),
+            })
+        except Exception as e:
+            self._publish_ack("led_preset", False, cid, str(e))
+            logger.error({
+                "event": "facade_preset_error",
+                "preset": preset_name,
+                "cid": cid,
+                "error": str(e),
+            })
+
+    async def _set_led_async(self, r: int, g: int, b: int) -> None:
         """Internal LED implementation."""
         try:
             session = self._get_or_create_session()
@@ -291,21 +402,36 @@ class BB8Facade:
                 "error": str(e),
             })
 
-    def drive(
+    async def drive(
         self, speed: int, heading: int, duration_ms: int | None = None
     ) -> None:
         """Drive BB-8 with specified parameters."""
         try:
-            # Validate through safety controller
+            # First check estop at facade level (authoritative gate)
+            if self._safety.estop_latched:
+                estop_reason = self._safety.get_estop_reason()
+                reason = f"Motion blocked by emergency stop: {estop_reason}"
+                logger.warning({
+                    "event": "facade_drive_blocked_estop",
+                    "speed": speed,
+                    "heading": heading,
+                    "duration_ms": duration_ms,
+                    "reason": reason,
+                })
+                self._publish_rejected("drive", reason)
+                return
+
+            # Normalize parameters (no timing constraints)
             validated_speed, validated_heading, validated_duration = (
-                self._safety.validate_drive_command(speed, heading, duration_ms)
+                self._safety.normalize_drive(speed, heading, duration_ms)
             )
 
+            # Gate the actual execution (timing and safety checks)
+            self._safety.gate_drive()
+
             self._last_cmd_timestamp = time.time()
-            self._schedule_task(
-                self._drive_impl(
-                    validated_speed, validated_heading, validated_duration
-                )
+            await self._drive_impl(
+                validated_speed, validated_heading, validated_duration
             )
 
         except SafetyViolation as e:
@@ -378,21 +504,35 @@ class BB8Facade:
             })
             self._publish_rejected("drive", str(e))
 
-    def estop(self, reason: str = "Manual emergency stop") -> None:
+    async def estop(self, reason: str = "Manual emergency stop") -> None:
         """Activate emergency stop."""
         try:
-            self._safety.activate_estop(reason)
+            activated, message = self._safety.activate_estop(reason)
 
-            # Stop device immediately
-            self._schedule_task(self._stop_impl())
+            if activated:
+                # Cancel any active LED animations
+                if self._lighting:
+                    self._lighting.cancel_active()
 
-            # Publish telemetry update
-            self._publish_telemetry_update()
+                # Stop device immediately
+                await self._stop_impl()
 
-            logger.warning({
-                "event": "facade_estop_activated",
-                "reason": reason,
-            })
+                # Publish telemetry update
+                await self._publish_telemetry()
+
+                logger.warning({
+                    "event": "facade_estop_activated",
+                    "reason": reason,
+                })
+            else:
+                # Already active - log and publish ACK with current state
+                logger.warning({
+                    "event": "facade_estop_already_active",
+                    "reason": reason,
+                    "current_reason": self._safety.get_estop_reason(),
+                })
+                # Still publish rejected to inform caller
+                self._publish_rejected("estop", message)
 
         except Exception as e:
             logger.error({
@@ -402,14 +542,14 @@ class BB8Facade:
             })
             self._publish_rejected("estop", str(e))
 
-    def clear_estop(self) -> None:
+    async def clear_estop(self) -> None:
         """Clear emergency stop if safe."""
         try:
             cleared, reason = self._safety.clear_estop()
 
             if cleared:
                 # Publish telemetry update
-                self._publish_telemetry_update()
+                await self._publish_telemetry()
 
                 logger.info({"event": "facade_estop_cleared", "reason": reason})
             else:
@@ -431,6 +571,27 @@ class BB8Facade:
             topic = f"{base}/event/rejected"
             payload = json.dumps({"cmd": cmd, "reason": reason})
             client.publish(topic, payload=payload, qos=1, retain=False)
+
+    def _publish_ack(
+        self,
+        cmd: str,
+        ok: bool,
+        cid: str | None = None,
+        reason: str | None = None,
+    ) -> None:
+        """Publish ACK/NACK message."""
+        client = self._mqtt.get("client")
+        base = self._mqtt.get("base")
+        if client and base:
+            topic = f"{base}/ack/{cmd}"
+            payload: dict[str, Any] = {"ok": ok}
+            if cid is not None:
+                payload["cid"] = cid
+            if reason is not None:
+                payload["reason"] = reason
+            client.publish(
+                topic, payload=json.dumps(payload), qos=1, retain=False
+            )
 
     def is_connected(self) -> bool:
         """Check if device is connected."""
@@ -467,6 +628,28 @@ class BB8Facade:
         if self._mqtt["client"] and self._mqtt["base"]:
             self._schedule_task(self._publish_telemetry())
 
+    async def publish_telemetry_async(self) -> None:
+        """Async version of telemetry publishing for direct await."""
+        await self._publish_telemetry()
+
+    def _build_telemetry(self) -> dict:
+        """Build telemetry payload as plain dict."""
+        current_time = time.time()
+        return {
+            "connected": self.is_connected(),
+            "estop": self._safety.is_estop_active(),
+            "last_cmd_ts": time.strftime(
+                "%Y-%m-%dT%H:%M:%S.%fZ",
+                time.gmtime(self._last_cmd_timestamp),
+            )
+            if self._last_cmd_timestamp > 0
+            else None,
+            "battery_pct": None,  # Battery will be updated async if available
+            "ts": time.strftime(
+                "%Y-%m-%dT%H:%M:%S.%fZ", time.gmtime(current_time)
+            ),
+        }
+
     async def _publish_telemetry(self) -> None:
         """Publish telemetry data."""
         try:
@@ -476,28 +659,18 @@ class BB8Facade:
             if not client or not base:
                 return
 
-            # Get battery (with timeout to avoid blocking)
-            battery_pct = None
+            # Build base telemetry payload (pure dict, no coroutines)
+            telemetry = self._build_telemetry()
+
+            # Try to get battery with timeout
             try:
                 battery_pct = await asyncio.wait_for(
                     self.get_battery(), timeout=1.0
                 )
+                telemetry["battery_pct"] = battery_pct
             except (asyncio.TimeoutError, Exception):
-                battery_pct = None
-
-            # Build telemetry payload
-            telemetry = {
-                "connected": self.is_connected(),
-                "estop": self._safety.is_estop_active(),
-                "last_cmd_ts": time.strftime(
-                    "%Y-%m-%dT%H:%M:%S.%fZ",
-                    time.gmtime(self._last_cmd_timestamp),
-                )
-                if self._last_cmd_timestamp > 0
-                else None,
-                "battery_pct": battery_pct,
-                "ts": time.strftime("%Y-%m-%dT%H:%M:%S.%fZ", time.gmtime()),
-            }
+                # Keep battery_pct as None
+                pass
 
             # Publish telemetry
             topic = f"{base}/status/telemetry"
@@ -526,7 +699,7 @@ class BB8Facade:
                 "error": str(e),
             })
 
-    # --------- MQTT wiring (subscribe/dispatch/state echo + discovery) ---------
+    # ---------- MQTT wiring (subscribe/dispatch/state echo + discovery) ------
 
     def attach_mqtt(
         self,
@@ -649,6 +822,97 @@ class BB8Facade:
             except Exception as e:
                 logger.error({"event": "stop_handler_error", "error": repr(e)})
 
+        def _handle_led_cmd(_c, _u, msg):
+            """Handle bb8/cmd/led - static RGB LED control."""
+            try:
+                payload = json.loads((msg.payload or b"").decode("utf-8"))
+                if not isinstance(payload, dict):
+                    logger.error({
+                        "event": "led_cmd_invalid_payload",
+                        "payload": payload,
+                    })
+                    return
+
+                r = payload.get("r", 0)
+                g = payload.get("g", 0)
+                b = payload.get("b", 0)
+                cid = payload.get("cid")
+
+                # Validate RGB values are numeric
+                try:
+                    r, g, b = int(r), int(g), int(b)
+                except (ValueError, TypeError):
+                    if cid:
+                        self._publish_ack(
+                            "led",
+                            False,
+                            cid,
+                            "Invalid RGB values - must be integers",
+                        )
+                    logger.error({
+                        "event": "led_cmd_invalid_rgb",
+                        "r": r,
+                        "g": g,
+                        "b": b,
+                    })
+                    return
+
+                # Schedule async LED operation
+                asyncio.create_task(self.set_led_async(r, g, b, cid))
+
+            except json.JSONDecodeError:
+                logger.error({
+                    "event": "led_cmd_json_error",
+                    "payload": msg.payload,
+                })
+            except Exception as e:
+                logger.error({
+                    "event": "led_cmd_handler_error",
+                    "error": str(e),
+                })
+
+        def _handle_led_preset_cmd(_c, _u, msg):
+            """Handle bb8/cmd/led_preset - preset animations."""
+            try:
+                payload = json.loads((msg.payload or b"").decode("utf-8"))
+                if not isinstance(payload, dict):
+                    logger.error({
+                        "event": "led_preset_invalid_payload",
+                        "payload": payload,
+                    })
+                    return
+
+                preset_name = payload.get("name")
+                cid = payload.get("cid")
+
+                if not preset_name or not isinstance(preset_name, str):
+                    if cid:
+                        self._publish_ack(
+                            "led_preset",
+                            False,
+                            cid,
+                            "Missing or invalid 'name' field",
+                        )
+                    logger.error({
+                        "event": "led_preset_missing_name",
+                        "payload": payload,
+                    })
+                    return
+
+                # Schedule async preset operation
+                asyncio.create_task(self.set_led_preset(preset_name, cid))
+
+            except json.JSONDecodeError:
+                logger.error({
+                    "event": "led_preset_json_error",
+                    "payload": msg.payload,
+                })
+            except Exception as e:
+                logger.error({
+                    "event": "led_preset_handler_error",
+                    "error": str(e),
+                })
+
         def _handle_estop(_c, _u, msg):
             try:
                 # Parse optional payload for reason/cid
@@ -662,7 +926,7 @@ class BB8Facade:
                 except Exception:
                     pass
 
-                self.estop(reason)
+                asyncio.create_task(self.estop(reason))
 
                 # Publish acknowledgment
                 ack_payload = {
@@ -753,6 +1017,15 @@ class BB8Facade:
                 f"{base_topic}/stop/press", _handle_stop
             )
             client.subscribe(f"{base_topic}/stop/press", qos=qos_val)
+
+            # LED command subscriptions
+            client.message_callback_add(f"{MQTT_BASE}/cmd/led", _handle_led_cmd)
+            client.subscribe(f"{MQTT_BASE}/cmd/led", qos=qos_val)
+
+            client.message_callback_add(
+                f"{MQTT_BASE}/cmd/led_preset", _handle_led_preset_cmd
+            )
+            client.subscribe(f"{MQTT_BASE}/cmd/led_preset", qos=qos_val)
 
             # Emergency stop subscriptions
             client.message_callback_add(f"{MQTT_BASE}/cmd/estop", _handle_estop)

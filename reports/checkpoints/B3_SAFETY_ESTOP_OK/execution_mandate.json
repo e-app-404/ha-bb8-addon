@@ -1,0 +1,34 @@
+{
+  "target_paths": [
+    "addon/bb8_core/facade.py",
+    "addon/bb8_core/bridge_controller.py",
+    "addon/bb8_core/safety.py",
+    "addon/tests/integration/test_safety_estop.py",
+    "reports/checkpoints/BB8-FUNC/b3_safety_tests.json",
+    "reports/checkpoints/BB8-FUNC/b3_estop_demo.log"
+  ],
+  "objective": "Harden motion safety: rate limit, duration cap, speed cap; implement latched emergency stop; publish minimal telemetry.",
+  "acceptance": {
+    "gate": "B3_SAFETY_ESTOP_OK",
+    "criteria": [
+      "Drive command rate ≥ 50ms enforced",
+      "Max motion duration default 2000ms enforced",
+      "Speed cap default 180/255 enforced (configurable)",
+      "Topic bb8/cmd/estop halts immediately and LATCHES",
+      "bb8/cmd/clear_estop clears latch only when safe",
+      "Telemetry published to bb8/status/telemetry with: {connected, estop, last_cmd_ts, battery_pct?}",
+      "All automated safety tests PASS in b3_safety_tests.json",
+      "b3_estop_demo.log shows: motion → estop → no motion → clear_estop → motion"
+    ],
+    "artifacts": [
+      "reports/checkpoints/BB8-FUNC/b3_safety_tests.json",
+      "reports/checkpoints/BB8-FUNC/b3_estop_demo.log"
+    ]
+  },
+  "risk": [
+    "Event-loop starvation under rapid commands",
+    "Latch/clear races if not atomic",
+    "Battery/telemetry reads causing unintended blocking"
+  ],
+  "rollback": "If safety checks fail, disable drive commands (fail-closed), keep power/LED commands active, and keep estop available."
+}

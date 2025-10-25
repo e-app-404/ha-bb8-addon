@@ -1,0 +1,31 @@
+{
+  "target_paths": [
+    "addon/bb8_core/lighting.py",
+    "addon/bb8_core/facade.py",
+    "addon/tests/integration/test_lighting.py",
+    "reports/checkpoints/BB8-FUNC/b4_led_matrix.json",
+    "reports/checkpoints/BB8-FUNC/b4_led_demo.log"
+  ],
+  "objective": "Robust LED control with clamping and non-blocking presets; animations cancel on new LED command or estop; acks/errors via MQTT.",
+  "acceptance": {
+    "gate": "B4_LED_PRESETS_OK",
+    "criteria": [
+      "RGB inputs clamped to 0–255; invalid payloads rejected with reason",
+      "Presets: off, white, police, sunset — non-blocking and cancellable",
+      "New LED command cancels prior animation within ≤100ms",
+      "Estop instantly cancels animations (LED may remain at last static value)",
+      "b4_led_matrix.json present with input→output mapping and preset specs",
+      "b4_led_demo.log shows: preset run → mid-run override → estop cancel → static apply"
+    ],
+    "artifacts": [
+      "reports/checkpoints/BB8-FUNC/b4_led_matrix.json",
+      "reports/checkpoints/BB8-FUNC/b4_led_demo.log"
+    ]
+  },
+  "risk": [
+    "Blocking animations in event loop",
+    "Race between cancel and new apply",
+    "LED API differences across spherov2 firmwares"
+  ],
+  "rollback": "If animations misbehave, disable presets; keep static RGB set with validation only."
+}
