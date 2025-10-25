@@ -918,11 +918,14 @@ def _wait_forever(client, bridge, ble=None) -> None:
 if __name__ == "__main__":
     """
     Foreground entrypoint (aligned with runtime model policy):
-    - Initialize BLE and facade via start_bridge_controller()
+    - Initialize BLE and facade via start_bridge_controller() within a running
+      asyncio loop to satisfy create_task semantics
     - Start MQTT dispatcher with explicit env/config resolution
-    - Block in a supervised wait loop
+    - Keep the loop alive indefinitely
     """
-    try:
+    import asyncio as _asyncio
+
+    async def _async_entry():
         cfg, _src = load_config() if 'load_config' in globals() else ({}, None)
 
         # Initialize core subsystems and get facade for handler attachment
@@ -949,7 +952,7 @@ if __name__ == "__main__":
         })
 
         # Start dispatcher with LWT and attach facade handlers
-        client = start_mqtt_dispatcher(
+        start_mqtt_dispatcher(
             mqtt_host=mqtt_host,
             mqtt_port=mqtt_port,
             mqtt_topic=mqtt_topic,
@@ -959,8 +962,12 @@ if __name__ == "__main__":
             status_topic=status_topic,
         )
 
-        # Foreground supervision
-        _wait_forever(client, bridge=None, ble=None)
+        # Keep the loop alive indefinitely; SIGTERM will stop the process
+        evt = _asyncio.Event()
+        await evt.wait()
+
+    try:
+        _asyncio.run(_async_entry())
     except SystemExit:
         raise
     except Exception as e:
