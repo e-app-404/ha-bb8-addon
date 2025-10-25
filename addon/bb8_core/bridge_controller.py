@@ -34,6 +34,7 @@ from .evidence_capture import EvidenceRecorder
 from .logging_setup import logger
 from .mqtt_dispatcher import (
     ensure_dispatcher_started,
+    start_mqtt_dispatcher,
     register_subscription,  # dynamic topic binding
 )
 
@@ -500,7 +501,7 @@ def start_bridge_controller(
 
     logger.info({"event": "ble_bridge_init", "target_mac": target_mac})
 
-    # Start MQTT dispatcher
+    # Start MQTT dispatcher (idempotent guard retained below for legacy paths)
     ensure_dispatcher_started()
 
     # Start supervised watchdog
@@ -912,6 +913,59 @@ def _wait_forever(client, bridge, ble=None) -> None:
         })
 
     # Removed unused device echo handler functions
+
+
+if __name__ == "__main__":
+    """
+    Foreground entrypoint (aligned with runtime model policy):
+    - Initialize BLE and facade via start_bridge_controller()
+    - Start MQTT dispatcher with explicit env/config resolution
+    - Block in a supervised wait loop
+    """
+    try:
+        cfg, _src = load_config() if 'load_config' in globals() else ({}, None)
+
+        # Initialize core subsystems and get facade for handler attachment
+        facade = start_bridge_controller(config=cfg)
+
+        # Resolve MQTT params (env → config → defaults)
+        mqtt_host = os.environ.get("MQTT_HOST") or cfg.get("MQTT_HOST") or cfg.get("mqtt_broker") or "core-mosquitto"
+        try:
+            mqtt_port = int(os.environ.get("MQTT_PORT") or cfg.get("MQTT_PORT") or cfg.get("mqtt_port") or 1883)
+        except Exception:
+            mqtt_port = 1883
+        base = os.environ.get("MQTT_BASE") or cfg.get("MQTT_BASE") or cfg.get("mqtt_topic_prefix") or "bb8"
+        mqtt_topic = f"{base}/command/#"  # legacy compat; facade subscribes on attach
+        username = os.environ.get("MQTT_USER") or cfg.get("MQTT_USERNAME") or cfg.get("mqtt_username")
+        password = os.environ.get("MQTT_PASSWORD") or cfg.get("MQTT_PASSWORD") or cfg.get("mqtt_password")
+        status_topic = f"{base}/status"
+
+        logger.info({
+            "event": "bridge_controller_mqtt_params",
+            "host": mqtt_host,
+            "port": mqtt_port,
+            "base": base,
+            "user": bool(username),
+        })
+
+        # Start dispatcher with LWT and attach facade handlers
+        client = start_mqtt_dispatcher(
+            mqtt_host=mqtt_host,
+            mqtt_port=mqtt_port,
+            mqtt_topic=mqtt_topic,
+            username=username,
+            password=password,
+            controller=facade,
+            status_topic=status_topic,
+        )
+
+        # Foreground supervision
+        _wait_forever(client, bridge=None, ble=None)
+    except SystemExit:
+        raise
+    except Exception as e:
+        logger.error({"event": "bridge_controller_fatal", "error": repr(e)})
+        raise
 
 
 # Removed import of register_subscription (unknown symbol)
