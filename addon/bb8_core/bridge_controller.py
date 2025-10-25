@@ -34,7 +34,6 @@ from .evidence_capture import EvidenceRecorder
 from .logging_setup import logger
 from .mqtt_dispatcher import (
     ensure_dispatcher_started,
-    start_mqtt_dispatcher,
     register_subscription,  # dynamic topic binding
 )
 
@@ -938,7 +937,6 @@ if __name__ == "__main__":
         except Exception:
             mqtt_port = 1883
         base = os.environ.get("MQTT_BASE") or cfg.get("MQTT_BASE") or cfg.get("mqtt_topic_prefix") or "bb8"
-        mqtt_topic = f"{base}/command/#"  # legacy compat; facade subscribes on attach
         username = os.environ.get("MQTT_USER") or cfg.get("MQTT_USERNAME") or cfg.get("mqtt_username")
         password = os.environ.get("MQTT_PASSWORD") or cfg.get("MQTT_PASSWORD") or cfg.get("mqtt_password")
         status_topic = f"{base}/status"
@@ -951,18 +949,107 @@ if __name__ == "__main__":
             "user": bool(username),
         })
 
-        # Start dispatcher with LWT and attach facade handlers
-        start_mqtt_dispatcher(
-            mqtt_host=mqtt_host,
-            mqtt_port=mqtt_port,
-            mqtt_topic=mqtt_topic,
-            username=username,
-            password=password,
-            controller=facade,
-            status_topic=status_topic,
-        )
+        # Minimal, in-module MQTT bootstrap to avoid cross-thread asyncio issues
+        import paho.mqtt.client as mqtt
+        from paho.mqtt.enums import CallbackAPIVersion
 
-        # Keep the loop alive indefinitely; SIGTERM will stop the process
+        client = mqtt.Client(
+            callback_api_version=CallbackAPIVersion.VERSION2,
+            protocol=mqtt.MQTTv311,
+        )
+        if username and password:
+            client.username_pw_set(username, password)
+        # LWT
+        client.will_set(status_topic, payload="offline", qos=0, retain=True)
+
+        # Helper: publish ACKs
+        def _ack(cmd: str, cid: str | None, ok: bool = True, reason: str | None = None):
+            payload = {"ok": bool(ok)}
+            if cid is not None:
+                payload["cid"] = cid
+            if reason is not None:
+                payload["reason"] = reason
+            client.publish(f"{base}/ack/{cmd}", json.dumps(payload), qos=0, retain=False)
+
+        loop = _asyncio.get_running_loop()
+
+        def _on_connect(cl, ud, flags, rc, properties=None):
+            cl.publish(status_topic, payload="online", qos=0, retain=True)
+            cl.subscribe(f"{base}/cmd/#", qos=0)
+            logger.info({"event": "mqtt_connected", "rc": rc, "reason": "success" if rc == 0 else rc})
+
+        def _on_message(cl, ud, msg):
+            try:
+                topic = msg.topic or ""
+                cmd = topic.split("/")[-1]
+                raw = (msg.payload or b"{}").decode("utf-8", "ignore")
+                data = {}
+                try:
+                    data = json.loads(raw) if raw else {}
+                except Exception:
+                    data = {}
+                cid = data.get("cid")
+
+                # Dispatch to facade on main loop thread
+                if cmd == "power":
+                    action = (data.get("action") or "").lower()
+                    loop.call_soon_threadsafe(lambda: facade.power(action == "wake"))
+                    _ack("power", cid, True)
+                elif cmd == "stop":
+                    loop.call_soon_threadsafe(lambda: facade.stop())
+                    _ack("stop", cid, True)
+                elif cmd == "led":
+                    r = int(data.get("r", 0)); g = int(data.get("g", 0)); b = int(data.get("b", 0))
+                    loop.call_soon_threadsafe(lambda: _asyncio.create_task(facade.set_led_async(r, g, b, cid)))
+                    _ack("led", cid, True)
+                elif cmd == "led_preset":
+                    name = data.get("name")
+                    loop.call_soon_threadsafe(lambda: _asyncio.create_task(facade.set_led_preset(name, cid)))
+                    _ack("led_preset", cid, True)
+                elif cmd == "drive":
+                    speed = int(data.get("speed", 0)); heading = int(data.get("heading", 0)); ms = data.get("ms")
+                    ms = int(ms) if ms is not None else None
+                    loop.call_soon_threadsafe(lambda: _asyncio.create_task(facade.drive(speed, heading, ms)))
+                    _ack("drive", cid, True)
+                elif cmd == "estop":
+                    reason = data.get("reason", "MQTT emergency stop")
+                    loop.call_soon_threadsafe(lambda: _asyncio.create_task(facade.estop(reason)))
+                    _ack("estop", cid, True)
+                elif cmd == "clear_estop":
+                    loop.call_soon_threadsafe(lambda: _asyncio.create_task(facade.clear_estop()))
+                    _ack("clear_estop", cid, True)
+                else:
+                    _ack("unknown", cid, False, f"no handler for {topic}")
+            except Exception as ex:  # defensive guard
+                try:
+                    _ack("unknown", None, False, f"handler error: {type(ex).__name__}")
+                except Exception:
+                    pass
+
+        client.on_connect = _on_connect
+        client.on_message = _on_message
+        client.connect(mqtt_host, mqtt_port, keepalive=60)
+        client.loop_start()
+
+        async def _telemetry_heartbeat():
+            while True:
+                snap = {
+                    "connected": False,
+                    "estop": getattr(getattr(facade, "_safety", None), "is_estop_active", lambda: False)(),
+                    "last_cmd_ts": None,
+                    "battery_pct": None,
+                    "ts": datetime.utcnow().replace(tzinfo=timezone.utc).isoformat() if hasattr(datetime, 'utcnow') else time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                }
+                try:
+                    client.publish(f"{base}/status/telemetry", json.dumps(snap), qos=0, retain=False)
+                except Exception:
+                    pass
+                await _asyncio.sleep(10.0)
+
+        # start telemetry task in loop
+        _asyncio.create_task(_telemetry_heartbeat())
+
+        # Keep the loop alive indefinitely
         evt = _asyncio.Event()
         await evt.wait()
 
