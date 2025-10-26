@@ -1038,7 +1038,7 @@ if __name__ == "__main__":
                     "estop": getattr(getattr(facade, "_safety", None), "is_estop_active", lambda: False)(),
                     "last_cmd_ts": None,
                     "battery_pct": None,
-                    "ts": datetime.utcnow().replace(tzinfo=timezone.utc).isoformat() if hasattr(datetime, 'utcnow') else time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 }
                 try:
                     client.publish(f"{base}/status/telemetry", json.dumps(snap), qos=0, retain=False)

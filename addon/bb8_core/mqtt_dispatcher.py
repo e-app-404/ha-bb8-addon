@@ -8,6 +8,7 @@ import os
 import socket
 from collections.abc import Callable
 from typing import Any
+from datetime import datetime, timezone
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
@@ -843,6 +844,7 @@ def start_mqtt_dispatcher(
     # Dynamic config lookups (do NOT resolve host at import time)
     mqtt_port = mqtt_port or int(CONFIG.get("MQTT_PORT", 1883))
     mqtt_topic = mqtt_topic or f"{CONFIG.get('MQTT_BASE', 'bb8')}/command/#"
+    base = CONFIG.get('MQTT_BASE', 'bb8')
     username = username or CONFIG.get("MQTT_USERNAME", "mqtt_bb8")
     password = password or CONFIG.get("MQTT_PASSWORD", None)
     client_id = client_id or CONFIG.get("MQTT_CLIENT_ID", "bb8-addon")
@@ -921,6 +923,38 @@ def start_mqtt_dispatcher(
             # Authoritative seam invocation at call time
             # (thread-safe & testable)
             _trigger_discovery_connected()
+            # Subscribe to command and echo channels
+            try:
+                client.subscribe(f"{base}/cmd/#", qos=0)
+                client.subscribe(f"{base}/echo/cmd", qos=0)
+            except Exception as e:
+                logger.warning({"event": "mqtt_subscribe_error", "error": repr(e)})
+
+            # Echo responder: respond on bb8/echo/state with compact JSON
+            def _on_echo(_c, _u, msg):
+                try:
+                    try:
+                        data = json.loads((msg.payload or b"{}").decode("utf-8", "ignore"))
+                    except Exception:
+                        data = {}
+                    cid = data.get("cid")
+                    payload = json.dumps(
+                        {
+                            "cid": cid,
+                            "source": "device",
+                            "pong": True,
+                            "ts": datetime.now(timezone.utc).isoformat(),
+                        },
+                        separators=(",", ":"),
+                    )
+                    _c.publish(f"{base}/echo/state", payload, qos=0, retain=False)
+                except Exception as ex:
+                    logger.debug({"event": "echo_publish_error", "error": repr(ex)})
+
+            try:
+                client.message_callback_add(f"{base}/echo/cmd", _on_echo)
+            except Exception as e:
+                logger.debug({"event": "echo_callback_add_error", "error": repr(e)})
             if hasattr(controller, "attach_mqtt"):
                 try:
                     controller.attach_mqtt(client, mqtt_topic, qos=qos, retain=retain)
