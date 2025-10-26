@@ -1065,8 +1065,13 @@ if __name__ == "__main__":
 
         async def _telemetry_heartbeat():
             while True:
+                try:
+                    conn = bool(getattr(facade, "is_connected", lambda: None)())
+                except Exception:
+                    conn = None
                 snap = {
-                    "connected": False,
+                    # Report actual BLE connectivity when available; fallback True
+                    "connected": (conn if conn is not None else True),
                     "estop": getattr(getattr(facade, "_safety", None), "is_estop_active", lambda: False)(),
                     "last_cmd_ts": None,
                     "battery_pct": None,
