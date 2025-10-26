@@ -73,8 +73,10 @@ export BB8_DOCS_ADR_DIR="${BB8_DOCS_ADR_DIR:-$BB8_ROOT/docs/ADR}"
 ### HA Deployment Variables
 
 ```bash
-# SSH & Remote Access
-export HA_SSH_HOST_ALIAS=home-assistant
+# SSH & Remote Access (standardized)
+# Preferred aliases (first reachable wins): homeassistant, ha-host, home-assistant, hass
+# You may set HA_SSH_HOST_ALIAS to force one, otherwise deploy scripts auto-detect.
+export HA_SSH_HOST_ALIAS=""   # leave empty to allow auto-detect in deploy scripts
 export HA_SSH_USER=babylon-babes
 export HA_SSH_HASS="ssh hass"
 

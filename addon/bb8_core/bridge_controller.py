@@ -33,7 +33,6 @@ def _on_signal(signum, frame):
 from .evidence_capture import EvidenceRecorder
 from .logging_setup import logger
 from .mqtt_dispatcher import (
-    ensure_dispatcher_started,
     register_subscription,  # dynamic topic binding
 )
 
@@ -95,8 +94,11 @@ def _client_or_none():
     return _client_or_none_cached_client
 
 
-# so later divergent attempts (e.g., localhost) are suppressed.
-ensure_dispatcher_started()
+# NOTE: Disable legacy MQTT dispatcher auto-start to avoid event-loop conflicts
+# with the in-module paho bootstrap used by __main__. The legacy dispatcher can
+# be explicitly enabled via tests or a config flag if ever needed.
+# (PIE P4/P1 import/runtime policy)
+# ensure_dispatcher_started()
 _ble_loop: asyncio.AbstractEventLoop | None = None
 _ble_inited: bool = False
 client = None
@@ -426,7 +428,6 @@ def start_bridge_controller(
     from .ble_gateway import BleGateway
     from .ble_session import BleSession
     from .logging_setup import logger
-    from .mqtt_dispatcher import ensure_dispatcher_started
 
     cfg = config or (load_config()[0] if "load_config" in globals() else {})
 
@@ -500,8 +501,13 @@ def start_bridge_controller(
 
     logger.info({"event": "ble_bridge_init", "target_mac": target_mac})
 
-    # Start MQTT dispatcher (idempotent guard retained below for legacy paths)
-    ensure_dispatcher_started()
+    # Legacy MQTT dispatcher intentionally not started here; __main__ uses a
+    # self-contained paho bootstrap for MQTT (LWT/online/cmd/ACK/telemetry).
+    # If a legacy path needs it, wire via an explicit config flag.
+    # try:
+    #     ensure_dispatcher_started()
+    # except Exception as e:
+    #     logger.debug({"event": "dispatcher_start_skipped", "reason": str(e)})
 
     # Start supervised watchdog
     watchdog_task = asyncio.create_task(
@@ -975,11 +981,18 @@ if __name__ == "__main__":
 
         def _on_connect(cl, ud, flags, rc, properties=None):
             cl.publish(status_topic, payload="online", qos=0, retain=True)
+            # Commands and echo responder subscriptions
             cl.subscribe(f"{base}/cmd/#", qos=0)
+            cl.subscribe(f"{base}/echo/cmd", qos=0)
             logger.info({"event": "mqtt_connected", "rc": rc, "reason": "success" if rc == 0 else rc})
 
         def _on_message(cl, ud, msg):
             try:
+                logger.info({
+                    "event": "mqtt_cmd_received",
+                    "topic": getattr(msg, "topic", ""),
+                    "len": len(getattr(msg, "payload", b"")),
+                })
                 topic = msg.topic or ""
                 cmd = topic.split("/")[-1]
                 raw = (msg.payload or b"{}").decode("utf-8", "ignore")
@@ -1018,6 +1031,25 @@ if __name__ == "__main__":
                 elif cmd == "clear_estop":
                     loop.call_soon_threadsafe(lambda: _asyncio.create_task(facade.clear_estop()))
                     _ack("clear_estop", cid, True)
+                elif topic == f"{base}/echo/cmd":
+                    # Immediate echo responder for evidence harness
+                    try:
+                        echo_payload = {
+                            "cid": cid,
+                            "source": "device",
+                            "pong": True,
+                            "ts": time.strftime(
+                                "%Y-%m-%dT%H:%M:%SZ", time.gmtime()
+                            ),
+                        }
+                        cl.publish(
+                            f"{base}/echo/state",
+                            json.dumps(echo_payload, separators=(",", ":")),
+                            qos=0,
+                            retain=False,
+                        )
+                    except Exception:
+                        pass
                 else:
                     _ack("unknown", cid, False, f"no handler for {topic}")
             except Exception as ex:  # defensive guard

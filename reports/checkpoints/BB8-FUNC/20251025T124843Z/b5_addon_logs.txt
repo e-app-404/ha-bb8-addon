@@ -1,0 +1,72 @@
+s6-rc: info: service s6rc-oneshot-runner: starting
+s6-rc: info: service s6rc-oneshot-runner successfully started
+s6-rc: info: service fix-attrs: starting
+s6-rc: info: service fix-attrs successfully started
+s6-rc: info: service legacy-cont-init: starting
+cont-init: info: running /etc/cont-init.d/10-venv-path
+cont-init: info: /etc/cont-init.d/10-venv-path exited 0
+s6-rc: info: service legacy-cont-init successfully started
+s6-rc: info: service legacy-services: starting
+services-up: info: copying legacy longrun ble_bridge (no readiness notification)
+services-up: info: copying legacy longrun echo_responder (no readiness notification)
+[2025-10-24T06:54:22Z] ECHO: run.sh starting (instrumented)
+PYTHONPATH=[MASKED]
+PYENV_OK PAHO=unknown
+[2025-10-24T06:54:22Z] ECHO: launching bb8_core.echo_responder (foreground exec)
+[2025-10-24T06:54:22Z] MQTT config: host=core-mosquitto port=1883 user=mqtt_bb8 base=bb8
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "safety_controller_init", "min_interval_ms": 50, "max_duration_ms": 2000, "max_speed": 180}
+2025-10-24 07:54:22,947 INFO:bb8_core.logging_setup: {'event': 'safety_controller_init', 'min_interval_ms': 50, 'max_duration_ms': 2000, 'max_speed': 180}
+{"event": "lighting_controller_init", "session_provided": false}
+2025-10-24 07:54:22,947 INFO:bb8_core.logging_setup: {'event': 'lighting_controller_init', 'session_provided': False}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-10-24 07:54:22,999 INFO:bb8_core.logging_setup: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-10-24 07:54:23,018 INFO Starting MQTT loop on core-mosquitto:1883
+2025-10-24 07:54:23,021 INFO Connected to MQTT broker with rc=Success
+2025-10-24 07:54:23,021 INFO Subscribed to bb8/echo/cmd
+2025-10-24 07:54:23,021 INFO Subscribed to bb8/ble_ready/cmd
+2025-10-24 19:14:33,377 INFO Received message on bb8/echo/cmd: b'{"cid": "echo-b5", "ping": true}'
+2025-10-24 19:14:33,390 INFO BLE probe error: There is no current event loop in thread 'Thread-1 (_probe_and_publish)'.
+/usr/src/app/bb8_core/echo_responder.py:287: RuntimeWarning: coroutine 'BleakScanner.discover' was never awaited
+  res = _ble_probe_once(
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+2025-10-25 10:58:55,824 INFO Received message on bb8/echo/cmd: b'{"cid": "echo-b5", "ping": true}'
+2025-10-25 10:58:55,829 INFO BLE probe error: There is no current event loop in thread 'Thread-2 (_probe_and_publish)'.
+2025-10-25 11:14:39,268 INFO Received message on bb8/echo/cmd: b'{"cid": "echo-b5", "ping": true}'
+2025-10-25 11:14:39,270 INFO BLE probe error: There is no current event loop in thread 'Thread-3 (_probe_and_publish)'.
+2025-10-25 11:30:41,809 INFO Received message on bb8/echo/cmd: b'{"cid": "echo-b5", "ping": true}'
+2025-10-25 11:30:41,810 INFO BLE probe error: There is no current event loop in thread 'Thread-4 (_probe_and_publish)'.
+s6-rc: info: service s6rc-oneshot-runner: starting
+s6-rc: info: service s6rc-oneshot-runner successfully started
+s6-rc: info: service fix-attrs: starting
+s6-rc: info: service fix-attrs successfully started
+s6-rc: info: service legacy-cont-init: starting
+cont-init: info: running /etc/cont-init.d/10-venv-path
+cont-init: info: /etc/cont-init.d/10-venv-path exited 0
+s6-rc: info: service legacy-cont-init successfully started
+s6-rc: info: service legacy-services: starting
+services-up: info: copying legacy longrun ble_bridge (no readiness notification)
+services-up: info: copying legacy longrun echo_responder (no readiness notification)
+[2025-10-25T11:33:09Z] ECHO: run.sh starting (instrumented)
+PYTHONPATH=[MASKED]
+PYENV_OK PAHO=unknown
+[2025-10-25T11:33:09Z] ECHO: launching bb8_core.echo_responder (foreground exec)
+[2025-10-25T11:33:09Z] MQTT config: host=core-mosquitto port=1883 user=mqtt_bb8 base=bb8
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "safety_controller_init", "min_interval_ms": 50, "max_duration_ms": 2000, "max_speed": 180}
+2025-10-25 12:33:09,963 INFO:bb8_core.logging_setup: {'event': 'safety_controller_init', 'min_interval_ms': 50, 'max_duration_ms': 2000, 'max_speed': 180}
+{"event": "lighting_controller_init", "session_provided": false}
+2025-10-25 12:33:09,963 INFO:bb8_core.logging_setup: {'event': 'lighting_controller_init', 'session_provided': False}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-10-25 12:33:10,030 INFO:bb8_core.logging_setup: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-10-25 12:33:10,066 INFO Starting MQTT loop on core-mosquitto:1883
+2025-10-25 12:33:10,084 INFO Connected to MQTT broker with rc=Success
+2025-10-25 12:33:10,085 INFO Subscribed to bb8/echo/cmd
+2025-10-25 12:33:10,085 INFO Subscribed to bb8/ble_ready/cmd
+2025-10-25 12:39:36,887 INFO Received message on bb8/echo/cmd: b'{"cid": "echo-b5", "ping": true}'
+2025-10-25 12:39:36,889 INFO BLE probe error: There is no current event loop in thread 'Thread-1 (_probe_and_publish)'.
+/usr/src/app/bb8_core/echo_responder.py:287: RuntimeWarning: coroutine 'BleakScanner.discover' was never awaited
+  res = _ble_probe_once(
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback

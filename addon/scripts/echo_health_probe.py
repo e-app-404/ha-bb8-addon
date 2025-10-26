@@ -68,12 +68,15 @@ def main(argv: list[str] | None = None) -> int:
     while time.time() < deadline and not got["ok"]:
         time.sleep(0.05)
     client.loop_stop()
-    try:
-        client.disconnect()
-    except Exception:
-        pass
+    import contextlib
 
-    line = f"- Echo health: {'green' if got['ok'] else 'fail'} (round-trip {got['ms'] if got['ms'] is not None else 'n/a'} ms)\n"
+    with contextlib.suppress(Exception):
+        client.disconnect()
+
+    line = (
+        f"- Echo health: {'green' if got['ok'] else 'fail'} "
+        f"(round-trip {got['ms'] if got['ms'] is not None else 'n/a'} ms)\n"
+    )
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     mode = "a" if args.append else "w"

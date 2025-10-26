@@ -1,5 +1,5 @@
 ---
-mode: agent
+agent: tech-debt-remediation-plan
 model: GPT-4.1
 tools: ['edit', 'search/codebase', 'runCommands', 'runTasks']
 description: 'Normalize the selected Markdown to match doc style and Hestia style with canonical frontmatter and consistent format'

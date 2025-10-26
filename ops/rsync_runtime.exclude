@@ -1,0 +1,19 @@
+# Rsync exclude list for syncing addon/ to HA runtime
+# Governance: Do not ship dev artifacts to HA Host runtime
+.git/
+.gitignore
+.gitattributes
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+logs/
+reports/
+scratch/
+.DS_Store
+node_modules/
+*.pyc
+*.pyo

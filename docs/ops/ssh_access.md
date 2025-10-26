@@ -56,3 +56,29 @@ This document explains the recommended, minimal, and safe way to SSH into the Ho
 - Periodically verify `authorized_keys` on the host and remove stale keys.
 - Keep a log of who has shell access and for what reason.
 
+## Quick alias: `home-assistant` (recommended)
+
+Add this minimal alias to `~/.ssh/config` for use with deploy tasks and scripts:
+
+```ssh-config
+Host home-assistant
+  HostName <home-assistant-ip-or-hostname>
+  User hass
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+  ForwardAgent yes
+```
+
+Sanity checks (non-interactive):
+
+```bash
+ssh -o BatchMode=yes home-assistant true   # expect no output and exit 0
+```
+
+Deploy receipts location on HA host (read-only for operators):
+
+- `/config/ha-bb8/deploy/<UTC_TS>/deploy_receipt.txt` (tokens)
+- `/config/ha-bb8/deploy/<UTC_TS>/addon_logs_tail.txt` (last 120 lines)
+
+These are mirrored locally under `reports/ops/ssh/<UTC_TS>/` after a deploy run.
+

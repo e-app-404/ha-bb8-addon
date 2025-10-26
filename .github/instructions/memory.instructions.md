@@ -1,8 +1,6 @@
 ---
 applyTo: '**'
-description: >-
-  Workspace memory for HA-BB8: distilled, reusable lessons from debugging, deploys,
-  and evidence runs. Keep guidance concise, generalizable, and scoped to this repo.
+description: Workspace memory for HA-BB8: distilled, reusable lessons from debugging, deploys,and evidence runs. Keep guidance concise, generalizable, and scoped to this repo.
 ---
 
 # HA‑BB8 Workspace Memory

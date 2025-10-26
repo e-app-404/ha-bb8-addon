@@ -1,0 +1,84 @@
+s6-rc: info: service s6rc-oneshot-runner: starting
+s6-rc: info: service s6rc-oneshot-runner successfully started
+s6-rc: info: service fix-attrs: starting
+s6-rc: info: service fix-attrs successfully started
+s6-rc: info: service legacy-cont-init: starting
+cont-init: info: running /etc/cont-init.d/10-venv-path
+cont-init: info: /etc/cont-init.d/10-venv-path exited 0
+s6-rc: info: service legacy-cont-init successfully started
+s6-rc: info: service legacy-services: starting
+services-up: info: copying legacy longrun ble_bridge (no readiness notification)
+services-up: info: copying legacy longrun echo_responder (no readiness notification)
+[2025-10-25T20:58:32Z] ECHO: run.sh starting (instrumented)
+PYTHONPATH=[MASKED]
+PYENV_OK PAHO=unknown
+[2025-10-25T20:58:33Z] RUN: launching bb8_core.bridge_controller (foreground exec)
+[2025-10-25T20:58:33Z] MQTT config: host=core-mosquitto port=1883 user=mqtt_bb8 base=bb8
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "safety_controller_init", "min_interval_ms": 50, "max_duration_ms": 2000, "max_speed": 180}
+{"event": "lighting_controller_init", "session_provided": false}
+2025-10-25 21:58:33,542 INFO:bb8_core.logging_setup: {'event': 'safety_controller_init', 'min_interval_ms': 50, 'max_duration_ms': 2000, 'max_speed': 180}
+2025-10-25 21:58:33,542 INFO:bb8_core.logging_setup: {'event': 'lighting_controller_init', 'session_provided': False}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-10-25 21:58:33,610 INFO:bb8_core.logging_setup: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+Dispatcher config (resolved): host=%s port=%s user=%s topic=%s client_id=%s source=%s
+2025-10-25 21:58:33,645 INFO:bb8_core.logging_setup: Dispatcher config (resolved): host=127.0.0.1 port=1883 user=False topic=bb8 client_id=bb8-addon source=/data/options.json
+{"event": "bb8_presence_monitor_started"}
+2025-10-25 21:58:33,647 INFO:bb8_core.logging_setup: {'event': 'bb8_presence_monitor_started'}
+{"event": "bb8_presence_monitor_integration", "status": "started"}
+2025-10-25 21:58:33,647 INFO:bb8_core.logging_setup: {'event': 'bb8_presence_monitor_integration', 'status': 'started'}
+{"event": "bridge_controller_start", "bb8_mac_cli": true, "scan_seconds": 5, "rescan_on_fail": true, "cache_ttl_hours": 24}
+{"event": "ble_gateway_init", "mode": "bleak", "adapter": "hci0"}
+{"event": "ble_gateway_init", "mode": "bleak", "adapter": "hci0"}
+{"event": "bb8_mac_resolve_bypass", "reason": "env_or_options", "bb8_mac": "ED:ED:87:D7:27:50"}
+{"event": "core_init", "address": "ED:ED:87:D7:27:50", "adapter": "hci0"}
+2025-10-25 21:58:33,648 INFO:bb8_core.logging_setup: {'event': 'bridge_controller_start', 'bb8_mac_cli': True, 'scan_seconds': 5, 'rescan_on_fail': True, 'cache_ttl_hours': 24}
+2025-10-25 21:58:33,648 INFO:bb8_core.logging_setup: {'event': 'ble_gateway_init', 'mode': 'bleak', 'adapter': 'hci0'}
+2025-10-25 21:58:33,648 INFO:bb8_core.logging_setup: {'event': 'ble_gateway_init', 'mode': 'bleak', 'adapter': 'hci0'}
+2025-10-25 21:58:33,648 INFO:bb8_core.logging_setup: {'event': 'bb8_mac_resolve_bypass', 'reason': 'env_or_options', 'bb8_mac': 'ED:ED:87:D7:27:50'}
+{"event": "ble_bridge_init", "target_mac": "ED:ED:87:D7:27:50"}
+2025-10-25 21:58:33,648 INFO:bb8_core.logging_setup: {'event': 'core_init', 'address': 'ED:ED:87:D7:27:50', 'adapter': 'hci0'}
+2025-10-25 21:58:33,648 INFO:bb8_core.logging_setup: {'event': 'ble_bridge_init', 'target_mac': 'ED:ED:87:D7:27:50'}
+{"event": "bridge_controller_ready", "watchdog_enabled": true, "target_mac": "ED:ED:87:D7:27:50"}
+2025-10-25 21:58:33,648 INFO:bb8_core.logging_setup: {'event': 'bridge_controller_ready', 'watchdog_enabled': True, 'target_mac': 'ED:ED:87:D7:27:50'}
+{"event": "bridge_controller_mqtt_params", "host": "core-mosquitto", "port": 1883, "base": "bb8", "user": true}
+2025-10-25 21:58:33,649 INFO:bb8_core.logging_setup: {'event': 'bridge_controller_mqtt_params', 'host': 'core-mosquitto', 'port': 1883, 'base': 'bb8', 'user': True}
+{"event": "mqtt_connect_attempt", "host": "core-mosquitto", "port": 1883, "resolved": "172.30.33.0", "client_id": "bb8-addon", "user": true, "tls": false, "topic": "bb8/command/#", "status_topic": "bb8/status", "source": "env:MQTT_HOST"}
+2025-10-25 21:58:33,880 INFO:bb8_core.logging_setup: {'event': 'mqtt_connect_attempt', 'host': 'core-mosquitto', 'port': 1883, 'resolved': '172.30.33.0', 'client_id': 'bb8-addon', 'user': True, 'tls': False, 'topic': 'bb8/command/#', 'status_topic': 'bb8/status', 'source': 'env:MQTT_HOST'}
+{"event": "watchdog_start", "interval_s": 10, "max_reconnect_attempts": 3}
+2025-10-25 21:58:33,883 INFO:bb8_core.logging_setup: {'event': 'watchdog_start', 'interval_s': 10, 'max_reconnect_attempts': 3}
+{"event": "mqtt_connected", "rc": 0, "reason": "success"}
+2025-10-25 21:58:33,951 INFO:bb8_core.logging_setup: {'event': 'mqtt_connected', 'rc': 0, 'reason': 'success'}
+{"event": "controller_attach_mqtt_error", "error": "RuntimeError('no running event loop')"}
+2025-10-25 21:58:33,951 ERROR:bb8_core.logging_setup: {'event': 'controller_attach_mqtt_error', 'error': "RuntimeError('no running event loop')"}
+/usr/src/app/bb8_core/mqtt_dispatcher.py:928: RuntimeWarning: coroutine 'publish_discovery' was never awaited
+  logger.error(
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+/usr/src/app/bb8_core/auto_detect.py:715: FutureWarning: BLEDevice.rssi is deprecated and will be removed in a future version of Bleak, use AdvertisementData.rssi instead
+  "rssi": getattr(d, "rssi", None),
+2025-10-25 21:58:38,843 ERROR:bb8_core.logging_setup: {'event': 'bb8_registry_atomic_write_error', 'error': "FileNotFoundError(2, 'No such file or directory')", 'path': 'addon/bb8_core/bb8_device_registry.yaml'}
+2025-10-25 21:58:38,843 INFO:bb8_core.logging_setup: {'event': 'bb8_presence_change', 'state': 'present', 'timestamp': 1761425918.842832, 'mac': 'ED:ED:87:D7:27:50', 'rssi': -80, 'absence_timeout_sec': 0}
+2025-10-25 21:58:38,843 INFO:bb8_core.logging_setup: {'event': 'bb8_presence_mqtt_publish', 'topic': 'bb8/presence/ED:ED:87:D7:27:50', 'payload': {'state': 'present', 'mac': 'ED:ED:87:D7:27:50', 'rssi': -80, 'absence_timeout_sec': 0, 'timestamp': 1761425918.8435576}}
+{"event": "bb8_registry_atomic_write_error", "error": "FileNotFoundError(2, 'No such file or directory')", "path": "addon/bb8_core/bb8_device_registry.yaml"}
+{"event": "bb8_presence_change", "state": "present", "timestamp": 1761425918.842832, "mac": "ED:ED:87:D7:27:50", "rssi": -80, "absence_timeout_sec": 0}
+{"event": "bb8_presence_mqtt_publish", "topic": "bb8/presence/ED:ED:87:D7:27:50", "payload": {"state": "present", "mac": "ED:ED:87:D7:27:50", "rssi": -80, "absence_timeout_sec": 0, "timestamp": 1761425918.8435576}}
+2025-10-25 21:58:43,888 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 1, 'max_attempts': 3}
+2025-10-25 21:58:43,888 INFO:bb8_core.logging_setup: {'event': 'watchdog_reconnect_attempt', 'attempt': 1, 'max_attempts': 3}
+2025-10-25 21:58:43,888 INFO:bb8_core.logging_setup: {'event': 'ble_session_connect_attempt', 'attempt': 1, 'max_attempts': 2, 'mac': 'ED:ED:87:D7:27:50', 'timeout': 5.0}
+2025-10-25 21:58:43,888 WARNING:bb8_core.logging_setup: {'event': 'ble_session_connect_attempt_failed', 'attempt': 1, 'max_attempts': 2, 'error': 'asyncio.run() cannot be called from a running event loop', 'mac': 'ED:ED:87:D7:27:50'}
+{"event": "watchdog_disconnected", "consecutive_failures": 1, "max_attempts": 3}
+{"event": "watchdog_reconnect_attempt", "attempt": 1, "max_attempts": 3}
+{"event": "ble_session_connect_attempt", "attempt": 1, "max_attempts": 2, "mac": "ED:ED:87:D7:27:50", "timeout": 5.0}
+{"event": "ble_session_connect_attempt_failed", "attempt": 1, "max_attempts": 2, "error": "asyncio.run() cannot be called from a running event loop", "mac": "ED:ED:87:D7:27:50"}
+{"event": "ble_session_connect_attempt", "attempt": 2, "max_attempts": 2, "mac": "ED:ED:87:D7:27:50", "timeout": 5.0}
+2025-10-25 21:58:44,332 INFO:bb8_core.logging_setup: {'event': 'ble_session_connect_attempt', 'attempt': 2, 'max_attempts': 2, 'mac': 'ED:ED:87:D7:27:50', 'timeout': 5.0}
+/usr/src/app/bb8_core/ble_session.py:161: RuntimeWarning: coroutine 'BleakScanner.discover' was never awaited
+  last_error = e
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+{"event": "ble_session_connect_attempt_failed", "attempt": 2, "max_attempts": 2, "error": "asyncio.run() cannot be called from a running event loop", "mac": "ED:ED:87:D7:27:50"}
+2025-10-25 21:58:44,334 WARNING:bb8_core.logging_setup: {'event': 'ble_session_connect_attempt_failed', 'attempt': 2, 'max_attempts': 2, 'error': 'asyncio.run() cannot be called from a running event loop', 'mac': 'ED:ED:87:D7:27:50'}
+{"event": "ble_session_connect_failed", "attempts": 2, "total_time": 0.4460108280181885, "last_error": "asyncio.run() cannot be called from a running event loop", "mac": "ED:ED:87:D7:27:50"}
+2025-10-25 21:58:44,334 ERROR:bb8_core.logging_setup: {'event': 'ble_session_connect_failed', 'attempts': 2, 'total_time': 0.4460108280181885, 'last_error': 'asyncio.run() cannot be called from a running event loop', 'mac': 'ED:ED:87:D7:27:50'}
+{"event": "watchdog_reconnect_failed", "attempt": 1, "error": "Failed to connect after 2 attempts: asyncio.run() cannot be called from a running event loop"}
+2025-10-25 21:58:44,334 ERROR:bb8_core.logging_setup: {'event': 'watchdog_reconnect_failed', 'attempt': 1, 'error': 'Failed to connect after 2 attempts: asyncio.run() cannot be called from a running event loop'}
