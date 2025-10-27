@@ -1,0 +1,119 @@
+{
+  "items": [
+    {
+      "basename": "addon_20251009T105938Z.tar.gz",
+      "found": true,
+      "id": "addon-snapshot-20251009",
+      "mtime_iso": "2025-10-09T10:59:41.293343+00:00",
+      "repo_path": "_backups/addon_20251009T105938Z.tar.gz",
+      "sha256": "d610063827b9cab69247c44ea1e8f13b8e0d2643a4ae997e2ae13e52541e2560",
+      "size_bytes": 12932631
+    },
+    {
+      "basename": "BB8-FUNC-B2-artifacts.tar.gz",
+      "found": true,
+      "id": "b2-artifacts",
+      "mtime_iso": "2025-10-27T01:23:26.816760+00:00",
+      "repo_path": "reports/artifacts/BB8-FUNC-B2-artifacts.tar.gz",
+      "sha256": "c25180b06e0d9f5d381b3f7044fcb4d2a829abceedba1bf050b4733a4518b5c8",
+      "size_bytes": 9809
+    },
+    {
+      "basename": "BB8-BLE-TEST.tar.gz",
+      "found": false,
+      "id": "bb8-ble-test",
+      "mtime_iso": null,
+      "repo_path": null,
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "basename": "ha_ble_diag_hci0_20251009T131211Z.tar.gz",
+      "found": false,
+      "id": "ble-diagnostics-hci0",
+      "mtime_iso": null,
+      "repo_path": null,
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "basename": "architecture.tar.gz",
+      "found": false,
+      "id": "architecture-bundle",
+      "mtime_iso": null,
+      "repo_path": null,
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "basename": "ADR.tar.gz",
+      "found": false,
+      "id": "adr-bundle",
+      "mtime_iso": null,
+      "repo_path": null,
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "basename": "config.tar.gz",
+      "found": false,
+      "id": "config-bundle",
+      "mtime_iso": null,
+      "repo_path": null,
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "basename": "prompt_registry.tar.gz",
+      "found": false,
+      "id": "prompt-registry",
+      "mtime_iso": null,
+      "repo_path": null,
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "basename": "20250813_strategos_v1.4.yaml",
+      "found": false,
+      "id": "persona-core",
+      "mtime_iso": null,
+      "repo_path": null,
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "basename": "20250803_xp_strategos_v1.6.yaml",
+      "found": false,
+      "id": "persona-xp",
+      "mtime_iso": null,
+      "repo_path": null,
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "basename": "dual_mode_xp_v1_250813.yaml",
+      "found": false,
+      "id": "dual-mode-xp",
+      "mtime_iso": null,
+      "repo_path": null,
+      "sha256": null,
+      "size_bytes": null
+    },
+    {
+      "basename": "system_instruction.yaml",
+      "found": false,
+      "id": "system-protocols",
+      "mtime_iso": null,
+      "repo_path": null,
+      "sha256": null,
+      "size_bytes": null
+    }
+  ],
+  "resolution_policy": {
+    "on_missing": "request_reupload",
+    "order": [
+      "repo"
+    ],
+    "verify_checksums": true
+  }
+}
