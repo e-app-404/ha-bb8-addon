@@ -93,8 +93,9 @@ fi
 # 7) Receipt (<=10 lines)
 G1=$(cat "$LOCAL_DIR/G1.status" 2>/dev/null || echo REWORK)
 G2=$(cat "$LOCAL_DIR/G2.status" 2>/dev/null || echo REWORK)
+TELE_FIELD=$([ "$(cat "$LOCAL_DIR/G1.status" 2>/dev/null || echo REWORK)" = "ACCEPT" ] && echo present || echo missing)
 printf "[Gate]: G1 %s, G2 %s\n" "$G1" "$G2"
-echo "- Highlights: diag_scan=$OK1 cid1=$CID1 actuate_probe=$OK2 cid2=$CID2 telemetry_field=$(grep -q '\"connected\"' \"$LOCAL_DIR/telemetry.json\" && echo present || echo missing)"
+echo "- Highlights: diag_scan=$OK1 cid1=$CID1 actuate_probe=$OK2 cid2=$CID2 telemetry_field=$TELE_FIELD"
 echo "- Evidence host: $HOST_DIR"
 echo "- Evidence local: $LOCAL_DIR"
 echo "- SHA256: $(cut -d' ' -f1 \"$LOCAL_DIR/manifest.sha256\")"
