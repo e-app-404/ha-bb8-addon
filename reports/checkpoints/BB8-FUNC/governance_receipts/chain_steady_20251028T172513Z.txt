@@ -1,0 +1,8 @@
+[Gate] G1=ACCEPT, G2=ACCEPT
+[Highlights] telemetry_field=present, ack_scan=c1_scan_ack.json, ack_actuation=c2_actuation_ack.json
+[Evidence:host] /config/ha-bb8/checkpoints/BB8-FUNC/20251028T172513Z/
+[Evidence:local] reports/checkpoints/BB8-FUNC/ssh_20251028T172513Z/
+[Hash] SHA256=c71f8580c531b8cfd3a40e96f797e2f13fffc4a96f5a1a48aee5a61b837106bc
+[Next] PR closeout and review
+[Confidence] high
+[Drift] none detected
