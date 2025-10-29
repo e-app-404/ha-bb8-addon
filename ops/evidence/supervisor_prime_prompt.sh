@@ -71,17 +71,34 @@ grep -q "\"cid\"[[:space:]]*:[[:space:]]*\"$CID-c2\"" "$LOCAL_DIR/c2_actuation_a
 
 ([ "$OK1" = true ] && [ "$OK2" = true ] && [ "$CID1" = true ] && [ "$CID2" = true ]) && echo ACCEPT > "$LOCAL_DIR/G2.status" || echo REWORK > "$LOCAL_DIR/G2.status"
 
-# 4) Package evidence and compute sha
-tar -czf "$LOCAL_DIR/evidence_$TS.tgz" -C "$LOCAL_DIR" .
+# 4) Package evidence and compute sha (avoid adding archive to itself)
+ARCHIVE_TMP="$EVID_LOCAL_BASE/.evidence_$TS.tgz"
+ARCHIVE_OUT="$LOCAL_DIR/evidence_$TS.tgz"
+tar -czf "$ARCHIVE_TMP" -C "$LOCAL_DIR" .
+mv "$ARCHIVE_TMP" "$ARCHIVE_OUT"
 if command -v sha256sum >/dev/null 2>&1; then
-  sha256sum "$LOCAL_DIR/evidence_$TS.tgz" | tee "$LOCAL_DIR/manifest.sha256" >/dev/null
+  sha256sum "$ARCHIVE_OUT" | tee "$LOCAL_DIR/manifest.sha256" >/dev/null
 else
-  shasum -a 256 "$LOCAL_DIR/evidence_$TS.tgz" | tee "$LOCAL_DIR/manifest.sha256" >/dev/null
+  shasum -a 256 "$ARCHIVE_OUT" | tee "$LOCAL_DIR/manifest.sha256" >/dev/null
 fi
 
 # 5) Mirror to host evidence directory (copy-out only; not deploy)
 ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$HOST" "mkdir -p '$HOST_DIR'"
-scp -q "$LOCAL_DIR"/* "$HOST:$HOST_DIR/" || true
+# Primary: scp (quiet). On failure, retry once. If still failing and rsync exists on both ends, try rsync.
+if scp -q "$LOCAL_DIR"/* "$HOST:$HOST_DIR/" 2>/dev/null; then
+  :
+else
+  sleep 1
+  if scp -q "$LOCAL_DIR"/* "$HOST:$HOST_DIR/" 2>/dev/null; then
+    :
+  else
+    if command -v rsync >/dev/null 2>&1 && ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$HOST" "command -v rsync >/dev/null 2>&1"; then
+      rsync -az --inplace "$LOCAL_DIR"/ "$HOST:$HOST_DIR/" || true
+    else
+      echo "[warn] scp failed twice and rsync unavailable on one side; continuing without host mirror" >&2
+    fi
+  fi
+fi
 
 # 6) On G2 REWORK, capture add-on logs for operator review
 if [ "$(cat "$LOCAL_DIR/G2.status" 2>/dev/null || echo REWORK)" != "ACCEPT" ]; then
@@ -98,5 +115,11 @@ printf "[Gate]: G1 %s, G2 %s\n" "$G1" "$G2"
 echo "- Highlights: diag_scan=$OK1 cid1=$CID1 actuate_probe=$OK2 cid2=$CID2 telemetry_field=$TELE_FIELD"
 echo "- Evidence host: $HOST_DIR"
 echo "- Evidence local: $LOCAL_DIR"
-echo "- SHA256: $(cut -d' ' -f1 \"$LOCAL_DIR/manifest.sha256\")"
+SHA=""
+if [ -f "$LOCAL_DIR/manifest.sha256" ]; then
+  SHA=$(awk '{print $1; exit}' "$LOCAL_DIR/manifest.sha256" 2>/dev/null || true)
+else
+  SHA="unavailable"
+fi
+echo "- SHA256: $SHA"
 echo "- Next: if G2=REWORK → patch handlers in bridge_controller/facade; Supervisor rebuild+restart; rerun"
