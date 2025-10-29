@@ -14,6 +14,15 @@ import paho.mqtt.client as mqtt
 from bleak import BleakScanner
 from paho.mqtt.enums import CallbackAPIVersion
 
+# Optional bleak import for environments without BLE stack during tests
+try:  # pragma: no cover
+    from bleak import BleakScanner as _BleakScanner
+except Exception:  # noqa: BLE001
+    _BleakScanner = None  # type: ignore[assignment]
+
+# Export name used by the module
+BleakScanner = _BleakScanner  # type: ignore[assignment]
+
 from .addon_config import load_config
 
 # Global MQTT configuration variables

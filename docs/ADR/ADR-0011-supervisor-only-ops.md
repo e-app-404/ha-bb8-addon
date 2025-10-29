@@ -1,16 +1,25 @@
 ---
 id: ADR-0011
-title: "Supervisor-only Operations"
+title: Supervisor-only Operations
 date: 2025-08-27
 status: Accepted
+decision: All operational visibility is emitted to Supervisor logs (ha addons logs).
+  run.sh prints DIAG and 15s health summaries to stdout; Python emits heartbeats;
+  an optional file-to-stdout forwarder mirrors key Python lines.
 author:
-  - Promachos Governance
+- Promachos Governance
 related:
-  - ADR-0001
-  - ADR-0010
+- ADR-0001
+- ADR-0010
 supersedes: []
 last_updated: 2025-09-03
-tags: ["supervisor", "operations", "diagnostics", "ha-cli", "governance", "tokens"]
+tags:
+- supervisor
+- operations
+- diagnostics
+- ha-cli
+- governance
+- tokens
 ---
 
 # ADR-0011: Supervisor-only Operations

@@ -1,17 +1,26 @@
 ---
 id: ADR-0030
-title: "Cross-Repository ADR Alignment and Linking Standard"
+title: Cross-Repository ADR Alignment and Linking Standard
 date: 2025-09-28
 status: Accepted
+decision: 'We establish a standardized system for cross-repository ADR references
+  that enables: 1. **Canonical URL-based references** to ADRs in other repositories
+  2.'
 author:
-  - Evert Appels
-  - GitHub Copilot
+- Evert Appels
+- GitHub Copilot
 related:
-  - ADR-0009
-  - ADR-0024
+- ADR-0009
+- ADR-0024
 supersedes: []
 last_updated: 2025-09-28
-tags: ["adr", "cross-repository", "linking", "alignment", "governance", "tokens"]
+tags:
+- adr
+- cross-repository
+- linking
+- alignment
+- governance
+- tokens
 ---
 
 # ADR-0030: Cross-Repository ADR Alignment and Linking Standard

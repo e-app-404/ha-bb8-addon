@@ -317,11 +317,16 @@ ssh {HA_USER}@{HA_HOST} "timeout 10 mosquitto_sub -h 192.168.0.129 -p 1883 -u mq
 # Stop MQTT broker temporarily
 ssh {HA_USER}@{HA_HOST} "systemctl stop mosquitto" # (if applicable)
 
+> Note: On Home Assistant OS, use Supervisor commands instead of systemctl, for example:
+> `ha addons restart core_mosquitto` (Supervisor context) or via HA API `/api/services/hassio/addon_restart`.
+
 # Expected behavior: Connection retry logs
 ssh {HA_USER}@{HA_HOST} "ha addons logs local_beep_boop_bb8" | grep -i "connection.*refused\|reconnect\|mqtt.*error" | tail -5
 
 # Recovery: restart broker and verify reconnection
 ssh {HA_USER}@{HA_HOST} "systemctl start mosquitto"
+
+> Note: On Home Assistant OS, prefer `ha addons restart core_mosquitto` over systemctl to manage the Mosquitto add-on.
 ssh {HA_USER}@{HA_HOST} "ha addons logs local_beep_boop_bb8" | grep "Connected to MQTT" | tail -1
 ```
 

@@ -39,10 +39,11 @@ Authoritative style guide (treat as single source of truth):
 - Required keys: id, title, authors, slug, date, last_updated
 - Optional keys: source, tags, url, related, adr (include adr only if applicable)
 - Types and formatting:
-  - id: string in format CAT-TOPIC-SERIALNR (e.g., HA-NETWORKING-0001); do not fabricate category semantics—preserve existing if present; if missing, leave a clear placeholder value.
+  - id: string in format CAT-TOPIC-SERIALNR (e.g., OPS-ENV_VARIABLES-01); do not fabricate category semantics—preserve existing if present; if missing, leave a clear placeholder value.
   - title/authors/source/slug/url/related/adr: strings
   - tags: YAML array of double-quoted strings (e.g., ["networking", "ha", "k8s"])
   - date and last_updated: "YYYY-MM-DD"
+- The `type` key refers to the purpose of the file contents, e.g. (stub, guide, reference, tutorial, manual, report, prompt, etc.); it's both a semantical label and used for file classification.
 - Update last_updated to today’s date (YYYY-MM-DD) if you made any changes; preserve original date.
 - Do not invent upstream URLs or sources—only normalize formatting for existing values.
 - If a required key is missing and cannot be inferred, add it with a TODO placeholder clearly marked.
@@ -53,11 +54,12 @@ Template for structure and ordering; values must reflect the document:
 
 ```yaml
 ---
-id: "<unique-id format CAT-TOPIC-SERIALNR>"
+id: "<unique-id>"
 title: "<Short descriptive title>"
 authors: "<Author or organization>"
 source: "<Upstream source or notes>"
 slug: "<short-slug>"
+type: "<plain|guide|reference|tutorial|manual|report|prompt|...>"
 tags: ["<keyword1>", "<keyword2>", "<keyword3>"]
 date: "YYYY-MM-DD"
 last_updated: "YYYY-MM-DD"
@@ -66,6 +68,7 @@ related: "<related document slugs separated by commas>"
 adr: "<ADR id if applicable>"
 ---
 ```
+
 
 ### 4) Normalize Markdown formatting (do not change meaning)
 

@@ -1,14 +1,17 @@
 ---
 +id: ADR-0014
-title: "Canonical Project Setup for HA-BB8 Addon"
+title: Canonical Project Setup for HA-BB8 Addon
 date: 2025-09-11
 status: Proposed
+decision: '- The root Makefile is the authoritative build, test, and CI entrypoint
+  for the repository. - All developer, CI, and QA targets are defined in the root
+  Makefile.'
 author:
-  - Promachos Governance
+- Promachos Governance
 related:
-  - ADR-0001
-  - ADR-0012
-  - ADR-0013
+- ADR-0001
+- ADR-0012
+- ADR-0013
 supersedes: []
 last_updated: 2025-09-11
 ---

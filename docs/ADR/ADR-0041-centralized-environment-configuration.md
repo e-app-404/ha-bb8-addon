@@ -1,15 +1,25 @@
 ---
 id: ADR-0041
-title: "Centralized Environment Configuration & Accessible Secrets Management"
+title: Centralized Environment Configuration & Accessible Secrets Management
 date: 2025-10-04
 status: Accepted
+decision: '### **Centralized .env Configuration** All deployment and operational configuration
+  centralized in a single .env file at project root:.'
 author:
-  - GitHub Copilot
-  - Evert Appels
-related: ["ADR-0008", "ADR-0040", "ADR-0033"]
+- GitHub Copilot
+- Evert Appels
+related:
+- ADR-0008
+- ADR-0040
+- ADR-0033
 supersedes: []
 last_updated: 2025-10-04
-tags: ["configuration", "security", "deployment", "secrets", "env"]
+tags:
+- configuration
+- security
+- deployment
+- secrets
+- env
 ---
 
 # ADR-0041: Centralized Environment Configuration & Accessible Secrets Management

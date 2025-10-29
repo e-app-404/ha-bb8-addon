@@ -1,14 +1,29 @@
 ---
 id: ADR-0032
-title: "MQTT/BLE Integration Architecture"
+title: MQTT/BLE Integration Architecture
 date: 2025-09-28
 status: Accepted
+decision: '**Technical Choice:** Implement a **dual-channel integration architecture**
+  with MQTT for command/telemetry and BLE for device control, using configurable topic
+  schemas and evidence-based validation.'
 author:
-  - Operational Evidence Analysis
-related: ["ADR-0020", "ADR-0031", "ADR-0033"]
+- Operational Evidence Analysis
+related:
+- ADR-0020
+- ADR-0031
+- ADR-0033
 supersedes: []
 last_updated: 2025-09-28
-tags: ["mqtt", "ble", "integration", "architecture", "topics", "evidence", "validation", "governance", "tokens"]
+tags:
+- mqtt
+- ble
+- integration
+- architecture
+- topics
+- evidence
+- validation
+- governance
+- tokens
 ---
 
 # ADR-0032: MQTT/BLE Integration Architecture

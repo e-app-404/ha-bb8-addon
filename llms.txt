@@ -1,0 +1,57 @@
+# Home Assistant BB‑8 Add-on
+
+> Home Assistant add-on to control a Sphero BB‑8 droid via Bluetooth Low Energy (BLE) and MQTT, with Supervisor-first deployment, ADR-governed architecture, and structured evidence/testing.
+
+This repository implements a governed HA add-on that bridges BLE control of a Sphero BB‑8 to MQTT topics for Home Assistant. Start with the README, then consult the ADR index for design decisions and the core modules listed below for the runtime entry points. Configuration is centralized and provenance-logged; deployment and testing are Supervisor-driven with evidence captured under reports/checkpoints.
+
+## Documentation
+
+- [Project README](README.md): Overview, features, architecture, release workflow, usage, and development notes
+- [ADR Index](docs/ADR/INDEX.md): Canonical index of architectural decisions for this add-on
+- [ADR-0031: Supervisor-only operations & testing](docs/ADR/ADR-0031-supervisor-only-operations-testing.md): Deployment/execution model and acceptance protocol
+- [ADR-0032: MQTT/BLE integration architecture](docs/ADR/ADR-0032-mqtt-ble-integration-architecture.md): Core integration design and service boundaries
+- [ADR-0037: MQTT discovery device block compliance](docs/ADR/ADR-0037-mqtt-discovery-device-block-compliance.md): Required device blocks for HA discovery
+- [ADR-0041: Centralized environment configuration](docs/ADR/ADR-0041-centralized-environment-configuration.md): Environment variable and path governance
+- [Testing & deployment instructions](.github/instructions/testing-deployment.instructions.md): Exact acceptance and dev-run processes with evidence
+- [Copilot agent instructions](.github/instructions/copilot-instructions.md): Repo-specific rules for edits, logging, MQTT, and runtime model
+- [ENV governance](.github/instructions/env-governance.instructions.md): Canonical CONFIG_ROOT, secrets separation, and validation
+
+## Core modules (runtime entry points)
+
+- [bridge_controller.py](addon/bb8_core/bridge_controller.py): Orchestrator to resolve BB‑8 MAC, initialize BLE gateway/bridge, and start MQTT dispatcher
+- [mqtt_dispatcher.py](addon/bb8_core/mqtt_dispatcher.py): Broker connection, topic subscription/publishing, HA discovery lifecycle
+- [ble_bridge.py](addon/bb8_core/ble_bridge.py): BLE device interface and Sphero protocol handling
+- [ble_gateway.py](addon/bb8_core/ble_gateway.py): Low-level BLE scanning/connection management
+- [facade.py](addon/bb8_core/facade.py): Unified interface between MQTT dispatcher and BLE bridge
+- [addon_config.py](addon/bb8_core/addon_config.py): Centralized config loader with provenance (options.json → env → YAML)
+- [logging_setup.py](addon/bb8_core/logging_setup.py): Structured JSON logger with secret redaction
+
+## Configuration and build
+
+- [Add-on config](addon/config.yaml): Home Assistant add-on manifest and options schema
+- [Add-on Dockerfile](addon/Dockerfile): Alpine-based runtime image for the add-on
+- [Runtime entry script](addon/run.sh): Foreground single-proc model; execs the target per ADR-0031
+- [Repository build descriptor](build.yaml): Workspace/build wiring for the add-on
+- [Root requirements](requirements.txt): Pinned dependencies for workspace tools/tests
+- [Add-on requirements](addon/requirements.txt): Runtime Python dependencies for the container
+- [Makefile](Makefile): Release, QA, evidence, and helper targets
+- [pyproject](pyproject.toml): Tooling configuration
+- [pytest.ini](pytest.ini): Test configuration
+- [ruff.toml](ruff.toml): Linting rules
+- [mypy.ini](mypy.ini): Type-checking rules
+- [.dockerignore](.dockerignore): Excludes to speed image builds and avoid dev artifacts
+
+## Evidence and tests
+
+- [MQTT health echo test](reports/checkpoints/INT-HA-CONTROL/mqtt_health_echo_test.py): Roundtrip health/SLA validation for MQTT
+- [INT-HA-CONTROL executor](reports/checkpoints/INT-HA-CONTROL/execute_int_ha_control.sh): Acceptance evidence harness (Supervisor-first)
+- [Acceptance brief](reports/checkpoints/INT-HA-CONTROL/ACCEPTANCE.md): Gate criteria and expected artifacts
+- [Example artifacts](reports/checkpoints/INT-HA-CONTROL/led_entity_schema_validation.json): LED discovery/schema validation result
+- [Add-on tests folder](addon/tests/): Unit/integration tests (fast set by default; slow BLE tests marked)
+
+## Optional
+
+- [Ops evidence docs](ops/evidence/README.md): Evidence collection overview and helpers
+- [Ops overview](ops/README.md): Operations utilities and workflows
+- [Deployment bundle docs](docs/deployment-bundle/README.md): Packaging/deployment references
+- [Workspace topology export](workspace_ops_export.yaml): Current operational topology snapshot

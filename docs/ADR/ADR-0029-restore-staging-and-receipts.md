@@ -1,17 +1,28 @@
 ---
 id: ADR-0029
-title: "Restore staging protocol and receipts"
+title: Restore staging protocol and receipts
 date: 2025-09-27
 status: accepted
+decision: '### Staging layout - Staging dir: _backups/restore_report/restore_staging/<UTC>/
+  - Inventory/receipts: _backups/inventory/{manifest_*.txt,tree_*.txt,staged_manifest_*.json}
+  _backups/inventory/restore_receipts/receipt_<UTC>.txt.'
 author:
-  - Evert Appels
+- Evert Appels
 related:
-  - ADR-0015
-  - ADR-0026
-  - ADR-0028
+- ADR-0015
+- ADR-0026
+- ADR-0028
 supersedes: []
 last_updated: 2025-09-27
-tags: ["restore", "staging", "receipts", "protocol", "governance", "tokens", "normalization", "auditability"]
+tags:
+- restore
+- staging
+- receipts
+- protocol
+- governance
+- tokens
+- normalization
+- auditability
 ---
 
 # ADR-0029: Restore staging protocol and receipts

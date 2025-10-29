@@ -1,17 +1,23 @@
 ---
 id: ADR-0012
-title: "Canonical module layout & imports"
+title: Canonical module layout & imports
 date: 2025-09-05
 status: Accepted
+decision: '- **Canonical path** for production Python is addon/bb8_core/*. - **Tests**
+  live in addon/tests/*.'
 author:
-  - Promachos Governance
+- Promachos Governance
 related:
-  - ADR-0001
-  - ADR-0003
-  - ADR-0009
+- ADR-0001
+- ADR-0003
+- ADR-0009
 supersedes: []
 last_updated: 2025-09-05
-tags: ["repo-structure", "imports", "governance", "coverage"]
+tags:
+- repo-structure
+- imports
+- governance
+- coverage
 ---
 
 # ADR-0012 - Canonical module layout & imports

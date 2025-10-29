@@ -1,0 +1,37 @@
+[meta]
+version = "1.0"
+date = "2025-10-27"
+maintainer = "HA-BB8 Maintainers"
+
+[tools.mqtt_purge_discovery]
+path = "ops/diag/mqtt_purge_discovery.sh"
+purpose = "Purge retained Home Assistant discovery topics for a specific device id."
+default_mode = "dry"
+requires = ["--device-id"]
+exec_requires = ["--execute"]
+env = ["MQTT_HOST", "MQTT_PORT", "MQTT_USER", "MQTT_PASSWORD", "MQTT_BASE"]
+examples = [
+	"bash ops/diag/mqtt_purge_discovery.sh --device-id bb8_s33 --dry-run",
+	"bash ops/diag/mqtt_purge_discovery.sh --device-id bb8_s33 --execute"
+]
+notes = [
+	"Dry-run by default; destructive purge only with --execute.",
+	"Scoped to device path: homeassistant/#/<DEVICE_ID>/#",
+	"Never writes to HA host paths."
+]
+
+[tools.restart_helpers]
+path = "ops/evidence/restart_helpers.sh"
+purpose = "Restart the BB-8 add-on via Supervisor (preferred) or HA API."
+modes = ["supervisor", "ha", "auto"]
+inputs = ["addon_slug"]
+env = ["SUPERVISOR_TOKEN", "HA_URL", "HA_TOKEN"]
+examples = [
+	"bash ops/evidence/restart_helpers.sh supervisor local_beep_boop_bb8",
+	"bash ops/evidence/restart_helpers.sh ha local_beep_boop_bb8"
+]
+notes = [
+	"Supervisor-first; prints binary receipts only; no secrets echoed.",
+	"Use make ha-restart to call with sensible defaults."
+]
+

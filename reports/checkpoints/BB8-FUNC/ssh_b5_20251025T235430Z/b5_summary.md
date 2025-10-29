@@ -1,6 +1,0 @@
-[B5 E2E]: PASS
-Online gate: ok (50 ms)
-ACKs: 5/5 (mean 20 ms)
-Telemetry: connected=None estop=None last_cmd_ts=None battery=None
-Evidence: b5_e2e_demo.log, b5_summary.md
-Echo health: fail (round-trip 5017 ms)

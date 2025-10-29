@@ -1,20 +1,32 @@
 ---
 id: ADR-0019
-title: "Workspace folder taxonomy and assignation rules"
+title: Workspace folder taxonomy and assignation rules
 date: 2025-09-14
 status: Accepted
+decision: "### Canonical roots - addon/: **Runtime code for the Home Assistant add-on**\
+  \ - addon/bb8_core/ \u2014 Python package for runtime code only. - addon/services.d/\
+  \ \u2014 s6-overlay services shipped in the container (<service>/run, optional <service>/log/run)."
 author:
-  - Evert Appels
-  - Github Copilot GPT 5 mini
+- Evert Appels
+- Github Copilot GPT 5 mini
 related:
-  - ADR-0001
-  - ADR-0004
-  - ADR-0008
-  - ADR-0009
-  - ADR-0017
-  - ADR-0018
+- ADR-0001
+- ADR-0004
+- ADR-0008
+- ADR-0009
+- ADR-0017
+- ADR-0018
 last_updated: 2025-10-07
-tags: ["workspace", "organization", "taxonomy", "folder structure", "ADR", "layout", "archive", "logs", "reports"]
+tags:
+- workspace
+- organization
+- taxonomy
+- folder structure
+- ADR
+- layout
+- archive
+- logs
+- reports
 supersedes: []
 ---
 

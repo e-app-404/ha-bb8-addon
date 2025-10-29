@@ -1,20 +1,23 @@
 ---
 id: ADR-0008
-title: "End-to-End Development → Deploy Flow (Dual‑Clone & HA Supervisor)"
+title: "End-to-End Development \u2192 Deploy Flow (Dual\u2011Clone & HA Supervisor)"
 date: 2025-08-27
 status: Accepted
+decision: "We adopt a single, reproducible 4\u2011lane flow: 1. **Local Dev & Test\
+  \ (workspace)*- \u2192 validate structure, run tests, update docs."
 author:
-  - Promachos Governance
+- Promachos Governance
 related:
-  - ADR-0001
-  - ADR-0003
-  - ADR-0004
-  - ADR-0034
-  - docs/OPERATIONS_OVERVIEW.md
+- ADR-0001
+- ADR-0003
+- ADR-0004
+- ADR-0034
+- docs/OPERATIONS_OVERVIEW.md
 supersedes: []
 last_updated: 2025-10-04
 evidence_sessions:
-  - 2025-10-04: "Verified deployment pipeline with file sync fixes, Alpine package compatibility, and HTTP API restart resolution"
+- 2025-10-04: Verified deployment pipeline with file sync fixes, Alpine package compatibility,
+    and HTTP API restart resolution
 ---
 
 # ADR‑0008: End‑to‑End Development → Deploy Flow (Dual‑Clone & HA Supervisor)

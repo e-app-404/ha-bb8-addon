@@ -1,16 +1,27 @@
 ---
 id: ADR-0028
-title: "Remote triad, backups, and mirror cutover policy"
+title: Remote triad, backups, and mirror cutover policy
 date: 2025-09-27
 status: accepted
+decision: '**GitHub is the source of truth.** Before any forced update: 1. **Preflight**
+  - git status --porcelain must be clean (or stash with message).'
 author:
-  - Evert Appels
+- Evert Appels
 related:
-  - ADR-0017
-  - ADR-0026
+- ADR-0017
+- ADR-0026
 supersedes: []
 last_updated: 2025-09-27
-tags: ["remote", "mirror", "cutover", "policy", "governance", "tokens", "backup", "synchronization", "git"]
+tags:
+- remote
+- mirror
+- cutover
+- policy
+- governance
+- tokens
+- backup
+- synchronization
+- git
 ---
 
 # ADR-0028: Remote triad, backups, and mirror cutover policy

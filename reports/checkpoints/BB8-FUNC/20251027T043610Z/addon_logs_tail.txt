@@ -1,0 +1,300 @@
+{"event": "bb8_registry_atomic_write_error", "error": "FileNotFoundError(2, 'No such file or directory')", "path": "addon/bb8_core/bb8_device_registry.yaml"}
+2025-10-27 04:29:22,851 ERROR:bb8_core.logging_setup: {'event': 'bb8_registry_atomic_write_error', 'error': "FileNotFoundError(2, 'No such file or directory')", 'path': 'addon/bb8_core/bb8_device_registry.yaml'}
+{"event": "watchdog_disconnected", "consecutive_failures": 2905, "max_attempts": 3}
+2025-10-27 04:29:28,894 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2905, 'max_attempts': 3}
+2025-10-27 04:29:28,894 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2905, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2905, "max_attempts": 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2906, "max_attempts": 3}
+2025-10-27 04:29:38,905 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2906, 'max_attempts': 3}
+2025-10-27 04:29:38,905 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2906, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2906, "max_attempts": 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2907, "max_attempts": 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2907, "max_attempts": 3}
+2025-10-27 04:29:48,915 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2907, 'max_attempts': 3}
+2025-10-27 04:29:48,916 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2907, 'max_attempts': 3}
+{"event": "bb8_registry_atomic_write_error", "error": "FileNotFoundError(2, 'No such file or directory')", "path": "addon/bb8_core/bb8_device_registry.yaml"}
+2025-10-27 04:29:57,871 ERROR:bb8_core.logging_setup: {'event': 'bb8_registry_atomic_write_error', 'error': "FileNotFoundError(2, 'No such file or directory')", 'path': 'addon/bb8_core/bb8_device_registry.yaml'}
+{"event": "watchdog_disconnected", "consecutive_failures": 2908, "max_attempts": 3}
+2025-10-27 04:29:58,922 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2908, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2908, "max_attempts": 3}
+2025-10-27 04:29:58,923 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2908, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2909, "max_attempts": 3}
+2025-10-27 04:30:08,933 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2909, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2909, "max_attempts": 3}
+2025-10-27 04:30:08,934 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2909, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2910, "max_attempts": 3}
+2025-10-27 04:30:18,944 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2910, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2910, "max_attempts": 3}
+2025-10-27 04:30:18,945 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2910, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2911, "max_attempts": 3}
+2025-10-27 04:30:28,953 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2911, 'max_attempts': 3}
+2025-10-27 04:30:28,954 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2911, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2911, "max_attempts": 3}
+2025-10-27 04:30:32,890 ERROR:bb8_core.logging_setup: {'event': 'bb8_registry_atomic_write_error', 'error': "FileNotFoundError(2, 'No such file or directory')", 'path': 'addon/bb8_core/bb8_device_registry.yaml'}
+{"event": "bb8_registry_atomic_write_error", "error": "FileNotFoundError(2, 'No such file or directory')", "path": "addon/bb8_core/bb8_device_registry.yaml"}
+{"event": "watchdog_disconnected", "consecutive_failures": 2912, "max_attempts": 3}
+2025-10-27 04:30:38,964 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2912, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2912, "max_attempts": 3}
+2025-10-27 04:30:38,965 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2912, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2913, "max_attempts": 3}
+2025-10-27 04:30:48,975 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2913, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2913, "max_attempts": 3}
+2025-10-27 04:30:48,975 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2913, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2914, "max_attempts": 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2914, "max_attempts": 3}
+2025-10-27 04:30:58,985 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2914, 'max_attempts': 3}
+2025-10-27 04:30:58,986 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2914, 'max_attempts': 3}
+{"event": "bb8_registry_atomic_write_error", "error": "FileNotFoundError(2, 'No such file or directory')", "path": "addon/bb8_core/bb8_device_registry.yaml"}
+2025-10-27 04:31:07,908 ERROR:bb8_core.logging_setup: {'event': 'bb8_registry_atomic_write_error', 'error': "FileNotFoundError(2, 'No such file or directory')", 'path': 'addon/bb8_core/bb8_device_registry.yaml'}
+{"event": "watchdog_disconnected", "consecutive_failures": 2915, "max_attempts": 3}
+2025-10-27 04:31:08,989 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2915, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2915, "max_attempts": 3}
+2025-10-27 04:31:08,990 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2915, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2916, "max_attempts": 3}
+2025-10-27 04:31:18,998 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2916, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2916, "max_attempts": 3}
+2025-10-27 04:31:18,999 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2916, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2917, "max_attempts": 3}
+2025-10-27 04:31:29,009 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2917, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2917, "max_attempts": 3}
+2025-10-27 04:31:29,009 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2917, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2918, "max_attempts": 3}
+2025-10-27 04:31:39,014 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2918, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2918, "max_attempts": 3}
+2025-10-27 04:31:39,014 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2918, 'max_attempts': 3}
+{"event": "bb8_registry_atomic_write_error", "error": "FileNotFoundError(2, 'No such file or directory')", "path": "addon/bb8_core/bb8_device_registry.yaml"}
+2025-10-27 04:31:42,932 ERROR:bb8_core.logging_setup: {'event': 'bb8_registry_atomic_write_error', 'error': "FileNotFoundError(2, 'No such file or directory')", 'path': 'addon/bb8_core/bb8_device_registry.yaml'}
+{"event": "watchdog_disconnected", "consecutive_failures": 2919, "max_attempts": 3}
+2025-10-27 04:31:49,024 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2919, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2919, "max_attempts": 3}
+2025-10-27 04:31:49,025 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2919, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2920, "max_attempts": 3}
+2025-10-27 04:31:59,034 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2920, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2920, "max_attempts": 3}
+2025-10-27 04:31:59,036 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2920, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2921, "max_attempts": 3}
+2025-10-27 04:32:09,038 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2921, 'max_attempts': 3}
+2025-10-27 04:32:09,039 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2921, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2921, "max_attempts": 3}
+2025-10-27 04:32:17,949 ERROR:bb8_core.logging_setup: {'event': 'bb8_registry_atomic_write_error', 'error': "FileNotFoundError(2, 'No such file or directory')", 'path': 'addon/bb8_core/bb8_device_registry.yaml'}
+{"event": "bb8_registry_atomic_write_error", "error": "FileNotFoundError(2, 'No such file or directory')", "path": "addon/bb8_core/bb8_device_registry.yaml"}
+2025-10-27 04:32:19,043 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2922, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2922, "max_attempts": 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2922, "max_attempts": 3}
+2025-10-27 04:32:19,043 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2922, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2923, "max_attempts": 3}
+2025-10-27 04:32:29,053 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2923, 'max_attempts': 3}
+2025-10-27 04:32:29,053 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2923, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2923, "max_attempts": 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2924, "max_attempts": 3}
+2025-10-27 04:32:39,063 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2924, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2924, "max_attempts": 3}
+2025-10-27 04:32:39,064 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2924, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2925, "max_attempts": 3}
+2025-10-27 04:32:49,074 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2925, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2925, "max_attempts": 3}
+2025-10-27 04:32:49,075 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2925, 'max_attempts': 3}
+{"event": "bb8_registry_atomic_write_error", "error": "FileNotFoundError(2, 'No such file or directory')", "path": "addon/bb8_core/bb8_device_registry.yaml"}
+2025-10-27 04:32:52,972 ERROR:bb8_core.logging_setup: {'event': 'bb8_registry_atomic_write_error', 'error': "FileNotFoundError(2, 'No such file or directory')", 'path': 'addon/bb8_core/bb8_device_registry.yaml'}
+{"event": "watchdog_disconnected", "consecutive_failures": 2926, "max_attempts": 3}
+2025-10-27 04:32:59,075 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2926, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2926, "max_attempts": 3}
+2025-10-27 04:32:59,077 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2926, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2927, "max_attempts": 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2927, "max_attempts": 3}
+2025-10-27 04:33:09,086 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2927, 'max_attempts': 3}
+2025-10-27 04:33:09,087 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2927, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2928, "max_attempts": 3}
+2025-10-27 04:33:19,093 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2928, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2928, "max_attempts": 3}
+2025-10-27 04:33:19,094 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2928, 'max_attempts': 3}
+{"event": "bb8_registry_atomic_write_error", "error": "FileNotFoundError(2, 'No such file or directory')", "path": "addon/bb8_core/bb8_device_registry.yaml"}
+2025-10-27 04:33:27,993 ERROR:bb8_core.logging_setup: {'event': 'bb8_registry_atomic_write_error', 'error': "FileNotFoundError(2, 'No such file or directory')", 'path': 'addon/bb8_core/bb8_device_registry.yaml'}
+{"event": "watchdog_disconnected", "consecutive_failures": 2929, "max_attempts": 3}
+2025-10-27 04:33:29,104 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2929, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2929, "max_attempts": 3}
+2025-10-27 04:33:29,105 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2929, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2930, "max_attempts": 3}
+2025-10-27 04:33:39,114 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2930, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2930, "max_attempts": 3}
+2025-10-27 04:33:39,115 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2930, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2931, "max_attempts": 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2931, "max_attempts": 3}
+2025-10-27 04:33:49,122 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2931, 'max_attempts': 3}
+2025-10-27 04:33:49,123 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2931, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2932, "max_attempts": 3}
+2025-10-27 04:33:59,133 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2932, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2932, "max_attempts": 3}
+2025-10-27 04:33:59,134 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2932, 'max_attempts': 3}
+{"event": "bb8_registry_atomic_write_error", "error": "FileNotFoundError(2, 'No such file or directory')", "path": "addon/bb8_core/bb8_device_registry.yaml"}
+2025-10-27 04:34:03,018 ERROR:bb8_core.logging_setup: {'event': 'bb8_registry_atomic_write_error', 'error': "FileNotFoundError(2, 'No such file or directory')", 'path': 'addon/bb8_core/bb8_device_registry.yaml'}
+{"event": "watchdog_disconnected", "consecutive_failures": 2933, "max_attempts": 3}
+2025-10-27 04:34:09,144 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2933, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2933, "max_attempts": 3}
+2025-10-27 04:34:09,145 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2933, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2934, "max_attempts": 3}
+2025-10-27 04:34:19,150 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2934, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2934, "max_attempts": 3}
+2025-10-27 04:34:19,151 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2934, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2935, "max_attempts": 3}
+2025-10-27 04:34:29,154 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2935, 'max_attempts': 3}
+2025-10-27 04:34:29,155 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2935, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2935, "max_attempts": 3}
+{"event": "bb8_registry_atomic_write_error", "error": "FileNotFoundError(2, 'No such file or directory')", "path": "addon/bb8_core/bb8_device_registry.yaml"}
+2025-10-27 04:34:38,037 ERROR:bb8_core.logging_setup: {'event': 'bb8_registry_atomic_write_error', 'error': "FileNotFoundError(2, 'No such file or directory')", 'path': 'addon/bb8_core/bb8_device_registry.yaml'}
+{"event": "watchdog_disconnected", "consecutive_failures": 2936, "max_attempts": 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2936, "max_attempts": 3}
+2025-10-27 04:34:39,163 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2936, 'max_attempts': 3}
+2025-10-27 04:34:39,164 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2936, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2937, "max_attempts": 3}
+2025-10-27 04:34:49,170 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2937, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2937, "max_attempts": 3}
+2025-10-27 04:34:49,171 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2937, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2938, "max_attempts": 3}
+2025-10-27 04:34:59,178 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2938, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2938, "max_attempts": 3}
+2025-10-27 04:34:59,179 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2938, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2939, "max_attempts": 3}
+2025-10-27 04:35:09,185 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2939, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2939, "max_attempts": 3}
+2025-10-27 04:35:09,186 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2939, 'max_attempts': 3}
+{"event": "bb8_registry_atomic_write_error", "error": "FileNotFoundError(2, 'No such file or directory')", "path": "addon/bb8_core/bb8_device_registry.yaml"}
+2025-10-27 04:35:13,055 ERROR:bb8_core.logging_setup: {'event': 'bb8_registry_atomic_write_error', 'error': "FileNotFoundError(2, 'No such file or directory')", 'path': 'addon/bb8_core/bb8_device_registry.yaml'}
+{"event": "watchdog_disconnected", "consecutive_failures": 2940, "max_attempts": 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2940, "max_attempts": 3}
+2025-10-27 04:35:19,192 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2940, 'max_attempts': 3}
+2025-10-27 04:35:19,192 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2940, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2941, "max_attempts": 3}
+2025-10-27 04:35:29,194 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2941, 'max_attempts': 3}
+2025-10-27 04:35:29,194 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2941, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2941, "max_attempts": 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2942, "max_attempts": 3}
+2025-10-27 04:35:39,202 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2942, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2942, "max_attempts": 3}
+2025-10-27 04:35:39,203 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2942, 'max_attempts': 3}
+{"event": "bb8_registry_atomic_write_error", "error": "FileNotFoundError(2, 'No such file or directory')", "path": "addon/bb8_core/bb8_device_registry.yaml"}
+2025-10-27 04:35:48,073 ERROR:bb8_core.logging_setup: {'event': 'bb8_registry_atomic_write_error', 'error': "FileNotFoundError(2, 'No such file or directory')", 'path': 'addon/bb8_core/bb8_device_registry.yaml'}
+{"event": "watchdog_disconnected", "consecutive_failures": 2943, "max_attempts": 3}
+2025-10-27 04:35:49,204 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2943, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2943, "max_attempts": 3}
+2025-10-27 04:35:49,205 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2943, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2944, "max_attempts": 3}
+2025-10-27 04:35:59,215 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2944, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2944, "max_attempts": 3}
+2025-10-27 04:35:59,215 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2944, 'max_attempts': 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2945, "max_attempts": 3}
+2025-10-27 04:36:09,226 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2945, 'max_attempts': 3}
+2025-10-27 04:36:09,226 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2945, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2945, "max_attempts": 3}
+{"event": "watchdog_disconnected", "consecutive_failures": 2946, "max_attempts": 3}
+2025-10-27 04:36:19,235 WARNING:bb8_core.logging_setup: {'event': 'watchdog_disconnected', 'consecutive_failures': 2946, 'max_attempts': 3}
+2025-10-27 04:36:19,235 ERROR:bb8_core.logging_setup: {'event': 'watchdog_max_attempts_exceeded', 'consecutive_failures': 2946, 'max_attempts': 3}
+{"event": "watchdog_max_attempts_exceeded", "consecutive_failures": 2946, "max_attempts": 3}
+s6-rc: info: service s6rc-oneshot-runner: starting
+s6-rc: info: service s6rc-oneshot-runner successfully started
+s6-rc: info: service fix-attrs: starting
+s6-rc: info: service fix-attrs successfully started
+s6-rc: info: service legacy-cont-init: starting
+cont-init: info: running /etc/cont-init.d/10-venv-path
+cont-init: info: /etc/cont-init.d/10-venv-path exited 0
+s6-rc: info: service legacy-cont-init successfully started
+s6-rc: info: service legacy-services: starting
+services-up: info: copying legacy longrun ble_bridge (no readiness notification)
+services-up: info: copying legacy longrun echo_responder (no readiness notification)
+[2025-10-27T04:36:30Z] ECHO: run.sh starting (instrumented)
+PYTHONPATH=[MASKED]
+PYENV_OK PAHO=unknown
+[2025-10-27T04:36:30Z] RUN: launching bb8_core.bridge_controller (foreground exec)
+[2025-10-27T04:36:30Z] MQTT config: host=core-mosquitto port=1883 user=mqtt_bb8 base=bb8
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+2025-10-27 04:36:30,962 INFO:bb8_core.logging_setup: {'event': 'safety_controller_init', 'min_interval_ms': 50, 'max_duration_ms': 2000, 'max_speed': 180}
+2025-10-27 04:36:30,963 INFO:bb8_core.logging_setup: {'event': 'lighting_controller_init', 'session_provided': False}
+{"event": "safety_controller_init", "min_interval_ms": 50, "max_duration_ms": 2000, "max_speed": 180}
+{"event": "lighting_controller_init", "session_provided": false}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+2025-10-27 04:36:31,040 INFO:bb8_core.logging_setup: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+2025-10-27 04:36:31,082 INFO:bb8_core.logging_setup: {'event': 'bb8_presence_monitor_started'}
+{"event": "bb8_presence_monitor_started"}
+{"event": "bb8_presence_monitor_integration", "status": "started"}
+2025-10-27 04:36:31,086 INFO:bb8_core.logging_setup: {'event': 'bb8_presence_monitor_integration', 'status': 'started'}
+2025-10-27 04:36:31,087 INFO:bb8_core.logging_setup: {'event': 'bridge_controller_start', 'bb8_mac_cli': True, 'scan_seconds': 5, 'rescan_on_fail': True, 'cache_ttl_hours': 24}
+{"event": "bridge_controller_start", "bb8_mac_cli": true, "scan_seconds": 5, "rescan_on_fail": true, "cache_ttl_hours": 24}
+{"event": "ble_gateway_init", "mode": "bleak", "adapter": "hci0"}
+2025-10-27 04:36:31,087 INFO:bb8_core.logging_setup: {'event': 'ble_gateway_init', 'mode': 'bleak', 'adapter': 'hci0'}
+{"event": "ble_gateway_init", "mode": "bleak", "adapter": "hci0"}
+2025-10-27 04:36:31,088 INFO:bb8_core.logging_setup: {'event': 'ble_gateway_init', 'mode': 'bleak', 'adapter': 'hci0'}
+{"event": "bb8_mac_resolve_bypass", "reason": "env_or_options", "bb8_mac": "ED:ED:87:D7:27:50"}
+2025-10-27 04:36:31,088 INFO:bb8_core.logging_setup: {'event': 'bb8_mac_resolve_bypass', 'reason': 'env_or_options', 'bb8_mac': 'ED:ED:87:D7:27:50'}
+{"event": "core_init", "address": "ED:ED:87:D7:27:50", "adapter": "hci0"}
+2025-10-27 04:36:31,088 INFO:bb8_core.logging_setup: {'event': 'core_init', 'address': 'ED:ED:87:D7:27:50', 'adapter': 'hci0'}
+{"event": "ble_bridge_init", "target_mac": "ED:ED:87:D7:27:50"}
+2025-10-27 04:36:31,089 INFO:bb8_core.logging_setup: {'event': 'ble_bridge_init', 'target_mac': 'ED:ED:87:D7:27:50'}
+{"event": "bridge_controller_ready", "watchdog_enabled": true, "target_mac": "ED:ED:87:D7:27:50"}
+2025-10-27 04:36:31,089 INFO:bb8_core.logging_setup: {'event': 'bridge_controller_ready', 'watchdog_enabled': True, 'target_mac': 'ED:ED:87:D7:27:50'}
+{"event": "bridge_controller_mqtt_params", "host": "core-mosquitto", "port": 1883, "base": "bb8", "user": true}
+2025-10-27 04:36:31,090 INFO:bb8_core.logging_setup: {'event': 'bridge_controller_mqtt_params', 'host': 'core-mosquitto', 'port': 1883, 'base': 'bb8', 'user': True}
+{"event": "watchdog_start", "interval_s": 10, "max_reconnect_attempts": 3}
+2025-10-27 04:36:31,100 INFO:bb8_core.logging_setup: {'event': 'watchdog_start', 'interval_s': 10, 'max_reconnect_attempts': 3}
+{"event": "mqtt_connected", "rc": "Success", "reason": "success"}
+2025-10-27 04:36:31,122 INFO:bb8_core.logging_setup: {'event': 'mqtt_connected', 'rc': ReasonCode(Connack, 'Success'), 'reason': 'success'}
+/usr/src/app/bb8_core/auto_detect.py:715: FutureWarning: BLEDevice.rssi is deprecated and will be removed in a future version of Bleak, use AdvertisementData.rssi instead
+  "rssi": getattr(d, "rssi", None),
+{"event": "bb8_registry_atomic_write_error", "error": "FileNotFoundError(2, 'No such file or directory')", "path": "addon/bb8_core/bb8_device_registry.yaml"}
+2025-10-27 04:36:36,226 ERROR:bb8_core.logging_setup: {'event': 'bb8_registry_atomic_write_error', 'error': "FileNotFoundError(2, 'No such file or directory')", 'path': 'addon/bb8_core/bb8_device_registry.yaml'}
+{"event": "bb8_presence_change", "state": "present", "timestamp": 1761539796.2259982, "mac": "ED:ED:87:D7:27:50", "rssi": -73, "absence_timeout_sec": 0}
+2025-10-27 04:36:36,226 INFO:bb8_core.logging_setup: {'event': 'bb8_presence_change', 'state': 'present', 'timestamp': 1761539796.2259982, 'mac': 'ED:ED:87:D7:27:50', 'rssi': -73, 'absence_timeout_sec': 0}
+{"event": "bb8_presence_mqtt_publish", "topic": "bb8/presence/ED:ED:87:D7:27:50", "payload": {"state": "present", "mac": "ED:ED:87:D7:27:50", "rssi": -73, "absence_timeout_sec": 0, "timestamp": 1761539796.2272477}}
+2025-10-27 04:36:36,227 INFO:bb8_core.logging_setup: {'event': 'bb8_presence_mqtt_publish', 'topic': 'bb8/presence/ED:ED:87:D7:27:50', 'payload': {'state': 'present', 'mac': 'ED:ED:87:D7:27:50', 'rssi': -73, 'absence_timeout_sec': 0, 'timestamp': 1761539796.2272477}}
+s6-rc: info: service s6rc-oneshot-runner: starting
+s6-rc: info: service s6rc-oneshot-runner successfully started
+s6-rc: info: service fix-attrs: starting
+s6-rc: info: service fix-attrs successfully started
+s6-rc: info: service legacy-cont-init: starting
+cont-init: info: running /etc/cont-init.d/10-venv-path
+cont-init: info: /etc/cont-init.d/10-venv-path exited 0
+s6-rc: info: service legacy-cont-init successfully started
+s6-rc: info: service legacy-services: starting
+services-up: info: copying legacy longrun ble_bridge (no readiness notification)
+services-up: info: copying legacy longrun echo_responder (no readiness notification)
+[2025-10-27T04:36:40Z] ECHO: run.sh starting (instrumented)
+PYTHONPATH=[MASKED]
+PYENV_OK PAHO=unknown
+[2025-10-27T04:36:41Z] RUN: launching bb8_core.bridge_controller (foreground exec)
+[2025-10-27T04:36:41Z] MQTT config: host=core-mosquitto port=1883 user=mqtt_bb8 base=bb8
+[LOGGING DEBUG] Resolved LOG_PATH candidate: /Volumes/addons/docs/reports/ha_bb8_addon.log
+[LOGGING DEBUG] Writable: True
+{"event": "safety_controller_init", "min_interval_ms": 50, "max_duration_ms": 2000, "max_speed": 180}
+2025-10-27 04:36:41,486 INFO:bb8_core.logging_setup: {'event': 'safety_controller_init', 'min_interval_ms': 50, 'max_duration_ms': 2000, 'max_speed': 180}
+{"event": "lighting_controller_init", "session_provided": false}
+2025-10-27 04:36:41,487 INFO:bb8_core.logging_setup: {'event': 'lighting_controller_init', 'session_provided': False}
+2025-10-27 04:36:41,532 INFO:bb8_core.logging_setup: {'event': 'version_probe', 'bleak': '0.22.3', 'spherov2': '0.12.1'}
+{"event": "version_probe", "bleak": "0.22.3", "spherov2": "0.12.1"}
+{"event": "bb8_presence_monitor_started"}
+2025-10-27 04:36:41,571 INFO:bb8_core.logging_setup: {'event': 'bb8_presence_monitor_started'}
+{"event": "bb8_presence_monitor_integration", "status": "started"}
+{"event": "bridge_controller_start", "bb8_mac_cli": true, "scan_seconds": 5, "rescan_on_fail": true, "cache_ttl_hours": 24}
+2025-10-27 04:36:41,572 INFO:bb8_core.logging_setup: {'event': 'bb8_presence_monitor_integration', 'status': 'started'}
+2025-10-27 04:36:41,573 INFO:bb8_core.logging_setup: {'event': 'bridge_controller_start', 'bb8_mac_cli': True, 'scan_seconds': 5, 'rescan_on_fail': True, 'cache_ttl_hours': 24}
+{"event": "ble_gateway_init", "mode": "bleak", "adapter": "hci0"}
+2025-10-27 04:36:41,573 INFO:bb8_core.logging_setup: {'event': 'ble_gateway_init', 'mode': 'bleak', 'adapter': 'hci0'}
+{"event": "ble_gateway_init", "mode": "bleak", "adapter": "hci0"}
+2025-10-27 04:36:41,577 INFO:bb8_core.logging_setup: {'event': 'ble_gateway_init', 'mode': 'bleak', 'adapter': 'hci0'}
+{"event": "bb8_mac_resolve_bypass", "reason": "env_or_options", "bb8_mac": "ED:ED:87:D7:27:50"}
+2025-10-27 04:36:41,578 INFO:bb8_core.logging_setup: {'event': 'bb8_mac_resolve_bypass', 'reason': 'env_or_options', 'bb8_mac': 'ED:ED:87:D7:27:50'}
+{"event": "core_init", "address": "ED:ED:87:D7:27:50", "adapter": "hci0"}
+2025-10-27 04:36:41,578 INFO:bb8_core.logging_setup: {'event': 'core_init', 'address': 'ED:ED:87:D7:27:50', 'adapter': 'hci0'}
+{"event": "ble_bridge_init", "target_mac": "ED:ED:87:D7:27:50"}
+2025-10-27 04:36:41,578 INFO:bb8_core.logging_setup: {'event': 'ble_bridge_init', 'target_mac': 'ED:ED:87:D7:27:50'}
+{"event": "bridge_controller_ready", "watchdog_enabled": true, "target_mac": "ED:ED:87:D7:27:50"}
+2025-10-27 04:36:41,578 INFO:bb8_core.logging_setup: {'event': 'bridge_controller_ready', 'watchdog_enabled': True, 'target_mac': 'ED:ED:87:D7:27:50'}
+{"event": "bridge_controller_mqtt_params", "host": "core-mosquitto", "port": 1883, "base": "bb8", "user": true}
+2025-10-27 04:36:41,579 INFO:bb8_core.logging_setup: {'event': 'bridge_controller_mqtt_params', 'host': 'core-mosquitto', 'port': 1883, 'base': 'bb8', 'user': True}
+{"event": "watchdog_start", "interval_s": 10, "max_reconnect_attempts": 3}
+2025-10-27 04:36:41,592 INFO:bb8_core.logging_setup: {'event': 'watchdog_start', 'interval_s': 10, 'max_reconnect_attempts': 3}
+{"event": "mqtt_connected", "rc": "Success", "reason": "success"}
+2025-10-27 04:36:41,593 INFO:bb8_core.logging_setup: {'event': 'mqtt_connected', 'rc': ReasonCode(Connack, 'Success'), 'reason': 'success'}
+{"event": "mqtt_cmd_received", "topic": "bb8/cmd/diag_scan", "len": 82}
+2025-10-27 04:36:42,654 INFO:bb8_core.logging_setup: {'event': 'mqtt_cmd_received', 'topic': 'bb8/cmd/diag_scan', 'len': 82}
+{"event": "mqtt_cmd_received", "topic": "bb8/cmd/actuate_probe", "len": 39}
+2025-10-27 04:36:43,711 INFO:bb8_core.logging_setup: {'event': 'mqtt_cmd_received', 'topic': 'bb8/cmd/actuate_probe', 'len': 39}

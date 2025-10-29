@@ -1,16 +1,29 @@
 ---
 id: ADR-0023
-title: "Guardrails to prevent mass-deletion and accidental backup commits"
+title: Guardrails to prevent mass-deletion and accidental backup commits
 authors:
-  - "Evert Appels"
-  - "Strategos"
+- Evert Appels
+- Strategos
 status: accepted
-related: 
-  - ADR-0018
+decision: 'We will adopt a layered set of guardrails across local developer tooling,
+  CI, and repository operational processes: 1) CI mass-deletion detector - Fail PRs
+  that delete/rename/move more than N files (default N=10). - Fail PRs that add tracked
+  backup-like patterns (e.g., *.autofix.*, *.perlbak, *.autof.'
+related:
+- ADR-0018
 supersedes: []
 date: 2025-09-25
 last_updated: 2025-09-25
-tags: ["guardrails", "mass-deletion", "backup-files", "governance", "tokens", "ci", "pre-commit", "snapshots", "auditability"]
+tags:
+- guardrails
+- mass-deletion
+- backup-files
+- governance
+- tokens
+- ci
+- pre-commit
+- snapshots
+- auditability
 ---
 
 ## Context

@@ -1,0 +1,45 @@
+[meta]
+version = "1.0"
+date = "2025-10-27"
+maintainer = "HA-BB8 Maintainers"
+
+[commands.cov_html]
+label = "Coverage: HTML"
+command = "make cov-html"
+group = "qa"
+description = "Generate local HTML coverage (htmlcov/) and open it (best-effort)."
+notes = ["Non-blocking open; works on macOS or Linux.", "Never writes to HA host."]
+
+[commands.ha_restart]
+label = "HA: Restart add-on"
+command = "make ha-restart"
+group = "ops"
+description = "Restart the add-on (Supervisor-first; HA API fallback)."
+notes = ["Requires SUPERVISOR_TOKEN inside HA or HA_URL+HA_TOKEN outside."]
+
+[commands.env_validate]
+label = "Env: validate"
+command = "make env-validate"
+group = "ops"
+description = "Run environment governance checks and write normalized output under reports/checkpoints/ENV-GOV/."
+notes = ["No secrets printed; .evidence.env remains local."]
+
+[commands.tests_fast]
+label = "Tests: fast"
+command = "pytest -q addon/tests -k 'not slow'"
+group = "test"
+description = "Run fast unit/integration tests only."
+
+[commands.qa]
+label = "QA: make qa"
+command = "make qa"
+group = "qa"
+description = "Run lint, types, tests, and security checks to consolidated reports."
+
+[commands.evidence_stp4]
+label = "Evidence: STP4"
+command = "make evidence-stp4"
+group = "evidence"
+description = "Run governed evidence collection (MQTT-only)."
+env = ["MQTT_HOST", "MQTT_PORT", "MQTT_USER", "MQTT_PASSWORD", "MQTT_BASE"]
+

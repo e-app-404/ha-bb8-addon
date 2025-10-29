@@ -1,3 +1,32 @@
+### Supervisor‑First Deployment (ADR‑0031, ADR‑0024)
+> **Project override:** Supervisor‑only deployment. Do **not** use rsync/git on the HA host for operational deploys.
+```bash
+ha addons reload
+ha addons rebuild local_beep_boop_bb8   # if Dockerfile/deps changed
+ha addons restart local_beep_boop_bb8
+
+# Verify
+ha addons info local_beep_boop_bb8 | grep 'state: started'
+```
+### Configuration Management (ADR‑0041, ADR‑0024)
+
+- **Centralized config**: Only **non‑secret** settings in `.env`; **secrets in `.evidence.env`** (never commit).
+- **CONFIG_ROOT** is `/config`; derive all HA paths from it. BB‑8 evidence mirrors to `/config/ha-bb8/**`.
+### Operational Guardrails (BB‑8)
+
+- **No host utility scripts** outside `/config/hestia/tools`.
+- **Runtime writes** inside the container go under `/data/**`; host evidence mirrors under `/config/ha-bb8/**`.
+### Governance Overrides (BB‑8)
+
+- **Supervisor‑only execution**: invoke and verify the sequence with the add‑on running under HA Supervisor; do not depend on host scripts.
+```json
+### Environment Variable Governance (ADR-0024 Companion)
+
+**Status:** Draft
+**Created:** 2025-10-07
+**ADR Alignment:** [ADR-0024 Canonical Config Path](../docs/ADR/ADR-0024-canonical-config-path.md)
+**Scope:** HA-BB8 Add-on Repository `.env` standardization
+```
 ---
 applyTo: '**'
 ---
@@ -148,6 +177,7 @@ ADR alignment: 0041.
 make qa             # Full QA suite: format, lint, types, tests, security
 make testcov        # Pytest with coverage (threshold comes from .coveragerc)
 make evidence-stp4  # End-to-end MQTT roundtrip attestation (governed)
+make env-validate   # ENV governance conformance check and artifact write
 ```
 
 ### Coverage Policy (Honest, Dynamic)
@@ -220,6 +250,12 @@ make evidence-stp4  # End-to-end MQTT roundtrip attestation (governed)
 - Diagnostics via `ops/diag/collect_ha_bb8_diagnostics.sh`
 - Attestation via STP4 protocol for MQTT roundtrip validation
 
+> Extended: STP5 Supervisor BLE Attestation
+
+- Use the STP5 runbook to exercise BLE + MQTT under Supervisor control.
+- Workspace task: “STP5 Supervisor BLE Attestation” (see VS Code tasks above) invokes `scripts/stp5_supervisor_ble_attest.sh` against your HA host.
+- Artifacts should be mirrored under `reports/checkpoints/**` per the Evidence Contract.
+
 #### HA Host validation & path confinement (B5+)
 
 - All artifacts written on the HA Host must be confined under the base directory: `/config/ha-bb8`.
@@ -246,27 +282,31 @@ Quick runbook (operator):
 - Include `manifest.sha256` for every checkpoint directory.
   ADR alignment: 0008, 0031, 0041.
 
-### Deployment Pipeline (ADR-0008)
-
+### Supervisor‑First Deployment (ADR‑0031, ADR‑0024) +
+> **Project override:** Supervisor‑only deployment. Do **not** use rsync/git on the HA host for operational deploys. +
 ```bash
-# Verified end-to-end deployment (PREFERRED; triggers container rebuild)
-make release-patch    # Version bump + GitHub publish + rsync deploy + HA API restart
-make release-minor    # Minor version increment with full pipeline
-make release VERSION=1.4.2  # Explicit version with full pipeline
+# From HA host shell (or Studio Code Server terminal)
+# Rebuild + restart the local BB‑8 add‑on strictly via Supervisor
+ha addons reload
+ha addons rebuild local_beep_boop_bb8   # if Dockerfile/deps changed
+ha addons restart local_beep_boop_bb8
 
-# Manual deployment (current state)
-REMOTE_HOST_ALIAS=home-assistant ops/release/deploy_ha_over_ssh.sh
-
-# Deployment verification
-ssh home-assistant 'grep version: /addons/local/beep_boop_bb8/config.yaml'
+# Verify
+ha addons info local_beep_boop_bb8 | grep 'state: started'
 ```
 
-### Configuration Management (ADR-0041)
+### Configuration Management (ADR‑0041, ADR‑0024)
 
-- **Centralized config**: All settings in `.env` file (auto-sourced by deployment scripts)
-- **Required settings**: `HA_URL="http://192.168.0.129:8123"` for HTTP restart functionality
-- **Secrets management**: Use `addon/secrets.yaml` (synced to HA system, accessible to SSH user)
-- **No hardcoded values**: SSH hosts, paths, API endpoints all configurable via `.env`
+- **Centralized config**: Only **non‑secret** settings in `.env`; **secrets in `.evidence.env`** (never commit).
+- **CONFIG_ROOT** is `/config`; derive all HA paths from it. BB‑8 evidence mirrors to `/config/ha-bb8/**`.
+- **Broker in‑container**: `core-mosquitto`. Do not hardcode external IPs.
+- **No hardcoded values**: Keep hosts/paths in env; avoid script‑embedded literals.
+
+### Operational Guardrails (BB‑8)
+
+- **No host utility scripts** outside `/config/hestia/tools`.
+- **Runtime writes** inside the container go under `/data/**`; host evidence mirrors under `/config/ha-bb8/**`.
+- **Testing surface** is **MQTT only** (`bb8/cmd/*`, `bb8/ack/*`, `bb8/status/*`).
 
 ## ADR Governance
 
@@ -278,7 +318,7 @@ ssh home-assistant 'grep version: /addons/local/beep_boop_bb8/config.yaml'
 
 ### Key ADRs
 
-- **ADR-0008**: End-to-end deployment flow with verified pipeline (rsync, Alpine compatibility)
+- **ADR-0008**: End-to-end deployment flow (reference only) — **override by ADR‑0031 Supervisor‑first**
 - **ADR-0019**: Workspace folder taxonomy
 - **ADR-0024**: Canonical config path management ( + expansion doc `ENV_GOVERNANCE`)
 - **ADR-0031**: Supervisor-only operations & testing protocol
@@ -400,6 +440,12 @@ CONTEXT_HANDOFF:
 - Agents should read this index first to target changes precisely.
   ADR alignment: 0019.
 
+**LLM Entrypoint (llms.txt)**
+
+- The repository root contains `llms.txt` (llmstxt.org format) to guide LLM navigation.
+- Prefer consulting `llms.txt` first for key docs (README, ADRs), core runtime modules, config/build files, and evidence harness locations.
+- Keep links in `llms.txt` current when moving files that affect onboarding or governance.
+
 ## Editing Protocol for the AI Agent (PIE: I4 — Improve)
 
 1. **PLAN**: List files to touch, risks, expected artifacts.
@@ -428,6 +474,16 @@ Provide a devcontainer for local lint/type/test only. **Do not** use it for Supe
 - **QA** — `make qa`
 - **Evidence (STP4)** — `make evidence-stp4`
 - **Release patch** — `make release-patch`
+
+### VS Code tasks (wired in this workspace)
+
+- HA: Deploy over SSH — runs `ops/release/deploy_ha_over_ssh.sh`
+- STP5 Supervisor BLE Attestation — executes `scripts/stp5_supervisor_ble_attest.sh` with env (HOST/PORT/USER/PASS/BASE/REQUIRE_BLE)
+- Env: validate — `make env-validate` (ENV governance check and artifact write)
+- HA: Restart add-on — `make ha-restart` via HA Core API/Supervisor proxy
+- Tests: fast — `pytest -q addon/tests -k 'not slow'`
+- Evidence: STP4 — `make evidence-stp4`
+- QA: make qa — `make qa`
 
 ### Common Anti-Patterns by Model
 

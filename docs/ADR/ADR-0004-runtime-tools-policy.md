@@ -1,13 +1,15 @@
 ---
 +id: ADR-0004
-title: "Conditional Runtime Tools Policy (CRTP) & Workspace Drift Enforcement"
+title: Conditional Runtime Tools Policy (CRTP) & Workspace Drift Enforcement
 date: 2025-08-26
 status: Accepted
+decision: "*remain in the shipped add\u2011on subtree** only when at least one of\
+  \ the following is true:."
 author:
-  - Strategos
+- Strategos
 related:
-  - ADR-0001
-  - ADR-0009
+- ADR-0001
+- ADR-0009
 supersedes: []
 last_updated: 2025-09-13
 ---

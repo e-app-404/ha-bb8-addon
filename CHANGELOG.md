@@ -74,7 +74,7 @@ ADR-0001 “Canonical Topology — Dual-Clone via Git Remote” implemented. Wor
 ## v2025.08.20
 
 ### Highlights
-- **STP4 (strict) graduation — PASS**  
+- **STP4 (strict) graduation — PASS**
   Device-originated scalar echoes verified; LED RGB JSON shape enforced; command→state pairing clean.
 
 ### Added
@@ -1141,3 +1141,5 @@ Before publishing a changelog entry:
 ## 2025-09-04 — 2025.8.21.44
 - bump: add-on version to 2025.8.21.44
 - chore: synchronized config.yaml and Dockerfile
+
+\- bb8-func-b5-accept-20251026T202521Z: B1–B5 ACCEPT; E2E PASS (5/5 ACKs), echo green; evidence mirrored to /config/ha-bb8.

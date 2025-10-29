@@ -1,11 +1,13 @@
 ---
 id: ADR-0021
-title: "Patch Etiquette & Session Guidelines"
+title: Patch Etiquette & Session Guidelines
 date: 2025-09-15
 status: Accepted
+decision: '## Guidelines - Keep patches small & reversible; each adds unit + FakeMQTT
+  E2E tests. - No prod files outside addon/**.'
 author:
-  - Evert Appels
-  - Strategos GPT
+- Evert Appels
+- Strategos GPT
 related: []
 supersedes: []
 last_updated: 2025-09-15

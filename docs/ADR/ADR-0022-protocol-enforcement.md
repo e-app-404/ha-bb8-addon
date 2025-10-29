@@ -1,15 +1,25 @@
 ---
 id: ADR-0022
-title: "Protocol Enforcement (Topics, Imports, Shape)"
+title: Protocol Enforcement (Topics, Imports, Shape)
 date: 2025-09-15
 status: Accepted
+decision: '## Enforced Rules 1. **Imports:** Only addon.bb8_core is allowed.'
 author:
-  - "Evert Appels"
-  - "Strategos GPT"
+- Evert Appels
+- Strategos GPT
 related: []
 supersedes: []
 last_updated: 2025-09-15
-tags: ["governance", "protocol", "enforcement", "imports", "topics", "shape", "coverage", "snapshots", "tokens"]
+tags:
+- governance
+- protocol
+- enforcement
+- imports
+- topics
+- shape
+- coverage
+- snapshots
+- tokens
 ---
 
 # ADR-0022: Protocol Enforcement (Topics, Imports, Shape)

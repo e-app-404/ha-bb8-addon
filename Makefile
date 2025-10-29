@@ -160,7 +160,7 @@ deploy-ssh:
 	REMOTE_HOST_ALIAS=home-assistant ops/release/deploy_ha_over_ssh.sh
 
 publish:
-	REMOTE_HOST_ALIAS=home-assistant ops/release/publish_and_deploy.sh 
+	REMOTE_HOST_ALIAS=home-assistant ops/release/publish_and_deploy.sh
 # TODO: check correct script name vs publish_addon_archive.sh
 quiet:
 	sh ops/check_workspace_quiet.sh .
@@ -177,3 +177,22 @@ env-print:
 
 env-validate:
 	@bash ops/env/env_governance_check.sh | tee reports/checkpoints/ENV-GOV/env_validate.out
+
+# =====================
+# Developer QoL Helpers
+# =====================
+
+.PHONY: cov-html ha-restart
+
+cov-html:
+	pytest -q --maxfail=1 --disable-warnings --cov=addon/bb8_core --cov-report=html || true
+	@if [ -d htmlcov ]; then \
+	  (command -v open >/dev/null 2>&1 && open "htmlcov/index.html") \
+	  || (command -v xdg-open >/dev/null 2>&1 && xdg-open "htmlcov/index.html") \
+	  || echo "Coverage HTML at htmlcov/index.html"; \
+	fi
+
+ha-restart:
+	# Supervisor-first via Supervisor API (inside HA) or HA REST (outside)
+	bash ops/evidence/restart_helpers.sh supervisor local_beep_boop_bb8 \
+	 || bash ops/evidence/restart_helpers.sh ha local_beep_boop_bb8

@@ -1,5 +1,6 @@
 ---
 status: accepted
+decision: '### Coverage Measurement Framework.'
 date: 2025-10-01
 deciders: Copilot Claude, Strategos
 consulted: QA Team, Operations

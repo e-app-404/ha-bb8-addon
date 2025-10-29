@@ -1,0 +1,39 @@
+[meta]
+version = "1.0"
+date = "2025-10-27"
+maintainer = "HA-BB8 Maintainers"
+
+[topics]
+base_default = "bb8"
+discovery_prefix = "homeassistant"
+
+[topics.commands]
+drive = "{base}/cmd/drive"
+stop = "{base}/cmd/stop"
+led = "{base}/cmd/led"
+power = "{base}/cmd/power"
+estop = "{base}/cmd/estop"
+clear_estop = "{base}/cmd/clear_estop"
+diag_scan = "{base}/cmd/diag_scan"
+actuate_probe = "{base}/cmd/actuate_probe"
+
+[topics.acks]
+drive = "{base}/ack/drive"
+stop = "{base}/ack/stop"
+led = "{base}/ack/led"
+power = "{base}/ack/power"
+diag_scan = "{base}/ack/diag_scan"
+actuate_probe = "{base}/ack/actuate_probe"
+
+[topics.status]
+online = "{base}/status"
+telemetry = "{base}/status/telemetry"
+
+[purge]
+# Purge scope used by ops/diag/mqtt_purge_discovery.sh
+scoped_filter = "{discovery_prefix}/#/{device_id}/#"
+notes = [
+	"Purge helper defaults to dry-run and requires both --device-id and --execute.",
+	"Do not use project-wide wildcards in production; keep purge scoped to device."
+]
+

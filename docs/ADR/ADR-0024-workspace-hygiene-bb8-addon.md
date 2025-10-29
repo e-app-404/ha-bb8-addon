@@ -1,26 +1,39 @@
 ---
 id: ADR-0024
-title: "Workspace Hygiene (BB-8 add-on) — Adoption of ADR-0024 with repo-specific overrides"
+title: "Workspace Hygiene (BB-8 add-on) \u2014 Adoption of ADR-0024 with repo-specific\
+  \ overrides"
 date: 2025-09-27
 status: Accepted
+decision: "**Adopt the main repo\u2019s ADR-0024 as the normative policy** and apply\
+  \ the following **BB-8\u2013specific overrides**:."
 author:
-  - Evert Appels
+- Evert Appels
 related:
-  - ADR-0015
-  - ADR-0023
-  - ADR-0026
-  - ADR-0027
+- ADR-0015
+- ADR-0023
+- ADR-0026
+- ADR-0027
 external_related:
-  - repo: "ha-config"
-    adr: "ADR-0024"
-    url: "https://github.com/e-app-404/ha-config/blob/main/docs/ADR/ADR-0024-workspace-hygiene.md"
-    relationship: "adopts"
-    last_checked: "2025-09-28"
+- repo: ha-config
+  adr: ADR-0024
+  url: https://github.com/e-app-404/ha-config/blob/main/docs/ADR/ADR-0024-workspace-hygiene.md
+  relationship: adopts
+  last_checked: '2025-09-28'
 alignment_dependencies:
-  - "ha-config:ADR-0024"
+- ha-config:ADR-0024
 supersedes: []
 last_updated: 2025-09-30
-tags: ["adr", "cross-repository", "linking", "alignment", "governance", "tokens", "workspace-hygiene", "backups", "ci", "enforcement"]
+tags:
+- adr
+- cross-repository
+- linking
+- alignment
+- governance
+- tokens
+- workspace-hygiene
+- backups
+- ci
+- enforcement
 ---
 
 ## Context

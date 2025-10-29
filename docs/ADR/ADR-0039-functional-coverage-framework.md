@@ -1,8 +1,9 @@
 ---
 status: supersedes
+decision: '### Functional Coverage Framework.'
 date: 2025-10-01
 deciders: Copilot Claude, User Feedback
-consulted: QA Team, Operations  
+consulted: QA Team, Operations
 informed: Development Team, Stakeholders
 supersedes: ADR-0038
 ---

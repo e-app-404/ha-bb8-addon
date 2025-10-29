@@ -1,13 +1,17 @@
 ---
 id: ADR-0015
-title: "Snapshot & Inventory Policy"
+title: Snapshot & Inventory Policy
 date: 2025-09-12
 status: Accepted
+decision: '1. **Trigger Metric (Thresholds)** - Create a tracked-tree tarball snapshot
+  when **either**: - LOC_CHANGED >= 2000 (sum of lines added + deleted since last
+  snapshot mark), **or** - FILES_CHANGED >= 80 (files touched since last snapshot
+  mark), **or** - No previous snapshot mark is found.'
 author:
-   - Promachos Governance
+- Promachos Governance
 related:
-   - ADR-0001
-   - ADR-0009
+- ADR-0001
+- ADR-0009
 supersedes: []
 last_updated: 2025-09-12
 ---

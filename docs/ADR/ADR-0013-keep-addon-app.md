@@ -1,16 +1,23 @@
 ---
 id: ADR-0013
-title: "Keep all app/ scripts and diagnostics in addon/app/"
+title: Keep all app/ scripts and diagnostics in addon/app/
 date: 2025-09-06
 status: Accepted
+decision: '- All scripts, diagnostics, and test utilities must reside in addon/app/.
+  - The root /app folder is eliminated.'
 author:
-  - Promachos Governance
+- Promachos Governance
 related:
-  - ADR-0001
-  - ADR-0012
+- ADR-0001
+- ADR-0012
 supersedes: []
 last_updated: 2025-09-06
-tags: ["app", "scripts", "diagnostics", "repo-structure", "governance"]
+tags:
+- app
+- scripts
+- diagnostics
+- repo-structure
+- governance
 ---
 
 # ADR-0013 - Keep all app/ scripts and diagnostics in addon/app/

@@ -1,9 +1,31 @@
+You have one **acceptance** path and one **dev‑only** path:
+
+A) **Supervisor/HA OS path (acceptance, production‑like)**
+B) **Standalone dev runner (dev‑only; not valid for acceptance)**
+# 1. Prepare local add-on folder on HA (if developing a local add‑on)
+#    Example HA path: /addons/local/beep_boop_bb8/
+#    Use **one** of the following (dev workflow):
+#    - VS Code (remote) – copy the add‑on folder
+#    - **DEPRECATED for acceptance**: rsync direct to HA host
+# 2. Rebuild/Restart strictly via Supervisor:
+#    - Add-ons → BB‑8 → REBUILD (if Dockerfile/deps changed) → RESTART
+#    - Confirm logs show the new version starting
+# 4. Run operational evidence collection (MQTT‑only)
+# 5. Restart sequence (authorized via Supervisor)
+# 6. Single‑owner discovery (prevent + detect)
+# 7. LED alignment (toggle‑gated)
+
+## BB‑8 Governance Overrides (binding)
+
+- **Supervisor‑first:** do not rely on host shell scripts for deploys.
+- **Evidence confinement:** mirror acceptance evidence to `/config/ha-bb8/**` (host); keep container writes under `/data/**`.
+- **MQTT‑only testing:** invoke via topics; no direct host/container exec in acceptance flow.
 # Deployment options for testing — clarity pass (no guesswork, binary steps)
 
-You’ve got two clean paths to deploy and test the BB8 codebase:
+You have one **acceptance** path and one **dev‑only** path:
 
-A) **Supervisor/HA OS path (preferred, production-like)**
-B) **Standalone dev runner (no Supervisor; quick iteration)**
+A) **Supervisor/HA OS path (acceptance, production‑like)**
+B) **Standalone dev runner (dev‑only; not valid for acceptance)**
 
 Both produce the same PASS/FAIL artifacts under `reports/checkpoints/INT-HA-CONTROL/`. Coverage is informative only (per our delta contract); INT-HA-CONTROL acceptance is purely operational.
 
@@ -38,16 +60,14 @@ python3 -m venv .venv && source .venv/bin/activate
 python -m pip install -U pip paho-mqtt pytest pytest-cov
 set -a && source .evidence.env && set +a
 
-# 1. Sync code to HA local add-on (adjust path to your HA host):
-#    Example HA path: /addons/local/beep_boop_bb8/bb8_core/
-#    Use one of the following options:
+# 1. Prepare local add-on folder on HA (if developing a local add‑on)
+#    Example HA path: /addons/local/beep_boop_bb8/
+#    Use **one** of the following (dev workflow):
+#    - VS Code (remote) – copy the add‑on folder
+#    - **DEPRECATED for acceptance**: rsync direct to HA host
 
-# Option 1: VS Code (remote) – copy the whole repo's add-on folder into HA path
-# Option 2: rsync (from workstation to HA host; replace HA_HOST):
-# rsync -av --delete addon/  ha@HA_HOST:/addons/local/beep_boop_bb8/bb8_core/
-
-# 2. In Home Assistant UI (Supervisor):
-#    - Open Add-ons → BB8 → "REBUILD" or "RESTART" (rebuild if Dockerfile changed)
+# 2. Rebuild/Restart strictly via Supervisor:
+#    - Add-ons → BB‑8 → REBUILD (if Dockerfile/deps changed) → RESTART
 #    - Confirm logs show the new version starting
 
 # 3. Start P0 stability window (120 min) from your repo root (workstation)
@@ -56,14 +76,14 @@ bash reports/checkpoints/INT-HA-CONTROL/start_p0_monitoring.sh & disown
 #    Within 2 minutes, in HA UI:
 #    - Restart the BB8 add-on (Supervisor → Add-ons → BB8 → Restart)
 
-# 4. Run operational evidence collection from your workstation
+# 4. Run operational evidence collection (MQTT‑only)
 python reports/checkpoints/INT-HA-CONTROL/mqtt_health_echo_test.py \
   --host "$MQTT_HOST" --port "${MQTT_PORT:-1883}" \
   --user "$MQTT_USER" --password "$MQTT_PASSWORD" \
   --base "$MQTT_BASE" --sla-ms 1000 \
   --out reports/checkpoints/INT-HA-CONTROL/mqtt_roundtrip.log
 
-# 5. Restart sequence (authorized)
+# 5. Restart sequence (authorized via Supervisor)
 #    - T+10 min: Restart MQTT broker add-on (Mosquitto)
 #    - T+20 min: Restart Home Assistant Core
 #    After each restart, run the entity audit collector:
@@ -72,13 +92,19 @@ python reports/checkpoints/INT-HA-CONTROL/entity_persistence_audit.py \
   --out-json reports/checkpoints/INT-HA-CONTROL/entity_audit.json \
   --out-log  reports/checkpoints/INT-HA-CONTROL/entity_persistence_test.log
 
-# 6. Single-owner discovery (prevent + detect)
+# 6. Single‑owner discovery (prevent + detect)
 python reports/checkpoints/INT-HA-CONTROL/discovery_ownership_audit.py \
   --topics 'homeassistant/#' \
   --output reports/checkpoints/INT-HA-CONTROL/discovery_ownership_audit.json \
   --summary reports/checkpoints/INT-HA-CONTROL/discovery_ownership_check.txt
 
-# 7. LED alignment (toggle-gated)
+# 7. LED alignment (toggle‑gated)
+
+## BB‑8 Governance Overrides (binding)
+
+- **Supervisor‑first:** do not rely on host shell scripts for deploys.
+- **Evidence confinement:** mirror acceptance evidence to `/config/ha-bb8/**` (host); keep container writes under `/data/**`.
+- **MQTT‑only testing:** invoke via topics; no direct host/container exec in acceptance flow.
 #    First ensure PUBLISH_LED_DISCOVERY=0 in add-on options → validator asserts LED ABSENT.
 #    Then set =1 → restart BB8 → validate schema + device block:
 python reports/checkpoints/INT-HA-CONTROL/led_entity_alignment_test.py \

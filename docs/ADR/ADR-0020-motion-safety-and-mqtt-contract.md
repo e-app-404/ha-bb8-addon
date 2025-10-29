@@ -1,11 +1,12 @@
 ---
 id: ADR-0020
-title: "Workspace folder taxonomy and assignation rules"
+title: Workspace folder taxonomy and assignation rules
 date: 2025-09-15
 status: Accepted
+decision: Architectural decision documented in this ADR.
 author:
-  - Evert Appels
-  - Strategos GPT
+- Evert Appels
+- Strategos GPT
 related: []
 supersedes: []
 last_updated: 2025-09-15

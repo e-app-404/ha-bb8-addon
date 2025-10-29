@@ -1,7 +1,7 @@
 ---
-mode: 'agent'
+agent: ai-implementation-planner
 description: 'Create a new implementation plan file for new features, refactoring existing code or upgrading packages, design, architecture or infrastructure.'
-tools: ['changes', 'codebase', 'edit/editFiles', 'extensions', 'fetch', 'githubRepo', 'openSimpleBrowser', 'problems', 'runTasks', 'search', 'searchResults', 'terminalLastCommand', 'terminalSelection', 'testFailure', 'usages', 'vscodeAPI']
+tools: ['runCommands/terminalSelection', 'runCommands/terminalLastCommand', 'runTasks', 'edit/editFiles', 'search', 'extensions', 'usages', 'vscodeAPI', 'problems', 'changes', 'testFailure', 'openSimpleBrowser', 'fetch', 'githubRepo']
 ---
 # Create Implementation Plan
 

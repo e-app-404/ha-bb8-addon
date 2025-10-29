@@ -7,7 +7,7 @@ import logging
 import os
 import socket
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import paho.mqtt.client as mqtt
@@ -270,8 +270,10 @@ def _resolve_mqtt_host() -> tuple[str, str]:
     if cfg_host:
         log.info("mqtt_host=%s source=config", cfg_host)
         return str(cfg_host), "config"
-    log.info("mqtt_host=localhost source=default")
-    return "localhost", "default"
+    # Governance: in-container default must resolve to Home Assistant's internal broker hostname
+    # (ADR-0031/ENV-GOV). Use core-mosquitto instead of localhost to avoid accidental loopback.
+    log.info("mqtt_host=core-mosquitto source=default")
+    return "core-mosquitto", "default"
 
 
 _LOOPBACKS = {"localhost", "192.168.0.129"}
@@ -941,7 +943,7 @@ def start_mqtt_dispatcher(
                         "cid": cid,
                         "source": "device",
                         "pong": True,
-                        "ts": datetime.now(timezone.utc).isoformat(),
+                        "ts": datetime.now(UTC).isoformat(),
                     }
                     client.publish(
                         f"{base}/echo/state",

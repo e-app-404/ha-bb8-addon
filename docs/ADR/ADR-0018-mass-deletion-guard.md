@@ -1,14 +1,17 @@
 ---
 id: ADR-0018
-title: "Mass-Deletion Guard"
+title: Mass-Deletion Guard
 date: 2025-09-13
 status: Draft
+decision: '- Pre-push hook blocks pushes if deletions exceed 30% of total changes
+  (adds + dels). - Users must explicitly commit intentional deletions and document
+  them in reports/mass_deletion_receipt.txt.'
 author:
-  - Promachos Governance
+- Promachos Governance
 related:
-  - ADR-0017
-  - ADR-0009
-  - ADR-0023
+- ADR-0017
+- ADR-0009
+- ADR-0023
 supersedes: []
 last_updated: 2025-09-13
 ---

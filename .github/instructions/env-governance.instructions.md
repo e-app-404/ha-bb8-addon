@@ -1,3 +1,25 @@
+### ✅ DO
+
+- **Use CONFIG_ROOT=/config** as the single source of truth for HA config root
+- **Derive all HA paths** from CONFIG_ROOT (e.g., `$CONFIG_ROOT/hestia`, `$CONFIG_ROOT/domain`)
+- **Keep secrets in `.evidence.env`** - MQTT creds, tokens, test config
+- **Use WORKSPACE_ROOT** for repository-scoped operations and paths
+- **Place scripts in hestia/tools/** - shell_command.yaml files only declare HA entries
+- **Validate with `make env-validate`** before committing .env changes
+- **Use singular path names** - DIR_DOMAIN not DIR_DOMAINS
+- **Document path derivations** - show how variables build from CONFIG_ROOT
+
+### ❌ DON'T
+
+- **Put secrets in `.env`** - no MQTT passwords, tokens, or test credentials
+- **Use host-dependent paths** in HA config derivations (HA_MOUNT, ~/hass, $HOME/hass)
+- **Hardcode non-canonical roots** - everything HA-related derives from CONFIG_ROOT
+- **Put scripts in domain/shell_commands/** - that's for declarative YAML only
+- **Use plural path names** inconsistently - prefer singular (domain not domains)
+- **Mix repository paths with HA config paths** - keep WORKSPACE_ROOT and CONFIG_ROOT separate
+- **Skip validation** - always run env-validate after changes
+- **Commit .evidence.env** - it should remain local and excluded from git
+- **Rely on host-side operational scripts** for acceptance testing or deployment steps.
 # Environment Variable Governance (ADR-0024 Companion)
 
 **Status:** Draft
@@ -266,6 +288,8 @@ env-validate:
 - **Validate with `make env-validate`** before committing .env changes
 - **Use singular path names** - DIR_DOMAIN not DIR_DOMAINS
 - **Document path derivations** - show how variables build from CONFIG_ROOT
+- **Mirror BB‑8 evidence** under `/config/ha-bb8/**`; keep container runtime writes under `/data/**`.
+- **Deploy via Supervisor** (`ha addons reload|rebuild|restart`); avoid rsync/git for operational deploys.
 
 ### ❌ DON'T
 
@@ -277,6 +301,7 @@ env-validate:
 - **Mix repository paths with HA config paths** - keep WORKSPACE_ROOT and CONFIG_ROOT separate
 - **Skip validation** - always run env-validate after changes
 - **Commit .evidence.env** - it should remain local and excluded from git
+- **Rely on host-side operational scripts** for acceptance testing or deployment steps.
 
 ## Implementation Status
 

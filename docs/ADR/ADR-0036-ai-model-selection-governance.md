@@ -1,18 +1,31 @@
 ---
 id: ADR-0036
-title: "AI Model Selection and Governance for Development Automation"
+title: AI Model Selection and Governance for Development Automation
 date: 2025-09-28
 status: Accepted
+decision: '### Model Assignment Matrix **GPT-4o mini: Operational Excellence** - QA
+  pipeline failures (make qa, make testcov, make security) - Code formatting and linting
+  issues - Test coverage improvements and test file maintenance - Configuration updates
+  and environment variable management - Evidence collect.'
 author:
-  - Development Automation Analysis
-  - Copilot Claude
-related: ["ADR-0009", "ADR-0019", "ADR-0031"]
+- Development Automation Analysis
+- Copilot Claude
+related:
+- ADR-0009
+- ADR-0019
+- ADR-0031
 supersedes: []
 last_updated: 2025-09-28
-tags: ["ai-models", "development-automation", "guardrails", "governance", "gpt", "claude"]
+tags:
+- ai-models
+- development-automation
+- guardrails
+- governance
+- gpt
+- claude
 references:
-  - Existing copilot_claude_bb8_development_prompt.md patterns
-  - Model capability analysis from workspace session evidence
+- Existing copilot_claude_bb8_development_prompt.md patterns
+- Model capability analysis from workspace session evidence
 ---
 
 # ADR-0036: AI Model Selection and Governance for Development Automation

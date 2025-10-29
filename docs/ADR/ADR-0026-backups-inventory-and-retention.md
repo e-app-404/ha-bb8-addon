@@ -1,16 +1,28 @@
 ---
 id: ADR-0026
-title: "Backups, inventory, and retention policy for BB-8 add-on"
+title: Backups, inventory, and retention policy for BB-8 add-on
 date: 2025-09-27
 status: accepted
+decision: '### 1) Paths & tracking - **Backups live under** _backups/ and **are ignored
+  by Git**. - **Inventory is the exception** and is tracked:.'
 author:
-  - Evert Appels
+- Evert Appels
 related:
-  - ADR-0015
-  - ADR-0023
+- ADR-0015
+- ADR-0023
 supersedes: []
 last_updated: 2025-09-27
-tags: ["backup", "inventory", "retention", "policy", "governance", "tokens", "hygiene", "ci", "enforcement", "adr"]
+tags:
+- backup
+- inventory
+- retention
+- policy
+- governance
+- tokens
+- hygiene
+- ci
+- enforcement
+- adr
 ---
 
 # ADR-0026: Backups, inventory, and retention policy for BB-8 add-on

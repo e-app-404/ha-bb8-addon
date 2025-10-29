@@ -1,13 +1,14 @@
 ---
 id: ADR-0010
-title: "Unified Supervision & DIAG Instrumentation"
+title: Unified Supervision & DIAG Instrumentation
 date: 2025-09-03
 status: Accepted
+decision: 1. Enforce single control-plane via run.sh for both bb8_core.main and bb8_core.echo_responder.
 author:
-  - Promachos Governance
+- Promachos Governance
 related:
-  - ADR-0001
-  - ADR-0008
+- ADR-0001
+- ADR-0008
 supersedes: []
 last_updated: 2025-09-03
 ---

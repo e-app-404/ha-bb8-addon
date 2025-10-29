@@ -1,3 +1,14 @@
+### Governance Overrides (BB‑8)
+
+- **Supervisor‑only execution**: invoke and verify the sequence with the add‑on running under HA Supervisor; do not depend on host scripts.
+```json
+### Environment Variable Governance (ADR-0024 Companion)
+
+**Status:** Draft
+**Created:** 2025-10-07
+**ADR Alignment:** [ADR-0024 Canonical Config Path](../docs/ADR/ADR-0024-canonical-config-path.md)
+**Scope:** HA-BB8 Add-on Repository `.env` standardization
+```
 ---
 applyTo: '*'
 description: 'Phase B5 — End-to-End Demo & Stabilization execution guidance for Copilot and operators'
@@ -39,6 +50,14 @@ This instruction file outlines the steps to implement and validate the Phase B5 
   "rollback": "If any step fails, abort remaining motion; publish explicit NACK with reason; keep device in safe state (stopped) and do not sleep."
 }
 ```
+
+### Governance Overrides (BB‑8)
+
+- **Supervisor‑only execution**: invoke and verify the sequence with the add‑on running under HA Supervisor; do not depend on host scripts.
+- **Evidence confinement**: write runtime logs under `/data/**`; mirror acceptance artifacts under `/config/ha-bb8/checkpoints/BB8-FUNC/<ts>/`.
+- **MQTT‑only surface**: all triggers and validations flow through `bb8/cmd/*`, `bb8/ack/*`, and `bb8/status/*`.
+
+> **Note:** Ensure `bb8/status/telemetry` heartbeat is observed before publishing the sequence (readiness gate ≤90s).
 
 ## Implement: Task List
 
@@ -101,3 +120,7 @@ mosquitto_pub -h core-mosquitto -t bb8/cmd/power -m '{"action":"sleep","cid":"sm
 - Foreground supervision: OK
 - Notes: (retries/timeouts if any)
 ```
+
+## Post-B5 Follow-ups (Non-blocking)
+Set `connected=true` in telemetry when BLE session is active in facade.
+Optionally NACK `led_preset` during estop (instead of start-then-cancel); document semantics if kept.

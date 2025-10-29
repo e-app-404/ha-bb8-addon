@@ -1,12 +1,15 @@
 ---
 id: ADR-0016
-title: "Coverage & seam policy"
+title: Coverage & seam policy
 date: 2025-09-12
 status: Accepted
+decision: "- **Coverage**: single driver (pytest-cov); repo fail-under \u226570%;\
+  \ high-priority per-file gates \u226590%. - **Seams**: Do not change production\
+  \ solely for tests."
 author:
-  - "Promachos Governance"
+- Promachos Governance
 related:
-  - ADR-0012
+- ADR-0012
 supersedes: []
 last_updated: 2025-09-12
 ---

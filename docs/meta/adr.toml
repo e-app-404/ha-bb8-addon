@@ -1,0 +1,396 @@
+# ADR Frontmatter Canonical Schema
+# Defines the authoritative structure, validation rules, and processing requirements
+# for Architecture Decision Record YAML frontmatter headers.
+
+#TODO Adapt to BB8 project
+
+[metadata]
+version = "1.0"
+description = "ADR Frontmatter Canonical Schema per ADR-0009"
+last_updated = "2025-10-15"
+schema_authority = "ADR-0009-adr-governance-formatting.md"
+
+# Core required fields for all ADRs
+[fields.id]
+type = "string"
+required = true
+pattern = "^ADR-\\d{4}$"
+description = "Unique ADR identifier with zero-padded numbering (e.g., ADR-0001)"
+validation = "regex"
+normalization = "uppercase"
+generation = "filename_based"
+immutable = true
+
+[fields.title]
+type = "string"
+required = true
+min_length = 15
+max_length = 200
+description = "Full descriptive title including ADR-XXXX prefix"
+validation = "length_and_format"
+normalization = "trim_whitespace"
+format_template = "ADR-XXXX: Descriptive Summary"
+consistency_check = "id_prefix_match"
+
+[fields.slug]
+type = "string"
+required = true
+pattern = "^[a-z0-9-]+$"
+min_length = 5
+max_length = 100
+description = "Kebab-case slug derived from title (excluding ADR-XXXX prefix)"
+validation = "regex_and_uniqueness"
+normalization = "kebab_case"
+generation = "title_derived"
+dependencies = ["title"]
+uniqueness_scope = "workspace"
+
+[fields.status]
+type = "enum"
+required = true
+allowed_values = [
+    "Draft",
+    "Proposed",
+    "Accepted",
+    "Implemented",
+    "Amended",
+    "Deprecated",
+    "Superseded",
+    "Rejected",
+    "Withdrawn"
+]
+description = "Lifecycle status following ADR-0009 state model"
+validation = "enum_check"
+normalization = "title_case"
+lifecycle_transitions = true
+deprecated_aliases = { "Approved" = "Accepted" }
+
+[fields.related]
+type = "array"
+required = true
+item_type = "string"
+item_pattern = "^ADR-\\d{4}$"
+description = "Array of related ADR references for cross-linking"
+validation = "array_of_adr_refs"
+normalization = "sort_and_dedupe"
+default = []
+cross_reference_check = true
+bidirectional_validation = false
+
+[fields.supersedes]
+type = "array"
+required = true
+item_type = "string"
+item_pattern = "^ADR-\\d{4}$"
+description = "Array of ADR references that this ADR supersedes"
+validation = "array_of_adr_refs"
+normalization = "sort_and_dedupe"
+default = []
+cross_reference_check = true
+bidirectional_validation = true
+circular_dependency_check = true
+
+[fields.last_updated]
+type = "date"
+required = true
+format = "YYYY-MM-DD"
+description = "Last modification date in ISO-8601 format (MUST change on edits)"
+validation = "iso_date"
+normalization = "iso_format"
+auto_update = true
+timezone = "UTC"
+track_changes = true
+
+[fields.date]
+type = "date"
+required = true
+format = "YYYY-MM-DD"
+description = "Original creation/decision date in ISO-8601 format"
+validation = "iso_date"
+normalization = "iso_format"
+immutable = true
+chronology_check = "before_or_equal_last_updated"
+
+[fields.decision]
+type = "string"
+required = true
+min_length = 20
+max_length = 300
+description = "Concise summary of the architectural decision (max 300 chars)"
+validation = "length_and_content"
+normalization = "trim_and_sentence_case"
+generation = "content_extraction"
+dependencies = ["content"]
+extraction_patterns = [
+    "##\\s*(?:\\d+\\.\\s*)?Decision\\s*\\n\\n(.*?)(?=\\n##|\\n```|\\Z)",
+    "##\\s*(?:\\d+\\.\\s*)?Decision\\s*\\n(.*?)(?=\\n##|\\n```|\\Z)"
+]
+fallback_generation = true
+
+# Optional fields (commonly used but not required)
+[fields.author]
+type = "string_or_array"
+required = false
+description = "Author(s) of the ADR"
+validation = "author_format"
+normalization = "consistent_format"
+
+[fields.tags]
+type = "array"
+required = false
+item_type = "string"
+description = "Categorization tags for the ADR"
+validation = "tag_format"
+normalization = "lowercase_and_sort"
+
+# Processing configuration
+[processing]
+field_order = [
+    "id",
+    "title",
+    "slug",
+    "status",
+    "related",
+    "supersedes",
+    "last_updated",
+    "date",
+    "decision"
+]
+backup_pattern = ".bk.{timestamp}"
+backup_format = "%Y%m%d-%H%M%S"
+dry_run_default = true
+parallel_processing = false
+validation_strict = true
+
+[processing.dependencies]
+# Fields that depend on other fields being processed first
+slug = ["title"]
+decision = ["content"]
+last_updated = ["any_change"]
+
+[processing.validation_levels]
+# Different validation strictness levels
+strict = ["pattern", "length", "cross_reference", "chronology", "uniqueness"]
+standard = ["pattern", "length", "cross_reference"]
+basic = ["pattern", "length"]
+
+# Content extraction patterns for decision field
+[extraction.decision]
+primary_patterns = [
+    "##\\s*(?:\\d+\\.\\s*)?Decision\\s*\\n\\n(.*?)(?=\\n##|\\n```|\\Z)",
+    "##\\s*(?:\\d+\\.\\s*)?Decision\\s*\\n(.*?)(?=\\n##|\\n```|\\Z)",
+    "\\*\\*Decision\\*\\*[:\\s]*(.*?)(?=\\n\\n|\\n##|\\Z)"
+]
+fallback_patterns = [
+    "(?i)decision.*?[-*]\\s*(.*?)(?=\\n|$)",
+    "(?:##\\s*(?:\\d+\\.\\s*)?(?:Context|Decision|Summary).*?\\n\\n)(.*?)(?=\\n##|\\n```|\\Z)"
+]
+default_text = "Architectural decision documented in this ADR."
+max_sentences = 2
+sentence_break_pattern = "(?<=[.!?])\\s+"
+
+# Validation error messages
+[validation.messages]
+id_invalid_format = "ID must follow format ADR-XXXX with zero-padded numbers"
+id_mismatch_filename = "ID in frontmatter must match filename ADR number"
+title_too_short = "Title must be at least {min_length} characters"
+title_too_long = "Title must not exceed {max_length} characters"
+title_missing_prefix = "Title should include ADR-XXXX prefix matching the ID"
+slug_invalid_format = "Slug must be kebab-case (lowercase, hyphens only)"
+slug_not_unique = "Slug must be unique across all ADRs in workspace"
+status_invalid = "Status must be one of: {allowed_values}"
+status_deprecated = "Status '{value}' is deprecated, use '{replacement}' instead"
+related_invalid_format = "Related ADRs must follow format ADR-XXXX"
+related_not_found = "Related ADR '{value}' does not exist in workspace"
+supersedes_circular = "Circular supersession detected: {chain}"
+date_invalid_format = "Date must be in YYYY-MM-DD format"
+date_chronology_error = "Creation date cannot be after last_updated date"
+decision_too_short = "Decision summary must be at least {min_length} characters"
+decision_too_long = "Decision summary must not exceed {max_length} characters"
+
+# File locations and patterns
+[files]
+adr_directory = "docs/ADR"
+adr_pattern = "ADR-*.md"
+processor_directory = "/config/hestia/tools/adr"
+processor_pattern = "frontmatter-{field}.py"
+backup_directory = "/config/hestia/workspace/archive/adr_backups"
+log_directory = "/config/hestia/workspace/operations/logs/adr_processing"
+
+# Rendering configuration for governance index generation
+[rendering]
+# Output file specifications
+output_files = [
+    { path = "reports/governance/governance_index.json", format = "json" },
+    { path = "reports/governance/governance_index.md", format = "markdown" }
+]
+
+# Record structure for ADR display in governance index
+[rendering.record]
+# Core fields displayed for each ADR record (in order)
+display_fields = [
+    "id",
+    "title",
+    "slug",
+    "status",
+    "date",
+    "decision",
+    "related",
+    "supersedes",
+    "last_updated"
+]
+
+# Field display specifications
+[rendering.record.fields.id]
+required = true
+display_name = "ID"
+max_length = 10
+
+[rendering.record.fields.title]
+required = true
+display_name = "Title"
+max_length = 80
+strip_adr_prefix = true
+
+[rendering.record.fields.slug]
+required = true
+display_name = "Slug"
+max_length = 60
+
+[rendering.record.fields.status]
+required = true
+display_name = "Status"
+max_length = 20
+
+[rendering.record.fields.date]
+required = true
+display_name = "Date"
+format = "YYYY-MM-DD"
+
+[rendering.record.fields.decision]
+required = true
+display_name = "Decision"
+max_length = 150
+append_ellipsis = true
+
+[rendering.record.fields.related]
+required = false
+display_name = "References"
+format = "array"
+separator = ", "
+
+[rendering.record.fields.supersedes]
+required = false
+display_name = "Supersedes"
+format = "array"
+separator = ", "
+
+[rendering.record.fields.last_updated]
+required = true
+display_name = "Last Updated"
+format = "YYYY-MM-DD"
+
+# JSON-specific rendering configuration
+[rendering.record.json]
+# Additional metadata for JSON output
+include_metadata = [
+    "path", "filename", "tags", "superseded_by", "priority",
+    "is_deprecated", "last_modified"
+]
+# JSON structure preferences
+sort_keys = false
+indent_spaces = 2
+preserve_field_order = true
+
+# Markdown-specific rendering configuration
+[rendering.record.md]
+# Grouping and organization for markdown
+
+[[rendering.record.md.status_groups]]
+name = "🟢 Active ADRs"
+statuses = ["Accepted", "Implemented"]
+icon = "✅"
+
+[[rendering.record.md.status_groups]]
+name = "🔄 Proposed ADRs"
+statuses = ["Proposed"]
+icon = "🔄"
+
+[[rendering.record.md.status_groups]]
+name = "📝 Draft & Pending ADRs"
+statuses = ["Draft", "Pending"]
+icon = "📝"
+
+[[rendering.record.md.status_groups]]
+name = "🗂️ Superseded ADRs"
+statuses = ["Superseded", "Deprecated"]
+icon = "🗂️"
+
+# Display formatting for markdown
+title_format = "#### {id}: {title_clean}"
+metadata_format = "**Status**: {status} | **Date**: {date} | **Priority**: {priority}"
+decision_format = "**Decision**: {decision_preview}"
+path_format = "**Path**: `{path}`"
+
+# Hot rules configuration
+[rendering.hot_rules]
+# Rules for identifying critical ADRs
+critical_keywords = ["mount", "path", "config", "governance", "file writing"]
+critical_statuses = ["Accepted", "Implemented"]
+max_rules = 5
+default_rules = [
+    "ADR-0024: Single canonical config mount → `/config` only; no dual SMB mounts.",
+    "ADR-0022: Mount management via LaunchAgent; preflight before writes.",
+    "ADR-0018: Workspace lifecycle policies with backup patterns and hygiene.",
+    "Path contracts: prefer container paths over host aliases; avoid `/Volumes/...` in tooling."
+]
+
+# Statistics configuration
+[rendering.statistics]
+# Metrics to calculate and display
+include_counts = ["total_adrs", "by_status", "by_year", "deprecated_count"]
+
+[[rendering.statistics.status_icons]]
+status = "Accepted"
+icon = "✅"
+
+[[rendering.statistics.status_icons]]
+status = "Implemented"
+icon = "✅"
+
+[[rendering.statistics.status_icons]]
+status = "Proposed"
+icon = "🔄"
+
+[[rendering.statistics.status_icons]]
+status = "Draft"
+icon = "📝"
+
+[[rendering.statistics.status_icons]]
+status = "Pending"
+icon = "⏳"
+
+[[rendering.statistics.status_icons]]
+status = "Superseded"
+icon = "🗂️"
+
+# Integration points
+[integration]
+governance_index_trigger = true
+knowledge_base_update = true
+git_commit_hook = false  # Future enhancement
+pre_commit_validation = true
+ci_pipeline_integration = false  # Future enhancement
+
+# Tool responsibilities mapping
+[integration.tool_responsibilities]
+frontmatter_update = [
+    "field_validation", "field_normalization", "field_generation",
+    "content_modification", "orchestration"
+]
+adr_index = [
+    "record_collection", "template_rendering", "output_generation"
+]
+field_processors = [
+    "individual_field_processing", "validation_rules", "normalization_logic"
+]

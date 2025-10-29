@@ -1,0 +1,121 @@
+# CONTINUITY SEED v2 — HA↔MQTT↔BB-8 (Supervisor-first)
+project:
+  name: "HA-BB8"
+  component: "bb8-integration"
+  branch: "qg-test-80/coverage-honest-2025-10-07"
+
+governance:
+  supervisor_only: true
+  adr_0024_paths: true
+  host_evidence_dir: "/config/ha-bb8/checkpoints/BB8-FUNC"
+  container_runtime_root: "/data"
+  foreground_supervision: true
+  safety_first: true
+  mqtt_ack_with_cid: true
+  no_host_scripts: true
+
+runtime:
+  broker:
+    host: "core-mosquitto"
+    base_topic: "bb8"
+  device:
+    mac: "ED:ED:87:D7:27:50"
+    name: "S33 BB84 LE"
+    adapter: "hci0"
+  addon_capabilities:  # Supervisor config intent
+    host_dbus: true
+    udev: true
+    host_network: true
+
+status:
+  phases:
+    B1: "ACCEPT — BLE link/session; b1_ble_health.json"
+    B2: "ACCEPT — schemas & routing; b2_schema.json, b2_route_tests.log"
+    B3: "ACCEPT — safety, rate limit, estop; b3_safety_tests.json, b3_estop_demo.log"
+    B4: "ACCEPT — LED + presets; b4_led_matrix.json, b4_led_demo.log"
+    B5: "ACCEPT — E2E 5/5 ACKs, echo green; b5_e2e_demo.log, b5_summary.md, B5_ACCEPTED.md"
+  token_block:
+    requires: [ADR_0024_COMPLIANT_PATHS, FOREGROUND_SUPERVISION_OK, INTERNAL_BROKER_HOST_OK, BLE_SESSION_WATCHDOG_OK, EVIDENCE_FIRST_OK]
+    accepted: [B1_BLE_LINK_OK, B2_CMD_SCHEMA_WIRED_OK, B3_SAFETY_ESTOP_OK, B4_LED_PRESETS_OK, B5_E2E_DEMO_OK]
+
+evidence:
+  local_root: "reports/checkpoints/BB8-FUNC"
+  host_root: "/config/ha-bb8/checkpoints/BB8-FUNC"
+  latest_examples:
+    - "b5_e2e_demo.log"
+    - "b5_summary.md"
+    - "B5_ACCEPTED.md"
+    - "TOKEN_BLOCK.yaml"
+
+surfaces:
+  commands:
+    - "bb8/cmd/power {'action':'wake|sleep','cid':?...}"
+    - "bb8/cmd/drive {'speed':0..255,'heading':0..359,'ms':0..5000,'cid':?...}"
+    - "bb8/cmd/stop {'cid':?...}"
+    - "bb8/cmd/led {'r':0..255,'g':0..255,'b':0..255,'cid':?...}"
+    - "bb8/cmd/led_preset {'name':'off|white|police|sunset','cid':?...}"
+    - "bb8/cmd/estop {'cid':?...} / bb8/cmd/clear_estop {'cid':?...}"
+    - "bb8/cmd/diag_scan {'mac':'ED:ED:87:D7:27:50','adapter':'hci0','cid':?...}"
+    - "bb8/cmd/diag_gatt {'mac':'...','cid':?...}"
+    - "bb8/cmd/actuate_probe {'cid':?...}"
+  telemetry:
+    - "bb8/status (online|offline, retained)"
+    - "bb8/status/telemetry {connected,estop,last_cmd_ts,battery_pct,ts}"
+  echo:
+    - "bb8/echo/cmd → bb8/echo/state {'source':'device', ...}"
+
+response_contract:
+  copilot_reply_max_lines: 10
+  include: ["Gate verdict", "Actions taken", "Evidence (host+local)", "Next 2 steps"]
+  style: "quiet, command-first"
+
+next_objectives:
+  - "Supervisor-only diagnostic run: diag_scan → actuation probe (wake→roll→stop→white) with ACKs mirrored"
+  - "Stabilize telemetry: connected mirrors facade.is_connected(), battery pct surfaced when available"
+
+workspace_archives:
+  resolution_policy:
+    order: ["repo", "host", "sandbox"]   # deterministic
+    on_missing: "request_reupload"       # fail fast, no guessing
+    verify_checksums: true               # sha256 present for repo-found items
+  items:
+    - id: "addon-snapshot-20251009"
+      role: "Codebase snapshot used for B1–B4"
+      repo_path: "reports/artifacts/addon_20251009T105938Z.tar.gz"
+      host_path: "/config/ha-bb8/artifacts/addon_20251009T105938Z.tar.gz"
+      sandbox_path: "/mnt/data/addon_20251009T105938Z.tar.gz"
+      sha256: "d610063827b9cab69247c44ea1e8f13b8e0d2643a4ae997e2ae13e52541e2560"
+      required: false
+    - id: "b2-artifacts"
+      role: "B2 schemas, validators, route tests"
+      repo_path: "reports/artifacts/BB8-FUNC-B2-artifacts.tar.gz"
+      host_path: "/config/ha-bb8/artifacts/BB8-FUNC-B2-artifacts.tar.gz"
+      sandbox_path: "/mnt/data/BB8-FUNC-B2-artifacts.tar.gz"
+      sha256: "c25180b06e0d9f5d381b3f7044fcb4d2a829abceedba1bf050b4733a4518b5c8"
+      required: false
+    - id: "ble-diagnostics-hci0"
+      role: "HA host BLE diagnostics (hci0)"
+      repo_path: "reports/artifacts/ha_ble_diag_hci0_20251009T131211Z.tar.gz"
+      host_path: "/config/ha-bb8/artifacts/ha_ble_diag_hci0_20251009T131211Z.tar.gz"
+      sandbox_path: "/mnt/data/ha_ble_diag_hci0_20251009T131211Z.tar.gz"
+      sha256: null
+      required: false
+    - id: "adr-bundle"
+      role: "ADR set (incl. ADR-0024)"
+      repo_path: "config/artifacts/ADR.tar.gz"
+      host_path: "/config/hestia/library/docs/ADR"
+      sandbox_path: "/mnt/data/ADR.tar.gz"
+      sha256: null
+      required: false
+    - id: "system-protocols"
+      role: "System protocols (system_instruction.yaml)"
+      host_path: "/config/hestia/library/docs/governance/system_instruction.yaml"
+      sandbox_path: "/mnt/data/system_instruction.yaml"
+      sha256: null
+      required: true
+
+
+workspace_integrity:
+  # Optional: fill these when handy (sha256 ensures reproducibility across sessions)
+  require_checksums: false
+  # If true, next session should request/verify sha256 before using any archive

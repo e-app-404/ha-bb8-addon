@@ -1,16 +1,25 @@
 ---
 id: ADR-0037
-title: "MQTT Discovery Device Block Compliance Fix"
+title: MQTT Discovery Device Block Compliance Fix
 date: 2025-09-30
 status: Accepted
+decision: '**Architectural Choice**: Implement full Home Assistant MQTT Discovery
+  schema compliance by: 1. **Fix Device Block Structure**: Replace "ids" with "identifiers"
+  array 2.'
 author:
-  - GitHub Copilot
+- GitHub Copilot
 related:
-  - ADR-0032
-  - ADR-0020
+- ADR-0032
+- ADR-0020
 supersedes: []
 last_updated: 2025-09-30
-tags: ["mqtt", "discovery", "device-block", "home-assistant", "schema-compliance", "critical-fix"]
+tags:
+- mqtt
+- discovery
+- device-block
+- home-assistant
+- schema-compliance
+- critical-fix
 ---
 
 # ADR-0037: MQTT Discovery Device Block Compliance Fix

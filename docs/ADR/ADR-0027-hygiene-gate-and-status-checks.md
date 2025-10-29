@@ -1,17 +1,26 @@
 ---
 id: ADR-0027
-title: "Hygiene gate CI and required status checks"
+title: Hygiene gate CI and required status checks
 date: 2025-09-27
 status: accepted
+decision: '1. **Workflow file**: .github/workflows/hygiene-gate.yml - Triggers: pull_request
+  to main, push to main, workflow_dispatch, nightly schedule.'
 author:
-  - Evert Appels
+- Evert Appels
 related:
-  - ADR-0018
-  - ADR-0023
-  - ADR-0026
+- ADR-0018
+- ADR-0023
+- ADR-0026
 supersedes: []
 last_updated: 2025-09-27
-tags: ["ci", "hygiene", "branch-protection", "status-checks", "automation", "governance", "tokens"]
+tags:
+- ci
+- hygiene
+- branch-protection
+- status-checks
+- automation
+- governance
+- tokens
 ---
 
 # ADR-0027: Hygiene gate CI and required status checks

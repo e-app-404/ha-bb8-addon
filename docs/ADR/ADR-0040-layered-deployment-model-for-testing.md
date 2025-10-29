@@ -1,17 +1,32 @@
 ---
 id: ADR-0040
-title: "Layered Deployment Model for Testing & Version Provenance"
+title: Layered Deployment Model for Testing & Version Provenance
 date: 2025-10-03
 status: Accepted
+decision: '### **Mandatory Release Process for Testing Cycles** Every INT-HA-CONTROL
+  cycle must begin with a version release to establish code provenance:.'
 author:
-  - Evert Appels
-  - GitHub Copilot
-related: ["ADR-0031", "ADR-0032", "ADR-0033", "ADR-0036", "ADR-0008", "ADR-0041"]
+- Evert Appels
+- GitHub Copilot
+related:
+- ADR-0031
+- ADR-0032
+- ADR-0033
+- ADR-0036
+- ADR-0008
+- ADR-0041
 supersedes: []
 last_updated: 2025-10-04
-tags: ["deployment", "testing", "provenance", "versions", "supervisor", "docker"]
+tags:
+- deployment
+- testing
+- provenance
+- versions
+- supervisor
+- docker
 evidence_sessions:
-  - 2025-10-04: "SSH deployment reliability fixes with centralized configuration and accessible secrets"
+- 2025-10-04: SSH deployment reliability fixes with centralized configuration and
+    accessible secrets
 ---
 
 # ADR-0040: Layered Deployment Model for Testing & Version Provenance

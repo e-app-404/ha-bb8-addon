@@ -1,19 +1,21 @@
 ---
 id: ADR-0017
-title: "Branch & Rescue Protocol"
+title: Branch & Rescue Protocol
 date: 2025-09-13
 status: Accepted
+decision: '- Always create rescue branches off origin/main. - Use cherry-pick for
+  selective recovery; forbid unrelated histories.'
 author:
-  - "Promachos Governance"
+- Promachos Governance
 related:
-  - ADR-0018
-  - ADR-0009
-  - ADR-0033
-  - ADR-0008
+- ADR-0018
+- ADR-0009
+- ADR-0033
+- ADR-0008
 supersedes: []
 last_updated: 2025-10-04
 evidence_sessions:
-  - 2025-10-04: "Active workspace content merge strategy implementation and branch canonicalization"
+- 2025-10-04: Active workspace content merge strategy implementation and branch canonicalization
 ---
 
 # ADR-0017: Branch & Rescue Protocol

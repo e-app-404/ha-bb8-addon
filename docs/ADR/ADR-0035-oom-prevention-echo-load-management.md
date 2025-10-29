@@ -1,20 +1,34 @@
 ---
 id: ADR-0035
-title: "OOM Prevention & Echo Load Management"
+title: OOM Prevention & Echo Load Management
 date: 2025-09-28
 status: Accepted
+decision: '**Technical Choice:** Implement a **comprehensive OOM prevention strategy**
+  with echo load management, default-safe configuration, and memory pressure monitoring.'
 author:
-  - Operational Evidence Analysis
-  - Infrastructure Reconnaissance (Session SESS-8F2C7C94)
-  - Copilot Claude
-related: ["ADR-0010", "ADR-0031", "ADR-0032", "ADR-0034"]
+- Operational Evidence Analysis
+- Infrastructure Reconnaissance (Session SESS-8F2C7C94)
+- Copilot Claude
+related:
+- ADR-0010
+- ADR-0031
+- ADR-0032
+- ADR-0034
 supersedes: []
 last_updated: 2025-09-28
-tags: ["performance", "memory", "oom", "echo", "load-management", "telemetry", "threading", "operational-stability"]
+tags:
+- performance
+- memory
+- oom
+- echo
+- load-management
+- telemetry
+- threading
+- operational-stability
 references:
-  - reconnaissance response op_adr_v-68a770b8-6c20-8330-b2e6-df88b4b94ccf.md
-  - HA OS Infrastructure ADR-0034
-  - Home Assistant OOM incidents (kernel messages with photo evidence)
+- reconnaissance response op_adr_v-68a770b8-6c20-8330-b2e6-df88b4b94ccf.md
+- HA OS Infrastructure ADR-0034
+- Home Assistant OOM incidents (kernel messages with photo evidence)
 ---
 
 # ADR-0035: OOM Prevention & Echo Load Management

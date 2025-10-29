@@ -1,12 +1,13 @@
 ---
 id: ADR-0005
-title: "Development Setup (legacy)"
+title: Development Setup (legacy)
 date: 2025-08-26
 status: Informational
+decision: Architectural decision documented in this ADR.
 author:
-  - Promachos Governance
+- Promachos Governance
 related:
-  - ADR-0001
+- ADR-0001
 supersedes: []
 last_updated: 2025-08-26
 ---

@@ -1,0 +1,158 @@
+---
+id: "OPS-SUPERVISOR-DEVELOPMENT-01"
+title: "Supervisor Development"
+authors: "Home Assistant Team"
+slug: "supervisor-development"
+type: "guide"
+tags: ["supervisor", "development", "home-assistant"]
+date: "2023-01-01"
+last_updated: "2024-06-09"
+---
+
+These instructions are for development of the Supervisor, the Supervisor frontend panel, and the `hassio` integration. You will interact with a development or remote Supervisor, using a development machine. These instructions assume you have set up a devcontainer and other Docker-based tools. Follow our [devcontainer development environment](../../setup_devcontainer_environment.md) guide to set up your environment first.
+
+## Supervisor Development
+
+The following steps guide you through developing the Supervisor itself.
+
+1. Fork the [Supervisor repository](https://github.com/home-assistant/supervisor) and clone it to your development machine.
+2. Open the repository with Visual Studio Code devcontainer.
+3. Create a branch in your fork.
+4. Make your changes.
+5. Test your changes using the instructions below.
+6. Commit and push your changes, then create a PR against the `main` branch at [home-assistant/supervisor](https://github.com/home-assistant/supervisor).
+
+### Local Testing
+
+Start the task **Run Supervisor** in Visual Studio Code. This will start an instance of the Supervisor inside the devcontainer for testing your changes.
+
+When initialization is complete, access the Home Assistant frontend at [http://localhost:9123](http://localhost:9123).
+
+### Testing on a Remote System
+
+First, create an account at [Docker Hub](https://hub.docker.com/).
+
+1. Access the remote system via SSH or direct console.
+2. Check the architecture with `ha info` or `info` (for Home Assistant OS).
+3. On your development machine, use the [builder](https://github.com/home-assistant/builder) to build and publish your Supervisor image.
+
+> **Note**:
+> Adjust the following values as needed:
+> - Replace `aarch64` with the architecture from step 2.
+> - Replace `awesome-user` with your Docker Hub username.
+> - Replace `secret-password` with your Docker Hub password or publish token.
+
+```bash
+docker run --rm \
+    --privileged \
+    -v /run/docker.sock:/run/docker.sock \
+    -v "$(pwd):/data" \
+    ghcr.io/home-assistant/amd64-builder:dev \
+        --generic latest \
+        --target /data \
+        --aarch64 \
+        --docker-hub awesome-user \
+        --docker-user awesome-user \
+        --docker-password secret-password \
+        --no-cache
+```
+
+4. On your remote system, change the channel to `dev`:
+
+```bash
+ha supervisor --channel dev
+# or, for Home Assistant OS:
+supervisor --channel dev
+```
+
+5. Pull your Supervisor image:
+
+```bash
+docker pull awesome-user/aarch64-hassio-supervisor:latest
+```
+
+6. Tag your Supervisor image:
+
+```bash
+docker tag awesome-user/aarch64-hassio-supervisor:latest homeassistant/aarch64-hassio-supervisor:latest
+```
+
+7. Restart the Supervisor service:
+
+```bash
+systemctl restart hassos-supervisor
+```
+
+8. Check for issues:
+
+```bash
+journalctl -fu hassos-supervisor
+```
+
+## Integration Development
+
+To develop the `hassio` integration, ensure you have a [Home Assistant Core development environment](../development_environment.mdx) and [Supervisor API access](#supervisor-api-access).
+
+Configure Home Assistant Core to connect to a remote Supervisor by setting the following environment variables when starting Home Assistant:
+
+- `SUPERVISOR`: Set to the IP of the machine running Home Assistant and port 80 (the API proxy add-on).
+- `SUPERVISOR_TOKEN`: Set to the token found via [Supervisor API access](#supervisor-api-access).
+
+```shell
+SUPERVISOR=192.168.1.100:80 SUPERVISOR_TOKEN=abcdefghj1234 hass
+```
+
+Your local Home Assistant installation will now connect to the remote instance.
+
+## Frontend Development
+
+To develop the Supervisor panel, ensure you have a [Home Assistant frontend development environment](../../../frontend/development.md) set up with devcontainer, and [Supervisor API access](#supervisor-api-access).
+
+1. Run the **Develop Supervisor panel** task.
+2. Run the **Run HA Core for Supervisor in devcontainer** task.
+3. When prompted for the IP, use the host running [Supervisor API access](#supervisor-api-access).
+4. When prompted for the token, use the token found via [Supervisor API access](#supervisor-api-access).
+
+### Without Frontend Devcontainer
+
+Update the `hassio` integration configuration in your `configuration.yaml` to point to the frontend repository:
+
+```yaml
+# configuration.yaml
+hassio:
+  # Example path. Change to your frontend repository location
+  development_repo: /home/paulus/dev/hass/frontend
+```
+
+To build a local version of the Supervisor panel:
+
+```shell
+cd hassio
+script/develop
+```
+
+While `script/develop` is running, the Supervisor panel will rebuild whenever you change source files.
+
+## Supervisor API Access
+
+To develop for the `hassio` integration and Supervisor panel, you need API access to the Supervisor. This API is protected by a token, which you can extract using a special add-on. This can be done on a running system or with the [devcontainer](#local-testing).
+
+[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Faddons-development)
+[![Open your Home Assistant instance and show the dashboard of a Supervisor add-on.](https://my.home-assistant.io/badges/supervisor_addon.svg)](https://my.home-assistant.io/redirect/supervisor_addon/?addon=ae6e943c_remote_api)
+
+1. Add the developer add-on repository: [https://github.com/home-assistant/addons-development](https://github.com/home-assistant/addons-development)
+2. Install the "Remote API proxy" add-on.
+3. Click **Start**.
+4. The token will be printed in the logs.
+
+The add-on must remain running to allow Home Assistant Core to connect.
+
+> **Note**:
+> The Remote API proxy token has slightly fewer privileges than Home Assistant Core in production.
+> To get the actual token with full privileges, SSH into the host system and run:
+
+```shell
+docker inspect homeassistant | grep SUPERVISOR_TOKEN
+```
+
+Either token may change after a reboot or OS/container update.

@@ -1,26 +1,15 @@
 ---
-title: "ADR-XXXX: Short, Imperative Summary"
+title: 'ADR-XXXX: Short, Imperative Summary'
 date: YYYY-MM-DD
 status: Draft
+decision: <State the decision. If this amends or supersedes another ADR, name it here
+  and in front-matter.>.
 author:
-  - Your Name
+- Your Name
 related: []
 external_related: []
-# Optional: Cross-repository ADR references (see ADR-0030)
-# external_related:
-#   - repo: "ha-config"
-#     adr: "ADR-0024"
-#     url: "https://github.com/e-app-404/ha-config/blob/main/docs/ADR/ADR-0024-example.md"
-#     relationship: "adopts"  # adopts|inherits_from|extends|compatible_with|requires|conflicts_with|coordinates_with|mirrors|supersedes_external
-#     last_checked: "YYYY-MM-DD"
 alignment_dependencies: []
-# Optional: ADRs in other repositories that this ADR must align with
-# alignment_dependencies:
-#   - "ha-config:ADR-0024"
 cross_repo_impacts: []
-# Optional: ADRs in other repositories that may be impacted by changes to this ADR
-# cross_repo_impacts:
-#   - "omega-registry:ADR-0015"
 supersedes: []
 last_updated: YYYY-MM-DD
 tags: []

@@ -1,17 +1,27 @@
 ---
 id: ADR-0025
-title: "Canonical repo layout for HA BB-8 add-on (package lives under addon/)"
+title: Canonical repo layout for HA BB-8 add-on (package lives under addon/)
 date: 2025-09-27
 status: accepted
+decision: 1. **Single, canonical location** for the runtime package:.
 author:
-  - Evert Appels
+- Evert Appels
 related:
-  - ADR-0001
-  - ADR-0012
-  - ADR-0019
+- ADR-0001
+- ADR-0012
+- ADR-0019
 supersedes: []
 last_updated: 2025-09-27
-tags: ["repo-structure", "imports", "governance", "coverage", "pythonpath", "tokens", "addon", "bb8_core", "canonical"]
+tags:
+- repo-structure
+- imports
+- governance
+- coverage
+- pythonpath
+- tokens
+- addon
+- bb8_core
+- canonical
 ---
 
 # ADR-0025: Canonical repo layout for HA BB-8 add-on (package lives under addon/)

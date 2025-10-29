@@ -10,6 +10,14 @@ import time
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+# Provide a BB8 stub when spherov2 is not installed to allow isinstance checks
+try:  # pragma: no cover - environment dependent
+    from spherov2.toy.bb8 import BB8  # type: ignore
+except Exception:  # noqa: BLE001
+    class BB8:  # type: ignore
+        pass
+
 from addon.bb8_core.ble_session import (
     BleSession,
     BleSessionError,
@@ -34,8 +42,6 @@ class TestBleSessionConnection:
     @pytest.fixture
     def mock_find_toys(self, mock_bb8_toy):
         """Mock spherov2 find_toys function."""
-        from spherov2.toy.bb8 import BB8
-
         mock_bb8_toy.__class__ = BB8
         with patch("addon.bb8_core.ble_session.find_toys") as mock:
             mock.return_value = [mock_bb8_toy]

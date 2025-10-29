@@ -1,14 +1,28 @@
 ---
 id: ADR-0033
-title: "Dual-Clone Deployment Topology & Git Hygiene"
+title: Dual-Clone Deployment Topology & Git Hygiene
 date: 2025-09-28
 status: Accepted
+decision: '**Technical Choice:** Implement a **dual-clone deployment topology** with
+  Git-based synchronization, tokenized validation, and automated repository hygiene
+  enforcement.'
 author:
-  - Operational Evidence Analysis
-related: ["ADR-0001", "ADR-0008", "ADR-0031", "ADR-0032"]
+- Operational Evidence Analysis
+related:
+- ADR-0001
+- ADR-0008
+- ADR-0031
+- ADR-0032
 supersedes: []
 last_updated: 2025-09-28
-tags: ["deployment", "topology", "git", "hygiene", "tokens", "governance", "automation"]
+tags:
+- deployment
+- topology
+- git
+- hygiene
+- tokens
+- governance
+- automation
 ---
 
 # ADR-0033: Dual-Clone Deployment Topology & Git Hygiene

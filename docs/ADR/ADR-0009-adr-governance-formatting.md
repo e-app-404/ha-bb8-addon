@@ -1,20 +1,29 @@
 ---
 id: ADR-0009
-title: "ADR Governance, Redaction, and Formatting Policy"
+title: ADR Governance, Redaction, and Formatting Policy
 date: 2025-09-13
 status: Draft
+decision: '- All ADRs must comply with standardized structure, formatting, and machine-parseability
+  requirements. - Redaction, definition, and generation of ADRs must follow explicit,
+  documented procedures.'
 author:
-  - Evert Appels
-  - Github Copilot
+- Evert Appels
+- Github Copilot
 related:
-  - ADR-0001
-  - ADR-0004
-  - ADR-0008
-  - ADR-0017
-  - ADR-0018
+- ADR-0001
+- ADR-0004
+- ADR-0008
+- ADR-0017
+- ADR-0018
 last_updated: 2025-09-13
 supersedes: []
-tags: ["governance", "adr", "formatting", "redaction", "tokens", "automation"]
+tags:
+- governance
+- adr
+- formatting
+- redaction
+- tokens
+- automation
 ---
 
 # ADR-0009: ADR Governance, Redaction, and Formatting Policy

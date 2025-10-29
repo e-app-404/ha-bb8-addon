@@ -1,3 +1,17 @@
+---
+id: "ENV-GOVERNANCE-001"
+title: "Environment Variable Governance (ADR-0024 Companion)"
+authors: "HA-BB8 Maintainers"
+source: ""
+slug: "env-governance"
+tags: ["environment", "governance", "ha-bb8", "adr-0024"]
+date: "2025-10-07"
+last_updated: "2024-06-13"
+url: ""
+related: "ADR-0024-canonical-config-path"
+adr: "ADR-0024"
+---
+
 # Environment Variable Governance (ADR-0024 Companion)
 
 **Status:** Draft
@@ -155,16 +169,19 @@ sed -i.bak 's|domain/shell_commands/addons_runtime_fetch.sh|hestia/tools/addons_
 ### Phase 2: Secret Migration (Manual)
 
 1. **Review `.evidence.env`** - ensure it contains all MQTT/auth secrets:
+
    ```bash
    grep -E '^(MQTT_|HA_TOKEN|HA_LLAT_KEY=ey)' .evidence.env
    ```
 
 2. **Remove secrets from `.env`**:
+
    ```bash
    sed -i.bak '/^MQTT_/d; /^HA_TOKEN=/d; /^HA_LLAT_KEY=ey/d; /^REQUIRE_DEVICE_ECHO=/d; /^ENABLE_BRIDGE_TELEMETRY=/d; /^EVIDENCE_TIMEOUT_SEC=/d' .env
    ```
 
 3. **Update variable references** in scripts:
+
    ```bash
    # Replace HA_MOUNT usage with CONFIG_ROOT
    find ops/ -name "*.sh" -exec sed -i.bak 's|\$HA_MOUNT|\$CONFIG_ROOT|g' {} \;
@@ -216,51 +233,51 @@ ops/env/env_governance_check.sh
 - [ ] **BB8 checkpoint paths**: `grep 'INT-HA-CONTROL' .env` points to reports/checkpoints/
 - [ ] **Evidence env separate**: `.evidence.env` contains MQTT creds, not `.env`
 
-### Integration Points
+## Integration Points
 
-#### Makefile Targets
+### Makefile Targets
 
 ```make
 env-print:
-	@echo "CONFIG_ROOT=$${CONFIG_ROOT:-/config}"
-	@grep -E '^(export )?[A-Z0-9_]+=' .env | sed 's/^export //'
+   @echo "CONFIG_ROOT=$${CONFIG_ROOT:-/config}"
+   @grep -E '^(export )?[A-Z0-9_]+=' .env | sed 's/^export //'
 
 env-validate:
-	@bash ops/env/env_governance_check.sh | tee reports/checkpoints/ENV-GOV/env_validate.out
+   @bash ops/env/env_governance_check.sh | tee reports/checkpoints/ENV-GOV/env_validate.out
 ```
 
-#### Pre-commit Hook
+### Pre-commit Hook
 
 ```yaml
 - repo: local
   hooks:
-    - id: env-governance
-      name: ENV Governance Check
-      entry: ops/env/env_governance_check.sh
-      language: system
-      files: '^\.env$'
-      pass_filenames: false
+   - id: env-governance
+     name: ENV Governance Check
+     entry: ops/env/env_governance_check.sh
+     language: system
+     files: '^\.env$'
+     pass_filenames: false
 ```
 
-#### CI/CD Integration
+### CI/CD Integration
 
 ```yaml
 - name: ENV Governance Check
   run: |
-    source .env
-    ops/env/env_governance_check.sh
-    make env-validate
+   source .env
+   ops/env/env_governance_check.sh
+   make env-validate
 ```
 
 ## Do's and Don'ts
 
 ### ✅ DO
 
-- **Use CONFIG_ROOT=/config** as the single source of truth for HA config root
+- **Use `CONFIG_ROOT=/config`** as the single source of truth for HA config root
 - **Derive all HA paths** from CONFIG_ROOT (e.g., `$CONFIG_ROOT/hestia`, `$CONFIG_ROOT/domain`)
 - **Keep secrets in `.evidence.env`** - MQTT creds, tokens, test config
 - **Use WORKSPACE_ROOT** for repository-scoped operations and paths
-- **Place scripts in hestia/tools/** - shell_command.yaml files only declare HA entries
+- **Place scripts in `hestia/tools/`** - shell_command.yaml files only declare HA entries
 - **Validate with `make env-validate`** before committing .env changes
 - **Use singular path names** - DIR_DOMAIN not DIR_DOMAINS
 - **Document path derivations** - show how variables build from CONFIG_ROOT
@@ -270,11 +287,11 @@ env-validate:
 - **Put secrets in `.env`** - no MQTT passwords, tokens, or test credentials
 - **Use host-dependent paths** in HA config derivations (HA_MOUNT, ~/hass, $HOME/hass)
 - **Hardcode non-canonical roots** - everything HA-related derives from CONFIG_ROOT
-- **Put scripts in domain/shell_commands/** - that's for declarative YAML only
+- **Put scripts in `domain/shell_commands/`** - that's for declarative YAML only
 - **Use plural path names** inconsistently - prefer singular (domain not domains)
 - **Mix repository paths with HA config paths** - keep WORKSPACE_ROOT and CONFIG_ROOT separate
 - **Skip validation** - always run env-validate after changes
-- **Commit .evidence.env** - it should remain local and excluded from git
+- **Commit `.evidence.env`** - it should remain local and excluded from git
 
 ## Implementation Status
 
