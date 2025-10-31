@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+# Strategos instrumentation (Gate A)
+log_ts() { printf "[%s] %s\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"; }
+
+log_ts "ECHO: run.sh starting (instrumented)"
+# Masked env preview (no secrets)
+( env | grep -E '^(MQTT_HOST|MQTT_PORT|MQTT_BASE|REQUIRE_DEVICE_ECHO|PYTHONPATH)=' | sed -E 's/=.+/=\[MASKED\]/' ) || true
+
+# Python sanity checks (do not fail add-on if unavailable; we log and continue)
+python3 - << 'PY' || true
+import sys
+try:
+    import paho.mqtt.client as m
+    v = getattr(m, '__version__', 'unknown')
+    print(f"PYENV_OK PAHO={v}")
+except Exception as e:
+    print(f"PYENV_FAIL {type(e).__name__}: {e}")
+PY
+
+MODE="${MODE:-echo}"
+if [[ "$MODE" == "sentinel" ]]; then
+  log_ts "ECHO: SENTINEL START (60s)"
+  exec python3 - << 'PY'
+import time
+print("SENTINEL START", flush=True)
+time.sleep(60)
+PY
+fi
+
+# Default: bridge controller foreground process (foreground single-proc)
+log_ts "RUN: launching bb8_core.bridge_controller (foreground exec)"
+
+# Set internal MQTT broker hostname for container environment
+export MQTT_HOST="${MQTT_HOST:-core-mosquitto}"
+export MQTT_PORT="${MQTT_PORT:-1883}"
+export MQTT_USER="${MQTT_USER:-mqtt_bb8}"
+export MQTT_PASSWORD="${MQTT_PASSWORD:-mqtt_bb8}"
+export MQTT_BASE="${MQTT_BASE:-bb8}"
+
+log_ts "MQTT config: host=${MQTT_HOST} port=${MQTT_PORT} user=${MQTT_USER} base=${MQTT_BASE}"
+
+exec python3 -m bb8_core.bridge_controller

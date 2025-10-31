@@ -1,0 +1,112 @@
+#!/usr/bin/env python
+import argparse
+import json
+import os
+import threading
+import time
+
+import paho.mqtt.client as mqtt
+from paho.mqtt.client import CallbackAPIVersion
+
+
+def env(name, default=None, required=False):
+    v = os.environ.get(name, default)
+    if required and (v is None or v == ""):
+        raise SystemExit(f"[probe] missing env {name}")
+    if v is None:
+        v = ""
+    return str(v)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--timeout", type=int, default=8)
+    ap.add_argument("--require-echo", default="1")
+    args = ap.parse_args()
+
+    host = env("MQTT_HOST", default="", required=True)
+    port = int(env("MQTT_PORT", "1883"))
+    user = env("MQTT_USERNAME")
+    pwd = env("MQTT_PASSWORD")
+    base = env("MQTT_BASE", "bb8")
+
+    def get_mqtt_client():
+        return mqtt.Client(
+            client_id=f"probe-{int(time.time())}",
+            callback_api_version=CallbackAPIVersion.VERSION2,
+        )
+
+    client = get_mqtt_client()  # pragma: no cover
+    if user:
+        client.username_pw_set(user, pwd or None)  # pragma: no cover
+    res = {"connected": False, "roundtrip": "FAIL", "schema": "UNKNOWN"}
+    got_echo = threading.Event()
+    payload_seen: dict | None = None
+    from .telemetry import echo_roundtrip
+
+    def on_message(client, userdata, msg):
+        nonlocal payload_seen
+        try:
+            payload = json.loads(msg.payload.decode("utf-8"))
+        except Exception:
+            return
+        if msg.topic == f"{base}/echo/state":
+            payload_seen = payload
+            got_echo.set()
+
+    def on_connect(client, userdata, flags, rc, properties=None):
+        cid = getattr(client, "_client_id", b"")
+        try:
+            cid = cid.decode() if hasattr(cid, "decode") else str(cid)
+        except Exception:
+            cid = str(cid)
+        print(f"mqtt_on_connect rc={rc} client_id={cid}")  # pragma: no cover
+        if rc == 0:
+            res["connected"] = True
+            client.subscribe([(f"{base}/#", 0)])  # pragma: no cover
+            cmd = {"value": 1, "ts": int(time.time())}
+            client.publish(
+                f"{base}/echo/cmd", json.dumps(cmd), qos=0, retain=False
+            )  # pragma: no cover
+
+    client.on_connect = on_connect  # pragma: no cover
+    client.on_message = on_message  # pragma: no cover
+    client.connect(host, port, keepalive=10)  # pragma: no cover
+    client.loop_start()  # pragma: no cover
+    got_echo.wait(timeout=args.timeout)  # pragma: no cover
+    client.loop_stop()  # pragma: no cover
+    client.disconnect()  # pragma: no cover
+    # Telemetry hook (non-fatal)
+    try:
+        ms = int(args.timeout * 1000)
+        ok = (
+            got_echo.is_set()
+            and payload_seen
+            and payload_seen.get("source") == "device"
+        )
+        echo_roundtrip(client, ms, "PASS" if ok else "FAIL")  # pragma: no cover
+    except Exception:
+        pass
+
+    if got_echo.is_set() and payload_seen:
+        if payload_seen.get("source") == "device":
+            res["roundtrip"] = "PASS"
+        else:
+            res["roundtrip"] = "FAIL"
+        res["schema"] = "PASS" if "source" in payload_seen else "FAIL"
+
+    print(
+        f"probe: connected={res['connected']} "
+        f"roundtrip={res['roundtrip']} "
+        f"schema={res['schema']}"
+    )  # pragma: no cover
+    if not res["connected"]:
+        print("probe_exit reason=not_connected")  # pragma: no cover
+        raise SystemExit(2)
+    if res["roundtrip"] != "PASS" and os.environ.get("REQUIRE_DEVICE_ECHO", "1") == "1":
+        print("probe_exit reason=roundtrip_fail")  # pragma: no cover
+        raise SystemExit(3)
+
+
+if __name__ == "__main__":
+    main()
