@@ -10,3 +10,4 @@ This repository contains the **Home Assistant add-on** for the HA-BB8 BB-8 integ
 
 > Evidence bundles and governance docs live in the **workspace repo**.  
 > See PR comments for the latest supervised receipt and SHA manifest.
+
