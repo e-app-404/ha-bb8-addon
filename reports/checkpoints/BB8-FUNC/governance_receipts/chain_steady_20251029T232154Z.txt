@@ -1,9 +1,0 @@
-[Gate]: CHAIN_STEADY
-- Highlights: G1=ACCEPT G2=ACCEPT (diag_scan=true cid1=true actuate_probe=true cid2=true)
-- Evidence host: /config/ha-bb8/checkpoints/BB8-FUNC/20251029T232154Z
-- Evidence local: reports/checkpoints/BB8-FUNC/ssh_20251029T232154Z
-- SHA256: 697ba7fafeedcd68105571101ff2c1104edf743b18070a58885eba2a44c1f2b7  /Users/evertappels/actions-runner/Projects/HA-BB8/reports/checkpoints/BB8-FUNC/20251029T232154Z/evidence_20251029T232154Z.tgz
-- Governance: runtime_state=docs/ops/strategos_runtime_state.json
-- Next: maintain Supervisor-only/MQTT-only; PR #14 review/merge
-- Confidence: 0.97
-- Drift: 0

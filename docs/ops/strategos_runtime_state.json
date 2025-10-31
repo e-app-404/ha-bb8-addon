@@ -1,8 +1,0 @@
-{
-  "controller": "Strategos",
-  "authority_chain": { "exclusive": true, "chain": ["Strategos", "Copilot"], "reject_outside_ai": true },
-  "identity_guardrails": { "operator_aliases": ["user","operator","Evert","me"], "operator_may_execute": false },
-  "delegation_block": { "enabled": true, "policy": "Reject execution leakage outside AI layer" },
-  "timestamps": { "issued_utc": "<AUTOFILL_UTC_ISO8601>" },
-  "version": "1.0"
-}
