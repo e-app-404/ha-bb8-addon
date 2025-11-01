@@ -7,7 +7,6 @@ import logging
 import os
 import socket
 from collections.abc import Callable
-from datetime import UTC, datetime
 from typing import Any
 
 import paho.mqtt.client as mqtt
@@ -21,7 +20,7 @@ from .logging_setup import logger
 """
 mqtt_dispatcher.py
 
-Connects to the MQTT broker, subscribes to command topics, dispatches commands to
+Connects to the MQTT broker, subscribes to command topics, dispatches commands to 
 the BLE bridge/controller, and publishes status + discovery information for HA.
 """
 log = logging.getLogger(__name__)
@@ -270,10 +269,8 @@ def _resolve_mqtt_host() -> tuple[str, str]:
     if cfg_host:
         log.info("mqtt_host=%s source=config", cfg_host)
         return str(cfg_host), "config"
-    # Governance: in-container default must resolve to Home Assistant's internal broker hostname
-    # (ADR-0031/ENV-GOV). Use core-mosquitto instead of localhost to avoid accidental loopback.
-    log.info("mqtt_host=core-mosquitto source=default")
-    return "core-mosquitto", "default"
+    log.info("mqtt_host=localhost source=default")
+    return "localhost", "default"
 
 
 _LOOPBACKS = {"localhost", "192.168.0.129"}
@@ -324,18 +321,16 @@ def _norm_mac(mac: str | None) -> str:
 def _device_block() -> dict[str, Any]:
     mac = CONFIG.get("bb8_mac")
     version = CONFIG.get("ADDON_VERSION", "1.0.0")
-
+    
     # Debug logging to track actual values
-    log.debug(
-        f"_device_block: mac={mac}, version={version}, CONFIG_keys={list(CONFIG.keys()) if CONFIG else 'None'}"
-    )
-
+    log.debug(f"_device_block: mac={mac}, version={version}, CONFIG_keys={list(CONFIG.keys()) if CONFIG else 'None'}")
+    
     if not mac or mac == "UNKNOWN":
         # Fallback to a consistent device ID when MAC is not available
         did = "bb8-sphero-robot"
     else:
         did = f"bb8-{_norm_mac(mac)}"
-
+    
     device_block = {
         "identifiers": [did],
         "name": "BB-8 Sphero Robot",
@@ -344,7 +339,7 @@ def _device_block() -> dict[str, Any]:
         "sw_version": version,
         "suggested_area": "living_room",
     }
-
+    
     # Debug logging of final device block
     log.debug(f"_device_block returning: {device_block}")
     return device_block
@@ -367,14 +362,12 @@ def publish_bb8_discovery(publish_fn) -> None:
     po = CONFIG.get("availability_payload_offline", "offline")
     qos = int(CONFIG.get("qos", 1))
     dev = _device_block()
-
+    
     # Validation of device block before proceeding
     if not dev or not dev.get("identifiers"):
-        log.error(
-            f"Invalid device block generated: {dev}, CONFIG state: {dict(CONFIG) if CONFIG else 'None'}"
-        )
+        log.error(f"Invalid device block generated: {dev}, CONFIG state: {dict(CONFIG) if CONFIG else 'None'}")
         return
-
+    
     log.info(f"Discovery using device block: identifiers={dev.get('identifiers')}, name='{dev.get('name')}'")
 
     def cfg(uid_key: str, topic: str, payload: dict) -> None:
@@ -858,7 +851,6 @@ def start_mqtt_dispatcher(
     retain = retain if retain is not None else True
     status_topic = status_topic or f"{CONFIG.get('MQTT_BASE', 'bb8')}/status"
     tls = tls if tls is not None else CONFIG.get("MQTT_TLS", False)
-    base = CONFIG.get("MQTT_BASE", "bb8")
 
     # Ensure mqtt_host and host_source are set and are strings
     mqtt_host, host_source = _resolve_mqtt_host()
@@ -929,43 +921,6 @@ def start_mqtt_dispatcher(
             # Authoritative seam invocation at call time
             # (thread-safe & testable)
             _trigger_discovery_connected()
-            # Echo responder wiring: subscribe and attach handler
-            echo_cmd_topic = f"{base}/echo/cmd"
-
-            def _on_echo_cmd(_c, _u, msg):
-                try:
-                    try:
-                        data = json.loads(msg.payload.decode("utf-8", "ignore"))
-                    except Exception:
-                        data = {}
-                    cid = data.get("cid")
-                    payload = {
-                        "cid": cid,
-                        "source": "device",
-                        "pong": True,
-                        "ts": datetime.now(UTC).isoformat(),
-                    }
-                    client.publish(
-                        f"{base}/echo/state",
-                        json.dumps(payload, separators=(",", ":")),
-                        qos=0,
-                        retain=False,
-                    )
-                except Exception:
-                    # Defensive: never throw from callback
-                    pass
-            try:
-                client.message_callback_add(echo_cmd_topic, _on_echo_cmd)
-                client.subscribe(echo_cmd_topic, qos=0)
-                logger.info({
-                    "event": "mqtt_subscribed",
-                    "topic": echo_cmd_topic,
-                })
-            except Exception as e:
-                logger.warning({
-                    "event": "echo_responder_bind_failed",
-                    "error": repr(e),
-                })
             if hasattr(controller, "attach_mqtt"):
                 try:
                     controller.attach_mqtt(client, mqtt_topic, qos=qos, retain=retain)

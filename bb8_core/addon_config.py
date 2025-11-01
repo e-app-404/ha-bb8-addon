@@ -7,11 +7,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# Optional dependency: PyYAML may not be present in dev test envs
-try:  # pragma: no cover
-    import yaml  # type: ignore
-except Exception:  # noqa: BLE001
-    yaml = None  # type: ignore[assignment]
+import yaml
 
 logger = logging.getLogger(__name__)
 # Back-compat alias expected by some callers/tests
@@ -79,9 +75,6 @@ def _load_yaml_cfg(
     Load YAML config from the first available candidate path.
     Returns (data, source_path). Empty dict if none valid.
     """
-    if yaml is None:
-        logger.debug("[CONFIG] PyYAML not available; skipping YAML candidates")
-        return {}, None
     candidates = paths or _candidate_paths()
     for pth in candidates:
         if pth.exists():

@@ -1,0 +1,14 @@
+#include <tunables/global>
+profile hassio-addons.ha-bb8-bb8-integration flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  # MQTT networking
+  network inet stream,
+  network inet6 stream,
+  # Read CA certs
+  /etc/ssl/** r,
+  # HA add-on conventional paths
+  /data/** rwk,
+  /config/** r,
+  # Deny writes elsewhere by default
+  deny /** w,
+}

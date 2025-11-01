@@ -33,6 +33,7 @@ def _on_signal(signum, frame):
 from .evidence_capture import EvidenceRecorder
 from .logging_setup import logger
 from .mqtt_dispatcher import (
+    ensure_dispatcher_started,
     register_subscription,  # dynamic topic binding
 )
 
@@ -94,11 +95,8 @@ def _client_or_none():
     return _client_or_none_cached_client
 
 
-# NOTE: Disable legacy MQTT dispatcher auto-start to avoid event-loop conflicts
-# with the in-module paho bootstrap used by __main__. The legacy dispatcher can
-# be explicitly enabled via tests or a config flag if ever needed.
-# (PIE P4/P1 import/runtime policy)
-# ensure_dispatcher_started()
+# so later divergent attempts (e.g., localhost) are suppressed.
+ensure_dispatcher_started()
 _ble_loop: asyncio.AbstractEventLoop | None = None
 _ble_inited: bool = False
 client = None
@@ -352,13 +350,11 @@ def shutdown_ble() -> None:
 
 
 # -------- Dispatcher compatibility shim --------
-def _start_dispatcher_compat(func, supplied: dict[str, Any]) -> Any:  # noqa: F401
+def _start_dispatcher_compat(func, supplied: dict[str, Any]) -> Any:
     """
-    Start MQTT dispatcher, pruning/aliasing kwargs to match the function
-    signature. Supports both legacy
-    ('host','port','topic','user','password','controller') and new-style
-    ('mqtt_host','mqtt_port','mqtt_topic','username','passwd','bridge')
-    names.
+    Start MQTT dispatcher, pruning/aliasing kwargs to match the function signature.
+    Supports both legacy ('host','port','topic','user','password','controller') and
+    new-style ('mqtt_host','mqtt_port','mqtt_topic','username','passwd','bridge') names.
     """
     import inspect
 
@@ -413,7 +409,6 @@ def _start_dispatcher_compat(func, supplied: dict[str, Any]) -> Any:  # noqa: F4
 # -------- Core orchestration --------
 # Canonical entry point for controller startup
 from .facade import BB8Facade
-from .ble_session import BleSession
 
 
 def start_bridge_controller(
@@ -431,6 +426,7 @@ def start_bridge_controller(
     from .ble_gateway import BleGateway
     from .ble_session import BleSession
     from .logging_setup import logger
+    from .mqtt_dispatcher import ensure_dispatcher_started
 
     cfg = config or (load_config()[0] if "load_config" in globals() else {})
 
@@ -504,16 +500,11 @@ def start_bridge_controller(
 
     logger.info({"event": "ble_bridge_init", "target_mac": target_mac})
 
-    # Legacy MQTT dispatcher intentionally not started here; __main__ uses a
-    # self-contained paho bootstrap for MQTT (LWT/online/cmd/ACK/telemetry).
-    # If a legacy path needs it, wire via an explicit config flag.
-    # try:
-    #     ensure_dispatcher_started()
-    # except Exception as e:
-    #     logger.debug({"event": "dispatcher_start_skipped", "reason": str(e)})
+    # Start MQTT dispatcher
+    ensure_dispatcher_started()
 
     # Start supervised watchdog
-    asyncio.create_task(
+    watchdog_task = asyncio.create_task(
         _start_watchdog(facade, ble_session, cfg)
     )
 
@@ -525,9 +516,9 @@ def start_bridge_controller(
 
     return facade
 
+
 async def _start_watchdog(
     facade: BB8Facade, ble_session: BleSession, config: dict[str, Any]
-) -> None:
 ) -> None:
     """
     Supervised watchdog for BLE connection monitoring.
@@ -691,10 +682,7 @@ async def _publish_health_metrics(
             })
 
         # Write to health file for B1 evidence
-        health_file = (
-            "/Users/evertappels/actions-runner/Projects/HA-BB8/"
-            "reports/checkpoints/BB8-FUNC/b1_ble_health.json"
-        )
+        health_file = "/Users/evertappels/actions-runner/Projects/HA-BB8/reports/checkpoints/BB8-FUNC/b1_ble_health.json"
 
         # Ensure directory exists
         os.makedirs(os.path.dirname(health_file), exist_ok=True)
@@ -924,342 +912,6 @@ def _wait_forever(client, bridge, ble=None) -> None:
         })
 
     # Removed unused device echo handler functions
-
-
-if __name__ == "__main__":
-    """
-    Foreground entrypoint (aligned with runtime model policy):
-    - Initialize BLE and facade via start_bridge_controller() within a running
-      asyncio loop to satisfy create_task semantics
-    - Start MQTT dispatcher with explicit env/config resolution
-    - Keep the loop alive indefinitely
-    """
-    import asyncio as _asyncio
-
-    async def _async_entry():
-        cfg, _src = load_config() if 'load_config' in globals() else ({}, None)
-
-        # Initialize core subsystems and get facade for handler attachment
-        facade = start_bridge_controller(config=cfg)
-
-        # Resolve MQTT params (env → config → defaults)
-        mqtt_host = (
-            os.environ.get("MQTT_HOST")
-            or cfg.get("MQTT_HOST")
-            or cfg.get("mqtt_broker")
-            or "core-mosquitto"
-        )
-        try:
-            mqtt_port = int(
-                os.environ.get("MQTT_PORT")
-                or cfg.get("MQTT_PORT")
-                or cfg.get("mqtt_port")
-                or 1883
-            )
-        except Exception:
-            mqtt_port = 1883
-        base = (
-            os.environ.get("MQTT_BASE")
-            or cfg.get("MQTT_BASE")
-            or cfg.get("mqtt_topic_prefix")
-            or "bb8"
-        )
-        username = (
-            os.environ.get("MQTT_USER")
-            or cfg.get("MQTT_USERNAME")
-            or cfg.get("mqtt_username")
-        )
-        password = (
-            os.environ.get("MQTT_PASSWORD")
-            or cfg.get("MQTT_PASSWORD")
-            or cfg.get("mqtt_password")
-        )
-        status_topic = f"{base}/status"
-
-        logger.info({
-            "event": "bridge_controller_mqtt_params",
-            "host": mqtt_host,
-            "port": mqtt_port,
-            "base": base,
-            "user": bool(username),
-        })
-
-        # Minimal, in-module MQTT bootstrap to avoid cross-thread asyncio issues
-        import paho.mqtt.client as mqtt
-        from paho.mqtt.enums import CallbackAPIVersion
-
-        client = mqtt.Client(
-            callback_api_version=CallbackAPIVersion.VERSION2,
-            protocol=mqtt.MQTTv311,
-        )
-        if username and password:
-            client.username_pw_set(username, password)
-        # LWT
-        client.will_set(status_topic, payload="offline", qos=0, retain=True)
-
-        # Helper: publish ACKs
-        def _ack(
-            cmd: str,
-            cid: str | None,
-            ok: bool = True,
-            reason: str | None = None,
-        ):
-            payload: dict[str, Any] = {"ok": bool(ok)}
-            if cid is not None:
-                payload["cid"] = str(cid)
-            if reason is not None:
-                payload["reason"] = str(reason)
-            client.publish(
-                f"{base}/ack/{cmd}",
-                json.dumps(payload),
-                qos=0,
-                retain=False,
-            )
-
-        loop = _asyncio.get_running_loop()
-
-        def _on_connect(cl, _ud, _flags, rc, _properties=None):
-            cl.publish(
-                status_topic,
-                payload="online",
-                qos=0,
-                retain=True,
-            )
-            # Commands and echo responder subscriptions
-            cl.subscribe(f"{base}/cmd/#", qos=0)
-            cl.subscribe(f"{base}/echo/cmd", qos=0)
-            logger.info({
-                "event": "mqtt_connected",
-                "rc": rc,
-                "reason": "success" if rc == 0 else rc,
-            })
-
-        def _on_message(cl, ud, msg):
-            try:
-                logger.info({
-                    "event": "mqtt_cmd_received",
-                    "topic": getattr(msg, "topic", ""),
-                    "len": len(getattr(msg, "payload", b"")),
-                })
-                topic = msg.topic or ""
-                cmd = topic.split("/")[-1]
-                raw = (msg.payload or b"{}").decode("utf-8", "ignore")
-                data = {}
-                try:
-                    data = json.loads(raw) if raw else {}
-                except Exception:
-                    data = {}
-                cid = data.get("cid")
-
-                # Dispatch to facade on main loop thread
-                if facade is not None:
-                    if cmd == "power":
-                        action = (data.get("action") or "").lower()
-                        if hasattr(facade, "power"):
-                            loop.call_soon_threadsafe(
-                                lambda: facade.power(action == "wake")
-                            )
-                            _ack("power", cid, True)
-                        else:
-                            _ack(
-                                "power",
-                                cid,
-                                False,
-                                "Facade missing 'power' method",
-                            )
-                    elif cmd == "stop":
-                        if hasattr(facade, "stop"):
-                            loop.call_soon_threadsafe(lambda: facade.stop())
-                            _ack("stop", cid, True)
-                        else:
-                            _ack(
-                                "stop",
-                                cid,
-                                False,
-                                "Facade missing 'stop' method",
-                            )
-                    elif cmd == "led":
-                        r = int(data.get("r", 0))
-                        g = int(data.get("g", 0))
-                        b = int(data.get("b", 0))
-                        if facade is None:
-                            _ack("led", cid, False, "Facade is None")
-                        elif hasattr(facade, "set_led_async"):
-                            loop.call_soon_threadsafe(
-                                lambda: _asyncio.create_task(
-                                    facade.set_led_async(r, g, b, cid)
-                                )
-                            )
-                            _ack("led", cid, True)
-                        else:
-                            _ack(
-                                "led",
-                                cid,
-                                False,
-                                "Facade missing 'set_led_async' method",
-                            )
-                    elif cmd == "led_preset":
-                        name = data.get("name")
-                        if name is not None and hasattr(
-                            facade, "set_led_preset"
-                        ):
-                            loop.call_soon_threadsafe(
-                                lambda: _asyncio.create_task(
-                                    facade.set_led_preset(str(name), cid)
-                                )
-                            )
-                            _ack("led_preset", cid, True)
-                        elif name is None:
-                            _ack(
-                                "led_preset", cid, False, "Missing preset name"
-                            )
-                        else:
-                            _ack(
-                                "led_preset",
-                                cid,
-                                False,
-                                "Facade missing 'set_led_preset' method",
-                            )
-                    elif cmd == "drive":
-                        speed = int(data.get("speed", 0))
-                        heading = int(data.get("heading", 0))
-                        ms = data.get("ms")
-                        ms = int(ms) if ms is not None else None
-                        if facade is not None:
-                            if hasattr(facade, "drive"):
-                                loop.call_soon_threadsafe(
-                                    lambda: _asyncio.create_task(
-                                        facade.drive(speed, heading, ms)
-                                    )
-                                )
-                                _ack("drive", cid, True)
-                            else:
-                                _ack(
-                                    "drive",
-                                    cid,
-                                    False,
-                                    "Facade missing 'drive' method",
-                                )
-                        else:
-                            _ack("drive", cid, False, "Facade is None")
-                    elif cmd == "estop":
-                        reason = data.get("reason", "MQTT emergency stop")
-                        if facade is not None and hasattr(facade, "estop"):
-                            loop.call_soon_threadsafe(
-                                lambda: _asyncio.create_task(
-                                    facade.estop(reason)
-                                )
-                            )
-                            _ack("estop", cid, True)
-                        elif facade is None:
-                            _ack("estop", cid, False, "Facade is None")
-                        else:
-                            _ack(
-                                "estop",
-                                cid,
-                                False,
-                                "Facade missing 'estop' method",
-                            )
-                    elif cmd == "clear_estop":
-                        if facade is not None and hasattr(
-                            facade, "clear_estop"
-                        ):
-                            loop.call_soon_threadsafe(
-                                lambda: _asyncio.create_task(
-                                    facade.clear_estop()
-                                )
-                            )
-                            _ack("clear_estop", cid, True)
-                        elif facade is None:
-                            _ack("clear_estop", cid, False, "Facade is None")
-                        else:
-                            _ack(
-                                "clear_estop",
-                                cid,
-                                False,
-                                "Facade missing 'clear_estop' method",
-                            )
-                    elif topic == f"{base}/echo/cmd":
-                        # Immediate echo responder for evidence harness
-                        try:
-                            echo_payload = {
-                                "cid": cid,
-                                "source": "device",
-                                "pong": True,
-                                "ts": time.strftime(
-                                    "%Y-%m-%dT%H:%M:%SZ", time.gmtime()
-                                ),
-                            }
-                            cl.publish(
-                                f"{base}/echo/state",
-                                json.dumps(echo_payload, separators=(",", ":")),
-                                qos=0,
-                                retain=False,
-                            )
-                        except Exception:
-                            pass
-                else:
-                    _ack("unknown", cid, False, f"no handler for {topic}")
-            except Exception as ex:  # defensive guard
-                import contextlib
-
-                with contextlib.suppress(Exception):
-                    _ack(
-                        "unknown",
-                        None,
-                        False,
-                        f"handler error: {type(ex).__name__}",
-                    )
-
-        client.on_connect = _on_connect
-        client.on_message = _on_message
-        client.connect(mqtt_host, mqtt_port, keepalive=60)
-        client.loop_start()
-
-        async def _telemetry_heartbeat():
-            while True:
-                try:
-                    conn = bool(getattr(facade, "is_connected", lambda: None)())
-                except Exception:
-                    conn = None
-                snap = {
-                    # Report actual BLE connectivity when available;
-                    # fallback True
-                    "connected": (conn if conn is not None else True),
-                    "estop": getattr(
-                        getattr(facade, "_safety", None),
-                        "is_estop_active",
-                        lambda: False,
-                    )(),
-                    "last_cmd_ts": None,
-                    "battery_pct": None,
-                    "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                }
-                import contextlib
-
-                with contextlib.suppress(Exception):
-                    client.publish(
-                        f"{base}/status/telemetry",
-                        json.dumps(snap),
-                        qos=0,
-                        retain=False,
-                    )
-                await _asyncio.sleep(10.0)
-
-        # start telemetry task in loop
-        _asyncio.create_task(_telemetry_heartbeat())
-
-        # Keep the loop alive indefinitely
-        evt = _asyncio.Event()
-        await evt.wait()
-
-    try:
-        _asyncio.run(_async_entry())
-    except SystemExit:
-        raise
-    except Exception as e:
-        logger.error({"event": "bridge_controller_fatal", "error": repr(e)})
-        raise
 
 
 # Removed import of register_subscription (unknown symbol)
