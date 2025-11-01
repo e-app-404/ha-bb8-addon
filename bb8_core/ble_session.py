@@ -18,21 +18,9 @@ import random
 import time
 from typing import Any
 
-# Optional spherov2 imports. For unit tests (without spherov2),
-# leave placeholders that tests can patch.
-try:  # pragma: no cover - import surface varies in CI/dev
-    from spherov2.adapter.bleak_adapter import BleakAdapter as _BleakAdapter
-    from spherov2.scanner import find_toys as _find_toys
-    from spherov2.toy.bb8 import BB8 as _BB8
-except Exception:  # noqa: BLE001
-    _BleakAdapter = None  # type: ignore[assignment]
-    _find_toys = None  # type: ignore[assignment]
-    _BB8 = None  # type: ignore[assignment]
-
-# Expose names for tests to patch reliably
-BleakAdapter = _BleakAdapter  # type: ignore[assignment]
-find_toys = _find_toys  # type: ignore[assignment]
-BB8 = _BB8  # type: ignore[assignment]
+from spherov2.adapter.bleak_adapter import BleakAdapter
+from spherov2.scanner import find_toys
+from spherov2.toy.bb8 import BB8
 
 from .logging_setup import logger
 
@@ -76,10 +64,7 @@ class BleSession:
             target_mac: BB-8 MAC address. If None, auto-discovery will be used.
         """
         self._target_mac = target_mac
-        # Use Any here to avoid importing spherov2 in environments without it
-        from typing import Any as _Any
-
-        self._toy: _Any | None = None
+        self._toy: BB8 | None = None
         self._connected = False
         self._connect_attempts = 0
         self._last_connect_time = 0.0
@@ -130,34 +115,21 @@ class BleSession:
                 })
 
                 # Find BB-8 device
-                # Discover toys (tests patch find_toys; in prod, uses spherov2)
-                toys = []
-                if find_toys:
-                    toys = find_toys(timeout=self._connect_timeout)
+                toys = find_toys(timeout=self._connect_timeout)
                 bb8_toy = None
                 for toy in toys:
-                    # If BB8 class is available, require instance match; otherwise
-                    # fall back to string/addr contains the target (tests set address)
-                    if BB8 and isinstance(toy, BB8):
-                        if target.lower() in str(toy).lower():
-                            bb8_toy = toy
-                            break
-                    else:
-                        if target.lower() in str(toy).lower() or getattr(
-                            toy, "address", ""
-                        ).lower() == target.lower():
-                            bb8_toy = toy
-                            break
+                    if (
+                        isinstance(toy, BB8)
+                        and target.lower() in str(toy).lower()
+                    ):
+                        bb8_toy = toy
+                        break
 
                 if not bb8_toy:
                     raise ConnectionError(f"BB-8 not found at {target}")
 
-                # Create BB8 instance with BleakAdapter when available; otherwise
-                # use the discovered toy directly (tests patch BB8 to return a mock)
-                if BB8 and BleakAdapter:
-                    self._toy = BB8(bb8_toy, adapter_cls=BleakAdapter)
-                else:
-                    self._toy = bb8_toy
+                # Create BB8 instance with BleakAdapter
+                self._toy = BB8(bb8_toy, adapter_cls=BleakAdapter)
 
                 # Connect using spherov2 context manager
                 try:
@@ -237,12 +209,10 @@ class BleSession:
         """
         try:
             logger.info({"event": "ble_session_discovery_start"})
-            toys = []
-            if find_toys:
-                toys = find_toys(timeout=self._connect_timeout)
+            toys = find_toys(timeout=self._connect_timeout)
 
             for toy in toys:
-                if (BB8 and isinstance(toy, BB8)) or not BB8:
+                if isinstance(toy, BB8):
                     # Extract MAC from toy address
                     toy_str = str(toy)
                     # BB8 toy string typically contains MAC address

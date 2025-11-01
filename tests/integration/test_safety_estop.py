@@ -12,8 +12,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from addon.bb8_core.facade import BB8Facade
-from addon.bb8_core.safety import (
+from bb8_core.facade import BB8Facade
+from bb8_core.safety import (
     MotionSafetyController,
     SafetyConfig,
     SafetyViolation,
