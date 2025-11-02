@@ -1,0 +1,35 @@
+name: ADR-0001 Structure Gate
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  adr_structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify add-on repo shape (ADR-0001/A1)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "== MUST-HAVE at repo root =="
+          miss=0
+          for f in README.md VERSION apparmor.txt; do
+            if [ ! -f "$f" ]; then echo "Error: missing required: $f"; miss=1; fi
+          done
+          echo "== MUST-NOT (forbidden at root) =="
+          # .github allowed ONLY for this workflow file
+          for d in docs reports scripts; do
+            if [ -e "$d" ]; then echo "Error: forbidden in add-on repo root: $d"; miss=1; fi
+          done
+          if [ -d ".github" ]; then
+            bad=$(find .github -type f | grep -v '.github/workflows/adr-structure.yml' || true)
+            if [ -n "$bad" ]; then
+              echo "Error: forbidden .github contents detected:"; echo "$bad"; miss=1
+            fi
+          fi
+          echo "== Hygiene =="
+          if [ "$miss" -ne 0 ]; then
+            echo "Error: ADR-0001/A1 structure gate failed"; exit 1
+          fi
+          echo "PASS: ADR-0001/A1 structure gate"
