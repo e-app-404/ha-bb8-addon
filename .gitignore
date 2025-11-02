@@ -2,3 +2,8 @@
 /reports/
 /scripts/
 /.github/
+
+# ADR-0001-A1: allow minimal structure workflow only
+!.github/
+!.github/workflows/
+!.github/workflows/adr-structure.yml
