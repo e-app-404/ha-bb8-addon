@@ -1,3 +1,12 @@
+## 0.1.1 — 2025-11-03
+- MQTT resilience: safe_publish + connect-queue + logging normalization
+- Metrics topic: {BASE}/status/metrics (best-effort on connect/flush)
+- No telemetry/ACK schema changes
+- Supervised acceptance: G1/G2/G3 ACCEPT @ cf8077c
+  evidence: /config/ha-bb8/checkpoints/BB8-FUNC/20251103T230728Z
+  sha256: 0796ccac67feaf9fbcfc8f9a85bb50247d8e74270b4ed332159efa05b4583c15
+
+
 # Add-on Changelog
 
 ## 2025-10-08
