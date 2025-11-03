@@ -239,7 +239,16 @@ class BLEBridge:
             t = f"{base_topic}/{topic_suffix}"
             if isinstance(payload, dict | list):
                 payload = json.dumps(payload, separators=(",", ":"))
-            client.publish(t, payload=payload, qos=qos, retain=r)
+            # Prefer dispatcher.safe_publish for resilience; fallback to direct publish
+            try:
+                from . import mqtt_dispatcher as _md  # lazy import to avoid cycles
+
+                if hasattr(_md, "safe_publish"):
+                    _md.safe_publish(client, t, payload, qos=qos, retain=r)
+                else:
+                    client.publish(t, payload=payload, qos=qos, retain=r)
+            except Exception:
+                client.publish(t, payload=payload, qos=qos, retain=r)
 
         # --- Command handlers ---
         def _handle_power(_client, _userdata, msg):

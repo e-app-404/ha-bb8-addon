@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import socket
+import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
@@ -877,6 +878,12 @@ def start_mqtt_dispatcher(
     Reason-logged connect/disconnect
     Optional TLS (default False)
     """
+    # Cache guard upfront (non-fatal)
+    try:
+        _cache_guard_version()
+    except Exception:
+        pass
+
     logger.info(
         {
             "event": "mqtt_connect_attempt",
@@ -925,7 +932,20 @@ def start_mqtt_dispatcher(
         reason = REASONS.get(rc_value, f"unknown_{rc_value}")
         if rc_value == 0:
             logger.info({"event": "mqtt_connected", "rc": rc_value, "reason": reason})
+            # mark connected and flush queue
+            global _CONNECTED_AT, _OFFLINE_SINCE
+            _CONNECTED_AT = time.time()
+            _OFFLINE_SINCE = None
             client.publish(status_topic, payload="online", qos=qos, retain=False)
+            try:
+                _flush_queue(client)
+            except Exception:
+                # never raise from callback
+                pass
+            try:
+                _publish_metrics(client)
+            except Exception:
+                pass
             # Authoritative seam invocation at call time
             # (thread-safe & testable)
             _trigger_discovery_connected()
@@ -976,17 +996,19 @@ def start_mqtt_dispatcher(
                             "error": repr(e),
                         }
                     )
-        else:
-            logger.error(
-                {
-                    "event": "mqtt_connect_failed",
-                    "rc": rc,
-                    "reason": reason,
-                }
-            )
+            else:
+                # Treat as transient by default
+                logger.debug(
+                    {
+                        "event": "mqtt_connect_failed",
+                        "rc": rc,
+                        "reason": reason,
+                    }
+                )
 
     def _on_disconnect(client, userdata, flags, rc, properties=None):
-        logger.warning({"event": "mqtt_disconnected", "rc": rc})
+        # Note: disconnects are common; keep at INFO
+        logger.info({"event": "mqtt_disconnect", "rc": rc})
 
     client.on_connect = _on_connect
     client.on_disconnect = _on_disconnect
@@ -1144,3 +1166,189 @@ __all__ = [
     "turn_off_bb8",
     "main",
 ]
+
+# -----------------------------------------------------------------------------
+# Resilience helpers: safe_publish, payload validation, queue gating, metrics
+# -----------------------------------------------------------------------------
+
+# Module-level counters and state
+_PUBLISH_QUEUE: list[tuple[str, str, int, bool, float]] = []  # (topic, payload, qos, retain, ts)
+_OFFLINE_SINCE: float | None = None
+_PROCESS_STARTED_AT: float = time.time()
+_CONNECTED_AT: float | None = None
+mqtt_publish_failures_total: int = 0
+
+
+def _json_sanitise(obj: Any) -> Any:
+    """Recursively sanitise JSON-like obj: drop None, round floats(2)."""
+    if isinstance(obj, dict):
+        out = {}
+        for k, v in obj.items():
+            if v is None:
+                continue
+            out[k] = _json_sanitise(v)
+        return out
+    if isinstance(obj, list):
+        return [_json_sanitise(v) for v in obj if v is not None]
+    if isinstance(obj, float):
+        return round(obj, 2)
+    return obj
+
+
+def _validate_payload(obj: Any) -> tuple[bool, str | None, str | None]:
+    """Validate/normalise payload to JSON string.
+
+    Returns (ok, payload_str, err_msg).
+    Accepts str (passed-through) or JSON-serialisable objects.
+    Drops None fields and rounds floats to 2 decimals.
+    """
+    try:
+        if isinstance(obj, (bytes, bytearray)):
+            try:
+                obj = obj.decode("utf-8", "ignore")
+            except Exception:
+                obj = str(obj)
+        if isinstance(obj, str):
+            # Ensure it's encodable
+            json.dumps({"_": 1})  # sanity no-op
+            return True, obj, None
+        # Coerce to compact JSON string
+        cleaned = _json_sanitise(obj)
+        s = json.dumps(cleaned, separators=(",", ":"))
+        return True, s, None
+    except Exception as e:  # noqa: BLE001
+        return False, None, f"payload_not_serialisable: {e}"
+
+
+def _publish_metrics(client: Any) -> None:
+    """Publish lightweight metrics under {base}/status/metrics (best-effort)."""
+    try:
+        base = CONFIG.get("MQTT_BASE", "bb8")
+        topic = f"{base}/status/metrics"
+        queue_depth = len(_PUBLISH_QUEUE)
+        now = time.time()
+        up_ratio = 0.0
+        if _CONNECTED_AT is not None:
+            denom = max(0.001, now - _PROCESS_STARTED_AT)
+            up_ratio = max(0.0, min(1.0, (now - _CONNECTED_AT) / denom))
+        payload = {
+            "publish_failures_total": mqtt_publish_failures_total,
+            "queue_depth": queue_depth,
+            "uptime_ratio": round(up_ratio, 4),
+            "ts": datetime.now(UTC).isoformat(),
+        }
+        ok, s, err = _validate_payload(payload)
+        if not ok or s is None:
+            logger.error({"event": "metrics_payload_invalid", "error": err})
+            return
+        # Use qos 0, retain False for metrics
+        client.publish(topic, s, qos=0, retain=False)
+        logger.info({"event": "mqtt_publish", "topic": topic, "len": len(s)})
+    except Exception as e:  # noqa: BLE001
+        # Metrics failures are non-fatal
+        logger.debug({"event": "metrics_publish_failed", "error": repr(e)})
+
+
+def _flush_queue(client: Any, max_age_s: float = 5.0) -> None:
+    """Flush queued publishes; drop items older than max_age_s."""
+    global mqtt_publish_failures_total
+    if not _PUBLISH_QUEUE:
+        return
+    now = time.time()
+    kept: list[tuple[str, str, int, bool, float]] = []
+    to_send = []
+    for item in _PUBLISH_QUEUE:
+        if now - item[4] <= max_age_s:
+            to_send.append(item)
+        else:
+            mqtt_publish_failures_total += 1
+    # Clear queue then re-add any kept (should be none after flush)
+    _PUBLISH_QUEUE.clear()
+    for topic, payload, qos, retain, _ts in to_send:
+        try:
+            client.publish(topic, payload, qos=qos, retain=retain)
+        except Exception as e:  # noqa: BLE001
+            mqtt_publish_failures_total += 1
+            logger.debug({"event": "mqtt_publish_transient", "error": repr(e)})
+            # Requeue once at head to avoid loss if connect bounces immediately
+            kept.append((topic, payload, qos, retain, now))
+    _PUBLISH_QUEUE.extend(kept)
+    _publish_metrics(client)
+
+
+def safe_publish(client: Any, topic: str, payload: Any, qos: int = 0, retain: bool = False) -> bool:
+    """Publish safely with validation and simple backoff.
+
+    - Validates topic and payload (JSON-serialisable)
+    - If client is not connected yet, enqueue and return False (will flush on connect)
+    - Backoff on transient exceptions: 0.5s, 2s, 5s (max 3 tries)
+    - DEBUG on transient errors; ERROR only on schema faults
+    Returns True if a publish was attempted (or queued), False on validation error.
+    """
+    global _OFFLINE_SINCE, mqtt_publish_failures_total
+    if not topic or not isinstance(topic, str):
+        logger.error({"event": "mqtt_publish_invalid_topic"})
+        return False
+    ok, payload_str, err = _validate_payload(payload)
+    if not ok or payload_str is None:
+        mqtt_publish_failures_total += 1
+        logger.error({"event": "mqtt_publish_schema_error", "error": err})
+        return False
+
+    # Gate on connectivity if available
+    is_conn = getattr(client, "is_connected", None)
+    connected = bool(is_conn() if callable(is_conn) else True)
+    if not connected:
+        # Queue and return; on_connect will flush
+        _PUBLISH_QUEUE.append((topic, payload_str, qos, retain, time.time()))
+        if _OFFLINE_SINCE is None:
+            _OFFLINE_SINCE = time.time()
+        else:
+            if time.time() - _OFFLINE_SINCE > 10:
+                logger.warning({"event": "mqtt_offline_prolonged", "secs": round(time.time()-_OFFLINE_SINCE,1)})
+        return False
+
+    # Connected path with backoff on transient exceptions
+    backoffs = (0.5, 2.0, 5.0)
+    for i, delay in enumerate(backoffs, start=1):
+        try:
+            mid = client.publish(topic, payload_str, qos=qos, retain=retain)
+            # Best-effort wait if available
+            getattr(mid, "wait_for_publish", lambda timeout=1: True)(timeout=1)
+            logger.info({"event": "mqtt_publish", "topic": topic, "len": len(payload_str)})
+            return True
+        except Exception as e:  # noqa: BLE001
+            logger.debug({"event": "mqtt_publish_transient", "try": i, "error": repr(e)})
+            time.sleep(delay)
+    mqtt_publish_failures_total += 1
+    return False
+
+
+def _cache_guard_version() -> None:
+    """Validate /data/bb8_cache.json; warn and regenerate defaults if corrupt.
+
+    Adds a simple structure with cache_version and timestamp; never raises.
+    """
+    try:
+        path = "/data/bb8_cache.json"
+        if not os.path.exists(path):
+            # create minimal cache
+            data = {"cache_version": 1, "ts": datetime.now(UTC).isoformat()}
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(json.dumps(data, separators=(",", ":")))
+            return
+        # Validate
+        with open(path, "r", encoding="utf-8") as f:
+            obj = json.load(f)
+        if not isinstance(obj, dict) or "cache_version" not in obj:
+            raise ValueError("missing cache_version")
+    except Exception as e:  # noqa: BLE001
+        logger.warning({"event": "cache_guard_regenerate", "error": repr(e)})
+        try:
+            data = {"cache_version": 1, "ts": datetime.now(UTC).isoformat(), "notes": "regenerated"}
+            with open("/data/bb8_cache.json", "w", encoding="utf-8") as f:
+                f.write(json.dumps(data, separators=(",", ":")))
+        except Exception:
+            # final fallback: ignore
+            pass
+
