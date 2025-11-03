@@ -869,6 +869,12 @@ def start_mqtt_dispatcher(
     Reason-logged connect/disconnect
     Optional TLS (default False)
     """
+
+    # Cache guard upfront (non-fatal)
+    try:
+        _cache_guard_version()
+    except Exception:
+        pass
     logger.info(
         {
             "event": "mqtt_connect_attempt",
@@ -918,6 +924,17 @@ def start_mqtt_dispatcher(
         if rc_value == 0:
             logger.info({"event": "mqtt_connected", "rc": rc_value, "reason": reason})
             client.publish(status_topic, payload="online", qos=qos, retain=False)
+            global _CONNECTED_AT, _OFFLINE_SINCE
+            _CONNECTED_AT = time.time()
+            _OFFLINE_SINCE = None
+            try:
+                _flush_queue(client)
+            except Exception:
+                pass
+            try:
+                _publish_metrics(client)
+            except Exception:
+                pass
             # Authoritative seam invocation at call time
             # (thread-safe & testable)
             _trigger_discovery_connected()
@@ -932,7 +949,7 @@ def start_mqtt_dispatcher(
                         }
                     )
         else:
-            logger.error(
+            logger.debug(
                 {
                     "event": "mqtt_connect_failed",
                     "rc": rc,
@@ -941,7 +958,7 @@ def start_mqtt_dispatcher(
             )
 
     def _on_disconnect(client, userdata, flags, rc, properties=None):
-        logger.warning({"event": "mqtt_disconnected", "rc": rc})
+        logger.info({"event": "mqtt_disconnect", "rc": rc})
 
     client.on_connect = _on_connect
     client.on_disconnect = _on_disconnect
@@ -1099,3 +1116,137 @@ __all__ = [
     "turn_off_bb8",
     "main",
 ]
+
+
+# -----------------------------------------------------------------------------
+# Resilience helpers: safe_publish, payload validation, queue gating, metrics
+# -----------------------------------------------------------------------------
+_PUBLISH_QUEUE: list[tuple[str, str, int, bool, float]] = []  # (topic, payload, qos, retain, ts)
+_OFFLINE_SINCE: float | None = None
+_PROCESS_STARTED_AT: float = time.time()
+_CONNECTED_AT: float | None = None
+mqtt_publish_failures_total: int = 0
+
+def _json_sanitise(obj):
+    if isinstance(obj, dict):
+        return {k: _json_sanitise(v) for k, v in obj.items() if v is not None}
+    if isinstance(obj, list):
+        return [_json_sanitise(v) for v in obj if v is not None]
+    if isinstance(obj, float):
+        return round(obj, 2)
+    return obj
+
+def _validate_payload(obj):
+    try:
+        if isinstance(obj, (bytes, bytearray)):
+            try:
+                obj = obj.decode('utf-8', 'ignore')
+            except Exception:
+                obj = str(obj)
+        if isinstance(obj, str):
+            json.dumps({'_': 1})
+            return True, obj, None
+        s = json.dumps(_json_sanitise(obj), separators=(',', ':'))
+        return True, s, None
+    except Exception as e:
+        return False, None, f'payload_not_serialisable: {e}'
+
+def _publish_metrics(client):
+    try:
+        base = CONFIG.get('MQTT_BASE', 'bb8')
+        topic = f"{base}/status/metrics"
+        queue_depth = len(_PUBLISH_QUEUE)
+        now = time.time()
+        up_ratio = 0.0
+        if _CONNECTED_AT is not None:
+            denom = max(0.001, now - _PROCESS_STARTED_AT)
+            up_ratio = max(0.0, min(1.0, (now - _CONNECTED_AT) / denom))
+        payload = {
+            'publish_failures_total': mqtt_publish_failures_total,
+            'queue_depth': queue_depth,
+            'uptime_ratio': round(up_ratio, 4),
+            'ts': datetime.now(UTC).isoformat(),
+        }
+        ok, s, err = _validate_payload(payload)
+        if not ok or s is None:
+            logger.error({'event': 'metrics_payload_invalid', 'error': err})
+            return
+        client.publish(topic, s, qos=0, retain=False)
+        logger.info({'event': 'mqtt_publish', 'topic': topic, 'len': len(s)})
+    except Exception as e:
+        logger.debug({'event': 'metrics_publish_failed', 'error': repr(e)})
+
+def _flush_queue(client, max_age_s: float = 5.0):
+    global mqtt_publish_failures_total
+    if not _PUBLISH_QUEUE:
+        return
+    now = time.time()
+    kept = []
+    to_send = []
+    for topic, payload, qos, retain, ts in list(_PUBLISH_QUEUE):
+        if now - ts <= max_age_s:
+            to_send.append((topic, payload, qos, retain, ts))
+        else:
+            mqtt_publish_failures_total += 1
+    _PUBLISH_QUEUE.clear()
+    for topic, payload, qos, retain, _ in to_send:
+        try:
+            client.publish(topic, payload, qos=qos, retain=retain)
+        except Exception as e:
+            mqtt_publish_failures_total += 1
+            logger.debug({'event': 'mqtt_publish_transient', 'error': repr(e)})
+            kept.append((topic, payload, qos, retain, now))
+    _PUBLISH_QUEUE.extend(kept)
+    _publish_metrics(client)
+
+def safe_publish(client, topic: str, payload, qos: int = 0, retain: bool = False) -> bool:
+    global _OFFLINE_SINCE, mqtt_publish_failures_total
+    if not topic or not isinstance(topic, str):
+        logger.error({'event': 'mqtt_publish_invalid_topic'})
+        return False
+    ok, payload_str, err = _validate_payload(payload)
+    if not ok or payload_str is None:
+        mqtt_publish_failures_total += 1
+        logger.error({'event': 'mqtt_publish_schema_error', 'error': err})
+        return False
+    is_conn = getattr(client, 'is_connected', None)
+    connected = bool(is_conn() if callable(is_conn) else True)
+    if not connected:
+        _PUBLISH_QUEUE.append((topic, payload_str, qos, retain, time.time()))
+        if _OFFLINE_SINCE is None:
+            _OFFLINE_SINCE = time.time()
+        elif time.time() - _OFFLINE_SINCE > 10:
+            logger.warning({'event': 'mqtt_offline_prolonged', 'secs': round(time.time()-_OFFLINE_SINCE, 1)})
+        return False
+    for i, delay in enumerate((0.5, 2.0, 5.0), start=1):
+        try:
+            mid = client.publish(topic, payload_str, qos=qos, retain=retain)
+            getattr(mid, 'wait_for_publish', lambda timeout=1: True)(timeout=1)
+            logger.info({'event': 'mqtt_publish', 'topic': topic, 'len': len(payload_str)})
+            return True
+        except Exception as e:
+            logger.debug({'event': 'mqtt_publish_transient', 'try': i, 'error': repr(e)})
+            time.sleep(delay)
+    mqtt_publish_failures_total += 1
+    return False
+
+def _cache_guard_version():
+    try:
+        path = '/data/bb8_cache.json'
+        if not os.path.exists(path):
+            data = {'cache_version': 1, 'ts': datetime.now(UTC).isoformat()}
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(json.dumps(data, separators=(',', ':')))
+            return
+        with open(path, 'r', encoding='utf-8') as f:
+            obj = json.load(f)
+        if not isinstance(obj, dict) or 'cache_version' not in obj:
+            raise ValueError('missing cache_version')
+    except Exception as e:
+        logger.warning({'event': 'cache_guard_regenerate', 'error': repr(e)})
+        try:
+            data = {'cache_version': 1, 'ts': datetime.now(UTC).isoformat(), 'notes': 'regenerated'}
+            with open('/data/bb8_cache.json', 'w', encoding='utf-8') as f:
+                f.write(json.dumps(data, separators=(',', ':')))
+        except Exception:
+            pass
