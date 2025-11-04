@@ -335,9 +335,10 @@ def _device_block() -> dict[str, Any]:
     
     device_block = {
         "identifiers": [did],
-        "name": "BB-8 Sphero Robot",
+        "connections": ([["bluetooth", mac]] if mac and mac != "UNKNOWN" else []),
+        "name": "BB-8",
         "manufacturer": "Sphero",
-        "model": "BB-8 App-Enabled Droid",
+        "model": "BB-8",
         "sw_version": version,
         "suggested_area": "living_room",
     }

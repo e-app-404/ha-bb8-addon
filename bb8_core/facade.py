@@ -1003,6 +1003,107 @@ class BB8Facade:
         )
         self.publish_rssi = lambda dbm: _pub("rssi/state", str(int(dbm)))
 
+
+        # Minimal interaction commands (wake/roll/sleep)
+        def _handle_wake_cmd(_c, _u, msg):
+            cid = None
+            echo = None
+            try:
+                payload = (msg.payload or b'').decode('utf-8')
+                echo = payload
+                obj = None
+                try:
+                    obj = json.loads(payload)
+                except Exception:
+                    obj = {}
+                if isinstance(obj, dict):
+                    cid = obj.get('cid')
+                async def _do():
+                    ok = False
+                    try:
+                        await self.ensure_connected()
+                        session = self._get_or_create_session()
+                        await asyncio.wait_for(session.wake(), timeout=3.0)
+                        ok = True
+                    except Exception:
+                        ok = False
+                    ack = {"ok": ok}
+                    if cid:
+                        ack["cid"] = cid
+                    if echo is not None:
+                        ack["echo"] = echo
+                    _pub('ack/wake', ack, r=False)
+                self._schedule_task(_do())
+            except Exception as e:
+                logger.error({"event": "wake_handler_error", "error": repr(e)})
+
+        def _handle_roll_cmd(_c, _u, msg):
+            cid = None
+            echo = None
+            h = None
+            v = None
+            try:
+                payload = (msg.payload or b'').decode('utf-8')
+                echo = payload
+                obj = None
+                try:
+                    obj = json.loads(payload)
+                except Exception:
+                    obj = {}
+                if isinstance(obj, dict):
+                    cid = obj.get('cid')
+                    h = int(obj.get('h', 0))
+                    v = int(obj.get('v', 0))
+                async def _do():
+                    ok = False
+                    try:
+                        await self.ensure_connected()
+                        session = self._get_or_create_session()
+                        # one-shot roll for ~1s
+                        await asyncio.wait_for(session.roll(v or 0, h or 0, 1000), timeout=3.5)
+                        ok = True
+                    except Exception:
+                        ok = False
+                    ack = {"ok": ok, "h": h or 0, "v": v or 0}
+                    if cid:
+                        ack["cid"] = cid
+                    if echo is not None:
+                        ack["echo"] = echo
+                    _pub('ack/roll', ack, r=False)
+                self._schedule_task(_do())
+            except Exception as e:
+                logger.error({"event": "roll_handler_error", "error": repr(e)})
+
+        def _handle_sleep_cmd(_c, _u, msg):
+            cid = None
+            echo = None
+            try:
+                payload = (msg.payload or b'').decode('utf-8')
+                echo = payload
+                obj = None
+                try:
+                    obj = json.loads(payload)
+                except Exception:
+                    obj = {}
+                if isinstance(obj, dict):
+                    cid = obj.get('cid')
+                async def _do():
+                    ok = False
+                    try:
+                        session = self._get_or_create_session()
+                        await asyncio.wait_for(session.sleep(), timeout=3.0)
+                        ok = True
+                    except Exception:
+                        ok = False
+                    ack = {"ok": ok}
+                    if cid:
+                        ack["cid"] = cid
+                    if echo is not None:
+                        ack["echo"] = echo
+                    _pub('ack/sleep', ack, r=False)
+                self._schedule_task(_do())
+            except Exception as e:
+                logger.error({"event": "sleep_handler_error", "error": repr(e)})
         # ---- Subscriptions ----
         if not REQUIRE_DEVICE_ECHO:
             client.message_callback_add(
@@ -1035,6 +1136,16 @@ class BB8Facade:
                 f"{MQTT_BASE}/cmd/clear_estop", _handle_clear_estop
             )
             client.subscribe(f"{MQTT_BASE}/cmd/clear_estop", qos=qos_val)
+
+            # Minimal interaction subscriptions
+            client.message_callback_add(f"{MQTT_BASE}/cmd/wake", _handle_wake_cmd)
+            client.subscribe(f"{MQTT_BASE}/cmd/wake", qos=qos_val)
+
+            client.message_callback_add(f"{MQTT_BASE}/cmd/roll", _handle_roll_cmd)
+            client.subscribe(f"{MQTT_BASE}/cmd/roll", qos=qos_val)
+
+            client.message_callback_add(f"{MQTT_BASE}/cmd/sleep", _handle_sleep_cmd)
+            client.subscribe(f"{MQTT_BASE}/cmd/sleep", qos=qos_val)
 
             logger.info({"event": "facade_mqtt_attached", "base": base_topic})
 
