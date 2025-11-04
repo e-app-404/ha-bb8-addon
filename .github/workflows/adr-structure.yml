@@ -1,0 +1,18 @@
+name: ADR Structure Gate (A1)
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  a1-adr-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: A1 - ADR structure presence (minimal)
+        run: |
+          echo "A1: ADR structure gate — minimal stub"
+          # Add actual ADR checks when ADR dir is introduced in this repo
+          exit 0
