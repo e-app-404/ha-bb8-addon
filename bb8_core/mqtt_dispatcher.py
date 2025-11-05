@@ -6,11 +6,11 @@ import json
 import logging
 import os
 import socket
+import time
 from collections.abc import Callable
+from datetime import UTC, datetime
 from typing import Any
 
-import time
-from datetime import datetime, UTC
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
 
@@ -943,7 +943,8 @@ def start_mqtt_dispatcher(
             _trigger_discovery_connected()
             if hasattr(controller, "attach_mqtt"):
                 try:
-                    controller.attach_mqtt(client, mqtt_topic, qos=qos, retain=retain)
+                    base = CONFIG.get("MQTT_BASE", "bb8")
+                    controller.attach_mqtt(client, base, qos=qos, retain=retain)
                 except Exception as e:
                     logger.error(
                         {
