@@ -1040,7 +1040,7 @@ class BB8Facade:
                         ack["cid"] = cid
                     if echo is not None:
                         ack["echo"] = echo
-                    _pub('ack/wake', ack, r=False)
+                    client.publish(f"{MQTT_BASE}/ack/wake", payload=json.dumps(ack, separators=(',', ':')), qos=qos_val, retain=False)
                 self._schedule_task(_do())
             except Exception as e:
                 logger.error({"event": "wake_handler_error", "error": repr(e)})
@@ -1077,7 +1077,7 @@ class BB8Facade:
                         ack["cid"] = cid
                     if echo is not None:
                         ack["echo"] = echo
-                    _pub('ack/roll', ack, r=False)
+                    client.publish(f"{MQTT_BASE}/ack/roll", payload=json.dumps(ack, separators=(',', ':')), qos=qos_val, retain=False)
                 self._schedule_task(_do())
             except Exception as e:
                 logger.error({"event": "roll_handler_error", "error": repr(e)})
@@ -1108,7 +1108,7 @@ class BB8Facade:
                         ack["cid"] = cid
                     if echo is not None:
                         ack["echo"] = echo
-                    _pub('ack/sleep', ack, r=False)
+                    client.publish(f"{MQTT_BASE}/ack/sleep", payload=json.dumps(ack, separators=(',', ':')), qos=qos_val, retain=False)
                 self._schedule_task(_do())
             except Exception as e:
                 logger.error({"event": "sleep_handler_error", "error": repr(e)})
