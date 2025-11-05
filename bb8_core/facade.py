@@ -981,6 +981,14 @@ class BB8Facade:
                     "error": repr(e),
                 })
 
+        # Minimal interaction subscriptions (always enabled)
+        client.message_callback_add(f"{MQTT_BASE}/cmd/wake", _handle_wake_cmd)
+        client.subscribe(f"{MQTT_BASE}/cmd/wake", qos=qos_val)
+        client.message_callback_add(f"{MQTT_BASE}/cmd/roll", _handle_roll_cmd)
+        client.subscribe(f"{MQTT_BASE}/cmd/roll", qos=qos_val)
+        client.message_callback_add(f"{MQTT_BASE}/cmd/sleep", _handle_sleep_cmd)
+        client.subscribe(f"{MQTT_BASE}/cmd/sleep", qos=qos_val)
+
         # Discovery (idempotent; retained on broker)
         dbus_path = os.environ.get("BB8_DBUS_PATH") or CFG.get(
             "BB8_DBUS_PATH", "/org/bluez/hci0"
