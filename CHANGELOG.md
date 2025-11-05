@@ -1,3 +1,7 @@
+## 0.1.2 — Discovery identifiers + wake/roll/sleep
+- Adds device.identifiers & connections in HA discovery
+- Minimal interaction cmds: wake/roll/sleep
+
 ## 0.1.1 — 2025-11-03
 - MQTT resilience: safe_publish + connect-queue + logging normalization
 - Metrics topic: {BASE}/status/metrics (best-effort on connect/flush)
