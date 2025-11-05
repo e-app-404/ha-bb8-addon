@@ -32,10 +32,8 @@ def _on_signal(signum, frame):
 
 from .evidence_capture import EvidenceRecorder
 from .logging_setup import logger
-from .mqtt_dispatcher import (
-    ensure_dispatcher_started,
-    register_subscription,  # dynamic topic binding
-)
+from .mqtt_dispatcher import register_subscription  # dynamic topic binding
+from .mqtt_dispatcher import ensure_dispatcher_started
 
 log = logging.getLogger(__name__)
 
@@ -500,8 +498,8 @@ def start_bridge_controller(
 
     logger.info({"event": "ble_bridge_init", "target_mac": target_mac})
 
-    # Start MQTT dispatcher
-    ensure_dispatcher_started()
+    # Start MQTT dispatcher with facade controller
+    ensure_dispatcher_started(controller=facade)
 
     # Start supervised watchdog
     watchdog_task = asyncio.create_task(
