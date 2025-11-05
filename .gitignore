@@ -2,3 +2,7 @@
 /reports/
 /scripts/
 /.github/
+
+!.github/
+!.github/workflows/
+!.github/workflows/adr-structure.yml
