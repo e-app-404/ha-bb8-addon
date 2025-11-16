@@ -1,0 +1,76 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "BB-8 Command Schema v1",
+    "type": "object",
+    "oneOf": [
+        {
+            "title": "Drive Command",
+            "type": "object",
+            "properties": {
+                "speed": { "type": "integer", "minimum": 0, "maximum": 255 },
+                "heading": { "type": "integer", "minimum": 0, "maximum": 359 },
+                "ms": { "type": "integer", "minimum": 0, "maximum": 5000 },
+                "cid": { "type": "string" }
+            },
+            "required": ["speed", "heading", "ms"],
+            "additionalProperties": false
+        },
+        {
+            "title": "Stop Command",
+            "type": "object",
+            "properties": {
+                "cid": { "type": "string" }
+            },
+            "additionalProperties": false
+        },
+        {
+            "title": "LED Command",
+            "type": "object",
+            "properties": {
+                "r": { "type": "integer", "minimum": 0, "maximum": 255 },
+                "g": { "type": "integer", "minimum": 0, "maximum": 255 },
+                "b": { "type": "integer", "minimum": 0, "maximum": 255 },
+                "cid": { "type": "string" }
+            },
+            "required": ["r", "g", "b"],
+            "additionalProperties": false
+        },
+        {
+            "title": "Power Command",
+            "type": "object",
+            "properties": {
+                "action": { "type": "string", "enum": ["wake", "sleep"] },
+                "cid": { "type": "string" }
+            },
+            "required": ["action"],
+            "additionalProperties": false
+        },
+        {
+            "title": "Estop Command",
+            "type": "object",
+            "properties": {
+                "cid": { "type": "string" }
+            },
+            "additionalProperties": false
+        },
+        {
+            "title": "Clear Estop Command",
+            "type": "object",
+            "properties": {
+                "cid": { "type": "string" }
+            },
+            "additionalProperties": false
+        },
+        {
+            "title": "Ack",
+            "type": "object",
+            "properties": {
+                "ok": { "type": "boolean" },
+                "cid": { "type": "string" },
+                "reason": { "type": "string" }
+            },
+            "required": ["ok"],
+            "additionalProperties": false
+        }
+    ]
+}

@@ -1,0 +1,6 @@
+# Dev-only dependencies to make test collection pass locally
+pyyaml
+spherov2
+bleak
+paho-mqtt
+pytest

@@ -1,0 +1,16 @@
+.github export-ignore
+docs export-ignore
+ops export-ignore
+reports export-ignore
+scripts export-ignore
+_backups export-ignore
+addon export-ignore
+
+# common caches/artifacts
+.venv export-ignore
+.pytest_cache export-ignore
+.ruff_cache export-ignore
+.mypy_cache export-ignore
+__pycache__ export-ignore
+.coverage export-ignore
+htmlcov export-ignore
