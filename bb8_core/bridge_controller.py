@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# ruff: noqa: E402
+
 import warnings
 
 warnings.filterwarnings(
@@ -7,6 +9,7 @@ warnings.filterwarnings(
 )
 
 import asyncio
+import contextlib
 import json
 import logging
 import os
@@ -625,6 +628,9 @@ async def _start_watchdog(
                                 "attempt": consecutive_failures,
                             }
                         )
+
+                        with contextlib.suppress(Exception):
+                            facade.mark_post_connect_holdoff()
 
                         # Update facade presence
                         if facade.publish_presence:
