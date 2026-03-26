@@ -32,6 +32,7 @@ options:
   enable_echo: false            # default OFF; enable only for STP5 windows
   echo_max_inflight: 4          # hard cap on concurrent echo jobs
   echo_min_interval_ms: 50      # throttle per message
+  post_connect_delay_s: 15      # holdoff before LED commands are accepted
   # --- Telemetry & Logging ---
   enable_bridge_telemetry: false
   log_path: "/addons/local/beep_boop_bb8/ha_bb8_addon.log"
@@ -84,6 +85,7 @@ schema:
   enable_echo: bool
   echo_max_inflight: int?
   echo_min_interval_ms: int?
+  post_connect_delay_s: int?
   # --- Telemetry & Logging ---
   enable_bridge_telemetry: "bool?"
   log_path: "str?"

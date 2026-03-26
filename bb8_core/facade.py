@@ -79,6 +79,36 @@ class BB8Facade:
         self._telemetry_task: asyncio.Task | None = None
         self._last_cmd_timestamp: float = 0.0
 
+        cfg, _ = load_config()
+        self._post_connect_delay_s = self._read_post_connect_delay_s(cfg)
+        self._commands_ready_at_monotonic: float = 0.0
+
+    @staticmethod
+    def _read_post_connect_delay_s(cfg: dict[str, Any]) -> int:
+        raw = cfg.get("post_connect_delay_s", cfg.get("POST_CONNECT_DELAY_S", 15))
+        try:
+            delay = int(raw)
+        except Exception:
+            return 15
+        return max(0, delay)
+
+    def mark_post_connect_holdoff(self, now_monotonic: float | None = None) -> None:
+        """Start holdoff window after a successful BLE connect."""
+        now = time.monotonic() if now_monotonic is None else float(now_monotonic)
+        self._commands_ready_at_monotonic = now + float(self._post_connect_delay_s)
+
+    def get_post_connect_holdoff_remaining_s(
+        self, now_monotonic: float | None = None
+    ) -> int:
+        """Return remaining holdoff seconds for command readiness."""
+        if self._commands_ready_at_monotonic <= 0:
+            return 0
+        now = time.monotonic() if now_monotonic is None else float(now_monotonic)
+        remaining = self._commands_ready_at_monotonic - now
+        if remaining <= 0:
+            return 0
+        return int(remaining) if remaining.is_integer() else int(remaining) + 1
+
     def _get_or_create_session(self) -> BleSession:
         """Get or create BLE session instance."""
         if self._ble_session is None:
@@ -106,6 +136,8 @@ class BB8Facade:
                 # Publish presence if available
                 if self.publish_presence:
                     self.publish_presence(True)
+
+                self.mark_post_connect_holdoff()
 
                 # Publish telemetry update
                 self._publish_telemetry_update()
@@ -272,6 +304,29 @@ class BB8Facade:
     ) -> None:
         """Async LED control with validation and ACK/NACK."""
         try:
+            remaining_s = self.get_post_connect_holdoff_remaining_s()
+            if remaining_s > 0:
+                self._publish_ack(
+                    "led",
+                    False,
+                    cid,
+                    "post_connect_holdoff",
+                    extra={"remaining_s": remaining_s},
+                )
+                self._publish_rejected(
+                    "led",
+                    "post_connect_holdoff",
+                    remaining_s=remaining_s,
+                )
+                logger.info(
+                    {
+                        "event": "facade_led_deferred_post_connect",
+                        "remaining_s": remaining_s,
+                        "cid": cid,
+                    }
+                )
+                return
+
             # Always cancel any active animation first (idempotent)
             await self._lighting.cancel_active()
 
@@ -601,13 +656,25 @@ class BB8Facade:
             logger.error({"event": "facade_clear_estop_error", "error": str(e)})
             self._publish_rejected("clear_estop", str(e))
 
-    def _publish_rejected(self, cmd: str, reason: str) -> None:
+    def _publish_rejected(
+        self,
+        cmd: str,
+        reason: str,
+        *,
+        remaining_s: int | None = None,
+        extra: dict[str, Any] | None = None,
+    ) -> None:
         """Publish rejection message."""
         client = self._mqtt.get("client")
         base = self._mqtt.get("base")
         if client and base:
             topic = f"{base}/event/rejected"
-            payload = json.dumps({"cmd": cmd, "reason": reason})
+            payload_data: dict[str, Any] = {"cmd": cmd, "reason": reason}
+            if remaining_s is not None:
+                payload_data["remaining_s"] = int(remaining_s)
+            if extra:
+                payload_data.update(extra)
+            payload = json.dumps(payload_data)
             client.publish(topic, payload=payload, qos=1, retain=False)
 
     def _publish_ack(
@@ -616,6 +683,7 @@ class BB8Facade:
         ok: bool,
         cid: str | None = None,
         reason: str | None = None,
+        extra: dict[str, Any] | None = None,
     ) -> None:
         """Publish ACK/NACK message."""
         client = self._mqtt.get("client")
@@ -627,6 +695,8 @@ class BB8Facade:
                 payload["cid"] = cid
             if reason is not None:
                 payload["reason"] = reason
+            if extra:
+                payload.update(extra)
             client.publish(topic, payload=json.dumps(payload), qos=1, retain=False)
 
     def is_connected(self) -> bool:
