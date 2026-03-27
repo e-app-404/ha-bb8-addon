@@ -16,6 +16,7 @@ import os
 import signal
 import threading
 import time
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from .addon_config import load_config
@@ -105,6 +106,37 @@ def _client_or_none():
 _ble_loop: asyncio.AbstractEventLoop | None = None
 _ble_inited: bool = False
 client = None
+
+
+def _schedule_async_command_ack(
+    *,
+    loop: asyncio.AbstractEventLoop,
+    create_task: Callable[[Awaitable[Any]], asyncio.Task[Any]],
+    coroutine_factory: Callable[[], Awaitable[Any]],
+    ack_fn: Callable[[str, str | None, bool, str | None], None],
+    cmd: str,
+    cid: str | None,
+) -> None:
+    """Schedule a command coroutine and publish ACK from its completion outcome."""
+
+    def _start() -> None:
+        try:
+            task = create_task(coroutine_factory())
+        except Exception as exc:  # pragma: no cover - defensive
+            ack_fn(cmd, cid, False, str(exc))
+            return
+
+        def _on_done(done_task: asyncio.Task[Any]) -> None:
+            try:
+                done_task.result()
+            except Exception as exc:
+                ack_fn(cmd, cid, False, str(exc))
+                return
+            ack_fn(cmd, cid, True, None)
+
+        task.add_done_callback(_on_done)
+
+    loop.call_soon_threadsafe(_start)
 
 
 def on_power_set(payload):
@@ -1388,10 +1420,14 @@ if __name__ == "__main__":
                     elif cmd == "estop":
                         reason = data.get("reason", "MQTT emergency stop")
                         if facade is not None and hasattr(facade, "estop"):
-                            loop.call_soon_threadsafe(
-                                lambda: _asyncio.create_task(facade.estop(reason))
+                            _schedule_async_command_ack(
+                                loop=loop,
+                                create_task=_asyncio.create_task,
+                                coroutine_factory=lambda: facade.estop(reason),
+                                ack_fn=_ack,
+                                cmd="estop",
+                                cid=cid,
                             )
-                            _ack("estop", cid, True)
                         elif facade is None:
                             _ack("estop", cid, False, "Facade is None")
                         else:
@@ -1403,10 +1439,14 @@ if __name__ == "__main__":
                             )
                     elif cmd == "clear_estop":
                         if facade is not None and hasattr(facade, "clear_estop"):
-                            loop.call_soon_threadsafe(
-                                lambda: _asyncio.create_task(facade.clear_estop())
+                            _schedule_async_command_ack(
+                                loop=loop,
+                                create_task=_asyncio.create_task,
+                                coroutine_factory=lambda: facade.clear_estop(),
+                                ack_fn=_ack,
+                                cmd="clear_estop",
+                                cid=cid,
                             )
-                            _ack("clear_estop", cid, True)
                         elif facade is None:
                             _ack("clear_estop", cid, False, "Facade is None")
                         else:
