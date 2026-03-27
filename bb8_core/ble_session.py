@@ -397,11 +397,21 @@ class BleSession:
         if not self._toy:
             raise DeviceNotConnectedError("Toy not available")
 
-        # For now, return a reasonable default since BB-8 battery API
-        # varies significantly across spherov2 versions
-        # TODO: Implement actual battery reading when stable API available
-        logger.debug({"event": "battery_impl_using_default"})
-        return 75.0
+        read_fn = getattr(self._toy, "get_battery_voltage", None)
+        if not callable(read_fn):
+            logger.info(
+                {
+                    "event": "ble_session_battery_unavailable",
+                    "reason": "toy backend does not expose battery API",
+                }
+            )
+            return 0.0
+
+        try:
+            result = await asyncio.wait_for(asyncio.to_thread(read_fn), timeout=5.0)
+            return float(result)
+        except asyncio.TimeoutError as exc:
+            raise BleSessionError("Battery read timed out after 5.0s") from exc
 
     async def set_led(self, r: int, g: int, b: int) -> None:
         """Set BB-8 LED color.
