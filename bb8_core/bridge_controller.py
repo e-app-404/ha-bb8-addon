@@ -23,6 +23,7 @@ from .auto_detect import resolve_bb8_mac
 from .ble_bridge import BLEBridge
 from .ble_gateway import BleGateway
 from .ble_link import BLELink
+from .bluez_health import probe_bluez_health
 from .common import STATE_TOPICS, publish_device_echo
 
 _stop_evt = threading.Event()
@@ -535,6 +536,13 @@ async def _start_watchdog(
     """
     watchdog_interval = config.get("watchdog_interval_s", 10)
     max_reconnect_attempts = config.get("max_reconnect_attempts", 3)
+    enable_bluez_health_probe = bool(
+        config.get("enable_bluez_health_probe", config.get("ENABLE_BLUEZ_HEALTH_PROBE", True))
+    )
+    bluez_circuit_recheck_s = int(
+        config.get("bluez_circuit_recheck_s", config.get("BLUEZ_CIRCUIT_RECHECK_S", 30))
+    )
+    bluez_circuit_recheck_s = max(1, bluez_circuit_recheck_s)
 
     # Metrics cache
     metrics = {
@@ -552,10 +560,14 @@ async def _start_watchdog(
             "event": "watchdog_start",
             "interval_s": watchdog_interval,
             "max_reconnect_attempts": max_reconnect_attempts,
+            "enable_bluez_health_probe": enable_bluez_health_probe,
+            "bluez_circuit_recheck_s": bluez_circuit_recheck_s,
         }
     )
 
     consecutive_failures = 0
+    bluez_circuit_state = "CLOSED"
+    bluez_circuit_recheck_at_monotonic = 0.0
 
     while True:
         try:
@@ -600,6 +612,110 @@ async def _start_watchdog(
                 # Attempt reconnection if within limits
                 if consecutive_failures <= max_reconnect_attempts:
                     try:
+                        if enable_bluez_health_probe:
+                            now_monotonic = time.monotonic()
+                            if (
+                                bluez_circuit_state == "OPEN"
+                                and now_monotonic < bluez_circuit_recheck_at_monotonic
+                            ):
+                                retry_in_s = int(
+                                    max(
+                                        0.0,
+                                        bluez_circuit_recheck_at_monotonic - now_monotonic,
+                                    )
+                                )
+                                logger.warning(
+                                    {
+                                        "event": "bluez_circuit_open",
+                                        "state": bluez_circuit_state,
+                                        "retry_in_s": retry_in_s,
+                                        "attempt": consecutive_failures,
+                                    }
+                                )
+                                metrics["last_error"] = "bluez_circuit_open"
+                                if facade.publish_presence:
+                                    facade.publish_presence(False)
+                                await _publish_health_metrics(metrics, config)
+                                continue
+
+                            if bluez_circuit_state == "OPEN":
+                                logger.info(
+                                    {
+                                        "event": "bluez_circuit_recheck",
+                                        "state": bluez_circuit_state,
+                                        "attempt": consecutive_failures,
+                                    }
+                                )
+
+                            probe_source = (
+                                "watchdog_pre_reconnect"
+                                if bluez_circuit_state != "OPEN"
+                                else "watchdog_circuit_recheck"
+                            )
+                            try:
+                                probe_result = await probe_bluez_health(source=probe_source)
+                            except Exception as probe_err:
+                                probe_result = {
+                                    "healthy": False,
+                                    "reason": f"probe_error:{probe_err}",
+                                    "metadata": {"source": probe_source},
+                                }
+
+                            if not isinstance(probe_result, dict):
+                                probe_result = {
+                                    "healthy": False,
+                                    "reason": "probe_result_invalid_type",
+                                    "metadata": {"source": probe_source},
+                                }
+
+                            if bool(probe_result.get("healthy")):
+                                logger.info(
+                                    {
+                                        "event": "bluez_health_ok",
+                                        "reason": probe_result.get("reason", "ok"),
+                                        "metadata": probe_result.get("metadata", {}),
+                                    }
+                                )
+                                if bluez_circuit_state == "OPEN":
+                                    bluez_circuit_state = "CLOSED"
+                                    bluez_circuit_recheck_at_monotonic = 0.0
+                                    logger.info(
+                                        {
+                                            "event": "bluez_circuit_closed",
+                                            "state": bluez_circuit_state,
+                                        }
+                                    )
+                            else:
+                                reason = str(
+                                    probe_result.get("reason", "bluez_health_unhealthy")
+                                )
+                                logger.error(
+                                    {
+                                        "event": "bluez_health_failed",
+                                        "reason": reason,
+                                        "metadata": probe_result.get("metadata", {}),
+                                    }
+                                )
+                                bluez_circuit_state = "OPEN"
+                                # Anchor the recheck deadline to the sampled cycle
+                                # time so extra monotonic() calls cannot defer recovery.
+                                bluez_circuit_recheck_at_monotonic = (
+                                    now_monotonic + float(bluez_circuit_recheck_s)
+                                )
+                                logger.warning(
+                                    {
+                                        "event": "bluez_circuit_open",
+                                        "state": bluez_circuit_state,
+                                        "recheck_in_s": bluez_circuit_recheck_s,
+                                        "reason": reason,
+                                    }
+                                )
+                                metrics["last_error"] = reason
+                                if facade.publish_presence:
+                                    facade.publish_presence(False)
+                                await _publish_health_metrics(metrics, config)
+                                continue
+
                         logger.info(
                             {
                                 "event": "watchdog_reconnect_attempt",
@@ -665,6 +781,8 @@ async def _start_watchdog(
                         facade.publish_presence(False)
 
             # Publish health metrics
+            metrics["bluez_circuit_state"] = bluez_circuit_state
+            metrics["bluez_circuit_recheck_at"] = bluez_circuit_recheck_at_monotonic
             await _publish_health_metrics(metrics, config)
 
         except asyncio.CancelledError:
