@@ -28,14 +28,15 @@ RUN python3 -m venv "/opt/venv" \
  && chmod +x /usr/src/app/run.sh \
  && rm -rf /usr/src/app/tests /usr/src/app/__pycache__ /usr/src/app/.pytest_cache || true
 
-# HCI inspection tool (btmon) and DBus - install BlueZ + dbus
+# HCI inspection tool (btmon) and DBus - install BlueZ + dbus + busctl provider
 RUN if command -v apk >/dev/null 2>&1; then \
-            apk add --no-cache bluez bluez-deprecated bluez-libs bluez-btmon dbus; \
+            apk add --no-cache bluez bluez-deprecated bluez-libs bluez-btmon dbus systemd; \
         elif command -v apt-get >/dev/null 2>&1; then \
-            apt-get update && apt-get install -y --no-install-recommends bluez dbus && rm -rf /var/lib/apt/lists/*; \
+            apt-get update && apt-get install -y --no-install-recommends bluez dbus systemd && rm -rf /var/lib/apt/lists/*; \
         else \
             echo "No package manager detected for bluez; skipping btmon"; \
-        fi
+        fi \
+    && command -v busctl >/dev/null 2>&1 || (echo "FATAL: busctl not found in runtime image" >&2; exit 54)
 
 # Ensure dbus-next available for Python DBus access
 RUN /opt/venv/bin/pip install --no-cache-dir dbus-next

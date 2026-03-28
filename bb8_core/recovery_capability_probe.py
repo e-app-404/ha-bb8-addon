@@ -57,6 +57,11 @@ def _is_unauthorized(stderr_text: str, stdout_text: str) -> bool:
     return any(marker in message for marker in markers)
 
 
+def _is_command_missing(stderr_text: str, stdout_text: str, command: str) -> bool:
+    message = f"{stderr_text}\n{stdout_text}".lower()
+    return command.lower() in message and "no such file or directory" in message
+
+
 async def probe_host_bluetooth_recovery_capability(
     *,
     source: str,
@@ -104,6 +109,13 @@ async def probe_host_bluetooth_recovery_capability(
             "name_owner": owner_out.strip(),
             "error": owner_err,
         }
+    elif _is_command_missing(owner_err, owner_out, "busctl"):
+        result["system_bus"] = {"status": "command_missing", "error": owner_err or owner_out}
+        result["systemd1"] = {
+            "status": "command_missing",
+            "name_owner": "",
+            "error": owner_err or owner_out,
+        }
     else:
         result["system_bus"] = {"status": "not_reachable", "error": owner_err}
         result["systemd1"] = {
@@ -135,6 +147,12 @@ async def probe_host_bluetooth_recovery_capability(
         elif _is_unauthorized(ro_err, ro_out):
             result["systemd_readonly"] = {
                 "status": "unauthorized",
+                "error": ro_err or ro_out,
+                "response": "",
+            }
+        elif _is_command_missing(ro_err, ro_out, "busctl"):
+            result["systemd_readonly"] = {
+                "status": "command_missing",
                 "error": ro_err or ro_out,
                 "response": "",
             }
@@ -242,15 +260,27 @@ async def probe_host_bluetooth_recovery_capability(
 
     readonly_status = result["systemd_readonly"]["status"]
     if readonly_status == "callable":
+        dbus_capability_status = "callable"
         dbus_path_status = "reachable_and_callable"
         restart_invokable = True
     elif readonly_status == "unauthorized":
+        dbus_capability_status = "unauthorized"
         dbus_path_status = "reachable_but_unauthorized"
         restart_invokable = False
+    elif readonly_status == "command_missing" or result["system_bus"]["status"] == "command_missing":
+        dbus_capability_status = "command_missing"
+        dbus_path_status = "command_missing"
+        restart_invokable = False
     elif result["system_bus"]["status"] == "not_reachable":
+        dbus_capability_status = "not_reachable"
         dbus_path_status = "not_reachable"
         restart_invokable = False
+    elif readonly_status == "skipped":
+        dbus_capability_status = "skipped"
+        dbus_path_status = "skipped"
+        restart_invokable = False
     else:
+        dbus_capability_status = "unknown"
         dbus_path_status = "unknown"
         restart_invokable = False
 
@@ -269,6 +299,7 @@ async def probe_host_bluetooth_recovery_capability(
         supervisor_recovery_invokable = False
 
     result["summary"] = {
+        "dbus_capability_status": dbus_capability_status,
         "dbus_path_status": dbus_path_status,
         "restart_invokable_inference": restart_invokable,
         "supervisor_auth_status": supervisor_auth_status,

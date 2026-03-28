@@ -37,6 +37,7 @@ def test_probe_reports_callable_systemd_and_available_supervisor(monkeypatch):
     assert result["systemd1"]["status"] == "visible"
     assert result["systemd_readonly"]["status"] == "callable"
     assert result["supervisor_api"]["status"] == "available"
+    assert result["summary"]["dbus_capability_status"] == "callable"
     assert result["summary"]["dbus_path_status"] == "reachable_and_callable"
     assert result["summary"]["restart_invokable_inference"] is True
     assert result["summary"]["supervisor_auth_status"] == "authorized"
@@ -66,6 +67,7 @@ def test_probe_reports_unauthorized_systemd_call(monkeypatch):
 
     assert result["system_bus"]["status"] == "reachable"
     assert result["systemd_readonly"]["status"] == "unauthorized"
+    assert result["summary"]["dbus_capability_status"] == "unauthorized"
     assert result["summary"]["dbus_path_status"] == "reachable_but_unauthorized"
     assert result["summary"]["restart_invokable_inference"] is False
     assert result["supervisor_api"]["status"] == "not_configured"
@@ -98,6 +100,7 @@ def test_probe_reports_unreachable_bus_and_supervisor_unauthorized(monkeypatch):
     assert result["system_bus"]["status"] == "not_reachable"
     assert result["systemd1"]["status"] == "not_visible"
     assert result["systemd_readonly"]["status"] == "skipped"
+    assert result["summary"]["dbus_capability_status"] == "not_reachable"
     assert result["summary"]["dbus_path_status"] == "not_reachable"
     assert result["summary"]["restart_invokable_inference"] is False
     assert result["supervisor_api"]["status"] == "unauthorized"
@@ -128,8 +131,36 @@ def test_probe_reports_supervisor_transport_failure_as_unreachable(monkeypatch):
     )
 
     assert result["supervisor_api"]["status"] == "unreachable"
+    assert result["summary"]["dbus_capability_status"] == "not_reachable"
     assert result["summary"]["supervisor_auth_status"] == "unreachable"
     assert result["summary"]["supervisor_recovery_invokable_inference"] is False
     assert result["host_api"]["status"] == "unreachable"
     assert result["summary"]["host_api_status"] == "unreachable"
     assert result["summary"]["host_recovery_path_viable_inference"] is False
+
+
+def test_probe_reports_command_missing_busctl(monkeypatch):
+    def runner(args, timeout_s):
+        if args[:4] == ["busctl", "--system", "get-name-owner", "org.freedesktop.systemd1"]:
+            return 1, "", "[Errno 2] No such file or directory: 'busctl'"
+        pytest.fail(f"unexpected call: {args}")
+
+    def http_getter(url, headers, timeout_s):
+        return 200, "{}", ""
+
+    monkeypatch.setenv("SUPERVISOR_TOKEN", "token")
+
+    result = asyncio.run(
+        probe_host_bluetooth_recovery_capability(
+            source="unit",
+            command_runner=runner,
+            http_getter=http_getter,
+        )
+    )
+
+    assert result["system_bus"]["status"] == "command_missing"
+    assert result["systemd1"]["status"] == "command_missing"
+    assert result["systemd_readonly"]["status"] == "skipped"
+    assert result["summary"]["dbus_capability_status"] == "command_missing"
+    assert result["summary"]["dbus_path_status"] == "command_missing"
+    assert result["summary"]["restart_invokable_inference"] is False
