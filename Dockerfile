@@ -30,7 +30,7 @@ RUN python3 -m venv "/opt/venv" \
 
 # HCI inspection tool (btmon) and DBus - install BlueZ + dbus + busctl provider
 RUN if command -v apk >/dev/null 2>&1; then \
-            apk add --no-cache bluez bluez-deprecated bluez-libs bluez-btmon dbus systemd; \
+            apk add --no-cache bluez bluez-deprecated bluez-libs bluez-btmon dbus elogind; \
         elif command -v apt-get >/dev/null 2>&1; then \
             apt-get update && apt-get install -y --no-install-recommends bluez dbus systemd && rm -rf /var/lib/apt/lists/*; \
         else \
