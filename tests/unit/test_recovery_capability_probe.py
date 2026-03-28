@@ -41,6 +41,9 @@ def test_probe_reports_callable_systemd_and_available_supervisor(monkeypatch):
     assert result["summary"]["restart_invokable_inference"] is True
     assert result["summary"]["supervisor_auth_status"] == "authorized"
     assert result["summary"]["supervisor_recovery_invokable_inference"] is True
+    assert result["host_api"]["status"] == "authorized"
+    assert result["summary"]["host_api_status"] == "authorized"
+    assert result["summary"]["host_recovery_path_viable_inference"] is True
 
 
 def test_probe_reports_unauthorized_systemd_call(monkeypatch):
@@ -68,6 +71,9 @@ def test_probe_reports_unauthorized_systemd_call(monkeypatch):
     assert result["supervisor_api"]["status"] == "not_configured"
     assert result["summary"]["supervisor_auth_status"] == "not_configured"
     assert result["summary"]["supervisor_recovery_invokable_inference"] is False
+    assert result["host_api"]["status"] == "not_configured"
+    assert result["summary"]["host_api_status"] == "not_configured"
+    assert result["summary"]["host_recovery_path_viable_inference"] is False
 
 
 def test_probe_reports_unreachable_bus_and_supervisor_unauthorized(monkeypatch):
@@ -97,6 +103,9 @@ def test_probe_reports_unreachable_bus_and_supervisor_unauthorized(monkeypatch):
     assert result["supervisor_api"]["status"] == "unauthorized"
     assert result["summary"]["supervisor_auth_status"] == "unauthorized"
     assert result["summary"]["supervisor_recovery_invokable_inference"] is False
+    assert result["host_api"]["status"] == "unauthorized"
+    assert result["summary"]["host_api_status"] == "unauthorized"
+    assert result["summary"]["host_recovery_path_viable_inference"] is False
 
 
 def test_probe_reports_supervisor_transport_failure_as_unreachable(monkeypatch):
@@ -121,3 +130,6 @@ def test_probe_reports_supervisor_transport_failure_as_unreachable(monkeypatch):
     assert result["supervisor_api"]["status"] == "unreachable"
     assert result["summary"]["supervisor_auth_status"] == "unreachable"
     assert result["summary"]["supervisor_recovery_invokable_inference"] is False
+    assert result["host_api"]["status"] == "unreachable"
+    assert result["summary"]["host_api_status"] == "unreachable"
+    assert result["summary"]["host_recovery_path_viable_inference"] is False
