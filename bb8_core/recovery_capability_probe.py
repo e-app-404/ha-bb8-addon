@@ -211,9 +211,25 @@ async def probe_host_bluetooth_recovery_capability(
         dbus_path_status = "unknown"
         restart_invokable = False
 
+    supervisor_status = result["supervisor_api"].get("status", "unknown")
+    if supervisor_status == "available":
+        supervisor_auth_status = "authorized"
+        supervisor_recovery_invokable = True
+    elif supervisor_status in ("unauthorized", "not_configured"):
+        supervisor_auth_status = supervisor_status
+        supervisor_recovery_invokable = False
+    elif supervisor_status == "unreachable":
+        supervisor_auth_status = "unreachable"
+        supervisor_recovery_invokable = False
+    else:
+        supervisor_auth_status = "reachable_error"
+        supervisor_recovery_invokable = False
+
     result["summary"] = {
         "dbus_path_status": dbus_path_status,
         "restart_invokable_inference": restart_invokable,
+        "supervisor_auth_status": supervisor_auth_status,
+        "supervisor_recovery_invokable_inference": supervisor_recovery_invokable,
         "note": "inference based on read-only capability checks; no restart attempted",
     }
 
