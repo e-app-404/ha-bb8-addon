@@ -58,7 +58,17 @@ async def probe_bluez_health(
 
     owner_rc, owner_out, owner_err = await asyncio.to_thread(
         runner,
-        ["busctl", "--system", "get-name-owner", "org.bluez"],
+        [
+            "busctl",
+            "--system",
+            "call",
+            "org.freedesktop.DBus",
+            "/org/freedesktop/DBus",
+            "org.freedesktop.DBus",
+            "GetNameOwner",
+            "s",
+            "org.bluez",
+        ],
         float(timeout_s),
     )
     dbus_owned = owner_rc == 0 and bool(owner_out.strip())
