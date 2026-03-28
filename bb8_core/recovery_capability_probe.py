@@ -87,6 +87,7 @@ async def probe_host_bluetooth_recovery_capability(
         "systemd1": {},
         "systemd_readonly": {},
         "supervisor_api": {},
+        "host_api": {},
         "summary": {},
     }
 
@@ -153,11 +154,18 @@ async def probe_host_bluetooth_recovery_capability(
     supervisor_token = os.environ.get("SUPERVISOR_TOKEN", "").strip()
     supervisor_url_base = os.environ.get("SUPERVISOR_URL", "http://supervisor").rstrip("/")
     supervisor_info_url = f"{supervisor_url_base}/supervisor/info"
+    host_services_url = f"{supervisor_url_base}/host/services"
 
     if not supervisor_token:
         result["supervisor_api"] = {
             "status": "not_configured",
             "url": supervisor_info_url,
+            "http_status": 0,
+            "error": "SUPERVISOR_TOKEN not set",
+        }
+        result["host_api"] = {
+            "status": "not_configured",
+            "url": host_services_url,
             "http_status": 0,
             "error": "SUPERVISOR_TOKEN not set",
         }
@@ -197,6 +205,41 @@ async def probe_host_bluetooth_recovery_capability(
                 "error": http_err,
             }
 
+        host_status_code, _host_body, host_http_err = await asyncio.to_thread(
+            http_getter,
+            host_services_url,
+            {"Authorization": f"Bearer {supervisor_token}"},
+            float(timeout_s),
+        )
+        if host_status_code == 200:
+            result["host_api"] = {
+                "status": "authorized",
+                "url": host_services_url,
+                "http_status": host_status_code,
+                "error": "",
+            }
+        elif host_status_code in (401, 403):
+            result["host_api"] = {
+                "status": "unauthorized",
+                "url": host_services_url,
+                "http_status": host_status_code,
+                "error": host_http_err,
+            }
+        elif host_status_code > 0:
+            result["host_api"] = {
+                "status": "reachable_error",
+                "url": host_services_url,
+                "http_status": host_status_code,
+                "error": host_http_err,
+            }
+        else:
+            result["host_api"] = {
+                "status": "unreachable",
+                "url": host_services_url,
+                "http_status": 0,
+                "error": host_http_err,
+            }
+
     readonly_status = result["systemd_readonly"]["status"]
     if readonly_status == "callable":
         dbus_path_status = "reachable_and_callable"
@@ -230,6 +273,8 @@ async def probe_host_bluetooth_recovery_capability(
         "restart_invokable_inference": restart_invokable,
         "supervisor_auth_status": supervisor_auth_status,
         "supervisor_recovery_invokable_inference": supervisor_recovery_invokable,
+        "host_api_status": result["host_api"].get("status", "unknown"),
+        "host_recovery_path_viable_inference": result["host_api"].get("status") == "authorized",
         "note": "inference based on read-only capability checks; no restart attempted",
     }
 

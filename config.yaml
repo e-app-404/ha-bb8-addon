@@ -16,7 +16,7 @@ build:
 startup: services
 init: false
 hassio_api: true
-hassio_role: default
+hassio_role: manager
 
 boot: auto
 host_dbus: true
