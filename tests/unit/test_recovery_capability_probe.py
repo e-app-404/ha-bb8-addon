@@ -14,7 +14,16 @@ from bb8_core.recovery_capability_probe import (  # type: ignore[import-not-foun
 
 def test_probe_reports_callable_systemd_and_available_supervisor(monkeypatch):
     def runner(args, timeout_s):
-        if args[:4] == ["busctl", "--system", "get-name-owner", "org.freedesktop.systemd1"]:
+        if args[:8] == [
+            "busctl",
+            "--system",
+            "call",
+            "org.freedesktop.DBus",
+            "/org/freedesktop/DBus",
+            "org.freedesktop.DBus",
+            "GetNameOwner",
+            "s",
+        ] and args[-1] == "org.freedesktop.systemd1":
             return 0, '"org.freedesktop.systemd1"', ""
         if args[:4] == ["busctl", "--system", "get-property", "org.freedesktop.systemd1"]:
             return 0, 's "255"', ""
@@ -49,7 +58,16 @@ def test_probe_reports_callable_systemd_and_available_supervisor(monkeypatch):
 
 def test_probe_reports_unauthorized_systemd_call(monkeypatch):
     def runner(args, timeout_s):
-        if args[:4] == ["busctl", "--system", "get-name-owner", "org.freedesktop.systemd1"]:
+        if args[:8] == [
+            "busctl",
+            "--system",
+            "call",
+            "org.freedesktop.DBus",
+            "/org/freedesktop/DBus",
+            "org.freedesktop.DBus",
+            "GetNameOwner",
+            "s",
+        ] and args[-1] == "org.freedesktop.systemd1":
             return 0, '"org.freedesktop.systemd1"', ""
         if args[:4] == ["busctl", "--system", "get-property", "org.freedesktop.systemd1"]:
             return 1, "", "Access denied"
@@ -80,7 +98,16 @@ def test_probe_reports_unauthorized_systemd_call(monkeypatch):
 
 def test_probe_reports_unreachable_bus_and_supervisor_unauthorized(monkeypatch):
     def runner(args, timeout_s):
-        if args[:4] == ["busctl", "--system", "get-name-owner", "org.freedesktop.systemd1"]:
+        if args[:8] == [
+            "busctl",
+            "--system",
+            "call",
+            "org.freedesktop.DBus",
+            "/org/freedesktop/DBus",
+            "org.freedesktop.DBus",
+            "GetNameOwner",
+            "s",
+        ] and args[-1] == "org.freedesktop.systemd1":
             return 1, "", "Failed to connect to bus"
         pytest.fail(f"unexpected call: {args}")
 
@@ -113,7 +140,16 @@ def test_probe_reports_unreachable_bus_and_supervisor_unauthorized(monkeypatch):
 
 def test_probe_reports_supervisor_transport_failure_as_unreachable(monkeypatch):
     def runner(args, timeout_s):
-        if args[:4] == ["busctl", "--system", "get-name-owner", "org.freedesktop.systemd1"]:
+        if args[:8] == [
+            "busctl",
+            "--system",
+            "call",
+            "org.freedesktop.DBus",
+            "/org/freedesktop/DBus",
+            "org.freedesktop.DBus",
+            "GetNameOwner",
+            "s",
+        ] and args[-1] == "org.freedesktop.systemd1":
             return 1, "", "Failed to connect to bus"
         pytest.fail(f"unexpected call: {args}")
 
@@ -141,7 +177,16 @@ def test_probe_reports_supervisor_transport_failure_as_unreachable(monkeypatch):
 
 def test_probe_reports_command_missing_busctl(monkeypatch):
     def runner(args, timeout_s):
-        if args[:4] == ["busctl", "--system", "get-name-owner", "org.freedesktop.systemd1"]:
+        if args[:8] == [
+            "busctl",
+            "--system",
+            "call",
+            "org.freedesktop.DBus",
+            "/org/freedesktop/DBus",
+            "org.freedesktop.DBus",
+            "GetNameOwner",
+            "s",
+        ] and args[-1] == "org.freedesktop.systemd1":
             return 1, "", "[Errno 2] No such file or directory: 'busctl'"
         pytest.fail(f"unexpected call: {args}")
 

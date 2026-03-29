@@ -98,7 +98,17 @@ async def probe_host_bluetooth_recovery_capability(
 
     owner_rc, owner_out, owner_err = await asyncio.to_thread(
         command_runner,
-        ["busctl", "--system", "get-name-owner", "org.freedesktop.systemd1"],
+        [
+            "busctl",
+            "--system",
+            "call",
+            "org.freedesktop.DBus",
+            "/org/freedesktop/DBus",
+            "org.freedesktop.DBus",
+            "GetNameOwner",
+            "s",
+            "org.freedesktop.systemd1",
+        ],
         float(timeout_s),
     )
 
