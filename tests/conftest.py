@@ -7,26 +7,51 @@ Pytest configuration for HA-BB8 tests.
 
 from __future__ import annotations
 
+import importlib
 import os
 import sys
+import types
 from pathlib import Path
 
 
 def _ensure_repo_root_on_syspath() -> None:
     """Prepend the repository root to sys.path.
 
-    Tests live under addon/tests/**. We need the parent of 'addon' (repo root)
-    on sys.path so that the package import style `addon.bb8_core.*` works.
+    Tests live under tests/**. We need the repository root on sys.path.
     """
     tests_dir = Path(__file__).resolve().parent
-    addon_dir = tests_dir.parent  # addon/
-    repo_root = addon_dir.parent  # repo root
+    repo_root = tests_dir.parent
     root_str = str(repo_root)
     if root_str not in sys.path:
         sys.path.insert(0, root_str)
 
 
 _ensure_repo_root_on_syspath()
+
+
+def _install_addon_import_aliases() -> None:
+    """Provide compatibility aliases for legacy `addon.*` test imports."""
+    bb8_core_pkg = importlib.import_module("bb8_core")
+    facade_stub_mod = importlib.import_module("tests.helpers.facade_stub")
+
+    addon_pkg = types.ModuleType("addon")
+    addon_pkg.__path__ = []
+    addon_pkg.bb8_core = bb8_core_pkg
+
+    addon_tests_pkg = types.ModuleType("addon.tests")
+    addon_tests_pkg.__path__ = []
+    addon_helpers_pkg = types.ModuleType("addon.tests.helpers")
+    addon_helpers_pkg.__path__ = []
+    addon_helpers_pkg.facade_stub = facade_stub_mod
+
+    sys.modules.setdefault("addon", addon_pkg)
+    sys.modules.setdefault("addon.bb8_core", bb8_core_pkg)
+    sys.modules.setdefault("addon.tests", addon_tests_pkg)
+    sys.modules.setdefault("addon.tests.helpers", addon_helpers_pkg)
+    sys.modules.setdefault("addon.tests.helpers.facade_stub", facade_stub_mod)
+
+
+_install_addon_import_aliases()
 
 
 def pytest_configure(config):  # noqa: D401
