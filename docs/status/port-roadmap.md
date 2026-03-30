@@ -10,7 +10,7 @@ runtime features.
 ## Completed ports
 
 | Port | Description | PR | Status |
-| ---- | ----------- | -- | ------ |
+| --- | --- | --- | --- |
 | PORT-01 | Post-connect stabilization delay + LED holdoff | #21 | Merged |
 | PORT-02 | BlueZ health monitoring and circuit breaker | #22 | Merged |
 | PORT-03 | Estop ACK correctness | #23 | Merged |
@@ -19,7 +19,7 @@ runtime features.
 ## Beyond-roadmap: Recovery stream
 
 | Item | Description | PR | Status |
-| ---- | ----------- | -- | ------ |
+| --- | --- | --- | --- |
 | RECOVERY auth/capability | Supervisor + D-Bus capability validation | #24-#28 | Merged |
 | RECOVERY primitive | Bounded host bluetooth restart via D-Bus | #29 | Merged |
 | RECOVERY operator surface | One-shot trigger + README runbook | #30 | Merged |
@@ -27,17 +27,16 @@ runtime features.
 ## Deferred items
 
 | Port | Description | Status | Notes |
-| ---- | ----------- | ------ | ----- |
-| PORT-05 | CI test enforcement | PR #31 open, classification CI_HARDENED (commit f659bb2) | Collection errors repaired in canonical repo; fast suite still reports async-plugin/runtime test failures |
+| --- | --- | --- | --- |
+| PORT-05 | CI test enforcement | CI_HARDENED (PR #31 open) | Commit f659bb2. Collection errors repaired. Fast suite still has async-plugin/runtime test failures. |
 | PORT-06 | Telemetry shape hardening | Deferred | Incremental; estop ACK fix covered critical path |
 | PORT-07 | ble_session test alignment | Deferred | Focused unit tests cover critical paths |
-| PORT-08 | Documentation alignment | Partially addressed | README runbook landed in PR #30 |
+| PORT-08 | Documentation alignment | Partially addressed | README runbook in PR #30 |
 
 ## Runtime validation note
 
 A bounded runtime validation pass was attempted on canonical main after
-merged recovery stream. Evidence showed:
-
+the merged recovery stream. Evidence showed:
 - deployed/runtime SHA parity matched canonical main
 - connection-phase physical reaction was observed on retry
 - logs contained:
@@ -46,13 +45,12 @@ merged recovery stream. Evidence showed:
   - facade_led_async_success
 
 However:
-
 - no facade_led_hw_result ok=true marker was captured
 - no ble_session_led_write_timeout marker was captured
 - operator did not reliably observe whether BB-8 turned green
 
-Therefore this runtime validation should be treated as **inconclusive / operator-unconfirmed**,
-not as a timeout classification.
+Therefore this runtime validation should be treated as operator-unconfirmed
+and inconclusive, not as a timeout classification.
 
 ## Legacy repo
 
