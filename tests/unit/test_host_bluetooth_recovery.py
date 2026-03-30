@@ -35,11 +35,15 @@ def test_restart_skipped_during_cooldown() -> None:
     def http_requester(method, url, headers, timeout_s):
         return 200, "{}", ""
 
+    def command_runner(args, timeout_s):
+        return 0, 'o "/org/freedesktop/systemd1/job/123"', ""
+
     first = asyncio.run(
         action.request_restart(
             reason="first",
             now_fn=lambda: 100.0,
             http_requester=http_requester,
+            command_runner=command_runner,
         )
     )
     second = asyncio.run(
@@ -50,7 +54,7 @@ def test_restart_skipped_during_cooldown() -> None:
     )
 
     assert first["status"] == "succeeded"
-    assert first["path"] == "supervisor"
+    assert first["path"] == "dbus"
     assert second["status"] == "skipped_cooldown"
     assert second["classification"] == "cooldown_active"
     assert second["remaining_s"] > 0
@@ -65,20 +69,26 @@ def test_restart_succeeds_via_supervisor_primary() -> None:
         calls.append(url)
         return 200, "{}", ""
 
+    def command_runner(args, timeout_s):
+        return 0, 'o "/org/freedesktop/systemd1/job/123"', ""
+
     result = asyncio.run(
         action.request_restart(
             reason="unit-test",
             http_requester=http_requester,
+            command_runner=command_runner,
             emit=events.append,
         )
     )
 
     assert result["status"] == "succeeded"
-    assert result["path"] == "supervisor"
-    assert result["classification"] == "supervisor_success"
-    assert calls and calls[0].endswith("/host/service/bluetooth/restart")
+    assert result["path"] == "dbus"
+    assert result["classification"] == "dbus_fallback_success"
+    assert result["supervisor"]["classification"] == "control_path_unavailable"
+    assert calls and calls[0].endswith("/host/services")
     assert [evt["event"] for evt in events] == [
         "recovery_restart_requested",
+        "recovery_restart_attempted",
         "recovery_restart_attempted",
         "recovery_restart_succeeded",
     ]
@@ -88,9 +98,7 @@ def test_restart_falls_back_to_dbus_when_supervisor_fails() -> None:
     action = HostBluetoothRestartRecovery(enabled=True, cooldown_s=30, supervisor_token="token")
 
     def http_requester(method, url, headers, timeout_s):
-        if url.endswith("/host/service/bluetooth/restart"):
-            return 404, "{}", "HTTP Error 404: Not Found"
-        if url.endswith("/host/service/bluetooth/reload"):
+        if url.endswith("/host/services"):
             return 503, "{}", "HTTP Error 503: Service Unavailable"
         return 0, "", "unexpected"
 
