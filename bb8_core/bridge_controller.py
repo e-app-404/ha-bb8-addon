@@ -10,6 +10,7 @@ warnings.filterwarnings(
 
 import asyncio
 import contextlib
+import importlib.util
 import json
 import logging
 import os
@@ -17,7 +18,27 @@ import signal
 import threading
 import time
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from typing import Any
+
+try:
+    from addon.bb8_core.ha_discovery import light_discovery_config
+except ModuleNotFoundError:
+    _ha_discovery_path = (
+        Path(__file__).resolve().parents[1] / "addon" / "bb8_core" / "ha_discovery.py"
+    )
+    _ha_discovery_spec = importlib.util.spec_from_file_location(
+        "addon.bb8_core.ha_discovery",
+        _ha_discovery_path,
+    )
+    if (
+        _ha_discovery_spec is None
+        or _ha_discovery_spec.loader is None
+    ):  # pragma: no cover - defensive
+        raise
+    _ha_discovery_module = importlib.util.module_from_spec(_ha_discovery_spec)
+    _ha_discovery_spec.loader.exec_module(_ha_discovery_module)
+    light_discovery_config = _ha_discovery_module.light_discovery_config
 
 from .addon_config import load_config
 from .auto_detect import resolve_bb8_mac
@@ -106,6 +127,148 @@ def _client_or_none():
 _ble_loop: asyncio.AbstractEventLoop | None = None
 _ble_inited: bool = False
 client = None
+
+
+def _runtime_mqtt_base(config: dict[str, Any] | None = None) -> str:
+    cfg = config or {}
+    return (
+        os.environ.get("BASE")
+        or os.environ.get("MQTT_BASE")
+        or cfg.get("MQTT_BASE")
+        or cfg.get("mqtt_topic_prefix")
+        or cfg.get("mqtt_topic")
+        or "bb8"
+    )
+
+
+def _publish_connection_availability(
+    state: str, *, config: dict[str, Any] | None = None
+) -> None:
+    active_client = client
+    if active_client is None:
+        log.warning(
+            "connection availability publish skipped (no mqtt client): %s",
+            state,
+        )
+        return
+
+    topic = f"{_runtime_mqtt_base(config)}/status/connection"
+    active_client.publish(topic, payload=state, qos=0, retain=True)
+    log.info("connection availability published -> %s %s", topic, state)
+
+
+def _clamp_led_rgb(r: int, g: int, b: int) -> tuple[int, int, int]:
+    return (
+        max(0, min(255, int(r))),
+        max(0, min(255, int(g))),
+        max(0, min(255, int(b))),
+    )
+
+
+def _parse_legacy_led_rgb(raw_payload: str) -> tuple[int, int, int] | None:
+    parts = [part.strip() for part in raw_payload.split(",")]
+    if len(parts) != 3:
+        return None
+    try:
+        return _clamp_led_rgb(*(int(part) for part in parts))
+    except Exception:
+        return None
+
+
+def _resolve_led_command_payload(
+    raw_payload: str,
+    payload: dict[str, Any],
+    last_commanded_color: list[int] | tuple[int, int, int],
+) -> tuple[tuple[int, int, int], bool] | None:
+    if payload:
+        state = str(payload.get("state", "")).upper()
+        if state == "OFF":
+            return (0, 0, 0), False
+
+        color = payload.get("color")
+        if isinstance(color, dict):
+            try:
+                return _clamp_led_rgb(
+                    int(color.get("r", 0)),
+                    int(color.get("g", 0)),
+                    int(color.get("b", 0)),
+                ), True
+            except Exception:
+                log.error("led_cmd malformed color payload=%r", raw_payload)
+                return None
+
+        if all(channel in payload for channel in ("r", "g", "b")):
+            try:
+                return _clamp_led_rgb(
+                    int(payload.get("r", 0)),
+                    int(payload.get("g", 0)),
+                    int(payload.get("b", 0)),
+                ), True
+            except Exception:
+                log.error("led_cmd malformed rgb payload=%r", raw_payload)
+                return None
+
+        if state == "ON":
+            return tuple(int(channel) for channel in last_commanded_color), False
+
+        log.error("led_cmd malformed payload=%r", raw_payload)
+        return None
+
+    legacy_rgb = _parse_legacy_led_rgb(raw_payload.strip())
+    if legacy_rgb is not None:
+        return legacy_rgb, True
+
+    log.error("led_cmd malformed payload=%r", raw_payload)
+    return None
+
+
+def _build_ha_led_state_payload(rgb: tuple[int, int, int]) -> str:
+    if rgb == (0, 0, 0):
+        payload: dict[str, Any] = {"state": "OFF"}
+    else:
+        payload = {
+            "state": "ON",
+            "color_mode": "rgb",
+            "color": {"r": rgb[0], "g": rgb[1], "b": rgb[2]},
+        }
+    return json.dumps(payload, separators=(",", ":"))
+
+
+async def _process_led_command(
+    *,
+    facade: Any,
+    mqtt_client: Any,
+    raw_payload: str,
+    payload: dict[str, Any],
+    cid: str | None,
+    last_commanded_color: list[int],
+    led_state_topic: str,
+) -> bool:
+    resolved = _resolve_led_command_payload(raw_payload, payload, last_commanded_color)
+    if resolved is None:
+        return False
+
+    rgb, explicit_color = resolved
+
+    try:
+        await facade.set_led_async(rgb[0], rgb[1], rgb[2], cid)
+    except Exception as exc:
+        log.error("led_cmd facade failure: %s payload=%r", exc, rgb)
+        return False
+
+    mqtt_client.publish(
+        led_state_topic,
+        _build_ha_led_state_payload(rgb),
+        qos=0,
+        retain=True,
+    )
+
+    if explicit_color and rgb != (0, 0, 0):
+        last_commanded_color[0] = rgb[0]
+        last_commanded_color[1] = rgb[1]
+        last_commanded_color[2] = rgb[2]
+
+    return True
 
 
 def _schedule_async_command_ack(
@@ -600,6 +763,7 @@ async def _start_watchdog(
     consecutive_failures = 0
     bluez_circuit_state = "CLOSED"
     bluez_circuit_recheck_at_monotonic = 0.0
+    availability_state = "disconnected"
 
     while True:
         try:
@@ -612,6 +776,9 @@ async def _start_watchdog(
             if is_connected:
                 metrics["last_ok_ts"] = time.time()
                 consecutive_failures = 0
+                if availability_state != "connected":
+                    _publish_connection_availability("connected", config=config)
+                    availability_state = "connected"
 
                 # Try to get battery for health check
                 try:
@@ -633,6 +800,9 @@ async def _start_watchdog(
 
             else:
                 consecutive_failures += 1
+                if availability_state != "disconnected":
+                    _publish_connection_availability("disconnected", config=config)
+                    availability_state = "disconnected"
                 logger.warning(
                     {
                         "event": "watchdog_disconnected",
@@ -779,6 +949,9 @@ async def _start_watchdog(
 
                         with contextlib.suppress(Exception):
                             facade.mark_post_connect_holdoff()
+
+                        _publish_connection_availability("connected", config=config)
+                        availability_state = "connected"
 
                         # Update facade presence
                         if facade.publish_presence:
@@ -1131,6 +1304,8 @@ if __name__ == "__main__":
     import asyncio as _asyncio
 
     async def _async_entry():
+        global client
+
         cfg, _src = load_config() if "load_config" in globals() else ({}, None)
 
         # Initialize core subsystems and get facade for handler attachment
@@ -1225,6 +1400,8 @@ if __name__ == "__main__":
             )
 
         loop = _asyncio.get_running_loop()
+        led_state_topic = f"{base}/state/led"
+        last_commanded_color = [255, 255, 255]
 
         # Attach facade-level MQTT handlers (always-on diag_gatt and telemetry wiring)
         try:
@@ -1259,6 +1436,29 @@ if __name__ == "__main__":
                 )
             except Exception:
                 pass
+            try:
+                discovery_topic, discovery_payload = light_discovery_config()
+                cl.publish(discovery_topic, payload=discovery_payload, qos=0, retain=True)
+                cl.publish(
+                    led_state_topic,
+                    _build_ha_led_state_payload((0, 0, 0)),
+                    qos=0,
+                    retain=True,
+                )
+                _publish_connection_availability("disconnected", config=cfg)
+                logger.info(
+                    {
+                        "event": "ha_light_discovery_published",
+                        "topic": discovery_topic,
+                    }
+                )
+            except Exception as exc:
+                logger.warning(
+                    {
+                        "event": "ha_light_discovery_publish_failed",
+                        "error": str(exc),
+                    }
+                )
             # Commands and echo responder subscriptions
             cl.subscribe(f"{base}/cmd/#", qos=0)
             cl.subscribe(f"{base}/echo/cmd", qos=0)
@@ -1358,15 +1558,20 @@ if __name__ == "__main__":
                                 "Facade missing 'stop' method",
                             )
                     elif cmd == "led":
-                        r = int(data.get("r", 0))
-                        g = int(data.get("g", 0))
-                        b = int(data.get("b", 0))
                         if facade is None:
                             _ack("led", cid, False, "Facade is None")
                         elif hasattr(facade, "set_led_async"):
                             loop.call_soon_threadsafe(
                                 lambda: _asyncio.create_task(
-                                    facade.set_led_async(r, g, b, cid)
+                                    _process_led_command(
+                                        facade=facade,
+                                        mqtt_client=client,
+                                        raw_payload=raw,
+                                        payload=data,
+                                        cid=cid,
+                                        last_commanded_color=last_commanded_color,
+                                        led_state_topic=led_state_topic,
+                                    )
                                 )
                             )
                             _ack("led", cid, True)
