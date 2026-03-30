@@ -45,6 +45,8 @@ options:
   enable_health_checks: false
   enable_bluez_health_probe: true
   bluez_circuit_recheck_s: 30
+  enable_host_bluetooth_restart_recovery: false
+  bluetooth_restart_cooldown_s: 300
 
   # --- Discovery / Publishing policy ---
   dispatcher_discovery_enabled: false  # <-- LED discovery OFF by default (INT-HA-CONTROL governance)
@@ -100,6 +102,8 @@ schema:
   enable_health_checks: "bool?"
   enable_bluez_health_probe: "bool?"
   bluez_circuit_recheck_s: "int?"
+  enable_host_bluetooth_restart_recovery: "bool?"
+  bluetooth_restart_cooldown_s: "int?"
 
   # --- Discovery / Publishing policy ---
   dispatcher_discovery_enabled: "bool?"
