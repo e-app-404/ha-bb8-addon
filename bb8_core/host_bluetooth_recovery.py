@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import argparse
 import asyncio
+import json
+import os
 import subprocess
 import time
 import urllib.error
@@ -294,3 +297,97 @@ class HostBluetoothRestartRecovery:
             "stderr": err,
             "returncode": rc,
         }
+
+
+async def operator_trigger_once(
+    *,
+    reason: str,
+    timeout_s: float = 5.0,
+    config: Mapping[str, Any] | None = None,
+    config_source: str | None = None,
+    supervisor_token: str | None = None,
+    supervisor_url_base: str | None = None,
+    http_requester: HttpRequester | None = None,
+    command_runner: CommandRunner | None = None,
+    now_fn: NowFn | None = None,
+) -> dict[str, Any]:
+    """Run one explicit operator-triggered recovery attempt.
+
+    This helper preserves the primitive's one-shot semantics and returns
+    a structured payload suitable for runbooks and manual operations.
+    """
+    resolved_source = config_source
+    cfg: Mapping[str, Any]
+
+    if config is None:
+        from bb8_core import addon_config as ac
+
+        loaded_cfg, loaded_src = ac.load_config(force=True)
+        cfg = loaded_cfg
+        resolved_source = str(loaded_src) if loaded_src else None
+    else:
+        cfg = config
+
+    token = supervisor_token if supervisor_token is not None else os.environ.get("SUPERVISOR_TOKEN", "")
+    url_base = (
+        supervisor_url_base
+        if supervisor_url_base is not None
+        else os.environ.get("SUPERVISOR_URL", "http://supervisor")
+    )
+
+    action = HostBluetoothRestartRecovery.from_config(
+        cfg,
+        supervisor_token=token,
+        supervisor_url_base=url_base,
+    )
+    events: list[dict[str, Any]] = []
+    result = await action.request_restart(
+        reason=reason,
+        timeout_s=timeout_s,
+        http_requester=http_requester,
+        command_runner=command_runner,
+        now_fn=now_fn,
+        emit=events.append,
+    )
+
+    return {
+        "config_source": resolved_source,
+        "effective_enabled": action.enabled,
+        "cooldown_s": action.cooldown_s,
+        "result": result,
+        "emitted_events": events,
+    }
+
+
+def _build_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="One-shot operator trigger for host bluetooth restart recovery",
+    )
+    parser.add_argument(
+        "--reason",
+        default="operator_manual_trigger",
+        help="Operator-provided reason string for this one-shot attempt",
+    )
+    parser.add_argument(
+        "--timeout-s",
+        type=float,
+        default=5.0,
+        help="Per-path timeout in seconds (default: 5.0)",
+    )
+    return parser
+
+
+def main() -> int:
+    args = _build_arg_parser().parse_args()
+    payload = asyncio.run(
+        operator_trigger_once(
+            reason=args.reason,
+            timeout_s=float(args.timeout_s),
+        )
+    )
+    print(json.dumps(payload))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
