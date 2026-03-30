@@ -10,6 +10,7 @@ warnings.filterwarnings(
 
 import asyncio
 import contextlib
+import importlib.util
 import json
 import logging
 import os
@@ -17,9 +18,27 @@ import signal
 import threading
 import time
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from typing import Any
 
-from addon.bb8_core.ha_discovery import light_discovery_config
+try:
+    from addon.bb8_core.ha_discovery import light_discovery_config
+except ModuleNotFoundError:
+    _ha_discovery_path = (
+        Path(__file__).resolve().parents[1] / "addon" / "bb8_core" / "ha_discovery.py"
+    )
+    _ha_discovery_spec = importlib.util.spec_from_file_location(
+        "addon.bb8_core.ha_discovery",
+        _ha_discovery_path,
+    )
+    if (
+        _ha_discovery_spec is None
+        or _ha_discovery_spec.loader is None
+    ):  # pragma: no cover - defensive
+        raise
+    _ha_discovery_module = importlib.util.module_from_spec(_ha_discovery_spec)
+    _ha_discovery_spec.loader.exec_module(_ha_discovery_module)
+    light_discovery_config = _ha_discovery_module.light_discovery_config
 
 from .addon_config import load_config
 from .auto_detect import resolve_bb8_mac
@@ -136,6 +155,120 @@ def _publish_connection_availability(
     topic = f"{_runtime_mqtt_base(config)}/status/connection"
     active_client.publish(topic, payload=state, qos=0, retain=True)
     log.info("connection availability published -> %s %s", topic, state)
+
+
+def _clamp_led_rgb(r: int, g: int, b: int) -> tuple[int, int, int]:
+    return (
+        max(0, min(255, int(r))),
+        max(0, min(255, int(g))),
+        max(0, min(255, int(b))),
+    )
+
+
+def _parse_legacy_led_rgb(raw_payload: str) -> tuple[int, int, int] | None:
+    parts = [part.strip() for part in raw_payload.split(",")]
+    if len(parts) != 3:
+        return None
+    try:
+        return _clamp_led_rgb(*(int(part) for part in parts))
+    except Exception:
+        return None
+
+
+def _resolve_led_command_payload(
+    raw_payload: str,
+    payload: dict[str, Any],
+    last_commanded_color: list[int] | tuple[int, int, int],
+) -> tuple[tuple[int, int, int], bool] | None:
+    if payload:
+        state = str(payload.get("state", "")).upper()
+        if state == "OFF":
+            return (0, 0, 0), False
+
+        color = payload.get("color")
+        if isinstance(color, dict):
+            try:
+                return _clamp_led_rgb(
+                    int(color.get("r", 0)),
+                    int(color.get("g", 0)),
+                    int(color.get("b", 0)),
+                ), True
+            except Exception:
+                log.error("led_cmd malformed color payload=%r", raw_payload)
+                return None
+
+        if all(channel in payload for channel in ("r", "g", "b")):
+            try:
+                return _clamp_led_rgb(
+                    int(payload.get("r", 0)),
+                    int(payload.get("g", 0)),
+                    int(payload.get("b", 0)),
+                ), True
+            except Exception:
+                log.error("led_cmd malformed rgb payload=%r", raw_payload)
+                return None
+
+        if state == "ON":
+            return tuple(int(channel) for channel in last_commanded_color), False
+
+        log.error("led_cmd malformed payload=%r", raw_payload)
+        return None
+
+    legacy_rgb = _parse_legacy_led_rgb(raw_payload.strip())
+    if legacy_rgb is not None:
+        return legacy_rgb, True
+
+    log.error("led_cmd malformed payload=%r", raw_payload)
+    return None
+
+
+def _build_ha_led_state_payload(rgb: tuple[int, int, int]) -> str:
+    if rgb == (0, 0, 0):
+        payload: dict[str, Any] = {"state": "OFF"}
+    else:
+        payload = {
+            "state": "ON",
+            "color_mode": "rgb",
+            "color": {"r": rgb[0], "g": rgb[1], "b": rgb[2]},
+        }
+    return json.dumps(payload, separators=(",", ":"))
+
+
+async def _process_led_command(
+    *,
+    facade: Any,
+    mqtt_client: Any,
+    raw_payload: str,
+    payload: dict[str, Any],
+    cid: str | None,
+    last_commanded_color: list[int],
+    led_state_topic: str,
+) -> bool:
+    resolved = _resolve_led_command_payload(raw_payload, payload, last_commanded_color)
+    if resolved is None:
+        return False
+
+    rgb, explicit_color = resolved
+
+    try:
+        await facade.set_led_async(rgb[0], rgb[1], rgb[2], cid)
+    except Exception as exc:
+        log.error("led_cmd facade failure: %s payload=%r", exc, rgb)
+        return False
+
+    mqtt_client.publish(
+        led_state_topic,
+        _build_ha_led_state_payload(rgb),
+        qos=0,
+        retain=True,
+    )
+
+    if explicit_color and rgb != (0, 0, 0):
+        last_commanded_color[0] = rgb[0]
+        last_commanded_color[1] = rgb[1]
+        last_commanded_color[2] = rgb[2]
+
+    return True
 
 
 def _schedule_async_command_ack(
@@ -1270,105 +1403,6 @@ if __name__ == "__main__":
         led_state_topic = f"{base}/state/led"
         last_commanded_color = [255, 255, 255]
 
-        def _clamp_rgb(r: int, g: int, b: int) -> tuple[int, int, int]:
-            return (
-                max(0, min(255, int(r))),
-                max(0, min(255, int(g))),
-                max(0, min(255, int(b))),
-            )
-
-        def _parse_legacy_led_rgb(raw_payload: str) -> tuple[int, int, int] | None:
-            parts = [part.strip() for part in raw_payload.split(",")]
-            if len(parts) != 3:
-                return None
-            try:
-                return _clamp_rgb(*(int(part) for part in parts))
-            except Exception:
-                return None
-
-        def _resolve_led_command_payload(
-            raw_payload: str, payload: dict[str, Any]
-        ) -> tuple[tuple[int, int, int], bool] | None:
-            if payload:
-                state = str(payload.get("state", "")).upper()
-                if state == "OFF":
-                    return (0, 0, 0), False
-
-                color = payload.get("color")
-                if isinstance(color, dict):
-                    try:
-                        return _clamp_rgb(
-                            int(color.get("r", 0)),
-                            int(color.get("g", 0)),
-                            int(color.get("b", 0)),
-                        ), True
-                    except Exception:
-                        log.error(
-                            "led_cmd malformed color payload=%r",
-                            raw_payload,
-                        )
-                        return None
-
-                if all(channel in payload for channel in ("r", "g", "b")):
-                    try:
-                        return _clamp_rgb(
-                            int(payload.get("r", 0)),
-                            int(payload.get("g", 0)),
-                            int(payload.get("b", 0)),
-                        ), True
-                    except Exception:
-                        log.error(
-                            "led_cmd malformed rgb payload=%r",
-                            raw_payload,
-                        )
-                        return None
-
-                if state == "ON":
-                    return tuple(last_commanded_color), False
-
-                log.error("led_cmd malformed payload=%r", raw_payload)
-                return None
-
-            legacy_rgb = _parse_legacy_led_rgb(raw_payload.strip())
-            if legacy_rgb is not None:
-                return legacy_rgb, True
-
-            log.error("led_cmd malformed payload=%r", raw_payload)
-            return None
-
-        def _publish_ha_led_state(rgb: tuple[int, int, int]) -> None:
-            if rgb == (0, 0, 0):
-                payload = {"state": "OFF"}
-            else:
-                payload = {
-                    "state": "ON",
-                    "color_mode": "rgb",
-                    "color": {"r": rgb[0], "g": rgb[1], "b": rgb[2]},
-                }
-            client.publish(
-                led_state_topic,
-                json.dumps(payload, separators=(",", ":")),
-                qos=0,
-                retain=True,
-            )
-
-        async def _apply_led_command(
-            rgb: tuple[int, int, int],
-            cid: str | None,
-            explicit_color: bool,
-        ) -> None:
-            try:
-                await facade.set_led_async(rgb[0], rgb[1], rgb[2], cid)
-            except Exception as exc:
-                log.error("led_cmd facade failure: %s payload=%r", exc, rgb)
-                return
-
-            _publish_ha_led_state(rgb)
-            if explicit_color and rgb != (0, 0, 0):
-                last_commanded_color[0] = rgb[0]
-                last_commanded_color[1] = rgb[1]
-                last_commanded_color[2] = rgb[2]
-
         # Attach facade-level MQTT handlers (always-on diag_gatt and telemetry wiring)
         try:
             if facade is not None and hasattr(facade, "attach_mqtt"):
@@ -1405,7 +1439,12 @@ if __name__ == "__main__":
             try:
                 discovery_topic, discovery_payload = light_discovery_config()
                 cl.publish(discovery_topic, payload=discovery_payload, qos=0, retain=True)
-                _publish_ha_led_state((0, 0, 0))
+                cl.publish(
+                    led_state_topic,
+                    _build_ha_led_state_payload((0, 0, 0)),
+                    qos=0,
+                    retain=True,
+                )
                 _publish_connection_availability("disconnected", config=cfg)
                 logger.info(
                     {
@@ -1522,13 +1561,17 @@ if __name__ == "__main__":
                         if facade is None:
                             _ack("led", cid, False, "Facade is None")
                         elif hasattr(facade, "set_led_async"):
-                            resolved = _resolve_led_command_payload(raw, data)
-                            if resolved is None:
-                                return
-                            rgb, explicit_color = resolved
                             loop.call_soon_threadsafe(
                                 lambda: _asyncio.create_task(
-                                    _apply_led_command(rgb, cid, explicit_color)
+                                    _process_led_command(
+                                        facade=facade,
+                                        mqtt_client=client,
+                                        raw_payload=raw,
+                                        payload=data,
+                                        cid=cid,
+                                        last_commanded_color=last_commanded_color,
+                                        led_state_topic=led_state_topic,
+                                    )
                                 )
                             )
                             _ack("led", cid, True)
