@@ -1,11 +1,18 @@
+import importlib.util
 import json
-import sys
 from pathlib import Path
 
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-
-from addon.bb8_core.ha_discovery import light_discovery_config
+_MODULE_PATH = Path(__file__).resolve().parents[1] / "bb8_core" / "ha_discovery.py"
+_MODULE_SPEC = importlib.util.spec_from_file_location(
+    "int01_ha_discovery_test_module",
+    _MODULE_PATH,
+)
+if _MODULE_SPEC is None or _MODULE_SPEC.loader is None:  # pragma: no cover - defensive
+    raise RuntimeError(f"Unable to load ha_discovery module from {_MODULE_PATH}")
+_MODULE = importlib.util.module_from_spec(_MODULE_SPEC)
+_MODULE_SPEC.loader.exec_module(_MODULE)
+light_discovery_config = _MODULE.light_discovery_config
 
 
 def _payload() -> dict:
