@@ -36,3 +36,18 @@ def light_discovery_config() -> tuple[str, str]:
         "device": DEVICE_INFO,
     }
     return topic, json.dumps(payload)
+
+
+def connection_status_discovery_config() -> tuple[str, str]:
+    topic = "homeassistant/binary_sensor/bb8_connection/config"
+    payload = {
+        "name": "BB-8 Connection",
+        "unique_id": "bb8_connection_status",
+        "object_id": "bb8_connection",
+        "device_class": "connectivity",
+        "state_topic": "bb8/status/connection",
+        "payload_on": "connected",
+        "payload_off": "disconnected",
+        "device": DEVICE_INFO,
+    }
+    return topic, json.dumps(payload)
