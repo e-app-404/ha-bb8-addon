@@ -121,6 +121,23 @@ class BB8Facade:
         if self._ble_session:
             self._ble_session = BleSession(mac)
 
+    def set_ble_session(self, session: BleSession) -> None:
+        """Use an externally managed BLE session for facade and lighting commands."""
+        self._ble_session = session
+        self._lighting.set_ble_session(session)
+
+        target_mac = getattr(session, "_target_mac", None)
+        if isinstance(target_mac, str) and target_mac:
+            self._target_mac = target_mac
+
+        logger.info(
+            {
+                "event": "facade_session_propagated",
+                "has_session": session is not None,
+                "target_mac": self._target_mac,
+            }
+        )
+
     async def ensure_connected(self) -> None:
         """Ensure device is connected, attempt connection if not."""
         session = self._get_or_create_session()
@@ -131,7 +148,7 @@ class BB8Facade:
 
                 # Notify safety and lighting controllers
                 self._safety.set_device_connected(True)
-                self._lighting.set_ble_session(self._ble_session)
+                self.set_ble_session(session)
 
                 # Publish presence if available
                 if self.publish_presence:

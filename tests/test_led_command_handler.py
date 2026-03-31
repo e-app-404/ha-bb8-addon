@@ -241,6 +241,27 @@ def test_led_state_payload_structure():
     assert bridge_controller._build_ha_led_state_payload((0, 0, 0)) == '{"state":"OFF"}'
 
 
+def test_propagate_ble_session_to_facade():
+    session = object()
+
+    class SessionAwareFacade:
+        def __init__(self):
+            self.calls = []
+
+        def set_ble_session(self, value):
+            self.calls.append(value)
+
+    facade = SessionAwareFacade()
+
+    bridge_controller._propagate_ble_session_to_facade(facade, session)
+
+    assert facade.calls == [session]
+
+
+def test_propagate_ble_session_to_facade_missing_method_is_noop():
+    bridge_controller._propagate_ble_session_to_facade(object(), object())
+
+
 def test_led_backward_compat_payload():
     facade = RecordingFacade()
     mqtt_client = FakeMQTTClient()

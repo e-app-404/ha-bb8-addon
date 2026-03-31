@@ -234,6 +234,13 @@ def _build_ha_led_state_payload(rgb: tuple[int, int, int]) -> str:
     return json.dumps(payload, separators=(",", ":"))
 
 
+def _propagate_ble_session_to_facade(facade: Any, ble_session: Any) -> None:
+    """Keep facade/lighting command paths on the watchdog-managed BLE session."""
+    if facade is None or not hasattr(facade, "set_ble_session"):
+        return
+    facade.set_ble_session(ble_session)
+
+
 async def _process_led_command(
     *,
     facade: Any,
@@ -698,6 +705,7 @@ def start_bridge_controller(
     bridge = BLEBridge(gw, target_mac)  # Keep for compatibility
     facade = BB8Facade(bridge)
     facade.set_target_mac(target_mac)  # Configure facade with session
+    _propagate_ble_session_to_facade(facade, ble_session)
 
     logger.info({"event": "ble_bridge_init", "target_mac": target_mac})
 
@@ -949,6 +957,8 @@ async def _start_watchdog(
                                 "attempt": consecutive_failures,
                             }
                         )
+
+                        _propagate_ble_session_to_facade(facade, ble_session)
 
                         with contextlib.suppress(Exception):
                             facade.mark_post_connect_holdoff()

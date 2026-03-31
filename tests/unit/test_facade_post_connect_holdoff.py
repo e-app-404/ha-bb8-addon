@@ -1,6 +1,7 @@
 import json
 import asyncio
 from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
 
 import bb8_core.facade as facade_mod  # type: ignore[import-not-found]
 
@@ -126,3 +127,27 @@ def test_delay_override_affects_remaining_seconds(monkeypatch):
     payload = json.loads(ack["payload"])
     assert payload["reason"] == "post_connect_holdoff"
     assert payload["remaining_s"] == 1
+
+
+def test_propagated_session_drives_led_path(monkeypatch):
+    monkeypatch.setattr(
+        facade_mod,
+        "load_config",
+        lambda *args, **kwargs: ({"post_connect_delay_s": 15}, "test"),
+    )
+
+    facade = facade_mod.BB8Facade(bridge=SimpleNamespace())
+    session = MagicMock()
+    session.is_connected = MagicMock(return_value=True)
+    session.set_led = AsyncMock(return_value=None)
+    session._target_mac = "C9:5A:63:6B:B5:4A"
+    facade._mqtt = {"client": FakeClient(), "base": "bb8/test", "qos": 1, "retain": False}
+
+    facade.set_ble_session(session)
+
+    result = asyncio.run(facade.set_led_async(7, 8, 9, cid="cid-propagated"))
+
+    assert result is True
+    assert facade._ble_session is session
+    assert facade._lighting._ble_session is session
+    session.set_led.assert_awaited_once_with(7, 8, 9)
