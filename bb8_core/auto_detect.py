@@ -51,15 +51,13 @@ async def async_monitor_bb8_presence(
                 devices = await async_ble_scan_fn(scan_seconds=5, adapter=None)
             else:
                 devices = await async_scan_for_bb8(scan_seconds=5)
-            found = False
+            candidate = _pick_best_bb8_candidate(devices)
+            found = candidate is not None
             now = time.time()
-            for d in devices:
-                if is_probable_bb8(d.get("name")):
-                    found = True
-                    mac = d.get("address")
-                    name = d.get("name")
-                    rssi = d.get("rssi")
-                    break
+            if candidate:
+                mac = candidate.get("address")
+                name = candidate.get("name")
+                rssi = candidate.get("rssi")
             if found:
                 consecutive_misses = 0
                 absent_since = None
@@ -333,15 +331,13 @@ def monitor_bb8_presence(
                 if ble_scan_fn
                 else scan_for_bb8(scan_seconds=5, adapter=None)
             )
-            found = False
+            candidate = _pick_best_bb8_candidate(devices)
+            found = candidate is not None
             now = time.time()
-            for d in devices:
-                if is_probable_bb8(d.get("name")):
-                    found = True
-                    mac = d.get("address")
-                    name = d.get("name")
-                    rssi = d.get("rssi")
-                    break
+            if candidate:
+                mac = candidate.get("address")
+                name = candidate.get("name")
+                rssi = candidate.get("rssi")
             if found:
                 consecutive_misses = 0
                 absent_since = None
@@ -521,6 +517,64 @@ def is_probable_bb8(name: str | None) -> bool:
     return any(t in name_l for t in ("bb-8", "bb8", "droid", "sphero"))
 
 
+def _bb8_candidate_priority(
+    device: dict[str, Any],
+    configured_mac: str | None = None,
+    configured_name: str | None = None,
+) -> int:
+    """
+    Rank a scanned device as a BB-8 candidate.
+
+    Configured identity is authoritative and should outrank generic name heuristics.
+    """
+    configured_mac = configured_mac or CFG.get("bb8_mac")
+    configured_name = configured_name or CFG.get("bb8_name")
+    device_mac = (device.get("address") or "").strip()
+    device_name = (device.get("name") or "").strip()
+
+    if configured_mac and device_mac and device_mac.lower() == configured_mac.strip().lower():
+        return 3
+    if configured_name and device_name and device_name == configured_name.strip():
+        return 2
+    if is_probable_bb8(device_name):
+        return 1
+    return 0
+
+
+def _pick_best_bb8_candidate(
+    devices: list[dict[str, Any]],
+    configured_mac: str | None = None,
+    configured_name: str | None = None,
+) -> dict[str, Any] | None:
+    """Return the strongest BB-8 candidate from a scan result set."""
+    candidates = [
+        d
+        for d in devices
+        if _bb8_candidate_priority(
+            d,
+            configured_mac=configured_mac,
+            configured_name=configured_name,
+        )
+        > 0
+    ]
+    if not candidates:
+        return None
+    candidates.sort(
+        key=lambda d: (
+            _bb8_candidate_priority(
+                d,
+                configured_mac=configured_mac,
+                configured_name=configured_name,
+            ),
+            d.get("name", "").lower() == "bb-8",
+            d.get("rssi", -999),
+            d.get("address", ""),
+        ),
+        reverse=True,
+    )
+    return candidates[0]
+
+
 async def async_scan_for_bb8(scan_seconds: int) -> list[Candidate]:
     """
     Async BLE scan for BB-8 candidates.
@@ -532,21 +586,25 @@ async def async_scan_for_bb8(scan_seconds: int) -> list[Candidate]:
     devices = await BleakScanner.discover(timeout=scan_seconds)  # pragma: no cover
     out: list[Candidate] = []
     for d in devices:
-        name = getattr(d, "name", None)
-        if is_probable_bb8(name):
+        device = {
+            "address": getattr(d, "address", ""),
+            "name": getattr(d, "name", None),
+            "rssi": getattr(d, "rssi", None),
+        }
+        if _bb8_candidate_priority(device) > 0:
             out.append(
                 Candidate(
-                    mac=getattr(d, "address", ""),
-                    name=name or "",
-                    rssi=getattr(d, "rssi", None),
+                    mac=device["address"],
+                    name=device["name"] or "",
+                    rssi=device["rssi"],
                 )
             )
 
     # Sort: exact name first, stronger RSSI, then MAC
     def score(c: Candidate) -> tuple[int, int, str]:
-        exact = 1 if c.name.lower() == "bb-8" else 0
+        priority = _bb8_candidate_priority({"address": c.mac, "name": c.name, "rssi": c.rssi})
         rssi = c.rssi if isinstance(c.rssi, int) else -999
-        return (exact, rssi, c.mac)
+        return (priority, rssi, c.mac)
 
     out.sort(key=score, reverse=True)
     return out
@@ -732,15 +790,10 @@ def pick_bb8_mac(devices: list[dict]) -> str | None:
     """
     Pick the most probable BB-8 MAC from scanned devices.
     """
-    candidates = [d for d in devices if is_probable_bb8(d.get("name"))]
-    if not candidates:
+    candidate = _pick_best_bb8_candidate(devices)
+    if not candidate:
         return None
-    # Prefer exact name, then strongest RSSI
-    candidates.sort(
-        key=lambda d: (d.get("name", "").lower() == "bb-8", d.get("rssi", -999)),
-        reverse=True,
-    )
-    return candidates[0].get("address", "")
+    return candidate.get("address", "")
 
 
 class Options:

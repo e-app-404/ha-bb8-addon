@@ -145,6 +145,61 @@ class TestIsProbableBB8:
         assert auto_detect.is_probable_bb8(name) == expected
 
 
+class TestConfiguredIdentityFiltering:
+    def test_configured_mac_match_is_accepted_for_non_heuristic_name(self):
+        devices = [
+            {
+                "address": "C9:5A:63:6B:B5:4A",
+                "name": "BB-B54A",
+                "rssi": -60,
+            }
+        ]
+
+        with mock.patch.dict(auto_detect.CFG, {"bb8_mac": "C9:5A:63:6B:B5:4A"}, clear=False):
+            assert auto_detect.pick_bb8_mac(devices) == "C9:5A:63:6B:B5:4A"
+
+    def test_configured_name_match_is_accepted(self):
+        devices = [
+            {
+                "address": "C9:5A:63:6B:B5:4A",
+                "name": "BB-B54A",
+                "rssi": -60,
+            }
+        ]
+
+        with mock.patch.dict(auto_detect.CFG, {"bb8_name": "BB-B54A"}, clear=False):
+            assert auto_detect.pick_bb8_mac(devices) == "C9:5A:63:6B:B5:4A"
+
+    def test_generic_heuristic_is_used_as_fallback(self):
+        devices = [
+            {
+                "address": "AA:BB:CC:DD:EE:FF",
+                "name": "BB-8",
+                "rssi": -50,
+            }
+        ]
+
+        with mock.patch.dict(auto_detect.CFG, {}, clear=False):
+            assert auto_detect.pick_bb8_mac(devices) == "AA:BB:CC:DD:EE:FF"
+
+    def test_configured_mac_is_preferred_over_generic_heuristic(self):
+        devices = [
+            {
+                "address": "AA:BB:CC:DD:EE:FF",
+                "name": "BB-8",
+                "rssi": -40,
+            },
+            {
+                "address": "C9:5A:63:6B:B5:4A",
+                "name": "BB-B54A",
+                "rssi": -80,
+            },
+        ]
+
+        with mock.patch.dict(auto_detect.CFG, {"bb8_mac": "C9:5A:63:6B:B5:4A"}, clear=False):
+            assert auto_detect.pick_bb8_mac(devices) == "C9:5A:63:6B:B5:4A"
+
+
 class TestResolveScanPick:
     @pytest.fixture(autouse=True)
     def mock_bleak_scanner(self):
