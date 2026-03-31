@@ -60,6 +60,20 @@ def _on_signal(signum, frame):
     _stop_evt.set()
 
 
+def _config_truthy(config: dict[str, Any] | None, *keys: str, default: bool = False) -> bool:
+    """Read a bool-like flag from config with conservative parsing."""
+    if not config:
+        return default
+    for key in keys:
+        if key not in config:
+            continue
+        value = config.get(key)
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "on"}
+        return bool(value)
+    return default
+
+
 from .evidence_capture import EvidenceRecorder
 from .logging_setup import logger
 from .mqtt_dispatcher import (
@@ -629,7 +643,12 @@ def start_bridge_controller(
     cfg = config or (load_config()[0] if "load_config" in globals() else {})
 
     # Start passive BLE presence monitor in background thread if enabled
-    enable_presence_monitor = cfg.get("enable_presence_monitor", True)
+    enable_presence_monitor = _config_truthy(
+        cfg,
+        "enable_presence_monitor",
+        "ENABLE_PRESENCE_MONITOR",
+        default=False,
+    )
     if enable_presence_monitor:
         try:
             start_presence_monitor()
@@ -646,6 +665,13 @@ def start_bridge_controller(
                     "error": repr(e),
                 }
             )
+    else:
+        logger.info(
+            {
+                "event": "bb8_presence_monitor_integration",
+                "status": "disabled",
+            }
+        )
 
     logger.info(
         {
@@ -1324,6 +1350,12 @@ if __name__ == "__main__":
         global client
 
         cfg, _src = load_config() if "load_config" in globals() else ({}, None)
+        enable_presence_monitor = _config_truthy(
+            cfg,
+            "enable_presence_monitor",
+            "ENABLE_PRESENCE_MONITOR",
+            default=False,
+        )
 
         # Initialize core subsystems and get facade for handler attachment
         facade = start_bridge_controller(config=cfg)
@@ -1424,7 +1456,13 @@ if __name__ == "__main__":
         try:
             if facade is not None and hasattr(facade, "attach_mqtt"):
                 # Use base as provided; facade computes derived base for state topics as needed
-                facade.attach_mqtt(client, base, qos=1, retain=True)
+                facade.attach_mqtt(
+                    client,
+                    base,
+                    qos=1,
+                    retain=True,
+                    enable_presence_discovery=enable_presence_monitor,
+                )
                 logger.info({"event": "facade_mqtt_attached_via_controller", "base": base})
         except Exception as e:
             logger.warning({"event": "facade_attach_mqtt_failed", "error": str(e)})
