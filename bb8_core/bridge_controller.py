@@ -22,7 +22,10 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from addon.bb8_core.ha_discovery import light_discovery_config
+    from addon.bb8_core.ha_discovery import (
+        connection_status_discovery_config,
+        light_discovery_config,
+    )
 except ModuleNotFoundError:
     _ha_discovery_path = (
         Path(__file__).resolve().parents[1] / "addon" / "bb8_core" / "ha_discovery.py"
@@ -38,6 +41,7 @@ except ModuleNotFoundError:
         raise
     _ha_discovery_module = importlib.util.module_from_spec(_ha_discovery_spec)
     _ha_discovery_spec.loader.exec_module(_ha_discovery_module)
+    connection_status_discovery_config = _ha_discovery_module.connection_status_discovery_config
     light_discovery_config = _ha_discovery_module.light_discovery_config
 
 from .addon_config import load_config
@@ -1452,6 +1456,8 @@ if __name__ == "__main__":
             try:
                 discovery_topic, discovery_payload = light_discovery_config()
                 cl.publish(discovery_topic, payload=discovery_payload, qos=0, retain=True)
+                connection_topic, connection_payload = connection_status_discovery_config()
+                cl.publish(connection_topic, payload=connection_payload, qos=0, retain=True)
                 cl.publish(
                     led_state_topic,
                     _build_ha_led_state_payload((0, 0, 0)),
@@ -1463,6 +1469,12 @@ if __name__ == "__main__":
                     {
                         "event": "ha_light_discovery_published",
                         "topic": discovery_topic,
+                    }
+                )
+                logger.info(
+                    {
+                        "event": "ha_connection_discovery_published",
+                        "topic": connection_topic,
                     }
                 )
             except Exception as exc:
