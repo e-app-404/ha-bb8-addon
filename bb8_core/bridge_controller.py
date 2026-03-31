@@ -106,7 +106,6 @@ DEFAULT_MQTT_HOST = "localhost"
 DEFAULT_MQTT_PORT = 1883
 PRESENCE_STATE_TOPIC = "bb8/state/presence"
 LEGACY_PRESENCE_TOPICS = (
-    "homeassistant/binary_sensor/bb8_presence/config",
     "homeassistant/sensor/bb8/presence/config",
     "bb8/presence/state",
     "bb8/presence",
