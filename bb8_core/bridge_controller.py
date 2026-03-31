@@ -251,9 +251,12 @@ async def _process_led_command(
     rgb, explicit_color = resolved
 
     try:
-        await facade.set_led_async(rgb[0], rgb[1], rgb[2], cid)
+        led_applied = await facade.set_led_async(rgb[0], rgb[1], rgb[2], cid)
     except Exception as exc:
         log.error("led_cmd facade failure: %s payload=%r", exc, rgb)
+        return False
+
+    if led_applied is not True:
         return False
 
     mqtt_client.publish(

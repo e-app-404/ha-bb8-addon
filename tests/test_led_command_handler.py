@@ -75,15 +75,16 @@ class RecordingFacade:
 
     async def set_led_async(self, r, g, b, cid=None):
         self.calls.append((r, g, b, cid))
+        return True
 
 
-class RaisingFacade:
+class FailingFacade:
     def __init__(self):
         self.calls = []
 
     async def set_led_async(self, r, g, b, cid=None):
         self.calls.append((r, g, b, cid))
-        raise RuntimeError("boom")
+        return False
 
 
 def _run_led_command(*, facade, mqtt_client, raw_payload, payload, cid=None, last_color=None):
@@ -213,9 +214,9 @@ def test_led_malformed_payload(caplog):
     assert any("led_cmd malformed payload" in record.message for record in caplog.records)
 
 
-def test_led_facade_exception_no_state_publish():
-    """Bridge controller suppresses state publish only when facade failure propagates."""
-    facade = RaisingFacade()
+def test_led_facade_failure_no_state_publish():
+    """Bridge controller suppresses retained state publish when the facade reports failure."""
+    facade = FailingFacade()
     mqtt_client = FakeMQTTClient()
     last_color = [255, 255, 255]
 

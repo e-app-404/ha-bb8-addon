@@ -301,7 +301,7 @@ class BB8Facade:
 
     async def set_led_async(
         self, r: int, g: int, b: int, cid: str | None = None
-    ) -> None:
+    ) -> bool:
         """Async LED control with validation and ACK/NACK."""
         try:
             remaining_s = self.get_post_connect_holdoff_remaining_s()
@@ -325,7 +325,7 @@ class BB8Facade:
                         "cid": cid,
                     }
                 )
-                return
+                return False
 
             # Always cancel any active animation first (idempotent)
             await self._lighting.cancel_active()
@@ -334,7 +334,18 @@ class BB8Facade:
             r, g, b = self._lighting.clamp_rgb(r, g, b)
 
             # Apply static color via lighting controller
-            await self._lighting.set_static(r, g, b)
+            hardware_applied = await self._lighting.set_static(r, g, b)
+            if not hardware_applied:
+                raise RuntimeError("LED hardware path unavailable: not_connected")
+
+            logger.info(
+                {
+                    "event": "facade_led_hw_result",
+                    "ok": True,
+                    "rgb": [r, g, b],
+                    "cid": cid,
+                }
+            )
 
             # Publish a telemetry update after LED change
             self._publish_telemetry_update()
@@ -349,9 +360,19 @@ class BB8Facade:
                     "cid": cid,
                 }
             )
+            return True
 
         except Exception as e:
             self._publish_ack("led", False, cid, str(e))
+            logger.info(
+                {
+                    "event": "facade_led_hw_result",
+                    "ok": False,
+                    "rgb": [r, g, b],
+                    "cid": cid,
+                    "error": str(e),
+                }
+            )
             logger.error(
                 {
                     "event": "facade_led_async_error",
@@ -360,6 +381,7 @@ class BB8Facade:
                     "error": str(e),
                 }
             )
+            return False
 
     async def set_led_preset(self, preset_name: str, cid: str | None = None) -> None:
         """Run LED preset animation with estop checking."""

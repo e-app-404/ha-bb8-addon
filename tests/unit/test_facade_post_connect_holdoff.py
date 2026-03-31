@@ -33,6 +33,7 @@ class FakeLighting:
 
     async def set_static(self, r, g, b):
         self.static_calls.append((r, g, b))
+        return True
 
 
 class FakeSession:
@@ -58,9 +59,10 @@ def test_led_deferred_during_post_connect_holdoff(monkeypatch):
     facade.mark_post_connect_holdoff(now_monotonic=100.0)
     monkeypatch.setattr(facade_mod.time, "monotonic", lambda: 100.2)
 
-    asyncio.run(facade.set_led_async(1, 2, 3, cid="cid-holdoff"))
+    result = asyncio.run(facade.set_led_async(1, 2, 3, cid="cid-holdoff"))
 
     assert facade._lighting.static_calls == []
+    assert result is False
     ack = next(c for c in facade._mqtt["client"].calls if c["topic"].endswith("/ack/led"))
     rej = next(
         c for c in facade._mqtt["client"].calls if c["topic"].endswith("/event/rejected")
@@ -92,9 +94,10 @@ def test_led_succeeds_after_holdoff(monkeypatch):
     facade.mark_post_connect_holdoff(now_monotonic=100.0)
     monkeypatch.setattr(facade_mod.time, "monotonic", lambda: 120.0)
 
-    asyncio.run(facade.set_led_async(7, 8, 9, cid="cid-ready"))
+    result = asyncio.run(facade.set_led_async(7, 8, 9, cid="cid-ready"))
 
     assert facade._lighting.static_calls == [(7, 8, 9)]
+    assert result is True
     ack = next(c for c in facade._mqtt["client"].calls if c["topic"].endswith("/ack/led"))
     ack_payload = json.loads(ack["payload"])
     assert ack_payload["ok"] is True
@@ -116,8 +119,9 @@ def test_delay_override_affects_remaining_seconds(monkeypatch):
     facade.mark_post_connect_holdoff(now_monotonic=10.0)
     monkeypatch.setattr(facade_mod.time, "monotonic", lambda: 12.0)
 
-    asyncio.run(facade.set_led_async(10, 11, 12, cid="cid-delay"))
+    result = asyncio.run(facade.set_led_async(10, 11, 12, cid="cid-delay"))
 
+    assert result is False
     ack = next(c for c in facade._mqtt["client"].calls if c["topic"].endswith("/ack/led"))
     payload = json.loads(ack["payload"])
     assert payload["reason"] == "post_connect_holdoff"

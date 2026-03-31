@@ -106,7 +106,7 @@ class LightingController:
         # Reset cancel event for next animation
         self._cancel_event.clear()
 
-    async def set_static(self, r: int, g: int, b: int) -> None:
+    async def set_static(self, r: int, g: int, b: int) -> bool:
         """
         Set static LED color with RGB clamping.
 
@@ -120,31 +120,36 @@ class LightingController:
         r, g, b = self.clamp_rgb(r, g, b)
         self._last_static_rgb = (r, g, b)
 
-        # Apply to device if connected
-        if self._ble_session and self._ble_session.is_connected and self._toy:
-            try:
-                self._toy.set_led(r, g, b)
-                logger.info(
-                    {
-                        "event": "lighting_static_applied",
-                        "rgb": [r, g, b],
-                    }
-                )
-            except Exception as e:
-                logger.error(
-                    {
-                        "event": "lighting_static_error",
-                        "rgb": [r, g, b],
-                        "error": str(e),
-                    }
-                )
-        else:
+        session = self._ble_session
+        is_connected = getattr(session, "is_connected", None)
+        if session is None or not callable(is_connected) or not is_connected():
+            logger.info(
+                {
+                    "event": "lighting_static_skipped",
+                    "reason": "not_connected",
+                    "rgb": [r, g, b],
+                }
+            )
+            return False
+
+        try:
+            await session.set_led(r, g, b)
             logger.info(
                 {
                     "event": "lighting_static_applied",
                     "rgb": [r, g, b],
                 }
             )
+            return True
+        except Exception as e:
+            logger.error(
+                {
+                    "event": "lighting_static_error",
+                    "rgb": [r, g, b],
+                    "error": str(e),
+                }
+            )
+            raise
 
     async def run_preset(self, name: str) -> bool:
         """
