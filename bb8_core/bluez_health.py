@@ -7,6 +7,11 @@ from collections.abc import Callable
 from typing import Any
 
 
+def _is_command_missing(stderr_text: str, stdout_text: str, command: str) -> bool:
+    message = f"{stderr_text}\n{stdout_text}".lower()
+    return command.lower() in message and "no such file or directory" in message
+
+
 def _run_command(args: list[str], timeout_s: float) -> tuple[int, str, str]:
     """Run a local command and return (returncode, stdout, stderr)."""
     try:
@@ -28,7 +33,7 @@ async def probe_bluez_health(
     timeout_s: float = 2.0,
     runner: Callable[[list[str], float], tuple[int, str, str]] | None = None,
 ) -> dict[str, Any]:
-    """Probe BlueZ health using service and DBus ownership checks.
+    """Probe BlueZ health using DBus ownership and optional service checks.
 
     Returns a structured payload:
     {
@@ -54,7 +59,7 @@ async def probe_bluez_health(
         ["systemctl", "is-active", "bluetooth"],
         float(timeout_s),
     )
-    bluez_active = active_rc == 0 and active_out.strip() == "active"
+    systemctl_missing = _is_command_missing(active_err, active_out, "systemctl")
 
     owner_rc, owner_out, owner_err = await asyncio.to_thread(
         runner,
@@ -72,8 +77,12 @@ async def probe_bluez_health(
         float(timeout_s),
     )
     dbus_owned = owner_rc == 0 and bool(owner_out.strip())
+    service_active = active_rc == 0 and active_out.strip() == "active"
+    bluez_active = dbus_owned if systemctl_missing else service_active
 
-    if bluez_active and dbus_owned:
+    if dbus_owned and systemctl_missing:
+        reason = "ok_dbus_only"
+    elif bluez_active and dbus_owned:
         reason = "ok"
     elif not bluez_active and not dbus_owned:
         reason = "bluez_inactive_and_unowned"
@@ -89,7 +98,15 @@ async def probe_bluez_health(
         "source": source,
     }
 
-    if active_err:
+    if systemctl_missing:
+        metadata["service_manager"] = "systemctl_missing"
+        metadata["service_manager_note"] = (
+            "systemctl unavailable; using DBus ownership as authoritative signal"
+        )
+    else:
+        metadata["service_manager"] = "systemctl"
+
+    if active_err and not systemctl_missing:
         metadata["active_error"] = active_err
     if owner_err:
         metadata["owner_error"] = owner_err
