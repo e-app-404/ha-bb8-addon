@@ -25,6 +25,7 @@ try:
     from addon.bb8_core.ha_discovery import (
         connection_status_discovery_config,
         light_discovery_config,
+        presence_discovery_config,
     )
 except ModuleNotFoundError:
     _ha_discovery_path = (
@@ -43,6 +44,7 @@ except ModuleNotFoundError:
     _ha_discovery_spec.loader.exec_module(_ha_discovery_module)
     connection_status_discovery_config = _ha_discovery_module.connection_status_discovery_config
     light_discovery_config = _ha_discovery_module.light_discovery_config
+    presence_discovery_config = _ha_discovery_module.presence_discovery_config
 
 from .addon_config import load_config
 from .auto_detect import resolve_bb8_mac
@@ -102,6 +104,14 @@ All code lives inside functions; only the __main__ guard executes main().
 
 DEFAULT_MQTT_HOST = "localhost"
 DEFAULT_MQTT_PORT = 1883
+PRESENCE_STATE_TOPIC = "bb8/state/presence"
+LEGACY_PRESENCE_TOPICS = (
+    "homeassistant/binary_sensor/bb8_presence/config",
+    "homeassistant/sensor/bb8/presence/config",
+    "bb8/presence/state",
+    "bb8/presence",
+    "bb8/status/presence",
+)
 
 # Client lookup when publishing; avoids import-order issues.
 # Removed import of get_client (unknown symbol)
@@ -157,6 +167,57 @@ def _runtime_mqtt_base(config: dict[str, Any] | None = None) -> str:
         or cfg.get("mqtt_topic")
         or "bb8"
     )
+
+
+def _publish_presence_state(state: str, mqtt_client: Any | None = None) -> None:
+    active_client = mqtt_client or client
+    if active_client is None:
+        log.warning("presence state publish skipped (no mqtt client): %s", state)
+        return
+    active_client.publish(PRESENCE_STATE_TOPIC, payload=state, qos=0, retain=True)
+    log.info("presence state published -> %s %s", PRESENCE_STATE_TOPIC, state)
+
+
+def _cleanup_legacy_presence_topics(mqtt_client: Any) -> None:
+    for topic in LEGACY_PRESENCE_TOPICS:
+        mqtt_client.publish(topic, payload="", qos=0, retain=True)
+        log.info("legacy presence cleanup published -> %s", topic)
+
+
+def _translate_presence_state(payload: Any) -> str | None:
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except Exception:
+            payload = {"state": payload}
+    if not isinstance(payload, dict):
+        return None
+
+    state = payload.get("state")
+    if isinstance(state, str):
+        normalized = state.strip().lower()
+        if normalized == "present":
+            return "detected"
+        if normalized == "absent":
+            return "not_detected"
+
+    if "present" in payload:
+        return "detected" if bool(payload.get("present")) else "not_detected"
+
+    return None
+
+
+def _auto_detect_presence_publish_adapter(topic: str, payload: Any) -> None:
+    translated_state = _translate_presence_state(payload)
+    if translated_state is None:
+        log.warning(
+            "presence adapter ignored payload from %s payload=%r",
+            topic,
+            payload,
+        )
+        return
+
+    _publish_presence_state(translated_state)
 
 
 def _publish_connection_availability(
@@ -647,11 +708,11 @@ def start_bridge_controller(
         cfg,
         "enable_presence_monitor",
         "ENABLE_PRESENCE_MONITOR",
-        default=False,
+        default=True,
     )
     if enable_presence_monitor:
         try:
-            start_presence_monitor()
+            start_presence_monitor(mqtt_publish_fn=_auto_detect_presence_publish_adapter)
             logger.info(
                 {
                     "event": "bb8_presence_monitor_integration",
@@ -1354,6 +1415,12 @@ if __name__ == "__main__":
             cfg,
             "enable_presence_monitor",
             "ENABLE_PRESENCE_MONITOR",
+            default=True,
+        )
+        enable_presence_discovery = _config_truthy(
+            cfg,
+            "enable_presence_discovery",
+            "ENABLE_PRESENCE_DISCOVERY",
             default=False,
         )
 
@@ -1461,7 +1528,7 @@ if __name__ == "__main__":
                     base,
                     qos=1,
                     retain=True,
-                    enable_presence_discovery=enable_presence_monitor,
+                    enable_presence_discovery=enable_presence_discovery,
                 )
                 logger.info({"event": "facade_mqtt_attached_via_controller", "base": base})
         except Exception as e:
@@ -1496,6 +1563,8 @@ if __name__ == "__main__":
                 cl.publish(discovery_topic, payload=discovery_payload, qos=0, retain=True)
                 connection_topic, connection_payload = connection_status_discovery_config()
                 cl.publish(connection_topic, payload=connection_payload, qos=0, retain=True)
+                presence_topic, presence_payload = presence_discovery_config()
+                cl.publish(presence_topic, payload=presence_payload, qos=0, retain=True)
                 cl.publish(
                     led_state_topic,
                     _build_ha_led_state_payload((0, 0, 0)),
@@ -1503,6 +1572,8 @@ if __name__ == "__main__":
                     retain=True,
                 )
                 _publish_connection_availability("disconnected", config=cfg)
+                _publish_presence_state("not_detected", mqtt_client=cl)
+                _cleanup_legacy_presence_topics(cl)
                 logger.info(
                     {
                         "event": "ha_light_discovery_published",
@@ -1515,10 +1586,16 @@ if __name__ == "__main__":
                         "topic": connection_topic,
                     }
                 )
+                logger.info(
+                    {
+                        "event": "ha_presence_discovery_published",
+                        "topic": presence_topic,
+                    }
+                )
             except Exception as exc:
                 logger.warning(
                     {
-                        "event": "ha_light_discovery_publish_failed",
+                        "event": "ha_entity_discovery_publish_failed",
                         "error": str(exc),
                     }
                 )

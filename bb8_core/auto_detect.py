@@ -260,9 +260,12 @@ registry_lock = threading.Lock()
 
 
 # Entrypoint integration: start passive presence monitor in a background thread
-def start_presence_monitor():
+def start_presence_monitor(**monitor_kwargs):
     t = threading.Thread(
-        target=monitor_bb8_presence, name="BB8PresenceMonitor", daemon=True
+        target=monitor_bb8_presence,
+        kwargs=monitor_kwargs,
+        name="BB8PresenceMonitor",
+        daemon=True,
     )
     t.start()
     logger.info({"event": "bb8_presence_monitor_started"})
