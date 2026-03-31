@@ -294,6 +294,20 @@ class BleSession:
         """Check if device is connected."""
         return self._connected and self._toy is not None
 
+    def _invalidate_connection(self, reason: str, *, error: str | None = None) -> None:
+        """Mark the active session as no longer trustworthy."""
+        payload = {
+            "event": "ble_session_invalidated",
+            "reason": reason,
+            "had_connection": self._connected,
+            "had_toy": self._toy is not None,
+        }
+        if error:
+            payload["error"] = error
+        logger.warning(payload)
+        self._connected = False
+        self._toy = None
+
     async def wake(self) -> None:
         """Wake up the BB-8 device.
 
@@ -460,6 +474,7 @@ class BleSession:
             )
 
         except Exception as e:
+            self._invalidate_connection("led_error", error=str(e))
             logger.error(
                 {
                     "event": "ble_session_led_error",
