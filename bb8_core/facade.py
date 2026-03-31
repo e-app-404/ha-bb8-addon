@@ -32,6 +32,18 @@ def _sleep_led_pattern():
     return [(10, 0, 0), (10, 0, 0), (10, 0, 0), (10, 0, 0), (10, 0, 0)]
 
 
+def _config_truthy(config: dict[str, Any], *keys: str, default: bool = False) -> bool:
+    """Read a bool-like flag from config with conservative parsing."""
+    for key in keys:
+        if key not in config:
+            continue
+        value = config.get(key)
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "on"}
+        return bool(value)
+    return default
+
+
 class BB8Facade:
     """
     High-level, MQTT-facing API for BB-8 Home Assistant integration.
@@ -854,6 +866,7 @@ class BB8Facade:
         base_topic: str,
         qos: int | None = None,
         retain: bool | None = None,
+        enable_presence_discovery: bool | None = None,
     ) -> None:
         """Attach MQTT client and set up subscriptions."""
         # Load config and set up MQTT topics
@@ -1190,15 +1203,27 @@ class BB8Facade:
         )
         import asyncio
 
-        asyncio.create_task(
-            publish_discovery(
-                client,
-                MQTT_CLIENT_ID,
-                dbus_path=dbus_path,
-                model=BB8_NAME,
-                name=BB8_NAME,
+        should_publish_presence_discovery = enable_presence_discovery
+        if should_publish_presence_discovery is None:
+            should_publish_presence_discovery = _config_truthy(
+                CFG,
+                "enable_presence_monitor",
+                "ENABLE_PRESENCE_MONITOR",
+                default=False,
             )
-        )
+
+        if should_publish_presence_discovery:
+            asyncio.create_task(
+                publish_discovery(
+                    client,
+                    MQTT_CLIENT_ID,
+                    dbus_path=dbus_path,
+                    model=BB8_NAME,
+                    name=BB8_NAME,
+                )
+            )
+        else:
+            logger.info({"event": "facade_presence_discovery", "status": "disabled"})
 
         # Bind telemetry publishers for use by controller/telemetry loop
         self.publish_presence = lambda online: _pub(
