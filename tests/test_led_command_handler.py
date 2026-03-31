@@ -75,15 +75,16 @@ class RecordingFacade:
 
     async def set_led_async(self, r, g, b, cid=None):
         self.calls.append((r, g, b, cid))
+        return True
 
 
-class RaisingFacade:
+class FailingFacade:
     def __init__(self):
         self.calls = []
 
     async def set_led_async(self, r, g, b, cid=None):
         self.calls.append((r, g, b, cid))
-        raise RuntimeError("boom")
+        return False
 
 
 def _run_led_command(*, facade, mqtt_client, raw_payload, payload, cid=None, last_color=None):
@@ -213,9 +214,9 @@ def test_led_malformed_payload(caplog):
     assert any("led_cmd malformed payload" in record.message for record in caplog.records)
 
 
-def test_led_facade_exception_no_state_publish():
-    """Bridge controller suppresses state publish only when facade failure propagates."""
-    facade = RaisingFacade()
+def test_led_facade_failure_no_state_publish():
+    """Bridge controller suppresses retained state publish when the facade reports failure."""
+    facade = FailingFacade()
     mqtt_client = FakeMQTTClient()
     last_color = [255, 255, 255]
 
@@ -238,6 +239,27 @@ def test_led_state_payload_structure():
         '{"state":"ON","color_mode":"rgb","color":{"r":1,"g":2,"b":3}}'
     )
     assert bridge_controller._build_ha_led_state_payload((0, 0, 0)) == '{"state":"OFF"}'
+
+
+def test_propagate_ble_session_to_facade():
+    session = object()
+
+    class SessionAwareFacade:
+        def __init__(self):
+            self.calls = []
+
+        def set_ble_session(self, value):
+            self.calls.append(value)
+
+    facade = SessionAwareFacade()
+
+    bridge_controller._propagate_ble_session_to_facade(facade, session)
+
+    assert facade.calls == [session]
+
+
+def test_propagate_ble_session_to_facade_missing_method_is_noop():
+    bridge_controller._propagate_ble_session_to_facade(object(), object())
 
 
 def test_led_backward_compat_payload():

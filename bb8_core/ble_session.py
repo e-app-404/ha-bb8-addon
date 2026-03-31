@@ -91,6 +91,12 @@ class BleSession:
         self._base_backoff = 0.4
         self._max_backoff = 2.0
 
+    async def _scan_toys(self) -> list[Any]:
+        """Run sync spherov2 discovery off the active event loop."""
+        if not find_toys:
+            return []
+        return await asyncio.to_thread(find_toys, timeout=self._connect_timeout)
+
     async def connect(self, mac: str | None = None) -> None:
         """Connect to BB-8 device.
 
@@ -135,9 +141,7 @@ class BleSession:
 
                 # Find BB-8 device
                 # Discover toys (tests patch find_toys; in prod, uses spherov2)
-                toys = []
-                if find_toys:
-                    toys = find_toys(timeout=self._connect_timeout)
+                toys = await self._scan_toys()
                 bb8_toy = None
                 for toy in toys:
                     # If BB8 class is available, require instance match; otherwise
@@ -247,9 +251,7 @@ class BleSession:
         """
         try:
             logger.info({"event": "ble_session_discovery_start"})
-            toys = []
-            if find_toys:
-                toys = find_toys(timeout=self._connect_timeout)
+            toys = await self._scan_toys()
 
             for toy in toys:
                 if (BB8 and isinstance(toy, BB8)) or not BB8:
