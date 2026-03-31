@@ -51,3 +51,18 @@ def connection_status_discovery_config() -> tuple[str, str]:
         "device": DEVICE_INFO,
     }
     return topic, json.dumps(payload)
+
+
+def presence_discovery_config() -> tuple[str, str]:
+    topic = "homeassistant/binary_sensor/bb8_presence/config"
+    payload = {
+        "name": "BB-8 Presence",
+        "unique_id": "bb8_ble_presence",
+        "object_id": "bb8_presence",
+        "device_class": "presence",
+        "state_topic": "bb8/state/presence",
+        "payload_on": "detected",
+        "payload_off": "not_detected",
+        "device": DEVICE_INFO,
+    }
+    return topic, json.dumps(payload)
