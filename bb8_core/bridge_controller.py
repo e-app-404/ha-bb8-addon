@@ -23,6 +23,7 @@ from typing import Any
 
 try:
     from addon.bb8_core.ha_discovery import (
+        connect_button_discovery_config,
         connection_status_discovery_config,
         light_discovery_config,
         presence_discovery_config,
@@ -42,6 +43,7 @@ except ModuleNotFoundError:
         raise
     _ha_discovery_module = importlib.util.module_from_spec(_ha_discovery_spec)
     _ha_discovery_spec.loader.exec_module(_ha_discovery_module)
+    connect_button_discovery_config = _ha_discovery_module.connect_button_discovery_config
     connection_status_discovery_config = _ha_discovery_module.connection_status_discovery_config
     light_discovery_config = _ha_discovery_module.light_discovery_config
     presence_discovery_config = _ha_discovery_module.presence_discovery_config
@@ -388,6 +390,36 @@ def _schedule_async_command_ack(
         task.add_done_callback(_on_done)
 
     loop.call_soon_threadsafe(_start)
+
+
+async def _request_connect_attempt(
+    *,
+    facade: Any,
+    ble_session: Any,
+    config: dict[str, Any],
+) -> None:
+    """Trigger a manual connect attempt using the watchdog-managed session."""
+    if ble_session.is_connected():
+        logger.info({"event": "connect_command_already_connected"})
+        _propagate_ble_session_to_facade(facade, ble_session)
+        with contextlib.suppress(Exception):
+            facade.mark_post_connect_holdoff()
+        _publish_connection_availability("connected", config=config)
+        if facade.publish_presence:
+            facade.publish_presence(True)
+        return
+
+    logger.info({"event": "connect_command_attempt"})
+    await ble_session.connect()
+    _propagate_ble_session_to_facade(facade, ble_session)
+
+    with contextlib.suppress(Exception):
+        facade.mark_post_connect_holdoff()
+
+    _publish_connection_availability("connected", config=config)
+    if facade.publish_presence:
+        facade.publish_presence(True)
+    logger.info({"event": "connect_command_success"})
 
 
 def on_power_set(payload):
@@ -1564,6 +1596,8 @@ if __name__ == "__main__":
                 cl.publish(connection_topic, payload=connection_payload, qos=0, retain=True)
                 presence_topic, presence_payload = presence_discovery_config()
                 cl.publish(presence_topic, payload=presence_payload, qos=0, retain=True)
+                connect_topic, connect_payload = connect_button_discovery_config()
+                cl.publish(connect_topic, payload=connect_payload, qos=0, retain=True)
                 cl.publish(
                     led_state_topic,
                     _build_ha_led_state_payload((0, 0, 0)),
@@ -1589,6 +1623,12 @@ if __name__ == "__main__":
                     {
                         "event": "ha_presence_discovery_published",
                         "topic": presence_topic,
+                    }
+                )
+                logger.info(
+                    {
+                        "event": "ha_connect_button_discovery_published",
+                        "topic": connect_topic,
                     }
                 )
             except Exception as exc:
@@ -1780,6 +1820,22 @@ if __name__ == "__main__":
                                 cid,
                                 False,
                                 "Facade missing 'estop' method",
+                            )
+                    elif cmd == "connect":
+                        if not raw.strip():
+                            _ack("connect", cid, False, "Missing connect payload")
+                        else:
+                            _schedule_async_command_ack(
+                                loop=loop,
+                                create_task=_asyncio.create_task,
+                                coroutine_factory=lambda: _request_connect_attempt(
+                                    facade=facade,
+                                    ble_session=ble_session,
+                                    config=cfg,
+                                ),
+                                ack_fn=_ack,
+                                cmd="connect",
+                                cid=cid,
                             )
                     elif cmd == "clear_estop":
                         if facade is not None and hasattr(facade, "clear_estop"):
