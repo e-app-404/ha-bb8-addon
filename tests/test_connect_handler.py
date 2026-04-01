@@ -115,7 +115,7 @@ def _branch_schedules_connect_attempt(branch: ast.If) -> bool:
     value = shared_session_assign.value
     if not isinstance(value, ast.Call):
         return False
-    if not isinstance(value.func, ast.Name) or value.func.id != "_resolve_shared_ble_session":
+    if not isinstance(value.func, ast.Name) or value.func.id != "_resolve_controller_ble_session":
         return False
 
     session_guard = raw_guard.orelse[1]
@@ -218,6 +218,26 @@ def test_connect_branch_uses_bound_shared_session():
     branch = _find_connect_branch()
 
     assert _branch_schedules_connect_attempt(branch)
+
+
+def test_connect_branch_uses_controller_owned_session_source():
+    branch = _find_connect_branch()
+    raw_guard = branch.body[0]
+    shared_session_assign = raw_guard.orelse[0]
+
+    assert isinstance(shared_session_assign, ast.Assign)
+    assert isinstance(shared_session_assign.value, ast.Call)
+    assert isinstance(shared_session_assign.value.func, ast.Name)
+    assert shared_session_assign.value.func.id == "_resolve_controller_ble_session"
+
+
+def test_controller_session_resolves_without_facade_binding(monkeypatch):
+    controller_session = FakeBleSession(connected=False)
+    monkeypatch.setattr(bridge_controller, "_controller_ble_session", None)
+
+    bridge_controller._bind_controller_ble_session(controller_session)
+
+    assert bridge_controller._resolve_controller_ble_session() is controller_session
 
 
 def test_connect_branch_missing_session_fails_cleanly():

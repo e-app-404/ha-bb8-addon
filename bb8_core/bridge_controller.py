@@ -156,6 +156,7 @@ def _client_or_none():
 _ble_loop: asyncio.AbstractEventLoop | None = None
 _ble_inited: bool = False
 client = None
+_controller_ble_session: Any | None = None
 
 
 def _runtime_mqtt_base(config: dict[str, Any] | None = None) -> str:
@@ -321,11 +322,15 @@ def _propagate_ble_session_to_facade(facade: Any, ble_session: Any) -> None:
     facade.set_ble_session(ble_session)
 
 
-def _resolve_shared_ble_session(facade: Any) -> Any | None:
-    """Return the watchdog-managed BleSession already bound into the facade."""
-    if facade is None:
-        return None
-    return getattr(facade, "_ble_session", None)
+def _bind_controller_ble_session(ble_session: Any) -> None:
+    """Persist the watchdog-owned BleSession for command callbacks."""
+    global _controller_ble_session
+    _controller_ble_session = ble_session
+
+
+def _resolve_controller_ble_session() -> Any | None:
+    """Return the canonical controller/watchdog-owned BleSession."""
+    return _controller_ble_session
 
 
 async def _process_led_command(
@@ -831,6 +836,7 @@ def start_bridge_controller(
 
     # Create BLE session and facade
     ble_session = BleSession(target_mac)
+    _bind_controller_ble_session(ble_session)
     bridge = BLEBridge(gw, target_mac)  # Keep for compatibility
     facade = BB8Facade(bridge)
     facade.set_target_mac(target_mac)  # Configure facade with session
@@ -1832,7 +1838,7 @@ if __name__ == "__main__":
                         if not raw.strip():
                             _ack("connect", cid, False, "Missing connect payload")
                         else:
-                            shared_ble_session = _resolve_shared_ble_session(facade)
+                            shared_ble_session = _resolve_controller_ble_session()
                             if shared_ble_session is None:
                                 logger.error({"event": "connect_command_session_unavailable"})
                                 _ack("connect", cid, False, "Shared BLE session unavailable")
