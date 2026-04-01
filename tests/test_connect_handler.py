@@ -102,9 +102,13 @@ def _branch_schedules_connect_attempt(branch: ast.If) -> bool:
     if not branch.body:
         return False
     raw_guard = branch.body[0]
-    if not isinstance(raw_guard, ast.If) or len(raw_guard.orelse) < 3:
+    if not isinstance(raw_guard, ast.If):
         return False
-    shared_session_assign = raw_guard.orelse[0]
+    orelse = raw_guard.orelse
+    if len(orelse) < 4:
+        return False
+
+    shared_session_assign = orelse[0]
     if not isinstance(shared_session_assign, ast.Assign):
         return False
     if len(shared_session_assign.targets) != 1:
@@ -118,14 +122,15 @@ def _branch_schedules_connect_attempt(branch: ast.If) -> bool:
     if not isinstance(value.func, ast.Name) or value.func.id != "_resolve_controller_ble_session":
         return False
 
-    session_guard = raw_guard.orelse[1]
+    session_guard = orelse[1]
     if not isinstance(session_guard, ast.If):
         return False
 
-    if len(raw_guard.orelse) < 3:
+    inflight_guard = orelse[2]
+    if not isinstance(inflight_guard, ast.If):
         return False
 
-    call_stmt = raw_guard.orelse[2]
+    call_stmt = orelse[3]
     if not isinstance(call_stmt, ast.Expr) or not isinstance(call_stmt.value, ast.Call):
         return False
     call = call_stmt.value
@@ -140,7 +145,7 @@ def _branch_schedules_connect_attempt(branch: ast.If) -> bool:
         body = keyword.value.body
         if not isinstance(body, ast.Call):
             return False
-        if not isinstance(body.func, ast.Name) or body.func.id != "_request_connect_attempt":
+        if not isinstance(body.func, ast.Name) or body.func.id != "_run_manual_connect_attempt":
             return False
         for inner_keyword in body.keywords:
             if inner_keyword.arg != "ble_session":
@@ -176,11 +181,32 @@ def _branch_has_missing_session_guard(branch: ast.If) -> bool:
     return bool(session_guard.body)
 
 
+def _branch_has_inflight_guard(branch: ast.If) -> bool:
+    if not branch.body:
+        return False
+    raw_guard = branch.body[0]
+    if not isinstance(raw_guard, ast.If) or len(raw_guard.orelse) < 3:
+        return False
+    inflight_guard = raw_guard.orelse[2]
+    if not isinstance(inflight_guard, ast.If):
+        return False
+    test = inflight_guard.test
+    if not isinstance(test, ast.UnaryOp) or not isinstance(test.op, ast.Not):
+        return False
+    operand = test.operand
+    if not isinstance(operand, ast.Call):
+        return False
+    if not isinstance(operand.func, ast.Name):
+        return False
+    return operand.func.id == "_begin_manual_connect_attempt"
+
+
 def test_connect_press_payload_accepted():
     branch = _find_connect_branch()
 
     assert _branch_rejects_only_empty_payload(branch)
     assert _branch_has_missing_session_guard(branch)
+    assert _branch_has_inflight_guard(branch)
     assert _branch_schedules_connect_attempt(branch)
     assert bool("PRESS".strip()) is True
 
@@ -190,6 +216,7 @@ def test_connect_nonempty_payload_accepted():
 
     assert _branch_rejects_only_empty_payload(branch)
     assert _branch_has_missing_session_guard(branch)
+    assert _branch_has_inflight_guard(branch)
     assert _branch_schedules_connect_attempt(branch)
     assert bool('{"cid":"abc"}'.strip()) is True
 
@@ -217,6 +244,7 @@ def test_connect_empty_payload_rejected_or_ignored_consistently():
 def test_connect_branch_uses_bound_shared_session():
     branch = _find_connect_branch()
 
+    assert _branch_has_inflight_guard(branch)
     assert _branch_schedules_connect_attempt(branch)
 
 
@@ -267,6 +295,75 @@ def test_connect_branch_missing_session_fails_cleanly():
     assert ack_call.value.args[2].value is False
     assert isinstance(ack_call.value.args[3], ast.Constant)
     assert ack_call.value.args[3].value == "Shared BLE session unavailable"
+
+
+def test_connect_branch_duplicate_request_fails_cleanly():
+    branch = _find_connect_branch()
+    raw_guard = branch.body[0]
+    inflight_guard = raw_guard.orelse[2]
+
+    assert _branch_has_inflight_guard(branch)
+    assert isinstance(inflight_guard, ast.If)
+    assert len(inflight_guard.body) >= 2
+
+    log_call = inflight_guard.body[0]
+    ack_call = inflight_guard.body[1]
+
+    assert isinstance(log_call, ast.Expr)
+    assert isinstance(log_call.value, ast.Call)
+    assert isinstance(log_call.value.func, ast.Attribute)
+    assert log_call.value.func.attr == "info"
+
+    assert isinstance(ack_call, ast.Expr)
+    assert isinstance(ack_call.value, ast.Call)
+    assert isinstance(ack_call.value.func, ast.Name)
+    assert ack_call.value.func.id == "_ack"
+    assert isinstance(ack_call.value.args[0], ast.Constant)
+    assert ack_call.value.args[0].value == "connect"
+    assert isinstance(ack_call.value.args[2], ast.Constant)
+    assert ack_call.value.args[2].value is False
+    assert isinstance(ack_call.value.args[3], ast.Constant)
+    assert ack_call.value.args[3].value == "Connect already in progress"
+
+
+def test_manual_connect_guard_blocks_overlapping_attempts(monkeypatch):
+    monkeypatch.setattr(bridge_controller, "_manual_connect_in_progress", False)
+
+    assert bridge_controller._begin_manual_connect_attempt() is True
+    assert bridge_controller._begin_manual_connect_attempt() is False
+
+    bridge_controller._finish_manual_connect_attempt()
+
+
+@pytest.mark.parametrize("connect_error", [None, RuntimeError("boom")])
+def test_manual_connect_guard_clears_after_completion_or_failure(monkeypatch, connect_error):
+    monkeypatch.setattr(bridge_controller, "_manual_connect_in_progress", False)
+    monkeypatch.setattr(bridge_controller, "client", FakeClient())
+
+    facade = FakeFacade()
+    ble_session = FakeBleSession(connected=False, connect_error=connect_error)
+
+    assert bridge_controller._begin_manual_connect_attempt() is True
+
+    if connect_error is None:
+        asyncio.run(
+            bridge_controller._run_manual_connect_attempt(
+                facade=facade,
+                ble_session=ble_session,
+                config={},
+            )
+        )
+    else:
+        with pytest.raises(RuntimeError, match="boom"):
+            asyncio.run(
+                bridge_controller._run_manual_connect_attempt(
+                    facade=facade,
+                    ble_session=ble_session,
+                    config={},
+                )
+            )
+
+    assert bridge_controller._manual_connect_in_progress is False
 
 
 def test_connect_already_connected_no_crash(monkeypatch):

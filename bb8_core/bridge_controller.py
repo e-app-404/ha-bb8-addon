@@ -157,6 +157,7 @@ _ble_loop: asyncio.AbstractEventLoop | None = None
 _ble_inited: bool = False
 client = None
 _controller_ble_session: Any | None = None
+_manual_connect_in_progress = False
 
 
 def _runtime_mqtt_base(config: dict[str, Any] | None = None) -> str:
@@ -333,6 +334,21 @@ def _resolve_controller_ble_session() -> Any | None:
     return _controller_ble_session
 
 
+def _begin_manual_connect_attempt() -> bool:
+    """Reserve the manual connect slot if no other request is in flight."""
+    global _manual_connect_in_progress
+    if _manual_connect_in_progress:
+        return False
+    _manual_connect_in_progress = True
+    return True
+
+
+def _finish_manual_connect_attempt() -> None:
+    """Release the manual connect slot after completion or failure."""
+    global _manual_connect_in_progress
+    _manual_connect_in_progress = False
+
+
 async def _process_led_command(
     *,
     facade: Any,
@@ -432,6 +448,23 @@ async def _request_connect_attempt(
     if facade.publish_presence:
         facade.publish_presence(True)
     logger.info({"event": "connect_command_success"})
+
+
+async def _run_manual_connect_attempt(
+    *,
+    facade: Any,
+    ble_session: Any,
+    config: dict[str, Any],
+) -> None:
+    """Run a guarded manual connect attempt and always clear in-flight state."""
+    try:
+        await _request_connect_attempt(
+            facade=facade,
+            ble_session=ble_session,
+            config=config,
+        )
+    finally:
+        _finish_manual_connect_attempt()
 
 
 def on_power_set(payload):
@@ -1843,10 +1876,14 @@ if __name__ == "__main__":
                                 logger.error({"event": "connect_command_session_unavailable"})
                                 _ack("connect", cid, False, "Shared BLE session unavailable")
                                 return
+                            if not _begin_manual_connect_attempt():
+                                logger.info({"event": "connect_command_already_in_progress"})
+                                _ack("connect", cid, False, "Connect already in progress")
+                                return
                             _schedule_async_command_ack(
                                 loop=loop,
                                 create_task=_asyncio.create_task,
-                                coroutine_factory=lambda: _request_connect_attempt(
+                                coroutine_factory=lambda: _run_manual_connect_attempt(
                                     facade=facade,
                                     ble_session=shared_ble_session,
                                     config=cfg,
