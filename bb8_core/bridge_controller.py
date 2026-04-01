@@ -321,6 +321,13 @@ def _propagate_ble_session_to_facade(facade: Any, ble_session: Any) -> None:
     facade.set_ble_session(ble_session)
 
 
+def _resolve_shared_ble_session(facade: Any) -> Any | None:
+    """Return the watchdog-managed BleSession already bound into the facade."""
+    if facade is None:
+        return None
+    return getattr(facade, "_ble_session", None)
+
+
 async def _process_led_command(
     *,
     facade: Any,
@@ -1825,12 +1832,17 @@ if __name__ == "__main__":
                         if not raw.strip():
                             _ack("connect", cid, False, "Missing connect payload")
                         else:
+                            shared_ble_session = _resolve_shared_ble_session(facade)
+                            if shared_ble_session is None:
+                                logger.error({"event": "connect_command_session_unavailable"})
+                                _ack("connect", cid, False, "Shared BLE session unavailable")
+                                return
                             _schedule_async_command_ack(
                                 loop=loop,
                                 create_task=_asyncio.create_task,
                                 coroutine_factory=lambda: _request_connect_attempt(
                                     facade=facade,
-                                    ble_session=ble_session,
+                                    ble_session=shared_ble_session,
                                     config=cfg,
                                 ),
                                 ack_fn=_ack,

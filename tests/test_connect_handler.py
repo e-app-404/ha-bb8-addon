@@ -101,10 +101,31 @@ def _branch_rejects_only_empty_payload(branch: ast.If) -> bool:
 def _branch_schedules_connect_attempt(branch: ast.If) -> bool:
     if not branch.body:
         return False
-    guard = branch.body[0]
-    if not isinstance(guard, ast.If) or not guard.orelse:
+    raw_guard = branch.body[0]
+    if not isinstance(raw_guard, ast.If) or len(raw_guard.orelse) < 3:
         return False
-    call_stmt = guard.orelse[0]
+    shared_session_assign = raw_guard.orelse[0]
+    if not isinstance(shared_session_assign, ast.Assign):
+        return False
+    if len(shared_session_assign.targets) != 1:
+        return False
+    target = shared_session_assign.targets[0]
+    if not isinstance(target, ast.Name) or target.id != "shared_ble_session":
+        return False
+    value = shared_session_assign.value
+    if not isinstance(value, ast.Call):
+        return False
+    if not isinstance(value.func, ast.Name) or value.func.id != "_resolve_shared_ble_session":
+        return False
+
+    session_guard = raw_guard.orelse[1]
+    if not isinstance(session_guard, ast.If):
+        return False
+
+    if len(raw_guard.orelse) < 3:
+        return False
+
+    call_stmt = raw_guard.orelse[2]
     if not isinstance(call_stmt, ast.Expr) or not isinstance(call_stmt.value, ast.Call):
         return False
     call = call_stmt.value
@@ -121,14 +142,45 @@ def _branch_schedules_connect_attempt(branch: ast.If) -> bool:
             return False
         if not isinstance(body.func, ast.Name) or body.func.id != "_request_connect_attempt":
             return False
+        for inner_keyword in body.keywords:
+            if inner_keyword.arg != "ble_session":
+                continue
+            if not isinstance(inner_keyword.value, ast.Name):
+                return False
+            return inner_keyword.value.id == "shared_ble_session"
         return True
     return False
+
+
+def _branch_has_missing_session_guard(branch: ast.If) -> bool:
+    if not branch.body:
+        return False
+    raw_guard = branch.body[0]
+    if not isinstance(raw_guard, ast.If) or len(raw_guard.orelse) < 2:
+        return False
+    session_guard = raw_guard.orelse[1]
+    if not isinstance(session_guard, ast.If):
+        return False
+    test = session_guard.test
+    if not isinstance(test, ast.Compare):
+        return False
+    if not isinstance(test.left, ast.Name) or test.left.id != "shared_ble_session":
+        return False
+    if len(test.ops) != 1 or not isinstance(test.ops[0], ast.Is):
+        return False
+    if len(test.comparators) != 1:
+        return False
+    comparator = test.comparators[0]
+    if not isinstance(comparator, ast.Constant) or comparator.value is not None:
+        return False
+    return bool(session_guard.body)
 
 
 def test_connect_press_payload_accepted():
     branch = _find_connect_branch()
 
     assert _branch_rejects_only_empty_payload(branch)
+    assert _branch_has_missing_session_guard(branch)
     assert _branch_schedules_connect_attempt(branch)
     assert bool("PRESS".strip()) is True
 
@@ -137,6 +189,7 @@ def test_connect_nonempty_payload_accepted():
     branch = _find_connect_branch()
 
     assert _branch_rejects_only_empty_payload(branch)
+    assert _branch_has_missing_session_guard(branch)
     assert _branch_schedules_connect_attempt(branch)
     assert bool('{"cid":"abc"}'.strip()) is True
 
@@ -159,6 +212,41 @@ def test_connect_empty_payload_rejected_or_ignored_consistently():
     assert ack_call.value.args[2].value is False
     assert isinstance(ack_call.value.args[3], ast.Constant)
     assert ack_call.value.args[3].value == "Missing connect payload"
+
+
+def test_connect_branch_uses_bound_shared_session():
+    branch = _find_connect_branch()
+
+    assert _branch_schedules_connect_attempt(branch)
+
+
+def test_connect_branch_missing_session_fails_cleanly():
+    branch = _find_connect_branch()
+    raw_guard = branch.body[0]
+    session_guard = raw_guard.orelse[1]
+
+    assert _branch_has_missing_session_guard(branch)
+    assert isinstance(session_guard, ast.If)
+    assert len(session_guard.body) >= 2
+
+    log_call = session_guard.body[0]
+    ack_call = session_guard.body[1]
+
+    assert isinstance(log_call, ast.Expr)
+    assert isinstance(log_call.value, ast.Call)
+    assert isinstance(log_call.value.func, ast.Attribute)
+    assert log_call.value.func.attr == "error"
+
+    assert isinstance(ack_call, ast.Expr)
+    assert isinstance(ack_call.value, ast.Call)
+    assert isinstance(ack_call.value.func, ast.Name)
+    assert ack_call.value.func.id == "_ack"
+    assert isinstance(ack_call.value.args[0], ast.Constant)
+    assert ack_call.value.args[0].value == "connect"
+    assert isinstance(ack_call.value.args[2], ast.Constant)
+    assert ack_call.value.args[2].value is False
+    assert isinstance(ack_call.value.args[3], ast.Constant)
+    assert ack_call.value.args[3].value == "Shared BLE session unavailable"
 
 
 def test_connect_already_connected_no_crash(monkeypatch):
