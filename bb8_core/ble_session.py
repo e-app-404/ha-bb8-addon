@@ -18,6 +18,11 @@ import random
 import time
 from typing import Any
 
+try:  # pragma: no cover - import surface varies in CI/dev
+    from bleak import BleakScanner as _BleakScanner
+except Exception:  # noqa: BLE001
+    _BleakScanner = None  # type: ignore[assignment]
+
 # Optional spherov2 imports. For unit tests (without spherov2),
 # leave placeholders that tests can patch.
 try:  # pragma: no cover - import surface varies in CI/dev
@@ -33,6 +38,7 @@ except Exception:  # noqa: BLE001
 BleakAdapter = _BleakAdapter  # type: ignore[assignment]
 find_toys = _find_toys  # type: ignore[assignment]
 BB8 = _BB8  # type: ignore[assignment]
+BleakScanner = _BleakScanner  # type: ignore[assignment]
 
 from .logging_setup import logger
 
@@ -92,10 +98,10 @@ class BleSession:
         self._max_backoff = 2.0
 
     async def _scan_toys(self) -> list[Any]:
-        """Run sync spherov2 discovery off the active event loop."""
-        if not find_toys:
+        """Discover nearby BLE devices without entering a nested event loop."""
+        if not BleakScanner:
             return []
-        return await asyncio.to_thread(find_toys, timeout=self._connect_timeout)
+        return await BleakScanner.discover(timeout=self._connect_timeout)
 
     async def connect(self, mac: str | None = None) -> None:
         """Connect to BB-8 device.
@@ -254,29 +260,25 @@ class BleSession:
             toys = await self._scan_toys()
 
             for toy in toys:
-                if (BB8 and isinstance(toy, BB8)) or not BB8:
-                    # Extract MAC from toy address
-                    toy_str = str(toy)
-                    # BB8 toy string typically contains MAC address
-                    if hasattr(toy, "address"):
-                        self._target_mac = toy.address
-                    else:
-                        # Fallback: parse from string representation
-                        import re
+                toy_str = str(toy)
+                if hasattr(toy, "address"):
+                    self._target_mac = toy.address
+                else:
+                    import re
 
-                        mac_pattern = r"([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})"
-                        mac_match = re.search(mac_pattern, toy_str)
-                        if mac_match:
-                            self._target_mac = mac_match.group(0)
+                    mac_pattern = r"([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})"
+                    mac_match = re.search(mac_pattern, toy_str)
+                    if mac_match:
+                        self._target_mac = mac_match.group(0)
 
-                    if self._target_mac:
-                        logger.info(
-                            {
-                                "event": "ble_session_discovery_success",
-                                "mac": self._target_mac,
-                            }
-                        )
-                        return True
+                if self._target_mac:
+                    logger.info(
+                        {
+                            "event": "ble_session_discovery_success",
+                            "mac": self._target_mac,
+                        }
+                    )
+                    return True
 
             logger.warning({"event": "ble_session_discovery_no_device"})
             return False

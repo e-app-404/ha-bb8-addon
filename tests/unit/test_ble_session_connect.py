@@ -17,59 +17,42 @@ def _mock_toy(address: str) -> MagicMock:
     return toy
 
 
-def test_connect_uses_to_thread_for_sync_discovery():
+def test_connect_uses_async_safe_bleak_discovery():
     session = BleSession("AA:BB:CC:DD:EE:FF")
     toy = _mock_toy("AA:BB:CC:DD:EE:FF")
 
-    async def run_inline(func, *args, **kwargs):
-        return func(*args, **kwargs)
-
-    with patch("bb8_core.ble_session.find_toys", return_value=[toy]) as mock_find_toys:
+    with patch("bb8_core.ble_session.find_toys") as mock_find_toys:
         with patch("bb8_core.ble_session.BB8", None):
-            with patch(
-                "bb8_core.ble_session.asyncio.to_thread",
-                new=AsyncMock(side_effect=run_inline),
-            ) as mock_to_thread:
+            with patch("bb8_core.ble_session.BleakScanner") as mock_scanner:
+                mock_scanner.discover = AsyncMock(return_value=[toy])
                 asyncio.run(session.connect())
 
     assert session.is_connected()
-    assert mock_to_thread.await_args_list[0].args[0] is mock_find_toys
-    assert mock_to_thread.await_args_list[0].kwargs == {"timeout": 5.0}
+    mock_scanner.discover.assert_awaited_once_with(timeout=5.0)
+    mock_find_toys.assert_not_called()
 
 
-def test_connect_consumes_discovery_result_after_threaded_scan():
+def test_connect_consumes_result_after_async_safe_scan():
     session = BleSession("AA:BB:CC:DD:EE:FF")
     toy = _mock_toy("AA:BB:CC:DD:EE:FF")
 
-    async def run_inline(func, *args, **kwargs):
-        return func(*args, **kwargs)
-
-    with patch("bb8_core.ble_session.find_toys", return_value=[toy]):
+    with patch("bb8_core.ble_session.find_toys") as mock_find_toys:
         with patch("bb8_core.ble_session.BB8", None):
-            with patch(
-                "bb8_core.ble_session.asyncio.to_thread",
-                new=AsyncMock(side_effect=run_inline),
-            ):
+            with patch("bb8_core.ble_session.BleakScanner") as mock_scanner:
+                mock_scanner.discover = AsyncMock(return_value=[toy])
                 asyncio.run(session.connect())
 
     assert session._toy is toy
     assert session._connect_attempts == 1
+    mock_find_toys.assert_not_called()
 
 
-def test_connect_raises_when_threaded_discovery_fails():
+def test_connect_raises_when_async_safe_discovery_fails():
     session = BleSession("AA:BB:CC:DD:EE:FF")
 
-    async def run_inline(func, *args, **kwargs):
-        return func(*args, **kwargs)
-
-    with patch(
-        "bb8_core.ble_session.find_toys",
-        side_effect=RuntimeError("scan boom"),
-    ) as mock_find_toys:
-        with patch(
-            "bb8_core.ble_session.asyncio.to_thread",
-            new=AsyncMock(side_effect=run_inline),
-        ) as mock_to_thread:
+    with patch("bb8_core.ble_session.find_toys") as mock_find_toys:
+        with patch("bb8_core.ble_session.BleakScanner") as mock_scanner:
+            mock_scanner.discover = AsyncMock(side_effect=RuntimeError("scan boom"))
             with patch("bb8_core.ble_session.asyncio.sleep", new=AsyncMock()):
                 import pytest
 
@@ -80,5 +63,5 @@ def test_connect_raises_when_threaded_discovery_fails():
                     asyncio.run(session.connect())
 
     assert not session.is_connected()
-    assert mock_find_toys.call_count == 2
-    assert mock_to_thread.await_count == 2
+    assert mock_scanner.discover.await_count == 2
+    mock_find_toys.assert_not_called()
