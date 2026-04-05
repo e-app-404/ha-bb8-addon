@@ -23,6 +23,7 @@ from typing import Any
 
 try:
     from addon.bb8_core.ha_discovery import (
+        connect_button_discovery_config,
         connection_status_discovery_config,
         light_discovery_config,
         presence_discovery_config,
@@ -42,6 +43,7 @@ except ModuleNotFoundError:
         raise
     _ha_discovery_module = importlib.util.module_from_spec(_ha_discovery_spec)
     _ha_discovery_spec.loader.exec_module(_ha_discovery_module)
+    connect_button_discovery_config = _ha_discovery_module.connect_button_discovery_config
     connection_status_discovery_config = _ha_discovery_module.connection_status_discovery_config
     light_discovery_config = _ha_discovery_module.light_discovery_config
     presence_discovery_config = _ha_discovery_module.presence_discovery_config
@@ -154,6 +156,8 @@ def _client_or_none():
 _ble_loop: asyncio.AbstractEventLoop | None = None
 _ble_inited: bool = False
 client = None
+_controller_ble_session: Any | None = None
+_manual_connect_in_progress = False
 
 
 def _runtime_mqtt_base(config: dict[str, Any] | None = None) -> str:
@@ -319,6 +323,32 @@ def _propagate_ble_session_to_facade(facade: Any, ble_session: Any) -> None:
     facade.set_ble_session(ble_session)
 
 
+def _bind_controller_ble_session(ble_session: Any) -> None:
+    """Persist the watchdog-owned BleSession for command callbacks."""
+    global _controller_ble_session
+    _controller_ble_session = ble_session
+
+
+def _resolve_controller_ble_session() -> Any | None:
+    """Return the canonical controller/watchdog-owned BleSession."""
+    return _controller_ble_session
+
+
+def _begin_manual_connect_attempt() -> bool:
+    """Reserve the manual connect slot if no other request is in flight."""
+    global _manual_connect_in_progress
+    if _manual_connect_in_progress:
+        return False
+    _manual_connect_in_progress = True
+    return True
+
+
+def _finish_manual_connect_attempt() -> None:
+    """Release the manual connect slot after completion or failure."""
+    global _manual_connect_in_progress
+    _manual_connect_in_progress = False
+
+
 async def _process_led_command(
     *,
     facade: Any,
@@ -388,6 +418,53 @@ def _schedule_async_command_ack(
         task.add_done_callback(_on_done)
 
     loop.call_soon_threadsafe(_start)
+
+
+async def _request_connect_attempt(
+    *,
+    facade: Any,
+    ble_session: Any,
+    config: dict[str, Any],
+) -> None:
+    """Trigger a manual connect attempt using the watchdog-managed session."""
+    if ble_session.is_connected():
+        logger.info({"event": "connect_command_already_connected"})
+        _propagate_ble_session_to_facade(facade, ble_session)
+        with contextlib.suppress(Exception):
+            facade.mark_post_connect_holdoff()
+        _publish_connection_availability("connected", config=config)
+        if facade.publish_presence:
+            facade.publish_presence(True)
+        return
+
+    logger.info({"event": "connect_command_attempt"})
+    await ble_session.connect()
+    _propagate_ble_session_to_facade(facade, ble_session)
+
+    with contextlib.suppress(Exception):
+        facade.mark_post_connect_holdoff()
+
+    _publish_connection_availability("connected", config=config)
+    if facade.publish_presence:
+        facade.publish_presence(True)
+    logger.info({"event": "connect_command_success"})
+
+
+async def _run_manual_connect_attempt(
+    *,
+    facade: Any,
+    ble_session: Any,
+    config: dict[str, Any],
+) -> None:
+    """Run a guarded manual connect attempt and always clear in-flight state."""
+    try:
+        await _request_connect_attempt(
+            facade=facade,
+            ble_session=ble_session,
+            config=config,
+        )
+    finally:
+        _finish_manual_connect_attempt()
 
 
 def on_power_set(payload):
@@ -792,6 +869,7 @@ def start_bridge_controller(
 
     # Create BLE session and facade
     ble_session = BleSession(target_mac)
+    _bind_controller_ble_session(ble_session)
     bridge = BLEBridge(gw, target_mac)  # Keep for compatibility
     facade = BB8Facade(bridge)
     facade.set_target_mac(target_mac)  # Configure facade with session
@@ -1564,6 +1642,8 @@ if __name__ == "__main__":
                 cl.publish(connection_topic, payload=connection_payload, qos=0, retain=True)
                 presence_topic, presence_payload = presence_discovery_config()
                 cl.publish(presence_topic, payload=presence_payload, qos=0, retain=True)
+                connect_topic, connect_payload = connect_button_discovery_config()
+                cl.publish(connect_topic, payload=connect_payload, qos=0, retain=True)
                 cl.publish(
                     led_state_topic,
                     _build_ha_led_state_payload((0, 0, 0)),
@@ -1589,6 +1669,12 @@ if __name__ == "__main__":
                     {
                         "event": "ha_presence_discovery_published",
                         "topic": presence_topic,
+                    }
+                )
+                logger.info(
+                    {
+                        "event": "ha_connect_button_discovery_published",
+                        "topic": connect_topic,
                     }
                 )
             except Exception as exc:
@@ -1780,6 +1866,31 @@ if __name__ == "__main__":
                                 cid,
                                 False,
                                 "Facade missing 'estop' method",
+                            )
+                    elif cmd == "connect":
+                        if not raw.strip():
+                            _ack("connect", cid, False, "Missing connect payload")
+                        else:
+                            shared_ble_session = _resolve_controller_ble_session()
+                            if shared_ble_session is None:
+                                logger.error({"event": "connect_command_session_unavailable"})
+                                _ack("connect", cid, False, "Shared BLE session unavailable")
+                                return
+                            if not _begin_manual_connect_attempt():
+                                logger.info({"event": "connect_command_already_in_progress"})
+                                _ack("connect", cid, False, "Connect already in progress")
+                                return
+                            _schedule_async_command_ack(
+                                loop=loop,
+                                create_task=_asyncio.create_task,
+                                coroutine_factory=lambda: _run_manual_connect_attempt(
+                                    facade=facade,
+                                    ble_session=shared_ble_session,
+                                    config=cfg,
+                                ),
+                                ack_fn=_ack,
+                                cmd="connect",
+                                cid=cid,
                             )
                     elif cmd == "clear_estop":
                         if facade is not None and hasattr(facade, "clear_estop"):

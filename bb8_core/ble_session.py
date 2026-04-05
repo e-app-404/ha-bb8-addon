@@ -18,6 +18,13 @@ import random
 import time
 from typing import Any
 
+from .auto_detect import _pick_best_bb8_candidate
+
+try:  # pragma: no cover - import surface varies in CI/dev
+    from bleak import BleakScanner as _BleakScanner
+except Exception:  # noqa: BLE001
+    _BleakScanner = None  # type: ignore[assignment]
+
 # Optional spherov2 imports. For unit tests (without spherov2),
 # leave placeholders that tests can patch.
 try:  # pragma: no cover - import surface varies in CI/dev
@@ -33,6 +40,7 @@ except Exception:  # noqa: BLE001
 BleakAdapter = _BleakAdapter  # type: ignore[assignment]
 find_toys = _find_toys  # type: ignore[assignment]
 BB8 = _BB8  # type: ignore[assignment]
+BleakScanner = _BleakScanner  # type: ignore[assignment]
 
 from .logging_setup import logger
 
@@ -84,18 +92,51 @@ class BleSession:
         self._connect_attempts = 0
         self._last_connect_time = 0.0
         self._connect_start_time = 0.0
+        self._target_name: str | None = None
 
         # Connection settings
-        self._connect_timeout = 5.0
+        self._connect_timeout = 6.0
         self._max_attempts = 2
         self._base_backoff = 0.4
         self._max_backoff = 2.0
 
     async def _scan_toys(self) -> list[Any]:
-        """Run sync spherov2 discovery off the active event loop."""
-        if not find_toys:
+        """Discover nearby BLE devices without entering a nested event loop."""
+        if not BleakScanner:
             return []
-        return await asyncio.to_thread(find_toys, timeout=self._connect_timeout)
+        return await BleakScanner.discover(timeout=self._connect_timeout)
+
+    @staticmethod
+    def _normalize_scan_result(device: Any) -> dict[str, Any]:
+        return {
+            "address": (getattr(device, "address", "") or "").strip(),
+            "name": (getattr(device, "name", None) or "").strip(),
+            "rssi": getattr(device, "rssi", None),
+            "raw": device,
+        }
+
+    def _select_candidate(self, devices: list[Any]) -> Any | None:
+        normalized_devices = [self._normalize_scan_result(device) for device in devices]
+        selected = _pick_best_bb8_candidate(
+            normalized_devices,
+            configured_mac=self._target_mac,
+            configured_name=self._target_name,
+        )
+        if selected:
+            return selected.get("raw")
+
+        target_mac = (self._target_mac or "").strip().lower()
+        if not target_mac:
+            return None
+
+        for device in normalized_devices:
+            raw_device = device.get("raw")
+            if BB8 and isinstance(raw_device, BB8):
+                if target_mac in str(raw_device).lower():
+                    return raw_device
+            elif target_mac in str(raw_device).lower():
+                return raw_device
+        return None
 
     async def connect(self, mac: str | None = None) -> None:
         """Connect to BB-8 device.
@@ -139,24 +180,8 @@ class BleSession:
                     }
                 )
 
-                # Find BB-8 device
-                # Discover toys (tests patch find_toys; in prod, uses spherov2)
                 toys = await self._scan_toys()
-                bb8_toy = None
-                for toy in toys:
-                    # If BB8 class is available, require instance match; otherwise
-                    # fall back to string/addr contains the target (tests set address)
-                    if BB8 and isinstance(toy, BB8):
-                        if target.lower() in str(toy).lower():
-                            bb8_toy = toy
-                            break
-                    else:
-                        if (
-                            target.lower() in str(toy).lower()
-                            or getattr(toy, "address", "").lower() == target.lower()
-                        ):
-                            bb8_toy = toy
-                            break
+                bb8_toy = self._select_candidate(toys)
 
                 if not bb8_toy:
                     raise ConnectionError(f"BB-8 not found at {target}")
@@ -253,30 +278,18 @@ class BleSession:
             logger.info({"event": "ble_session_discovery_start"})
             toys = await self._scan_toys()
 
-            for toy in toys:
-                if (BB8 and isinstance(toy, BB8)) or not BB8:
-                    # Extract MAC from toy address
-                    toy_str = str(toy)
-                    # BB8 toy string typically contains MAC address
-                    if hasattr(toy, "address"):
-                        self._target_mac = toy.address
-                    else:
-                        # Fallback: parse from string representation
-                        import re
-
-                        mac_pattern = r"([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})"
-                        mac_match = re.search(mac_pattern, toy_str)
-                        if mac_match:
-                            self._target_mac = mac_match.group(0)
-
-                    if self._target_mac:
-                        logger.info(
-                            {
-                                "event": "ble_session_discovery_success",
-                                "mac": self._target_mac,
-                            }
-                        )
-                        return True
+            selected = self._select_candidate(toys)
+            if selected:
+                normalized = self._normalize_scan_result(selected)
+                self._target_mac = normalized["address"] or self._target_mac
+                self._target_name = normalized["name"] or self._target_name
+                logger.info(
+                    {
+                        "event": "ble_session_discovery_success",
+                        "mac": self._target_mac,
+                    }
+                )
+                return True
 
             logger.warning({"event": "ble_session_discovery_no_device"})
             return False

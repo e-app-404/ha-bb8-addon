@@ -66,3 +66,16 @@ def presence_discovery_config() -> tuple[str, str]:
         "device": DEVICE_INFO,
     }
     return topic, json.dumps(payload)
+
+
+def connect_button_discovery_config() -> tuple[str, str]:
+    topic = "homeassistant/button/bb8_connect/config"
+    payload = {
+        "name": "BB-8 Connect",
+        "unique_id": "bb8_connect_button",
+        "object_id": "bb8_connect",
+        "command_topic": "bb8/cmd/connect",
+        "device_class": "restart",
+        "device": DEVICE_INFO,
+    }
+    return topic, json.dumps(payload)
